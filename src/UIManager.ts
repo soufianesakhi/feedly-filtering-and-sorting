@@ -200,12 +200,12 @@ export class UIManager {
         var this_ = this;
         NodeCreationObserver.onCreation(ext.settingsBtnPredecessorSelector, (element) => {
             var clone = $(element).clone();
-            $(clone).attr('id', this_.getBtnId(element.id));
-            $(clone).removeAttr('title');
-            $(clone).attr('src', ext.filterIconLink);
-            $(clone).attr('alt', 'icon');
-            $(clone).attr('data-page-action', '');
+            $(clone).empty().removeAttr('class').removeAttr('title').addClass("ShowSettingsBtn");
             $(element).after(clone);
+
+            var actionsDiv = $(".actions-and-details-container").parent();
+            actionsDiv.removeClass('col-xs-4').removeClass("col-md-4");
+            actionsDiv.prev().removeAttr('class').addClass('col-xs-4').addClass("col-md-4");
 
             $(clone).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
@@ -387,7 +387,7 @@ export class UIManager {
 
     checkReadArticles(article: Element) {
         if (!this.containsReadArticles) {
-            this.containsReadArticles = $(article).find(ext.articleLinkSelector).hasClass(ext.readArticleClass);
+            this.containsReadArticles = $(article).hasClass(ext.readArticleClass);
             if (this.containsReadArticles) {
                 this.articleManager.resetArticles();
                 window.scrollTo(0, 0);
@@ -448,10 +448,6 @@ export class UIManager {
             this.keywordToId[keyword] = id;
         }
         return this.getHTMLId(keywordListId + "_" + this.keywordToId[keyword]);
-    }
-
-    getBtnId(elementId: string): string {
-        return this.getHTMLId("settingsBtn_" + elementId);
     }
 
     getFilteringTypeTabId(filteringType: FilteringType) {

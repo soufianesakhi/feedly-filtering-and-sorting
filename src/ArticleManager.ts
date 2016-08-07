@@ -233,7 +233,7 @@ export class ArticleManager {
             return;
         }
         this.clearHiddingInfo();
-        $(ext.unreadCountSelector).after("<span class=" + this.hiddingInfoClass + ">(" + hiddenCount + " hidden)</span>");
+        $(ext.hidingInfoNextSibling).prev().append("<span class=" + this.hiddingInfoClass + "> (" + hiddenCount + " hidden)</span>");
     }
 
     clearHiddingInfo() {
@@ -253,7 +253,7 @@ export class ArticleManager {
             pagesPkg.BasePage.prototype.buryEntry.call(thisArg, id);
         }
         function getLastReadEntry(oldLastEntryObject, thisArg) {
-            if (getFromWindow(ext.keepNewArticlesUnreadId) == null) {
+            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || getFromWindow(ext.keepNewArticlesUnreadId) == null) {
                 return oldLastEntryObject;
             }
             var idsToMarkAsRead: string[] = getFromWindow(ext.articlesToMarkAsReadId);
@@ -269,19 +269,14 @@ export class ArticleManager {
             return { lastReadEntryId: lastReadEntryId };
         }
 
-        var feedlyListPagePrototype = pagesPkg.ListPage.prototype;
-        var oldMarkAllAsRead: Function = feedlyListPagePrototype.markAllSubscriptionEntriesAsRead;
-        feedlyListPagePrototype.markAllSubscriptionEntriesAsRead = function (subURL: string, b, oldLastEntryObject, d) {
+        var feedlyListPagePrototype = pagesPkg.ReactPage.prototype;
+        var oldMarkAllAsRead: Function = feedlyListPagePrototype.markAsRead;
+        feedlyListPagePrototype.markAsRead = function (oldLastEntryObject) {
             var lastEntryObject = getLastReadEntry(oldLastEntryObject, this);
             if (lastEntryObject != null) {
-                oldMarkAllAsRead.call(this, subURL, b, lastEntryObject, d);
-            }
-        }
-        var oldMarkCategoryAsRead: Function = feedlyListPagePrototype.markCategoryAsRead;
-        feedlyListPagePrototype.markCategoryAsRead = function (categoryName: string, oldLastEntryObject, c, d) {
-            var lastEntryObject = getLastReadEntry(oldLastEntryObject, this);
-            if (lastEntryObject != null) {
-                oldMarkCategoryAsRead.call(this, categoryName, lastEntryObject, c, d);
+                oldMarkAllAsRead.call(this, lastEntryObject);
+            } else {
+                this.feedly.jumpToNext();
             }
         }
     }
@@ -291,7 +286,7 @@ export class ArticleManager {
             return document.getElementById(id + "_main");
         }
         function isRead(id) {
-            return $(get(id)).find(ext.articleLinkSelector).hasClass(ext.readArticleClass);
+            return $(get(id)).hasClass(ext.readArticleClass);
         }
         function removed(id): boolean {
             return get(id) == null;
@@ -300,6 +295,7 @@ export class ArticleManager {
             return window["FFnS"][ext.sortedVisibleArticlesId];
         }
         function find(unreadOnly, isPrevious: boolean) {
+            console.log(this);
             var found = false;
             this.getSelectedEntryId() || (found = true);
             var sortedVisibleArticles = getSortedVisibleArticles();
