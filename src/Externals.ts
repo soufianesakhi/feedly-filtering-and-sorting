@@ -30,5 +30,6 @@ var ext = {
 
 	"lastReadEntryId": "lastReadEntry",
 	"keepNewArticlesUnreadId": "keepNewArticlesUnread",
-	"articlesToMarkAsReadId": "articlesToMarkAsRead"
+	"articlesToMarkAsReadId": "articlesToMarkAsRead",
+	"sortedVisibleArticlesId": "sortedVisibleArticles"
 }

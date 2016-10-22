@@ -1,9 +1,9 @@
 /// <reference path="./_references.d.ts" />
 
-import {FilteringType, SortingType} from "./DataTypes";
-import {Subscription} from "./Subscription";
-import {SubscriptionManager} from "./SubscriptionManager";
-import {$id, isRadioChecked} from "./Utils";
+import { FilteringType, SortingType } from "./DataTypes";
+import { Subscription } from "./Subscription";
+import { SubscriptionManager } from "./SubscriptionManager";
+import { $id, isRadioChecked } from "./Utils";
 
 export class ArticleManager {
     subscriptionManager: SubscriptionManager;
@@ -19,6 +19,7 @@ export class ArticleManager {
         this.subscriptionManager = subscriptionManager;
         this.articleSorterFactory = new ArticleSorterFactory();
         this.eval("(" + this.overrideMarkAsRead.toString() + ")();");
+        this.eval("(" + this.overrideNavigation.toString() + ")();");
         this.eval("window.ext = (" + JSON.stringify(ext).replace(/\s+/g, ' ') + ");");
     }
 
@@ -198,6 +199,8 @@ export class ArticleManager {
         hiddenArticles.forEach((article) => {
             articlesContainer.append(article.get());
         });
+        var sortedVisibleArticles = visibleArticles.map(a => a.getEntryId());
+        this.putWindow(ext.sortedVisibleArticlesId, sortedVisibleArticles);
     }
 
     sortArticleArray(articles: Article[]) {
@@ -238,7 +241,6 @@ export class ArticleManager {
         this.eval("window.FFnS['" + id + "'] = " + JSON.stringify(value) + ";");
     }
 
-    /* No JQuery */
     overrideMarkAsRead() {
         var pagesPkg = window["devhd"].pkg("pages");
         function getFromWindow(id: string) {
@@ -281,6 +283,42 @@ export class ArticleManager {
         }
     }
 
+    overrideNavigation() {
+        function isRead(id) {
+            return $("#" + id + "_main").find(ext.articleLinkSelector).hasClass(ext.readArticleClass);
+        }
+        function getSortedVisibleArticles(): String[] {
+            return window["FFnS"][ext.sortedVisibleArticlesId];
+        }
+        function find(unreadOnly, isPrevious: boolean) {
+            var selectedExists = false;
+            this.getSelectedEntryId() || (selectedExists = true);
+            var sortedVisibleArticles = getSortedVisibleArticles();
+            var len = sortedVisibleArticles.length;
+            for (var c = 0; c < len; c++) {
+                var index = isPrevious ? len - 1 - c : c;
+                var entry = sortedVisibleArticles[index];
+                if (selectedExists) {
+                    if (unreadOnly) {
+                        if (!isRead(entry)) return entry;
+                        continue
+                    }
+                    return entry;
+                }
+                entry === this.getSelectedEntryId() && (selectedExists = true)
+            }
+            if (!isPrevious) {
+                return null;
+            }
+        }
+        var prototype = window["devhd"].pkg("pages").ListPage.prototype;
+        prototype.findPreviousEntryId = function (unreadOnly) {
+            return find.call(this, unreadOnly, true);
+        }
+        prototype.findNextEntryId = function (unreadOnly) {
+            return find.call(this, unreadOnly, false);
+        }
+    }
 }
 
 class ArticleSorterFactory {
@@ -327,7 +365,7 @@ class Article {
 
     constructor(article: Element) {
         this.article = $(article);
-        
+
         // Title
         if (this.article.hasClass(ext.magazineTopEntryClass)) {
             this.title = this.article.find(ext.magazineTopEntryTitleSelector).text();
@@ -335,7 +373,7 @@ class Article {
             this.title = this.article.attr(ext.articleTitleAttribute)
         }
         this.title = this.title.trim().toLowerCase();
-        
+
         // Popularity
         var popularityStr = this.article.find(ext.popularitySelector).text().trim();
         popularityStr = popularityStr.replace("+", "");
@@ -344,7 +382,7 @@ class Article {
             popularityStr += "000";
         }
         this.popularity = Number(popularityStr);
-        
+
         if (this.article.hasClass(ext.cardsView)) {
             return;
         }

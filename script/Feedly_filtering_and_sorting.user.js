@@ -10,7 +10,7 @@
 // @require     http://code.jquery.com/jquery.min.js
 // @require     https://raw.githubusercontent.com/soufianesakhi/node-creation-observer-js/master/release/node-creation-observer-latest.js
 // @include     *://feedly.com/*
-// @version     1.5.2.1
+// @version     1.5.3
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -46,7 +46,8 @@ var ext = {
     "magazineTopEntryTitleSelector": "a.title",
     "lastReadEntryId": "lastReadEntry",
     "keepNewArticlesUnreadId": "keepNewArticlesUnread",
-    "articlesToMarkAsReadId": "articlesToMarkAsRead"
+    "articlesToMarkAsReadId": "articlesToMarkAsRead",
+    "sortedVisibleArticlesId": "sortedVisibleArticles"
 };
 
 var exported = {};
@@ -419,6 +420,7 @@ var ArticleManager = (function () {
         this.subscriptionManager = subscriptionManager;
         this.articleSorterFactory = new ArticleSorterFactory();
         this.eval("(" + this.overrideMarkAsRead.toString() + ")();");
+        this.eval("(" + this.overrideNavigation.toString() + ")();");
         this.eval("window.ext = (" + JSON.stringify(ext).replace(/\s+/g, ' ') + ");");
     }
     ArticleManager.prototype.refreshArticles = function () {
@@ -595,6 +597,8 @@ var ArticleManager = (function () {
         hiddenArticles.forEach(function (article) {
             articlesContainer.append(article.get());
         });
+        var sortedVisibleArticles = visibleArticles.map(function (a) { return a.getEntryId(); });
+        this.putWindow(ext.sortedVisibleArticlesId, sortedVisibleArticles);
     };
     ArticleManager.prototype.sortArticleArray = function (articles) {
         var sortingType = this.getCurrentSub().getSortingType();
@@ -630,7 +634,6 @@ var ArticleManager = (function () {
     ArticleManager.prototype.putWindow = function (id, value) {
         this.eval("window.FFnS['" + id + "'] = " + JSON.stringify(value) + ";");
     };
-    /* No JQuery */
     ArticleManager.prototype.overrideMarkAsRead = function () {
         var pagesPkg = window["devhd"].pkg("pages");
         function getFromWindow(id) {
@@ -669,6 +672,43 @@ var ArticleManager = (function () {
             if (lastEntryObject != null) {
                 oldMarkCategoryAsRead.call(this, categoryName, lastEntryObject, c, d);
             }
+        };
+    };
+    ArticleManager.prototype.overrideNavigation = function () {
+        function isRead(id) {
+            return $("#" + id + "_main").find(ext.articleLinkSelector).hasClass(ext.readArticleClass);
+        }
+        function getSortedVisibleArticles() {
+            return window["FFnS"][ext.sortedVisibleArticlesId];
+        }
+        function find(unreadOnly, isPrevious) {
+            var selectedExists = false;
+            this.getSelectedEntryId() || (selectedExists = true);
+            var sortedVisibleArticles = getSortedVisibleArticles();
+            var len = sortedVisibleArticles.length;
+            for (var c = 0; c < len; c++) {
+                var index = isPrevious ? len - 1 - c : c;
+                var entry = sortedVisibleArticles[index];
+                if (selectedExists) {
+                    if (unreadOnly) {
+                        if (!isRead(entry))
+                            return entry;
+                        continue;
+                    }
+                    return entry;
+                }
+                entry === this.getSelectedEntryId() && (selectedExists = true);
+            }
+            if (!isPrevious) {
+                return null;
+            }
+        }
+        var prototype = window["devhd"].pkg("pages").ListPage.prototype;
+        prototype.findPreviousEntryId = function (unreadOnly) {
+            return find.call(this, unreadOnly, true);
+        };
+        prototype.findNextEntryId = function (unreadOnly) {
+            return find.call(this, unreadOnly, false);
         };
     };
     return ArticleManager;
@@ -1283,10 +1323,17 @@ var GlobalSettingsCheckBox = (function () {
     return GlobalSettingsCheckBox;
 }());
 
+function injectResources() {
+    $("head").append("<style>" + templates.styleCSS + "</style>");
+    var head = document.getElementsByTagName("head")[0];
+    var script = document.createElement("script");
+    script.src = "//code.jquery.com/jquery.min.js";
+    head.appendChild(script);
+}
 $(document).ready(function () {
     var uiManager = new UIManager();
     var uiManagerBind = callbackBindedTo(uiManager);
-    $("head").append("<style>" + templates.styleCSS + "</style>");
+    injectResources();
     NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
         console.log("Feedly page fully loaded");
         uiManager.init();
