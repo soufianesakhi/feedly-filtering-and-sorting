@@ -1,5 +1,5 @@
 var ext = {
-	"filterIconLink": "https://cdn2.iconfinder.com/data/icons/windows-8-metro-style/128/empty_filter.png",
+	"filterIconLink": "http://megaicons.net/static/img/icons_sizes/8/178/512/objects-empty-filter-icon.png",
 	"plusIconLink": "https://cdn0.iconfinder.com/data/icons/social-messaging-ui-color-shapes/128/add-circle-blue-128.png",
 	"eraseIconLink": "https://cdn2.iconfinder.com/data/icons/large-glossy-svg-icons/512/erase_delete_remove_wipe_out-128.png",
 	"closeIconLink": "https://cdn2.iconfinder.com/data/icons/social-productivity-line-art-1/128/close-cancel-128.png",
@@ -30,5 +30,5 @@ var ext = {
 
 	"lastReadEntryId": "lastReadEntry",
 	"keepNewArticlesUnreadId": "keepNewArticlesUnread",
-    "articlesToMarkAsReadId": "articlesToMarkAsRead"
+	"articlesToMarkAsReadId": "articlesToMarkAsRead"
 }
