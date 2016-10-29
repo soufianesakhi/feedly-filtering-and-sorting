@@ -7,7 +7,7 @@ var ext = {
 	"urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
 
 	"settingsBtnPredecessorSelector": "#pageActionCustomize, #floatingPageActionCustomize",
-	"articleSelector": "#timeline > [id$='column0'] > div",
+	"articleSelector": "#timeline > [id$='column0'] > div[data-title]",
 	"sectionSelector": "#timeline > .section",
 	"articleLinkSelector": "a[id$=\"_main_title\"]",
 	"publishAgeSpanSelector": ".lastModified > span",

@@ -10,7 +10,7 @@
 // @require     http://code.jquery.com/jquery.min.js
 // @require     https://raw.githubusercontent.com/soufianesakhi/node-creation-observer-js/master/release/node-creation-observer-latest.js
 // @include     *://feedly.com/*
-// @version     1.5.3
+// @version     1.5.3.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -24,7 +24,7 @@ var ext = {
     "closeIconLink": "https://cdn2.iconfinder.com/data/icons/social-productivity-line-art-1/128/close-cancel-128.png",
     "urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
     "settingsBtnPredecessorSelector": "#pageActionCustomize, #floatingPageActionCustomize",
-    "articleSelector": "#timeline > [id$='column0'] > div",
+    "articleSelector": "#timeline > [id$='column0'] > div[data-title]",
     "sectionSelector": "#timeline > .section",
     "articleLinkSelector": "a[id$=\"_main_title\"]",
     "publishAgeSpanSelector": ".lastModified > span",
@@ -779,8 +779,10 @@ var Article = (function () {
         else {
             ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
         }
-        var publishDate = ageStr.split("--")[1].replace(/[^:]*:/, "").trim();
-        this.publishAge = Date.parse(publishDate);
+        if (ageStr != null) {
+            var publishDate = ageStr.split("--")[1].replace(/[^:]*:/, "").trim();
+            this.publishAge = Date.parse(publishDate);
+        }
     }
     Article.prototype.get = function () {
         return this.article;

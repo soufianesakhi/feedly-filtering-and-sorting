@@ -395,8 +395,10 @@ class Article {
         } else {
             ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
         }
-        var publishDate = ageStr.split("--")[1].replace(/[^:]*:/, "").trim();
-        this.publishAge = Date.parse(publishDate);
+        if (ageStr != null) {
+            var publishDate = ageStr.split("--")[1].replace(/[^:]*:/, "").trim();
+            this.publishAge = Date.parse(publishDate);
+        }
     }
 
     get(): JQuery {
