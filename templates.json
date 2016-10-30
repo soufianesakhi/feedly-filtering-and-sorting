@@ -12,6 +12,10 @@
         "file": "resources/filteringKeyword.html"
     },
     {
+        "name": "sortingSelectHTML",
+        "file": "resources/sortingSelect.html"
+    },
+    {
         "name": "styleCSS",
         "file": "resources/style.css"
     }

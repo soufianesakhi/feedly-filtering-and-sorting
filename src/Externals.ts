@@ -13,6 +13,7 @@ var ext = {
 	"publishAgeSpanSelector": ".lastModified > span",
 	"publishAgeTimestampAttr": "title",
 	"readArticleClass": "read",
+	"articleSourceSelector": ".sourceTitle",
 	"subscriptionChangeSelector": "h1#feedlyTitleBar > .hhint",
 	"articleTitleAttribute": "data-title",
 	"articleEntryIdAttribute": "data-entryid",

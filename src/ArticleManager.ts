@@ -343,6 +343,12 @@ class ArticleSorterFactory {
                 return (a.getPublishAge() - b.getPublishAge()) * multiplier;
             }
         }
+        function sourceSorter(isAscending: boolean) {
+            var multiplier = isAscending ? 1 : -1;
+            return (a: Article, b: Article) => {
+                return a.getSource().localeCompare(b.getSource()) * multiplier;
+            }
+        }
 
         this.sorterByType[SortingType.TitleDesc] = titleSorter(false);
         this.sorterByType[SortingType.TitleAsc] = titleSorter(true);
@@ -350,6 +356,8 @@ class ArticleSorterFactory {
         this.sorterByType[SortingType.PopularityAsc] = popularitySorter(true);
         this.sorterByType[SortingType.PublishDateNewFirst] = publishDateSorter(true);
         this.sorterByType[SortingType.PublishDateOldFirst] = publishDateSorter(false);
+        this.sorterByType[SortingType.SourceAsc] = sourceSorter(true);
+        this.sorterByType[SortingType.SourceDesc] = sourceSorter(false);
     }
 
     getSorter(sortingType: SortingType): (a: Article, b: Article) => number {
@@ -360,6 +368,7 @@ class ArticleSorterFactory {
 class Article {
     private article: JQuery;
     private title: string;
+    private source: string;
     private popularity: number;
     private publishAge: number;
 
@@ -399,6 +408,12 @@ class Article {
             var publishDate = ageStr.split("--")[1].replace(/[^:]*:/, "").trim();
             this.publishAge = Date.parse(publishDate);
         }
+
+        // Source
+        var source = this.article.find(ext.articleSourceSelector);
+        if (source != null) {
+            this.source = source.text();
+        }
     }
 
     get(): JQuery {
@@ -407,6 +422,10 @@ class Article {
 
     getTitle(): string {
         return this.title;
+    }
+
+    getSource(): string {
+        return this.source;
     }
 
     getPopularity(): number {

@@ -6,7 +6,9 @@ export enum SortingType {
     TitleDesc,
     TitleAsc,
     PublishDateNewFirst,
-    PublishDateOldFirst
+    PublishDateOldFirst,
+    SourceAsc,
+    SourceDesc
 }
 
 export enum FilteringType {

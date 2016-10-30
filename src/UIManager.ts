@@ -1,13 +1,13 @@
 /// <reference path="./_references.d.ts" />
 
-import {FilteringType, SortingType, HTMLElementType, getFilteringTypes, getFilteringTypeId} from "./DataTypes";
-import {Subscription} from "./Subscription";
-import {AdvancedControlsReceivedPeriod} from "./SubscriptionDTO";
-import {ArticleManager} from "./ArticleManager";
-import {SubscriptionManager} from "./SubscriptionManager";
-import {GlobalSettingsCheckBox} from "./HTMLGlobalSettings";
-import {HTMLSubscriptionManager, HTMLSubscriptionSetting} from "./HTMLSubscription";
-import {$id, bindMarkup} from "./Utils";
+import { FilteringType, SortingType, HTMLElementType, getFilteringTypes, getFilteringTypeId } from "./DataTypes";
+import { Subscription } from "./Subscription";
+import { AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
+import { ArticleManager } from "./ArticleManager";
+import { SubscriptionManager } from "./SubscriptionManager";
+import { GlobalSettingsCheckBox } from "./HTMLGlobalSettings";
+import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
+import { $id, bindMarkup } from "./Utils";
 
 export class UIManager {
     subscriptionManager: SubscriptionManager;
@@ -20,10 +20,11 @@ export class UIManager {
 
     keywordToId = {};
     idCount = 1;
+    sortingSelectId = "SortingType";
 
     htmlSettingsElements = [
         {
-            type: HTMLElementType.SelectBox, ids: ["SortingType"]
+            type: HTMLElementType.SelectBox, ids: [this.sortingSelectId]
         },
         {
             type: HTMLElementType.CheckBox,
@@ -107,7 +108,7 @@ export class UIManager {
         $id("FFnS_SettingsControls_SelectedSubscription").html(this.getImportOptionsHTML());
         var linkedSubContainer = $id("FFnS_SettingsControls_LinkedSubContainer");
         var linkedSub = $id("FFnS_SettingsControls_LinkedSub");
-        if (( (!this.globalSettingsEnabledCB.isEnabled()) && this.subscription.getURL() !== this.subscriptionManager.getActualSubscriptionURL() ) ||
+        if (((!this.globalSettingsEnabledCB.isEnabled()) && this.subscription.getURL() !== this.subscriptionManager.getActualSubscriptionURL()) ||
             (this.globalSettingsEnabledCB.isEnabled() && !this.subscriptionManager.isGlobalMode())) {
             linkedSubContainer.css("display", "");
             linkedSub.text("Subscription currently linked to: " + this.subscription.getURL());
@@ -135,12 +136,7 @@ export class UIManager {
 
         var settingsHtml = bindMarkup(templates.settingsHTML, [
             { name: "closeIconLink", value: ext.closeIconLink },
-            { name: "SortingType.PopularityDesc", value: SortingType.PopularityDesc },
-            { name: "SortingType.TitleAsc", value: SortingType.TitleAsc },
-            { name: "SortingType.PopularityAsc", value: SortingType.PopularityAsc },
-            { name: "SortingType.TitleDesc", value: SortingType.TitleDesc },
-            { name: "SortingType.PublishDateNewFirst", value: SortingType.PublishDateNewFirst },
-            { name: "SortingType.PublishDateOldFirst", value: SortingType.PublishDateOldFirst },
+            { name: "SortingSelect", value: this.getSortingSelectHTML("id='" + this.getHTMLId(this.sortingSelectId) + "'") },
             { name: "FilteringList.Type.FilteredOut", value: this.getFilteringListHTML(FilteringType.FilteredOut) },
             { name: "FilteringList.Type.RestrictedOn", value: this.getFilteringListHTML(FilteringType.RestrictedOn) },
             { name: "ImportMenu.SubscriptionOptions", value: this.getImportOptionsHTML() }
@@ -157,6 +153,20 @@ export class UIManager {
             $(tab).show();
         });
         var firstDiv = $("#" + tabsContentContainerId + " > div").first().show();
+    }
+
+    getSortingSelectHTML(attributes: string): string {
+        return bindMarkup(templates.sortingSelectHTML, [
+            { name: "Attributes", value: attributes },
+            { name: "PopularityDesc", value: SortingType.PopularityDesc },
+            { name: "TitleAsc", value: SortingType.TitleAsc },
+            { name: "PopularityAsc", value: SortingType.PopularityAsc },
+            { name: "TitleDesc", value: SortingType.TitleDesc },
+            { name: "PublishDateNewFirst", value: SortingType.PublishDateNewFirst },
+            { name: "PublishDateOldFirst", value: SortingType.PublishDateOldFirst },
+            { name: "SourceAsc", value: SortingType.SourceAsc },
+            { name: "SourceDesc", value: SortingType.SourceDesc }
+        ]);
     }
 
     getFilteringListHTML(type: FilteringType): string {
