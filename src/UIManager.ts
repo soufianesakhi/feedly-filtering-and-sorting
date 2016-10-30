@@ -87,15 +87,19 @@ export class UIManager {
     }
 
     updateMenu() {
-        this.updateSubscriptionSettings();
+        this.htmlSubscriptionManager.update();
+
         getFilteringTypes().forEach((type) => {
             this.updateFilteringList(type);
         });
         this.updateSettingsControls();
-    }
 
-    updateSubscriptionSettings() {
-        this.htmlSubscriptionManager.update();
+        // Additional sorting types
+        var container = $("#FFnS_AdditionalSortingTypes");
+        this.subscription.getAdditionalSortingTypes().forEach(s => {
+            var id = this.registerAdditionalSortingType();
+            $id(id).val(s);
+        })
     }
 
     updateSubscriptionTitle(globalSettingsEnabled: boolean) {
@@ -135,11 +139,13 @@ export class UIManager {
         var tabsContentContainerId = this.getHTMLId("tabs_content");
 
         var settingsHtml = bindMarkup(templates.settingsHTML, [
-            { name: "closeIconLink", value: ext.closeIconLink },
-            { name: "SortingSelect", value: this.getSortingSelectHTML("id='" + this.getHTMLId(this.sortingSelectId) + "'") },
+            { name: "SortingSelect", value: this.getSortingSelectHTML(this.getHTMLId(this.sortingSelectId)) },
             { name: "FilteringList.Type.FilteredOut", value: this.getFilteringListHTML(FilteringType.FilteredOut) },
             { name: "FilteringList.Type.RestrictedOn", value: this.getFilteringListHTML(FilteringType.RestrictedOn) },
-            { name: "ImportMenu.SubscriptionOptions", value: this.getImportOptionsHTML() }
+            { name: "ImportMenu.SubscriptionOptions", value: this.getImportOptionsHTML() },
+            { name: "closeIconLink", value: ext.closeIconLink },
+            { name: "plusIconLink", value: ext.plusIconLink },
+            { name: "eraseIconLink", value: ext.eraseIconLink }
         ]);
         $("body").prepend(settingsHtml);
 
@@ -152,12 +158,12 @@ export class UIManager {
             $("#" + tabsContentContainerId + " > div").not(tab).css("display", "none");
             $(tab).show();
         });
-        var firstDiv = $("#" + tabsContentContainerId + " > div").first().show();
+        $("#" + tabsContentContainerId + " > div").first().show();
     }
 
-    getSortingSelectHTML(attributes: string): string {
+    getSortingSelectHTML(id: string): string {
         return bindMarkup(templates.sortingSelectHTML, [
-            { name: "Attributes", value: attributes },
+            { name: "Id", value: id },
             { name: "PopularityDesc", value: SortingType.PopularityDesc },
             { name: "TitleAsc", value: SortingType.TitleAsc },
             { name: "PopularityAsc", value: SortingType.PopularityAsc },
@@ -175,9 +181,7 @@ export class UIManager {
             { name: "FilteringTypeTabId", value: this.getFilteringTypeTabId(type) },
             { name: "inputId", value: this.getHTMLId(ids.inputId) },
             { name: "plusBtnId", value: this.getHTMLId(ids.plusBtnId) },
-            { name: "plusIconLink", value: ext.plusIconLink },
             { name: "eraseBtnId", value: this.getHTMLId(ids.eraseBtnId) },
-            { name: "eraseIconLink", value: ext.eraseIconLink },
             { name: "filetringKeywordsId", value: ids.filetringKeywordsId }
         ]);
         return filteringListHTML;
@@ -256,7 +260,26 @@ export class UIManager {
             this.deleteSub();
         });
 
+        $id("FFnS_AddSortingType").click(() => {
+            var id = this.registerAdditionalSortingType();
+            this.subscription.addAdditionalSortingType($id(id).val());
+            this.refreshFilteringAndSorting();
+        });
+
+        $id("FFnS_EraseSortingTypes").click(() => {
+            this.subscription.setAdditionalSortingTypes([]);
+            $("#FFnS_AdditionalSortingTypes").empty();
+            this.refreshFilteringAndSorting();
+        });
+
         this.setUpFilteringListEvents();
+    }
+
+    registerAdditionalSortingType(): string {
+        var id = this.getHTMLId("AdditionalSortingType_" + (this.idCount++));
+        $("#FFnS_AdditionalSortingTypes").append(this.getSortingSelectHTML(id));
+        $id(id).change(() => this.updateAdditionalSortingTypes());
+        return id;
     }
 
     private setUpFilteringListEvents() {
@@ -325,6 +348,12 @@ export class UIManager {
         $id(ids.filetringKeywordsId).html(filteringKeywordsHTML);
         this.refreshFilteringAndSorting();
         this.setUpKeywordButtonsEvents(type);
+    }
+
+    updateAdditionalSortingTypes() {
+        var additionalSortingTypes = $("#FFnS_AdditionalSortingTypes > select").map((i, e) => $(e).val()).toArray();
+        this.subscription.setAdditionalSortingTypes(additionalSortingTypes);
+        this.refreshFilteringAndSorting();
     }
 
     addArticle(article: Element) {

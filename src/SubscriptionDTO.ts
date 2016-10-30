@@ -1,4 +1,4 @@
-import {FilteringType, SortingType, getFilteringTypes} from "./DataTypes";
+import { FilteringType, SortingType, getFilteringTypes } from "./DataTypes";
 
 export class SubscriptionDTO {
     url: string;
@@ -8,8 +8,9 @@ export class SubscriptionDTO {
     sortingType: SortingType = SortingType.PopularityDesc;
     advancedControlsReceivedPeriod = new AdvancedControlsReceivedPeriod();
     pinHotToTop = false;
+    additionalSortingTypes: SortingType[] = [];
     filteringListsByType: { [key: number]: string[]; } = {};
-    
+
     constructor(url: string) {
         this.url = url;
         getFilteringTypes().forEach((type) => {

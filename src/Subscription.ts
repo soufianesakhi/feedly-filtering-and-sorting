@@ -1,8 +1,8 @@
 /// <reference path="./_references.d.ts" />
 
-import {SubscriptionDTO, AdvancedControlsReceivedPeriod} from "./SubscriptionDTO";
-import {SubscriptionDAO} from "./SubscriptionDAO";
-import {FilteringType, SortingType, getFilteringTypes} from "./DataTypes";
+import { SubscriptionDTO, AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
+import { SubscriptionDAO } from "./SubscriptionDAO";
+import { FilteringType, SortingType, getFilteringTypes } from "./DataTypes";
 
 export class Subscription {
     dto: SubscriptionDTO;
@@ -16,7 +16,7 @@ export class Subscription {
     update(url: string, skipSave?: boolean) {
         var dto = this.dao.load(url);
         var cloneURL = this.dto == null ? dto.url : this.getURL();
-        this.dto =  this.dao.clone(dto, cloneURL);
+        this.dto = this.dao.clone(dto, cloneURL);
         if (!skipSave) {
             this.dao.save(this.dto);
         }
@@ -70,6 +70,20 @@ export class Subscription {
     setMaxHours_AdvancedControlsReceivedPeriod(hours: number, days: number) {
         var maxHours = hours + 24 * days;
         this.getAdvancedControlsReceivedPeriod().maxHours = maxHours;
+        this.dao.save(this.dto);
+    }
+
+    getAdditionalSortingTypes(): SortingType[] {
+        return this.dto.additionalSortingTypes;
+    }
+
+    setAdditionalSortingTypes(additionalSortingTypes: SortingType[]) {
+        this.dto.additionalSortingTypes = additionalSortingTypes;
+        this.dao.save(this.dto);
+    }
+
+    addAdditionalSortingType(additionalSortingType: SortingType) {
+        this.dto.additionalSortingTypes.push(additionalSortingType);
         this.dao.save(this.dto);
     }
 

@@ -10,7 +10,7 @@
 }
 
 #FFnS_settingsDiv {
-    max-height: 400px; 
+    max-height: 500px; 
     margin-top: 1%;
     margin-left: 15%;
     margin-right: 1%;
@@ -54,7 +54,7 @@
 .FFnS_Tab_Menu {
     display: none;
     width: 100%;
-    max-height: 200px; 
+    max-height: 300px; 
     overflow-y: auto;
     overflow-x: hidden;
 }

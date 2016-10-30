@@ -167,6 +167,7 @@ var SubscriptionDTO = (function () {
         this.sortingType = SortingType.PopularityDesc;
         this.advancedControlsReceivedPeriod = new AdvancedControlsReceivedPeriod();
         this.pinHotToTop = false;
+        this.additionalSortingTypes = [];
         this.filteringListsByType = {};
         this.url = url;
         getFilteringTypes().forEach(function (type) {
@@ -240,6 +241,17 @@ var Subscription = (function () {
         this.getAdvancedControlsReceivedPeriod().maxHours = maxHours;
         this.dao.save(this.dto);
     };
+    Subscription.prototype.getAdditionalSortingTypes = function () {
+        return this.dto.additionalSortingTypes;
+    };
+    Subscription.prototype.setAdditionalSortingTypes = function (additionalSortingTypes) {
+        this.dto.additionalSortingTypes = additionalSortingTypes;
+        this.dao.save(this.dto);
+    };
+    Subscription.prototype.addAdditionalSortingType = function (additionalSortingType) {
+        this.dto.additionalSortingTypes.push(additionalSortingType);
+        this.dao.save(this.dto);
+    };
     Subscription.prototype.addKeyword = function (keyword, type) {
         this.getFilteringList(type).push(keyword);
         this.dao.save(this.dto);
@@ -311,6 +323,7 @@ var SubscriptionDAO = (function () {
         clone.restrictingEnabled = (dtoToClone.restrictingEnabled != null) ? dtoToClone.restrictingEnabled : defDto.restrictingEnabled;
         clone.sortingEnabled = (dtoToClone.sortingEnabled != null) ? dtoToClone.sortingEnabled : defDto.sortingEnabled;
         clone.sortingType = (dtoToClone.sortingType != null) ? dtoToClone.sortingType : defDto.sortingType;
+        clone.additionalSortingTypes = (dtoToClone.additionalSortingTypes != null) ? dtoToClone.additionalSortingTypes : defDto.additionalSortingTypes;
         clone.pinHotToTop = (dtoToClone.pinHotToTop != null) ? dtoToClone.pinHotToTop : defDto.pinHotToTop;
         clone.advancedControlsReceivedPeriod = this.cloneAdvancedControlsReceivedPeriod(dtoToClone);
         var filteringListsByTypeToClone = (dtoToClone.filteringListsByType != null) ? dtoToClone.filteringListsByType : defDto.filteringListsByType;
@@ -832,12 +845,12 @@ var Article = (function () {
 }());
 
 var templates = {
-    "settingsHTML": "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' class='pageAction requiresLogin'> <fieldset> <legend>General settings</legend> <span class='setting_group'> <span class='tooltip'> Auto load all unread articles <span class='tooltiptext'>Not applied if there are no unread articles</span> </span> <input id='FFnS_autoLoadAllArticles' type='checkbox'> </span> <span class='setting_group'> <span class='tooltip'> Always use global settings <span class='tooltiptext'>Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span> </span> <input id='FFnS_globalSettingsEnabled' type='checkbox'> </span> </fieldset> <fieldset> <legend><span id='FFnS_subscription_title'></span></legend> <span class='setting_group'> <span class='tooltip'> Filtering enabled <span class='tooltiptext'>Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span> </span> <input id='FFnS_FilteringEnabled' type='checkbox'> </span> <span class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext'>Show only articles that contain at least one of the restricting keywords (not applied if empty)</span> </span> <input id='FFnS_RestrictingEnabled' type='checkbox'> </span> <span class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> {{SortingSelect}} </span> <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li> <a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a> </li> <li> <a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a> </li> <li> <a href='#FFnS_Tab_SettingsControls'>Settings controls</a> </li> </ul> <div id='FFnS_tabs_content'> {{FilteringList.Type.FilteredOut}} {{FilteringList.Type.RestrictedOn}} <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently published articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles published less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23'> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0'> <span>days</span> <span>ago should be:</span> </div> <span class='setting_group'> <span>Kept unread</span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' step='100'> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Marked as read if visible:</span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox'> </span> </fieldset> <fieldset> <legend>Hot articles</legend> <span class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox'> </span> </fieldset> <fieldset> <legend>Sorting</legend> <span class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox'> </span> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <span>Selected subscription:</span> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input'> {{ImportMenu.SubscriptionOptions}} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'>Import settings from selected subscription</button> <button id='FFnS_SettingsControls_DeleteSub'>Delete selected subscription</button> <fieldset> <legend>Linking</legend> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'>Link current subscription to selected subscription</button> </fieldset> </div> </div> </fieldset> </div> </div>",
+    "settingsHTML": "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' class='pageAction requiresLogin'> <fieldset> <legend>General settings</legend> <span class='setting_group'> <span class='tooltip'> Auto load all unread articles <span class='tooltiptext'>Not applied if there are no unread articles</span> </span> <input id='FFnS_autoLoadAllArticles' type='checkbox'> </span> <span class='setting_group'> <span class='tooltip'> Always use global settings <span class='tooltiptext'>Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span> </span> <input id='FFnS_globalSettingsEnabled' type='checkbox'> </span> </fieldset> <fieldset> <legend><span id='FFnS_subscription_title'></span></legend> <span class='setting_group'> <span class='tooltip'> Filtering enabled <span class='tooltiptext'>Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span> </span> <input id='FFnS_FilteringEnabled' type='checkbox'> </span> <span class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext'>Show only articles that contain at least one of the restricting keywords (not applied if empty)</span> </span> <input id='FFnS_RestrictingEnabled' type='checkbox'> </span> <span class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> {{SortingSelect}} </span> <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li> <a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a> </li> <li> <a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a> </li> <li> <a href='#FFnS_Tab_SettingsControls'>Settings controls</a> </li> </ul> <div id='FFnS_tabs_content'> {{FilteringList.Type.FilteredOut}} {{FilteringList.Type.RestrictedOn}} <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently published articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles published less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23'> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0'> <span>days</span> <span>ago should be:</span> </div> <span class='setting_group'> <span>Kept unread</span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' step='100'> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Marked as read if visible:</span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox'> </span> </fieldset> <fieldset> <legend>Hot articles</legend> <span class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox'> </span> </fieldset> <fieldset> <legend>Additional sorting applied when two entries have equal sorting (in order)</legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <span>Selected subscription:</span> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input'> {{ImportMenu.SubscriptionOptions}} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'>Import settings from selected subscription</button> <button id='FFnS_SettingsControls_DeleteSub'>Delete selected subscription</button> <fieldset> <legend>Linking</legend> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'>Link current subscription to selected subscription</button> </fieldset> </div> </div> </fieldset> </div> </div>",
     "filteringListHTML": "<div id='{{FilteringTypeTabId}}' class='FFnS_Tab_Menu'> <input id='{{inputId}}' class='FFnS_input' size='10' type='text'> <span id='{{plusBtnId}}'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='{{filetringKeywordsId}}'></span> <span id='{{eraseBtnId}}'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div>",
     "filteringKeywordHTML": "<button id='{{keywordId}}' type='button' class='FFnS_keyword'>{{keyword}}</button>",
-    "sortingSelectHTML": "<select {{Attributes}} class='FFnS_input'> <option value='{{PopularityDesc}}'>Sort by popularity (highest to lowest)</option> <option value='{{PopularityAsc}}'>Sort by popularity (lowest to highest)</option> <option value='{{TitleAsc}}'>Sort by title (a -&gt; z)</option> <option value='{{TitleDesc}}'>Sort by title (z -&gt; a)</option> <option value='{{PublishDateNewFirst}}'>Sort by publish date (new first)</option> <option value='{{PublishDateOldFirst}}'>Sort by publish date (old first)</option> <option value='{{SourceAsc}}'>Sort by source title (a -&gt; z)</option> <option value='{{SourceDesc}}'>Sort by source title (z -&gt; a)</option> </select>",
+    "sortingSelectHTML": "<select id='{{Id}}' class='FFnS_input'> <option value='{{PopularityDesc}}'>Sort by popularity (highest to lowest)</option> <option value='{{PopularityAsc}} '>Sort by popularity (lowest to highest)</option> <option value='{{TitleAsc}}'>Sort by title (a -&gt; z)</option> <option value='{{TitleDesc}}'>Sort by title (z -&gt; a)</option> <option value='{{PublishDateNewFirst}}'>Sort by publish date (new first)</option> <option value='{{PublishDateOldFirst}}'>Sort by publish date (old first)</option> <option value='{{SourceAsc}}'>Sort by source title (a -&gt; z)</option> <option value='{{SourceDesc}}'>Sort by source title (z -&gt; a)</option> </select>",
     "optionHTML": "<option value='{{value}}'>{{value}}</option>",
-    "styleCSS": "#FFnS_settingsDivContainer { display: none; background: rgba(0,0,0,0.9); width: 100%; height: 100%; z-index: 500; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 400px; margin-top: 1%; margin-left: 15%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #E0F5FF; padding: 2%; opacity: 1; } .FFnS_input { font-size:12px; } #FFnS_tabs_menu { height: 30px; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #B9E0ED; } #FFnS_tabs_menu li a { padding: 10px; color: #2A687D; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; max-height: 200px; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35A5E2; border-radius: 20px; color: #FFF; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn { float:right; width: 24px; height: 24px; } #FFnS_Tab_SettingsControls button { margin-top: 1%; font-size: 12px; display: block; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type=number]{ width: 30px; margin-left: 1%; margin-right: 1%; } #FFnS_MinPopularity_AdvancedControlsReceivedPeriod { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: sold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 2% } input { vertical-align: middle; } "
+    "styleCSS": "#FFnS_settingsDivContainer { display: none; background: rgba(0,0,0,0.9); width: 100%; height: 100%; z-index: 500; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 500px; margin-top: 1%; margin-left: 15%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #E0F5FF; padding: 2%; opacity: 1; } .FFnS_input { font-size:12px; } #FFnS_tabs_menu { height: 30px; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #B9E0ED; } #FFnS_tabs_menu li a { padding: 10px; color: #2A687D; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; max-height: 300px; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35A5E2; border-radius: 20px; color: #FFF; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn { float:right; width: 24px; height: 24px; } #FFnS_Tab_SettingsControls button { margin-top: 1%; font-size: 12px; display: block; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type=number]{ width: 30px; margin-left: 1%; margin-right: 1%; } #FFnS_MinPopularity_AdvancedControlsReceivedPeriod { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: sold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 2% } input { vertical-align: middle; } "
 };
 
 var UIManager = (function () {
@@ -907,14 +920,17 @@ var UIManager = (function () {
     };
     UIManager.prototype.updateMenu = function () {
         var _this = this;
-        this.updateSubscriptionSettings();
+        this.htmlSubscriptionManager.update();
         getFilteringTypes().forEach(function (type) {
             _this.updateFilteringList(type);
         });
         this.updateSettingsControls();
-    };
-    UIManager.prototype.updateSubscriptionSettings = function () {
-        this.htmlSubscriptionManager.update();
+        // Additional sorting types
+        var container = $("#FFnS_AdditionalSortingTypes");
+        this.subscription.getAdditionalSortingTypes().forEach(function (s) {
+            var id = _this.registerAdditionalSortingType();
+            $id(id).val(s);
+        });
     };
     UIManager.prototype.updateSubscriptionTitle = function (globalSettingsEnabled) {
         var title = globalSettingsEnabled ? "Global" : "Subscription";
@@ -949,11 +965,13 @@ var UIManager = (function () {
         var tabsMenuId = this.getHTMLId("tabs_menu");
         var tabsContentContainerId = this.getHTMLId("tabs_content");
         var settingsHtml = bindMarkup(templates.settingsHTML, [
-            { name: "closeIconLink", value: ext.closeIconLink },
-            { name: "SortingSelect", value: this.getSortingSelectHTML("id='" + this.getHTMLId(this.sortingSelectId) + "'") },
+            { name: "SortingSelect", value: this.getSortingSelectHTML(this.getHTMLId(this.sortingSelectId)) },
             { name: "FilteringList.Type.FilteredOut", value: this.getFilteringListHTML(FilteringType.FilteredOut) },
             { name: "FilteringList.Type.RestrictedOn", value: this.getFilteringListHTML(FilteringType.RestrictedOn) },
-            { name: "ImportMenu.SubscriptionOptions", value: this.getImportOptionsHTML() }
+            { name: "ImportMenu.SubscriptionOptions", value: this.getImportOptionsHTML() },
+            { name: "closeIconLink", value: ext.closeIconLink },
+            { name: "plusIconLink", value: ext.plusIconLink },
+            { name: "eraseIconLink", value: ext.eraseIconLink }
         ]);
         $("body").prepend(settingsHtml);
         // set up tabs
@@ -965,11 +983,11 @@ var UIManager = (function () {
             $("#" + tabsContentContainerId + " > div").not(tab).css("display", "none");
             $(tab).show();
         });
-        var firstDiv = $("#" + tabsContentContainerId + " > div").first().show();
+        $("#" + tabsContentContainerId + " > div").first().show();
     };
-    UIManager.prototype.getSortingSelectHTML = function (attributes) {
+    UIManager.prototype.getSortingSelectHTML = function (id) {
         return bindMarkup(templates.sortingSelectHTML, [
-            { name: "Attributes", value: attributes },
+            { name: "Id", value: id },
             { name: "PopularityDesc", value: SortingType.PopularityDesc },
             { name: "TitleAsc", value: SortingType.TitleAsc },
             { name: "PopularityAsc", value: SortingType.PopularityAsc },
@@ -986,9 +1004,7 @@ var UIManager = (function () {
             { name: "FilteringTypeTabId", value: this.getFilteringTypeTabId(type) },
             { name: "inputId", value: this.getHTMLId(ids.inputId) },
             { name: "plusBtnId", value: this.getHTMLId(ids.plusBtnId) },
-            { name: "plusIconLink", value: ext.plusIconLink },
             { name: "eraseBtnId", value: this.getHTMLId(ids.eraseBtnId) },
-            { name: "eraseIconLink", value: ext.eraseIconLink },
             { name: "filetringKeywordsId", value: ids.filetringKeywordsId }
         ]);
         return filteringListHTML;
@@ -1055,7 +1071,24 @@ var UIManager = (function () {
         $id("FFnS_SettingsControls_DeleteSub").click(function () {
             _this.deleteSub();
         });
+        $id("FFnS_AddSortingType").click(function () {
+            var id = _this.registerAdditionalSortingType();
+            _this.subscription.addAdditionalSortingType($id(id).val());
+            _this.refreshFilteringAndSorting();
+        });
+        $id("FFnS_EraseSortingTypes").click(function () {
+            _this.subscription.setAdditionalSortingTypes([]);
+            $("#FFnS_AdditionalSortingTypes").empty();
+            _this.refreshFilteringAndSorting();
+        });
         this.setUpFilteringListEvents();
+    };
+    UIManager.prototype.registerAdditionalSortingType = function () {
+        var _this = this;
+        var id = this.getHTMLId("AdditionalSortingType_" + (this.idCount++));
+        $("#FFnS_AdditionalSortingTypes").append(this.getSortingSelectHTML(id));
+        $id(id).change(function () { return _this.updateAdditionalSortingTypes(); });
+        return id;
     };
     UIManager.prototype.setUpFilteringListEvents = function () {
         getFilteringTypes().forEach(this.setUpFilteringListManagementEvents, this);
@@ -1115,6 +1148,11 @@ var UIManager = (function () {
         $id(ids.filetringKeywordsId).html(filteringKeywordsHTML);
         this.refreshFilteringAndSorting();
         this.setUpKeywordButtonsEvents(type);
+    };
+    UIManager.prototype.updateAdditionalSortingTypes = function () {
+        var additionalSortingTypes = $("#FFnS_AdditionalSortingTypes > select").map(function (i, e) { return $(e).val(); }).toArray();
+        this.subscription.setAdditionalSortingTypes(additionalSortingTypes);
+        this.refreshFilteringAndSorting();
     };
     UIManager.prototype.addArticle = function (article) {
         try {

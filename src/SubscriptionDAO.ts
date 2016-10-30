@@ -1,10 +1,10 @@
 
-import {FilteringType, SortingType, getFilteringTypes, getFilteringTypeId} from "./DataTypes";
-import {Subscription} from "./Subscription";
-import {SubscriptionDTO, AdvancedControlsReceivedPeriod} from "./SubscriptionDTO";
-import {SubscriptionManager} from "./SubscriptionManager";
-import {LocalPersistence} from "./LocalPersistence";
-import {registerAccessors} from "./Utils";
+import { FilteringType, SortingType, getFilteringTypes, getFilteringTypeId } from "./DataTypes";
+import { Subscription } from "./Subscription";
+import { SubscriptionDTO, AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
+import { SubscriptionManager } from "./SubscriptionManager";
+import { LocalPersistence } from "./LocalPersistence";
+import { registerAccessors } from "./Utils";
 
 export class SubscriptionDAO {
     private SUBSCRIPTION_ID_PREFIX = "subscription_";
@@ -27,12 +27,12 @@ export class SubscriptionDAO {
         var id = this.getSubscriptionId(url);
         var dto = LocalPersistence.get(id, null);
         if (dto != null) {
-            var linkedURL = (<LinkedSubscriptionDTO> dto).linkedUrl;
+            var linkedURL = (<LinkedSubscriptionDTO>dto).linkedUrl;
             if (linkedURL != null) {
                 console.log("Loading linked subscription: " + linkedURL);
                 subscriptionDTO = this.load(linkedURL);
             } else {
-                subscriptionDTO = <SubscriptionDTO> dto;
+                subscriptionDTO = <SubscriptionDTO>dto;
                 console.log("Loaded saved subscription: " + JSON.stringify(subscriptionDTO));
             }
         }
@@ -46,7 +46,7 @@ export class SubscriptionDAO {
         }
         return subscriptionDTO;
     }
-    
+
     delete(url: string) {
         LocalPersistence.delete(this.getSubscriptionId(url));
         console.log("Deleted: " + url);
@@ -62,6 +62,7 @@ export class SubscriptionDAO {
         clone.restrictingEnabled = (dtoToClone.restrictingEnabled != null) ? dtoToClone.restrictingEnabled : defDto.restrictingEnabled;
         clone.sortingEnabled = (dtoToClone.sortingEnabled != null) ? dtoToClone.sortingEnabled : defDto.sortingEnabled;
         clone.sortingType = (dtoToClone.sortingType != null) ? dtoToClone.sortingType : defDto.sortingType;
+        clone.additionalSortingTypes = (dtoToClone.additionalSortingTypes != null) ? dtoToClone.additionalSortingTypes : defDto.additionalSortingTypes;
         clone.pinHotToTop = (dtoToClone.pinHotToTop != null) ? dtoToClone.pinHotToTop : defDto.pinHotToTop;
         clone.advancedControlsReceivedPeriod = this.cloneAdvancedControlsReceivedPeriod(dtoToClone);
         var filteringListsByTypeToClone = (dtoToClone.filteringListsByType != null) ? dtoToClone.filteringListsByType : defDto.filteringListsByType;
@@ -106,7 +107,7 @@ export class SubscriptionDAO {
     getSubscriptionId(url: string): string {
         return this.SUBSCRIPTION_ID_PREFIX + url;
     }
-    
+
     linkSubscriptions(url: string, linkedURL: string) {
         var id = this.getSubscriptionId(url);
         var linkedSub = new LinkedSubscriptionDTO(linkedURL);
@@ -114,7 +115,7 @@ export class SubscriptionDAO {
         console.log("Subscription linked: " + JSON.stringify(linkedSub));
     }
 
-    isURLGlobal(url: string) : boolean {
+    isURLGlobal(url: string): boolean {
         return url === this.GLOBAL_SETTINGS_SUBSCRIPTION_URL;
     }
 }
