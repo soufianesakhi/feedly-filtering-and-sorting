@@ -204,8 +204,11 @@ export class ArticleManager {
     }
 
     sortArticleArray(articles: Article[]) {
-        var sortingType = this.getCurrentSub().getSortingType();
-        articles.sort(this.articleSorterFactory.getSorter(sortingType));
+        var sub = this.getCurrentSub();
+        var sortingTypes = [];
+        sortingTypes.push(sub.getSortingType());
+        sortingTypes = sortingTypes.concat(sub.getAdditionalSortingTypes());
+        articles.sort(this.articleSorterFactory.getSorter(sortingTypes));
     }
 
     isOldestFirst(): boolean {
@@ -360,8 +363,20 @@ class ArticleSorterFactory {
         this.sorterByType[SortingType.SourceDesc] = sourceSorter(false);
     }
 
-    getSorter(sortingType: SortingType): (a: Article, b: Article) => number {
-        return this.sorterByType[sortingType];
+    getSorter(sortingTypes: SortingType[]): (a: Article, b: Article) => number {
+        if (sortingTypes.length == 1) {
+            return this.sorterByType[0];
+        }
+        return (a: Article, b: Article) => {
+            var res;
+            for (var i = 0; i < sortingTypes.length; i++) {
+                res = this.sorterByType[sortingTypes[i]](a, b);
+                if (res != 0) {
+                    return res;
+                }
+            }
+            return res;
+        }
     }
 }
 
