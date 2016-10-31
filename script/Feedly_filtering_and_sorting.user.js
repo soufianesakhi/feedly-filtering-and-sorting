@@ -10,7 +10,7 @@
 // @require     http://code.jquery.com/jquery.min.js
 // @require     https://raw.githubusercontent.com/soufianesakhi/node-creation-observer-js/master/release/node-creation-observer-latest.js
 // @include     *://feedly.com/*
-// @version     1.5.4
+// @version     1.5.4.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -771,7 +771,7 @@ var ArticleSorterFactory = (function () {
     ArticleSorterFactory.prototype.getSorter = function (sortingTypes) {
         var _this = this;
         if (sortingTypes.length == 1) {
-            return this.sorterByType[0];
+            return this.sorterByType[sortingTypes[0]];
         }
         return function (a, b) {
             var res;

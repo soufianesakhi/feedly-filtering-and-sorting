@@ -365,7 +365,7 @@ class ArticleSorterFactory {
 
     getSorter(sortingTypes: SortingType[]): (a: Article, b: Article) => number {
         if (sortingTypes.length == 1) {
-            return this.sorterByType[0];
+            return this.sorterByType[sortingTypes[0]];
         }
         return (a: Article, b: Article) => {
             var res;
