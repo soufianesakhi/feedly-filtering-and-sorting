@@ -10,7 +10,7 @@
 // @require     http://code.jquery.com/jquery.min.js
 // @require     https://raw.githubusercontent.com/soufianesakhi/node-creation-observer-js/master/release/node-creation-observer-latest.js
 // @include     *://feedly.com/*
-// @version     1.5.4.1
+// @version     1.5.4.2
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -942,7 +942,7 @@ var UIManager = (function () {
         });
         this.updateSettingsControls();
         // Additional sorting types
-        var container = $("#FFnS_AdditionalSortingTypes");
+        $("#FFnS_AdditionalSortingTypes").empty();
         this.subscription.getAdditionalSortingTypes().forEach(function (s) {
             var id = _this.registerAdditionalSortingType();
             $id(id).val(s);

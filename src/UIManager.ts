@@ -95,7 +95,7 @@ export class UIManager {
         this.updateSettingsControls();
 
         // Additional sorting types
-        var container = $("#FFnS_AdditionalSortingTypes");
+        $("#FFnS_AdditionalSortingTypes").empty();
         this.subscription.getAdditionalSortingTypes().forEach(s => {
             var id = this.registerAdditionalSortingType();
             $id(id).val(s);
