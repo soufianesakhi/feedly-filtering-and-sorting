@@ -10,7 +10,7 @@
 // @require     http://code.jquery.com/jquery.min.js
 // @require     https://raw.githubusercontent.com/soufianesakhi/node-creation-observer-js/master/release/node-creation-observer-latest.js
 // @include     *://feedly.com/*
-// @version     1.5.4.2
+// @version     1.5.4.3
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -694,21 +694,30 @@ var ArticleManager = (function () {
         };
     };
     ArticleManager.prototype.overrideNavigation = function () {
+        function get(id) {
+            return document.getElementById(id + "_main");
+        }
         function isRead(id) {
-            return $("#" + id + "_main").find(ext.articleLinkSelector).hasClass(ext.readArticleClass);
+            return $(get(id)).find(ext.articleLinkSelector).hasClass(ext.readArticleClass);
+        }
+        function removed(id) {
+            return get(id) == null;
         }
         function getSortedVisibleArticles() {
             return window["FFnS"][ext.sortedVisibleArticlesId];
         }
         function find(unreadOnly, isPrevious) {
-            var selectedExists = false;
-            this.getSelectedEntryId() || (selectedExists = true);
+            var found = false;
+            this.getSelectedEntryId() || (found = true);
             var sortedVisibleArticles = getSortedVisibleArticles();
             var len = sortedVisibleArticles.length;
             for (var c = 0; c < len; c++) {
                 var index = isPrevious ? len - 1 - c : c;
                 var entry = sortedVisibleArticles[index];
-                if (selectedExists) {
+                if (found) {
+                    if (removed(entry)) {
+                        continue;
+                    }
                     if (unreadOnly) {
                         if (!isRead(entry))
                             return entry;
@@ -716,7 +725,7 @@ var ArticleManager = (function () {
                     }
                     return entry;
                 }
-                entry === this.getSelectedEntryId() && (selectedExists = true);
+                entry === this.getSelectedEntryId() && (found = true);
             }
             if (!isPrevious) {
                 return null;

@@ -287,28 +287,37 @@ export class ArticleManager {
     }
 
     overrideNavigation() {
+        function get(id) {
+            return document.getElementById(id + "_main");
+        }
         function isRead(id) {
-            return $("#" + id + "_main").find(ext.articleLinkSelector).hasClass(ext.readArticleClass);
+            return $(get(id)).find(ext.articleLinkSelector).hasClass(ext.readArticleClass);
+        }
+        function removed(id): boolean {
+            return get(id) == null;
         }
         function getSortedVisibleArticles(): String[] {
             return window["FFnS"][ext.sortedVisibleArticlesId];
         }
         function find(unreadOnly, isPrevious: boolean) {
-            var selectedExists = false;
-            this.getSelectedEntryId() || (selectedExists = true);
+            var found = false;
+            this.getSelectedEntryId() || (found = true);
             var sortedVisibleArticles = getSortedVisibleArticles();
             var len = sortedVisibleArticles.length;
             for (var c = 0; c < len; c++) {
                 var index = isPrevious ? len - 1 - c : c;
                 var entry = sortedVisibleArticles[index];
-                if (selectedExists) {
+                if (found) {
+                    if (removed(entry)) {
+                        continue;
+                    }
                     if (unreadOnly) {
                         if (!isRead(entry)) return entry;
-                        continue
+                        continue;
                     }
                     return entry;
                 }
-                entry === this.getSelectedEntryId() && (selectedExists = true)
+                entry === this.getSelectedEntryId() && (found = true)
             }
             if (!isPrevious) {
                 return null;
