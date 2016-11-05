@@ -15,9 +15,9 @@ This script requires the `Unread Only` option to be enabled (in the feedly setti
 
 ## Features
 
-- Filtering: Hide the articles that contain at least one of the filtering keywords (not applied if empty).
-- Restricting: Show only articles that contain at least one of the restricting keywords (not applied if empty).
-- Sorting: by popularity, by title or by publish date.
+- Filtering: Hide the articles that contain at least one of the filtering keywords.
+- Restricting: Show only articles that contain at least one of the restricting keywords.
+- Multi level sorting: by popularity, by title, by source or by publish date.
 - Auto load all unread articles.
 - Advanced controls of the recently published articles.
 - Pin hot articles to top.
@@ -37,7 +37,13 @@ Presentation support:
 - Recently published articles controls not supported in the `Cards` view (publish age not available in this view).
 - The `Full Articles` view is fully supported.
 
-The changelog can be found [here](https://github.com/soufianesakhi/feedly-filtering-and-sorting/releases).
+## Changelog
+Can be found [here](https://github.com/soufianesakhi/feedly-filtering-and-sorting/releases).
+
+## Requests
+Please report bugs and feature requests in the following [link](https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues).
+
+Don't forget to give the project a star if you like it :)
 
 ## Installation
 
