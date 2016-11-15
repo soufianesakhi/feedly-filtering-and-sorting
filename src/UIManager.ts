@@ -131,6 +131,7 @@ export class UIManager {
         this.initShowSettingsBtns();
         this.autoLoadAllArticlesCB.initUI();
         this.globalSettingsEnabledCB.initUI();
+        this.initStyling();
     }
 
     initSettingsMenu() {
@@ -463,6 +464,12 @@ export class UIManager {
             eraseBtnId: "DeleteAll_" + id,
             filetringKeywordsId: "FiletringKeywords_" + id
         };
+    }
+
+    initStyling() {
+        NodeCreationObserver.onCreation("header > h1", (e) => {
+            $(e).removeClass("col-md-4").addClass("col-md-6");
+        })
     }
 
     isVisible(e: JQuery) {

@@ -233,7 +233,7 @@ export class ArticleManager {
             return;
         }
         this.clearHiddingInfo();
-        $(ext.hidingInfoNextSibling).prev().append("<span class=" + this.hiddingInfoClass + "> (" + hiddenCount + " hidden)</span>");
+        $(ext.hidingInfoSibling).after("<div class='detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
     }
 
     clearHiddingInfo() {

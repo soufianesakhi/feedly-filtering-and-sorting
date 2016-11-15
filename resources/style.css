@@ -166,3 +166,11 @@ input {
 	width: 40px;
 	margin-right: 0px;
 }
+
+.header + div h4 {
+    display: none;
+}
+
+.fx header h1 .detail.FFnS_Hiding_Info::before {
+    content: '';
+}

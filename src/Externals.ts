@@ -16,7 +16,7 @@ var ext = {
 	"articleTitleAttribute": "data-title",
 	"articleEntryIdAttribute": "data-entryid",
 	"popularitySelector": ".engagement",
-	"hidingInfoNextSibling": ".list-entries",
+	"hidingInfoSibling": "header > h1 > .button-dropdown",
 	"fullyLoadedArticlesSelector": ".giant-mark-as-read",
 	"magazineView": "u4Entry",
 	"magazineAgeSuccessorSelector": "span.wikiBar",
