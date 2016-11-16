@@ -682,9 +682,7 @@ var ArticleManager = (function () {
             if (lastEntryObject != null) {
                 oldMarkAllAsRead.call(this, lastEntryObject);
             }
-            else {
-                this.feedly.jumpToNext();
-            }
+            this.feedly.jumpToNext();
         };
     };
     ArticleManager.prototype.overrideNavigation = function () {
@@ -700,8 +698,8 @@ var ArticleManager = (function () {
         function getSortedVisibleArticles() {
             return window["FFnS"][ext.sortedVisibleArticlesId];
         }
-        function find(unreadOnly, isPrevious) {
-            console.log(this);
+        function lookupEntry(unreadOnly, isPrevious) {
+            var selectedEntryId = this.navigo.selectedEntryId;
             var found = false;
             this.getSelectedEntryId() || (found = true);
             var sortedVisibleArticles = getSortedVisibleArticles();
@@ -722,16 +720,21 @@ var ArticleManager = (function () {
                 }
                 entry === this.getSelectedEntryId() && (found = true);
             }
-            if (!isPrevious) {
-                return null;
-            }
+            return null;
         }
-        var prototype = window["devhd"].pkg("pages").ListPage.prototype;
-        prototype.findPreviousEntryId = function (unreadOnly) {
-            return find.call(this, unreadOnly, true);
+        var prototype = window["devhd"].pkg("pages").ReactPage.prototype;
+        var onEntry = function (unreadOnly, b, isPrevious) {
+            var entryId = lookupEntry.call(this, unreadOnly, isPrevious);
+            entryId
+                ? b ? (this.uninlineEntry(), this.selectEntry(entryId, 'toview'), this.shouldMarkAsReadOnNP() && this.reader.askMarkEntryAsRead(entryId))
+                    : this.inlineEntry(entryId, !0)
+                : this.signs.setMessage(isPrevious ? 'At end' : 'At start');
         };
-        prototype.findNextEntryId = function (unreadOnly) {
-            return find.call(this, unreadOnly, false);
+        prototype.onPreviousEntry = function (unreadOnly, b) {
+            onEntry.call(this, unreadOnly, b, true);
+        };
+        prototype.onNextEntry = function (unreadOnly, b) {
+            onEntry.call(this, unreadOnly, b, false);
         };
     };
     return ArticleManager;
