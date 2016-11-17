@@ -10,8 +10,11 @@ When this script is enabled, a filter icon will appear next to the settings icon
 
 ![Import settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/settings_controls.PNG)
 
-This script requires the `Unread Only` option to be enabled (in the feedly settings / filters).
-![Unread Only](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/unread_only.PNG)
+This script requires the `Unread Only` option to be enabled.
+
+Additionally the `Latest` sort option must be enabled to use the script's sorting functionality (it's not required when the sorting is not enabled).
+
+![Feedly settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/feedly_settings.PNG)
 
 ## Features
 
@@ -32,10 +35,10 @@ Two settings modes are available:
   - A group of subscriptions can share the same settings by linking them to the same subscription.
 
 Presentation support:
-- The `Title Only` view is fully supported.
-- The `Magazine` view is supported except the `Most popular` section (Only filtering and restricting supported in this section). 
-- Recently published articles controls not supported in the `Cards` view (publish age not available in this view).
-- The `Full Articles` view is fully supported.
+- The `Title Only`, `Magazine` and `Cards` views are fully supported.
+- The `Full Articles` view is not currently supported (does not use the same rendering engine as the other views).
+
+A page refresh is required when changing the presentation.
 
 ## Changelog
 Can be found [here](https://github.com/soufianesakhi/feedly-filtering-and-sorting/releases).
