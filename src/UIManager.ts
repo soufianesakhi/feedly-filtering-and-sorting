@@ -370,14 +370,6 @@ export class UIManager {
         }
     }
 
-    addMagazineTopEntry(article: Element) {
-        try {
-            this.articleManager.addMagazineTopEntry(article);
-        } catch (err) {
-            console.log(err);
-        }
-    }
-
     addSection(section: Element) {
         if (section.id === "section0") {
             $(section).find("h2").text(" ");

@@ -26,7 +26,6 @@ export class ArticleManager {
     refreshArticles() {
         this.resetArticles();
         $(ext.articleSelector).toArray().forEach(this.addArticle, this);
-        $(ext.magazineTopEntrySelector).toArray().forEach(this.addMagazineTopEntry, this);
     }
 
     resetArticles() {
@@ -52,11 +51,6 @@ export class ArticleManager {
         this.advancedControls(article);
         this.articlesCount++;
         this.checkLastAddedArticle();
-    }
-
-    addMagazineTopEntry(a: Element) {
-        var article = new Article(a);
-        this.filterAndRestrict(article);
     }
 
     filterAndRestrict(article: Article) {
@@ -94,9 +88,6 @@ export class ArticleManager {
     }
 
     advancedControls(article: Article) {
-        if (article.get().hasClass(ext.cardsView)) {
-            return; // No publish age in card view
-        }
         var sub = this.getCurrentSub();
         var advControls = sub.getAdvancedControlsReceivedPeriod();
         if (advControls.keepUnread || advControls.hide) {
@@ -322,7 +313,7 @@ export class ArticleManager {
             entryId
                 ? b ? (this.uninlineEntry(), this.selectEntry(entryId, 'toview'), this.shouldMarkAsReadOnNP() && this.reader.askMarkEntryAsRead(entryId))
                     : this.inlineEntry(entryId, !0)
-                : this.signs.setMessage(isPrevious ? 'At end' : 'At start')
+                : this.signs.setMessage(isPrevious ? 'At start' : 'At end')
         }
         prototype.onPreviousEntry = function (unreadOnly, b) {
             onEntry.call(this, unreadOnly, b, true);
@@ -400,12 +391,7 @@ class Article {
         this.article = $(article);
 
         // Title
-        if (this.article.hasClass(ext.magazineTopEntryClass)) {
-            this.title = this.article.find(ext.magazineTopEntryTitleSelector).text();
-        } else {
-            this.title = this.article.attr(ext.articleTitleAttribute)
-        }
-        this.title = this.title.trim().toLowerCase();
+        this.title = this.article.attr(ext.articleTitleAttribute).trim().toLowerCase();
 
         // Popularity
         var popularityStr = this.article.find(ext.popularitySelector).text().trim();
@@ -416,18 +402,8 @@ class Article {
         }
         this.popularity = Number(popularityStr);
 
-        if (this.article.hasClass(ext.cardsView)) {
-            return;
-        }
         // Publish age
-        var ageStr: string;
-        if (this.article.hasClass(ext.fullArticlesView)) {
-            ageStr = this.article.find(ext.fullArticlesAgePredecessorSelector).next().attr(ext.publishAgeTimestampAttr);
-        } else if (this.article.hasClass(ext.magazineView)) {
-            ageStr = this.article.find(ext.magazineAgeSuccessorSelector).prev().attr(ext.publishAgeTimestampAttr);
-        } else {
-            ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
-        }
+        var ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
         if (ageStr != null) {
             var publishDate = ageStr.split("--")[1].replace(/[^:]*:/, "").trim();
             this.publishAge = Date.parse(publishDate);

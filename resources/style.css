@@ -167,7 +167,7 @@ input {
 	margin-right: 0px;
 }
 
-.header + div h4 {
+.header + div > div:first-child > div h4 {
     display: none;
 }
 
