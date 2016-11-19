@@ -8,6 +8,7 @@
         "Subscription",
         "SubscriptionDAO",
         "SubscriptionManager",
+        "FeedlyPage",
         "ArticleManager",
         "Templates",
         "UIManager",

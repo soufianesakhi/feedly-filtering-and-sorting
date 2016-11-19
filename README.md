@@ -12,7 +12,7 @@ When this script is enabled, a filter icon will appear next to the settings icon
 
 This script requires the `Unread Only` option to be enabled.
 
-Additionally the `Latest` sort option must be enabled to use the script's sorting functionality (it's not required when the sorting is not enabled).
+Additionally the `Latest` sort option must be enabled to use the script's sorting functionality (it's not required when the sorting is not enabled and the pin hot articles option is disabled).
 
 ![Feedly settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/feedly_settings.PNG)
 

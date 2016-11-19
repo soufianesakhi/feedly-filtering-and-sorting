@@ -12,6 +12,7 @@
         "src/ArticleManager.ts",
         "src/DataTypes.ts",
         "src/Externals.ts",
+        "src/FeedlyPage.ts",
         "src/HTMLGlobalSettings.ts",
         "src/HTMLSubscription.ts",
         "src/LocalPersistence.ts",

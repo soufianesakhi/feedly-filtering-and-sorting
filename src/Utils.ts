@@ -37,7 +37,7 @@ export function registerAccessors(srcObject, srcFieldName: string, targetPrototy
     for (var field in srcObject) {
         var type = typeof (srcObject[field]);
         if (type === "object") {
-            if (! $.isArray(srcObject[field])) {
+            if (!$.isArray(srcObject[field])) {
                 registerAccessors(srcObject[field], srcFieldName, targetPrototype, setterCallback, setterCallbackThisArg, field);
             }
         } else if (type !== "function") {
@@ -69,4 +69,39 @@ export function registerAccessors(srcObject, srcFieldName: string, targetPrototy
             })();
         }
     }
+}
+
+function getOrDefault(a, b) {
+    return a != null ? a : b;
+}
+
+export function deepClone<T>(toClone: T, clone: T, alternativeToCloneByField): T {
+    if (!toClone) {
+        return clone;
+    }
+    var typedClone = clone;
+    if (!clone) {
+        clone = {} as T;
+        typedClone = toClone;
+    }
+    for (var field in typedClone) {
+        var type = typeof (typedClone[field]);
+        switch (type) {
+            case "object":
+                if (!$.isArray(typedClone[field])) {
+                    clone[field] = deepClone(toClone[field], alternativeToCloneByField[field], alternativeToCloneByField);
+                } else {
+                    clone[field] = (<Array<any>>toClone[field]).slice(0);
+                }
+                break;
+            case "number":
+            case "string":
+                clone[field] = toClone[field] || clone[field];
+                break;
+            case "boolean":
+                clone[field] = getOrDefault(toClone[field], clone[field]);
+                break;
+        }
+    }
+    return clone;
 }

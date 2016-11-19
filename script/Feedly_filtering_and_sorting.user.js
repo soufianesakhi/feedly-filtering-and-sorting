@@ -10,7 +10,7 @@
 // @require     http://code.jquery.com/jquery.min.js
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
 // @include     *://feedly.com/*
-// @version     2.0.1
+// @version     2.1.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -102,6 +102,40 @@ function registerAccessors(srcObject, srcFieldName, targetPrototype, setterCallb
             })();
         }
     }
+}
+function getOrDefault(a, b) {
+    return a != null ? a : b;
+}
+function deepClone(toClone, clone, alternativeToCloneByField) {
+    if (!toClone) {
+        return clone;
+    }
+    var typedClone = clone;
+    if (!clone) {
+        clone = {};
+        typedClone = toClone;
+    }
+    for (var field in typedClone) {
+        var type = typeof (typedClone[field]);
+        switch (type) {
+            case "object":
+                if (!$.isArray(typedClone[field])) {
+                    clone[field] = deepClone(toClone[field], alternativeToCloneByField[field], alternativeToCloneByField);
+                }
+                else {
+                    clone[field] = toClone[field].slice(0);
+                }
+                break;
+            case "number":
+            case "string":
+                clone[field] = toClone[field] || clone[field];
+                break;
+            case "boolean":
+                clone[field] = getOrDefault(toClone[field], clone[field]);
+                break;
+        }
+    }
+    return clone;
 }
 
 (function (SortingType) {
@@ -266,6 +300,8 @@ var SubscriptionDAO = (function () {
         this.SUBSCRIPTION_ID_PREFIX = "subscription_";
         this.GLOBAL_SETTINGS_SUBSCRIPTION_URL = "---global settings---";
         registerAccessors(new SubscriptionDTO(""), "dto", Subscription.prototype, this.save, this);
+        this.defaultSubscription = new Subscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL, this);
+        this.defaultSubscriptionDTO = this.defaultSubscription.dto;
     }
     SubscriptionDAO.prototype.save = function (dto) {
         var url = dto.url;
@@ -304,43 +340,14 @@ var SubscriptionDAO = (function () {
         console.log("Deleted: " + url);
     };
     SubscriptionDAO.prototype.clone = function (dtoToClone, cloneUrl) {
-        var clone = new SubscriptionDTO(cloneUrl);
-        if (dtoToClone == null) {
-            return clone;
-        }
-        var defDto = this.defaultSubscriptionDTO != null ? this.defaultSubscriptionDTO : clone;
-        clone.filteringEnabled = (dtoToClone.filteringEnabled != null) ? dtoToClone.filteringEnabled : defDto.filteringEnabled;
-        clone.restrictingEnabled = (dtoToClone.restrictingEnabled != null) ? dtoToClone.restrictingEnabled : defDto.restrictingEnabled;
-        clone.sortingEnabled = (dtoToClone.sortingEnabled != null) ? dtoToClone.sortingEnabled : defDto.sortingEnabled;
-        clone.sortingType = (dtoToClone.sortingType != null) ? dtoToClone.sortingType : defDto.sortingType;
-        clone.additionalSortingTypes = (dtoToClone.additionalSortingTypes != null) ? dtoToClone.additionalSortingTypes : defDto.additionalSortingTypes;
-        clone.pinHotToTop = (dtoToClone.pinHotToTop != null) ? dtoToClone.pinHotToTop : defDto.pinHotToTop;
-        clone.advancedControlsReceivedPeriod = this.cloneAdvancedControlsReceivedPeriod(dtoToClone);
-        var filteringListsByTypeToClone = (dtoToClone.filteringListsByType != null) ? dtoToClone.filteringListsByType : defDto.filteringListsByType;
-        getFilteringTypes().forEach(function (type) {
-            clone.filteringListsByType[type] = filteringListsByTypeToClone[type].slice(0);
+        var clone = deepClone(dtoToClone, new SubscriptionDTO(cloneUrl), {
+            "advancedControlsReceivedPeriod": new AdvancedControlsReceivedPeriod()
         });
+        clone.url = cloneUrl;
         return clone;
     };
-    SubscriptionDAO.prototype.cloneAdvancedControlsReceivedPeriod = function (dtoToClone) {
-        var advCtrols = new AdvancedControlsReceivedPeriod();
-        var advCtrolsToClone = dtoToClone.advancedControlsReceivedPeriod;
-        if (advCtrolsToClone == null) {
-            return advCtrols;
-        }
-        var defAdvCtrols = this.defaultSubscriptionDTO != null ? this.defaultSubscriptionDTO.advancedControlsReceivedPeriod : advCtrols;
-        advCtrols.maxHours = (advCtrolsToClone.maxHours != null) ? advCtrolsToClone.maxHours : defAdvCtrols.maxHours;
-        advCtrols.keepUnread = (advCtrolsToClone.keepUnread != null) ? advCtrolsToClone.keepUnread : defAdvCtrols.keepUnread;
-        advCtrols.hide = (advCtrolsToClone.hide != null) ? advCtrolsToClone.hide : defAdvCtrols.hide;
-        advCtrols.showIfHot = (advCtrolsToClone.showIfHot != null) ? advCtrolsToClone.showIfHot : defAdvCtrols.showIfHot;
-        advCtrols.minPopularity = (advCtrolsToClone.minPopularity != null) ? advCtrolsToClone.minPopularity : defAdvCtrols.minPopularity;
-        advCtrols.markAsReadVisible = (advCtrolsToClone.markAsReadVisible != null) ? advCtrolsToClone.markAsReadVisible : defAdvCtrols.markAsReadVisible;
-        return advCtrols;
-    };
-    SubscriptionDAO.prototype.loadGlobalSettings = function () {
-        var globalSettings = new Subscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL, this);
-        this.defaultSubscriptionDTO = globalSettings.dto;
-        return globalSettings;
+    SubscriptionDAO.prototype.getGlobalSettings = function () {
+        return this.defaultSubscription;
     };
     SubscriptionDAO.prototype.getAllSubscriptionURLs = function () {
         var _this = this;
@@ -381,7 +388,7 @@ var SubscriptionManager = (function () {
     SubscriptionManager.prototype.loadSubscription = function (globalSettingsEnabled) {
         var subscription;
         if (globalSettingsEnabled) {
-            subscription = this.dao.loadGlobalSettings();
+            subscription = this.dao.getGlobalSettings();
         }
         else {
             subscription = new Subscription(this.getActualSubscriptionURL(), this.dao);
@@ -417,17 +424,133 @@ var SubscriptionManager = (function () {
     return SubscriptionManager;
 }());
 
+var FeedlyPage = (function () {
+    function FeedlyPage() {
+        this.eval = window["eval"];
+        this.hiddingInfoClass = "FFnS_Hiding_Info";
+        this.eval("(" + this.overrideMarkAsRead.toString() + ")();");
+        this.eval("(" + this.overrideNavigation.toString() + ")();");
+        this.eval("window.ext = (" + JSON.stringify(ext).replace(/\s+/g, ' ') + ");");
+    }
+    FeedlyPage.prototype.reset = function () {
+        this.clearHiddingInfo();
+        this.eval("window.FFnS = ({});");
+    };
+    FeedlyPage.prototype.showHiddingInfo = function () {
+        var hiddenCount = 0;
+        $(ext.articleSelector).each(function (i, a) {
+            if ($(a).css("display") === "none") {
+                hiddenCount++;
+            }
+        });
+        if (hiddenCount == 0) {
+            return;
+        }
+        this.clearHiddingInfo();
+        $(ext.hidingInfoSibling).after("<div class='detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
+    };
+    FeedlyPage.prototype.clearHiddingInfo = function () {
+        $("." + this.hiddingInfoClass).remove();
+    };
+    FeedlyPage.prototype.put = function (id, value) {
+        this.eval("window.FFnS['" + id + "'] = " + JSON.stringify(value) + ";");
+    };
+    FeedlyPage.prototype.overrideMarkAsRead = function () {
+        var pagesPkg = window["devhd"].pkg("pages");
+        function get(id) {
+            return window["FFnS"][id];
+        }
+        function markEntryAsRead(id, thisArg) {
+            pagesPkg.BasePage.prototype.buryEntry.call(thisArg, id);
+        }
+        function getLastReadEntry(oldLastEntryObject, thisArg) {
+            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || get(ext.keepNewArticlesUnreadId) == null) {
+                return oldLastEntryObject;
+            }
+            var idsToMarkAsRead = get(ext.articlesToMarkAsReadId);
+            if (idsToMarkAsRead != null) {
+                idsToMarkAsRead.forEach(function (id) {
+                    markEntryAsRead(id, thisArg);
+                });
+            }
+            var lastReadEntryId = get(ext.lastReadEntryId);
+            if (lastReadEntryId == null) {
+                return null;
+            }
+            return { lastReadEntryId: lastReadEntryId };
+        }
+        var feedlyListPagePrototype = pagesPkg.ReactPage.prototype;
+        var oldMarkAllAsRead = feedlyListPagePrototype.markAsRead;
+        feedlyListPagePrototype.markAsRead = function (oldLastEntryObject) {
+            var lastEntryObject = getLastReadEntry(oldLastEntryObject, this);
+            if (lastEntryObject != null) {
+                oldMarkAllAsRead.call(this, lastEntryObject);
+            }
+            this.feedly.jumpToNext();
+        };
+    };
+    FeedlyPage.prototype.overrideNavigation = function () {
+        function get(id) {
+            return document.getElementById(id + "_main");
+        }
+        function isRead(id) {
+            return $(get(id)).hasClass(ext.readArticleClass);
+        }
+        function removed(id) {
+            return get(id) == null;
+        }
+        function getSortedVisibleArticles() {
+            return window["FFnS"][ext.sortedVisibleArticlesId];
+        }
+        function lookupEntry(unreadOnly, isPrevious) {
+            var selectedEntryId = this.navigo.selectedEntryId;
+            var found = false;
+            this.getSelectedEntryId() || (found = true);
+            var sortedVisibleArticles = getSortedVisibleArticles();
+            var len = sortedVisibleArticles.length;
+            for (var c = 0; c < len; c++) {
+                var index = isPrevious ? len - 1 - c : c;
+                var entry = sortedVisibleArticles[index];
+                if (found) {
+                    if (removed(entry)) {
+                        continue;
+                    }
+                    if (unreadOnly) {
+                        if (!isRead(entry))
+                            return entry;
+                        continue;
+                    }
+                    return entry;
+                }
+                entry === this.getSelectedEntryId() && (found = true);
+            }
+            return null;
+        }
+        var prototype = window["devhd"].pkg("pages").ReactPage.prototype;
+        var onEntry = function (unreadOnly, b, isPrevious) {
+            var entryId = lookupEntry.call(this, unreadOnly, isPrevious);
+            entryId
+                ? b ? (this.uninlineEntry(), this.selectEntry(entryId, 'toview'), this.shouldMarkAsReadOnNP() && this.reader.askMarkEntryAsRead(entryId))
+                    : this.inlineEntry(entryId, !0)
+                : this.signs.setMessage(isPrevious ? 'At start' : 'At end');
+        };
+        prototype.onPreviousEntry = function (unreadOnly, b) {
+            onEntry.call(this, unreadOnly, b, true);
+        };
+        prototype.onNextEntry = function (unreadOnly, b) {
+            onEntry.call(this, unreadOnly, b, false);
+        };
+    };
+    return FeedlyPage;
+}());
+
 var ArticleManager = (function () {
     function ArticleManager(subscriptionManager) {
         this.articlesCount = 0;
         this.lastReadArticleAge = -1;
-        this.hiddingInfoClass = "FFnS_Hiding_Info";
-        this.eval = window["eval"];
         this.subscriptionManager = subscriptionManager;
         this.articleSorterFactory = new ArticleSorterFactory();
-        this.eval("(" + this.overrideMarkAsRead.toString() + ")();");
-        this.eval("(" + this.overrideNavigation.toString() + ")();");
-        this.eval("window.ext = (" + JSON.stringify(ext).replace(/\s+/g, ' ') + ");");
+        this.page = new FeedlyPage();
     }
     ArticleManager.prototype.refreshArticles = function () {
         this.resetArticles();
@@ -438,8 +561,7 @@ var ArticleManager = (function () {
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
-        this.clearHiddingInfo();
-        this.eval("window.FFnS = ({});");
+        this.page.reset();
     };
     ArticleManager.prototype.getCurrentSub = function () {
         return this.subscriptionManager.getCurrentSubscription();
@@ -448,10 +570,10 @@ var ArticleManager = (function () {
         return $(ext.articleSelector).length;
     };
     ArticleManager.prototype.addArticle = function (a) {
+        this.articlesCount++;
         var article = new Article(a);
         this.filterAndRestrict(article);
         this.advancedControls(article);
-        this.articlesCount++;
         this.checkLastAddedArticle();
     };
     ArticleManager.prototype.filterAndRestrict = function (article) {
@@ -529,34 +651,13 @@ var ArticleManager = (function () {
     ArticleManager.prototype.checkLastAddedArticle = function () {
         var sub = this.getCurrentSub();
         if (this.articlesCount == this.getCurrentUnreadCount()) {
-            if (this.lastReadArticleGroup.length > 0) {
-                var lastReadArticle;
-                if (this.isOldestFirst()) {
-                    lastReadArticle = this.lastReadArticleGroup[this.lastReadArticleGroup.length - 1];
-                }
-                else {
-                    lastReadArticle = this.lastReadArticleGroup[0];
-                }
-                if (lastReadArticle != null) {
-                    this.putWindow(ext.lastReadEntryId, lastReadArticle.getEntryId());
-                }
-            }
-            if (this.articlesToMarkAsRead.length > 0) {
-                var ids = this.articlesToMarkAsRead.map(function (article) {
-                    return article.getEntryId();
-                });
-                this.putWindow(ext.articlesToMarkAsReadId, ids);
-            }
-            if (sub.isSortingEnabled()) {
-                this.sortArticles();
-            }
-            if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
-                this.putWindow(ext.keepNewArticlesUnreadId, true);
-            }
-            this.showHiddingInfo();
+            this.prepareMarkAsRead();
+            this.sortArticles();
+            this.page.showHiddingInfo();
         }
     };
     ArticleManager.prototype.sortArticles = function () {
+        var sub = this.getCurrentSub();
         var visibleArticles = [], hiddenArticles = [];
         $(ext.articleSelector).toArray().map((function (a) {
             return new Article(a);
@@ -568,8 +669,7 @@ var ArticleManager = (function () {
                 hiddenArticles.push(a);
             }
         });
-        var sub = this.getCurrentSub();
-        if (sub.isPinHotToTop() && sub.getSortingType() == SortingType.PopularityDesc) {
+        if (sub.isPinHotToTop()) {
             var hotArticles = [];
             var normalArticles = [];
             visibleArticles.forEach(function (article) {
@@ -587,22 +687,48 @@ var ArticleManager = (function () {
         else {
             this.sortArticleArray(visibleArticles);
         }
-        var articlesContainer = $(ext.articleSelector).first().parent();
-        articlesContainer.empty();
-        visibleArticles.forEach(function (article) {
-            articlesContainer.append(article.get());
-        });
-        hiddenArticles.forEach(function (article) {
-            articlesContainer.append(article.get());
-        });
+        if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
+            var articlesContainer = $(ext.articleSelector).first().parent();
+            articlesContainer.empty();
+            visibleArticles.forEach(function (article) {
+                articlesContainer.append(article.get());
+            });
+            hiddenArticles.forEach(function (article) {
+                articlesContainer.append(article.get());
+            });
+        }
         var sortedVisibleArticles = visibleArticles.map(function (a) { return a.getEntryId(); });
-        this.putWindow(ext.sortedVisibleArticlesId, sortedVisibleArticles);
+        this.page.put(ext.sortedVisibleArticlesId, sortedVisibleArticles);
+    };
+    ArticleManager.prototype.prepareMarkAsRead = function () {
+        if (this.lastReadArticleGroup.length > 0) {
+            var lastReadArticle;
+            if (this.isOldestFirst()) {
+                lastReadArticle = this.lastReadArticleGroup[this.lastReadArticleGroup.length - 1];
+            }
+            else {
+                lastReadArticle = this.lastReadArticleGroup[0];
+            }
+            if (lastReadArticle != null) {
+                this.page.put(ext.lastReadEntryId, lastReadArticle.getEntryId());
+            }
+        }
+        if (this.articlesToMarkAsRead.length > 0) {
+            var ids = this.articlesToMarkAsRead.map(function (article) {
+                return article.getEntryId();
+            });
+            this.page.put(ext.articlesToMarkAsReadId, ids);
+        }
+        if (this.getCurrentSub().getAdvancedControlsReceivedPeriod().keepUnread) {
+            this.page.put(ext.keepNewArticlesUnreadId, true);
+        }
     };
     ArticleManager.prototype.sortArticleArray = function (articles) {
         var sub = this.getCurrentSub();
-        var sortingTypes = [];
-        sortingTypes.push(sub.getSortingType());
-        sortingTypes = sortingTypes.concat(sub.getAdditionalSortingTypes());
+        if (!sub.isSortingEnabled()) {
+            return;
+        }
+        var sortingTypes = [sub.getSortingType()].concat(sub.getAdditionalSortingTypes());
         articles.sort(this.articleSorterFactory.getSorter(sortingTypes));
     };
     ArticleManager.prototype.isOldestFirst = function () {
@@ -615,111 +741,6 @@ var ArticleManager = (function () {
             console.log(err);
             return false;
         }
-    };
-    ArticleManager.prototype.showHiddingInfo = function () {
-        var hiddenCount = 0;
-        $(ext.articleSelector).each(function (i, a) {
-            if ($(a).css("display") === "none") {
-                hiddenCount++;
-            }
-        });
-        if (hiddenCount == 0) {
-            return;
-        }
-        this.clearHiddingInfo();
-        $(ext.hidingInfoSibling).after("<div class='detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
-    };
-    ArticleManager.prototype.clearHiddingInfo = function () {
-        $("." + this.hiddingInfoClass).remove();
-    };
-    ArticleManager.prototype.putWindow = function (id, value) {
-        this.eval("window.FFnS['" + id + "'] = " + JSON.stringify(value) + ";");
-    };
-    ArticleManager.prototype.overrideMarkAsRead = function () {
-        var pagesPkg = window["devhd"].pkg("pages");
-        function getFromWindow(id) {
-            return window["FFnS"][id];
-        }
-        function markEntryAsRead(id, thisArg) {
-            pagesPkg.BasePage.prototype.buryEntry.call(thisArg, id);
-        }
-        function getLastReadEntry(oldLastEntryObject, thisArg) {
-            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || getFromWindow(ext.keepNewArticlesUnreadId) == null) {
-                return oldLastEntryObject;
-            }
-            var idsToMarkAsRead = getFromWindow(ext.articlesToMarkAsReadId);
-            if (idsToMarkAsRead != null) {
-                idsToMarkAsRead.forEach(function (id) {
-                    markEntryAsRead(id, thisArg);
-                });
-            }
-            var lastReadEntryId = getFromWindow(ext.lastReadEntryId);
-            if (lastReadEntryId == null) {
-                return null;
-            }
-            return { lastReadEntryId: lastReadEntryId };
-        }
-        var feedlyListPagePrototype = pagesPkg.ReactPage.prototype;
-        var oldMarkAllAsRead = feedlyListPagePrototype.markAsRead;
-        feedlyListPagePrototype.markAsRead = function (oldLastEntryObject) {
-            var lastEntryObject = getLastReadEntry(oldLastEntryObject, this);
-            if (lastEntryObject != null) {
-                oldMarkAllAsRead.call(this, lastEntryObject);
-            }
-            this.feedly.jumpToNext();
-        };
-    };
-    ArticleManager.prototype.overrideNavigation = function () {
-        function get(id) {
-            return document.getElementById(id + "_main");
-        }
-        function isRead(id) {
-            return $(get(id)).hasClass(ext.readArticleClass);
-        }
-        function removed(id) {
-            return get(id) == null;
-        }
-        function getSortedVisibleArticles() {
-            return window["FFnS"][ext.sortedVisibleArticlesId];
-        }
-        function lookupEntry(unreadOnly, isPrevious) {
-            var selectedEntryId = this.navigo.selectedEntryId;
-            var found = false;
-            this.getSelectedEntryId() || (found = true);
-            var sortedVisibleArticles = getSortedVisibleArticles();
-            var len = sortedVisibleArticles.length;
-            for (var c = 0; c < len; c++) {
-                var index = isPrevious ? len - 1 - c : c;
-                var entry = sortedVisibleArticles[index];
-                if (found) {
-                    if (removed(entry)) {
-                        continue;
-                    }
-                    if (unreadOnly) {
-                        if (!isRead(entry))
-                            return entry;
-                        continue;
-                    }
-                    return entry;
-                }
-                entry === this.getSelectedEntryId() && (found = true);
-            }
-            return null;
-        }
-        var prototype = window["devhd"].pkg("pages").ReactPage.prototype;
-        var onEntry = function (unreadOnly, b, isPrevious) {
-            var entryId = lookupEntry.call(this, unreadOnly, isPrevious);
-            entryId
-                ? b ? (this.uninlineEntry(), this.selectEntry(entryId, 'toview'), this.shouldMarkAsReadOnNP() && this.reader.askMarkEntryAsRead(entryId))
-                    : this.inlineEntry(entryId, !0)
-                : this.signs.setMessage(isPrevious ? 'At start' : 'At end');
-        };
-        prototype.onPreviousEntry = function (unreadOnly, b) {
-            onEntry.call(this, unreadOnly, b, true);
-        };
-        prototype.onNextEntry = function (unreadOnly, b) {
-            onEntry.call(this, unreadOnly, b, false);
-        };
     };
     return ArticleManager;
 }());

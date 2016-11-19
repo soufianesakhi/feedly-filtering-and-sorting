@@ -1,8 +1,8 @@
 /// <reference path="./_references.d.ts" />
 
-import {FilteringType, SortingType} from "./DataTypes";
-import {Subscription} from "./Subscription";
-import {SubscriptionDAO} from "./SubscriptionDAO";
+import { FilteringType, SortingType } from "./DataTypes";
+import { Subscription } from "./Subscription";
+import { SubscriptionDAO } from "./SubscriptionDAO";
 
 export class SubscriptionManager {
     private currentSubscription: Subscription;
@@ -16,7 +16,7 @@ export class SubscriptionManager {
     loadSubscription(globalSettingsEnabled: boolean): Subscription {
         var subscription: Subscription;
         if (globalSettingsEnabled) {
-            subscription = this.dao.loadGlobalSettings();
+            subscription = this.dao.getGlobalSettings();
         } else {
             subscription = new Subscription(this.getActualSubscriptionURL(), this.dao);
         }
@@ -47,7 +47,7 @@ export class SubscriptionManager {
         return document.URL.replace(this.urlPrefixPattern, "");
     }
 
-    isGlobalMode() : boolean {
+    isGlobalMode(): boolean {
         return this.dao.isURLGlobal(this.currentSubscription.getURL());
     }
 

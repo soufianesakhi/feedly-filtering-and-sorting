@@ -4,15 +4,18 @@ import { Subscription } from "./Subscription";
 import { SubscriptionDTO, AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
 import { SubscriptionManager } from "./SubscriptionManager";
 import { LocalPersistence } from "./LocalPersistence";
-import { registerAccessors } from "./Utils";
+import { registerAccessors, deepClone } from "./Utils";
 
 export class SubscriptionDAO {
     private SUBSCRIPTION_ID_PREFIX = "subscription_";
     private GLOBAL_SETTINGS_SUBSCRIPTION_URL = "---global settings---";
+    private defaultSubscription: Subscription;
     private defaultSubscriptionDTO: SubscriptionDTO;
 
     constructor() {
         registerAccessors(new SubscriptionDTO(""), "dto", Subscription.prototype, this.save, this);
+        this.defaultSubscription = new Subscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL, this);
+        this.defaultSubscriptionDTO = this.defaultSubscription.dto;
     }
 
     save(dto: SubscriptionDTO) {
@@ -53,45 +56,15 @@ export class SubscriptionDAO {
     }
 
     clone(dtoToClone: SubscriptionDTO, cloneUrl: string): SubscriptionDTO {
-        var clone = new SubscriptionDTO(cloneUrl);
-        if (dtoToClone == null) {
-            return clone;
-        }
-        var defDto = this.defaultSubscriptionDTO != null ? this.defaultSubscriptionDTO : clone;
-        clone.filteringEnabled = (dtoToClone.filteringEnabled != null) ? dtoToClone.filteringEnabled : defDto.filteringEnabled;
-        clone.restrictingEnabled = (dtoToClone.restrictingEnabled != null) ? dtoToClone.restrictingEnabled : defDto.restrictingEnabled;
-        clone.sortingEnabled = (dtoToClone.sortingEnabled != null) ? dtoToClone.sortingEnabled : defDto.sortingEnabled;
-        clone.sortingType = (dtoToClone.sortingType != null) ? dtoToClone.sortingType : defDto.sortingType;
-        clone.additionalSortingTypes = (dtoToClone.additionalSortingTypes != null) ? dtoToClone.additionalSortingTypes : defDto.additionalSortingTypes;
-        clone.pinHotToTop = (dtoToClone.pinHotToTop != null) ? dtoToClone.pinHotToTop : defDto.pinHotToTop;
-        clone.advancedControlsReceivedPeriod = this.cloneAdvancedControlsReceivedPeriod(dtoToClone);
-        var filteringListsByTypeToClone = (dtoToClone.filteringListsByType != null) ? dtoToClone.filteringListsByType : defDto.filteringListsByType;
-        getFilteringTypes().forEach((type) => {
-            clone.filteringListsByType[type] = filteringListsByTypeToClone[type].slice(0);
+        var clone = deepClone(dtoToClone, new SubscriptionDTO(cloneUrl), {
+            "advancedControlsReceivedPeriod": new AdvancedControlsReceivedPeriod()
         });
+        clone.url = cloneUrl;
         return clone;
     }
 
-    cloneAdvancedControlsReceivedPeriod(dtoToClone: SubscriptionDTO): AdvancedControlsReceivedPeriod {
-        var advCtrols = new AdvancedControlsReceivedPeriod();
-        var advCtrolsToClone = dtoToClone.advancedControlsReceivedPeriod;
-        if (advCtrolsToClone == null) {
-            return advCtrols;
-        }
-        var defAdvCtrols = this.defaultSubscriptionDTO != null ? this.defaultSubscriptionDTO.advancedControlsReceivedPeriod : advCtrols;
-        advCtrols.maxHours = (advCtrolsToClone.maxHours != null) ? advCtrolsToClone.maxHours : defAdvCtrols.maxHours;
-        advCtrols.keepUnread = (advCtrolsToClone.keepUnread != null) ? advCtrolsToClone.keepUnread : defAdvCtrols.keepUnread;
-        advCtrols.hide = (advCtrolsToClone.hide != null) ? advCtrolsToClone.hide : defAdvCtrols.hide;
-        advCtrols.showIfHot = (advCtrolsToClone.showIfHot != null) ? advCtrolsToClone.showIfHot : defAdvCtrols.showIfHot;
-        advCtrols.minPopularity = (advCtrolsToClone.minPopularity != null) ? advCtrolsToClone.minPopularity : defAdvCtrols.minPopularity;
-        advCtrols.markAsReadVisible = (advCtrolsToClone.markAsReadVisible != null) ? advCtrolsToClone.markAsReadVisible : defAdvCtrols.markAsReadVisible;
-        return advCtrols;
-    }
-
-    loadGlobalSettings(): Subscription {
-        var globalSettings = new Subscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL, this);
-        this.defaultSubscriptionDTO = globalSettings.dto;
-        return globalSettings;
+    getGlobalSettings(): Subscription {
+        return this.defaultSubscription;
     }
 
     getAllSubscriptionURLs(): string[] {
