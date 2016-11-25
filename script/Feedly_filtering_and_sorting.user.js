@@ -117,6 +117,9 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
     }
     for (var field in typedClone) {
         var type = typeof (typedClone[field]);
+        if (!toClone[field]) {
+            continue;
+        }
         switch (type) {
             case "object":
                 if (!$.isArray(typedClone[field])) {
@@ -424,133 +427,13 @@ var SubscriptionManager = (function () {
     return SubscriptionManager;
 }());
 
-var FeedlyPage = (function () {
-    function FeedlyPage() {
-        this.eval = window["eval"];
-        this.hiddingInfoClass = "FFnS_Hiding_Info";
-        this.eval("(" + this.overrideMarkAsRead.toString() + ")();");
-        this.eval("(" + this.overrideNavigation.toString() + ")();");
-        this.eval("window.ext = (" + JSON.stringify(ext).replace(/\s+/g, ' ') + ");");
-    }
-    FeedlyPage.prototype.reset = function () {
-        this.clearHiddingInfo();
-        this.eval("window.FFnS = ({});");
-    };
-    FeedlyPage.prototype.showHiddingInfo = function () {
-        var hiddenCount = 0;
-        $(ext.articleSelector).each(function (i, a) {
-            if ($(a).css("display") === "none") {
-                hiddenCount++;
-            }
-        });
-        if (hiddenCount == 0) {
-            return;
-        }
-        this.clearHiddingInfo();
-        $(ext.hidingInfoSibling).after("<div class='detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
-    };
-    FeedlyPage.prototype.clearHiddingInfo = function () {
-        $("." + this.hiddingInfoClass).remove();
-    };
-    FeedlyPage.prototype.put = function (id, value) {
-        this.eval("window.FFnS['" + id + "'] = " + JSON.stringify(value) + ";");
-    };
-    FeedlyPage.prototype.overrideMarkAsRead = function () {
-        var pagesPkg = window["devhd"].pkg("pages");
-        function get(id) {
-            return window["FFnS"][id];
-        }
-        function markEntryAsRead(id, thisArg) {
-            pagesPkg.BasePage.prototype.buryEntry.call(thisArg, id);
-        }
-        function getLastReadEntry(oldLastEntryObject, thisArg) {
-            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || get(ext.keepNewArticlesUnreadId) == null) {
-                return oldLastEntryObject;
-            }
-            var idsToMarkAsRead = get(ext.articlesToMarkAsReadId);
-            if (idsToMarkAsRead != null) {
-                idsToMarkAsRead.forEach(function (id) {
-                    markEntryAsRead(id, thisArg);
-                });
-            }
-            var lastReadEntryId = get(ext.lastReadEntryId);
-            if (lastReadEntryId == null) {
-                return null;
-            }
-            return { lastReadEntryId: lastReadEntryId };
-        }
-        var feedlyListPagePrototype = pagesPkg.ReactPage.prototype;
-        var oldMarkAllAsRead = feedlyListPagePrototype.markAsRead;
-        feedlyListPagePrototype.markAsRead = function (oldLastEntryObject) {
-            var lastEntryObject = getLastReadEntry(oldLastEntryObject, this);
-            if (lastEntryObject != null) {
-                oldMarkAllAsRead.call(this, lastEntryObject);
-            }
-            this.feedly.jumpToNext();
-        };
-    };
-    FeedlyPage.prototype.overrideNavigation = function () {
-        function get(id) {
-            return document.getElementById(id + "_main");
-        }
-        function isRead(id) {
-            return $(get(id)).hasClass(ext.readArticleClass);
-        }
-        function removed(id) {
-            return get(id) == null;
-        }
-        function getSortedVisibleArticles() {
-            return window["FFnS"][ext.sortedVisibleArticlesId];
-        }
-        function lookupEntry(unreadOnly, isPrevious) {
-            var selectedEntryId = this.navigo.selectedEntryId;
-            var found = false;
-            this.getSelectedEntryId() || (found = true);
-            var sortedVisibleArticles = getSortedVisibleArticles();
-            var len = sortedVisibleArticles.length;
-            for (var c = 0; c < len; c++) {
-                var index = isPrevious ? len - 1 - c : c;
-                var entry = sortedVisibleArticles[index];
-                if (found) {
-                    if (removed(entry)) {
-                        continue;
-                    }
-                    if (unreadOnly) {
-                        if (!isRead(entry))
-                            return entry;
-                        continue;
-                    }
-                    return entry;
-                }
-                entry === this.getSelectedEntryId() && (found = true);
-            }
-            return null;
-        }
-        var prototype = window["devhd"].pkg("pages").ReactPage.prototype;
-        var onEntry = function (unreadOnly, b, isPrevious) {
-            var entryId = lookupEntry.call(this, unreadOnly, isPrevious);
-            entryId
-                ? b ? (this.uninlineEntry(), this.selectEntry(entryId, 'toview'), this.shouldMarkAsReadOnNP() && this.reader.askMarkEntryAsRead(entryId))
-                    : this.inlineEntry(entryId, !0)
-                : this.signs.setMessage(isPrevious ? 'At start' : 'At end');
-        };
-        prototype.onPreviousEntry = function (unreadOnly, b) {
-            onEntry.call(this, unreadOnly, b, true);
-        };
-        prototype.onNextEntry = function (unreadOnly, b) {
-            onEntry.call(this, unreadOnly, b, false);
-        };
-    };
-    return FeedlyPage;
-}());
-
 var ArticleManager = (function () {
-    function ArticleManager(subscriptionManager) {
+    function ArticleManager(subscriptionManager, page) {
         this.articlesCount = 0;
         this.lastReadArticleAge = -1;
         this.subscriptionManager = subscriptionManager;
         this.articleSorterFactory = new ArticleSorterFactory();
-        this.page = new FeedlyPage();
+        this.page = page;
     }
     ArticleManager.prototype.refreshArticles = function () {
         this.resetArticles();
@@ -860,8 +743,176 @@ var templates = {
     "filteringKeywordHTML": "<button id='{{keywordId}}' type='button' class='FFnS_keyword'>{{keyword}}</button>",
     "sortingSelectHTML": "<select id='{{Id}}' class='FFnS_input'> <option value='{{PopularityDesc}}'>Sort by popularity (highest to lowest)</option> <option value='{{PopularityAsc}} '>Sort by popularity (lowest to highest)</option> <option value='{{TitleAsc}}'>Sort by title (a -&gt; z)</option> <option value='{{TitleDesc}}'>Sort by title (z -&gt; a)</option> <option value='{{PublishDateNewFirst}}'>Sort by publish date (new first)</option> <option value='{{PublishDateOldFirst}}'>Sort by publish date (old first)</option> <option value='{{SourceAsc}}'>Sort by source title (a -&gt; z)</option> <option value='{{SourceDesc}}'>Sort by source title (z -&gt; a)</option> </select>",
     "optionHTML": "<option value='{{value}}'>{{value}}</option>",
-    "styleCSS": "#FFnS_settingsDivContainer { display: none; background: rgba(0,0,0,0.9); width: 100%; height: 100%; z-index: 500; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 500px; margin-top: 1%; margin-left: 15%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #E0F5FF; padding: 2%; opacity: 1; } .FFnS_input { font-size:12px; } #FFnS_tabs_menu { height: 30px; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #B9E0ED; } #FFnS_tabs_menu li a { padding: 10px; color: #2A687D; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; max-height: 300px; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35A5E2; border-radius: 20px; color: #FFF; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn { float:right; width: 24px; height: 24px; } #FFnS_Tab_SettingsControls button { margin-top: 1%; font-size: 12px; display: block; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type=number]{ width: 30px; margin-left: 1%; margin-right: 1%; } #FFnS_MinPopularity_AdvancedControlsReceivedPeriod { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: sold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 2% } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('http://megaicons.net/static/img/icons_sizes/8/178/512/objects-empty-filter-icon.png'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; color: #757575; background-color: transparent; font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .header + div > div:first-child > div h4 { display: none; } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } "
+    "styleCSS": "#FFnS_settingsDivContainer { display: none; background: rgba(0,0,0,0.9); width: 100%; height: 100%; z-index: 500; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 500px; margin-top: 1%; margin-left: 15%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #E0F5FF; padding: 2%; opacity: 1; } .FFnS_input { font-size:12px; } #FFnS_tabs_menu { height: 30px; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #B9E0ED; } #FFnS_tabs_menu li a { padding: 10px; color: #2A687D; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; max-height: 300px; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35A5E2; border-radius: 20px; color: #FFF; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn { float:right; width: 24px; height: 24px; } #FFnS_Tab_SettingsControls button { margin-top: 1%; font-size: 12px; display: block; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type=number]{ width: 30px; margin-left: 1%; margin-right: 1%; } #FFnS_MinPopularity_AdvancedControlsReceivedPeriod { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: sold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 2% } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('http://megaicons.net/static/img/icons_sizes/8/178/512/objects-empty-filter-icon.png'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; color: #757575; background-color: transparent; font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .header + div > div:first-child > div h4 { display: none; } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .fx .mark-as-read.open-in-new-tab-button { background:url(http://s3.feedly.com/production/head/images/condensed-visit-black.png); background-size: 32px 32px; background-repeat: no-repeat; margin-right: 0px; } .fx .entry.u5 .mark-as-read.open-in-new-tab-button { filter: brightness(0) invert(1); margin-right: 4px; margin-top: 4px; } .fx .entry.u0 .mark-as-read.open-in-new-tab-button { background-size: 28px 28px; }"
 };
+
+var FeedlyPage = (function () {
+    function FeedlyPage(subscriptionManager) {
+        this.eval = window["eval"];
+        this.hiddingInfoClass = "FFnS_Hiding_Info";
+        this.subscriptionManager = subscriptionManager;
+        this.eval("(" + this.overrideMarkAsRead.toString() + ")();");
+        this.eval("(" + this.overrideNavigation.toString() + ")();");
+        this.eval("window.ext = (" + JSON.stringify(ext).replace(/\s+/g, ' ') + ");");
+        this.reader = new FeedlyReader(this);
+        this.initStyling();
+    }
+    FeedlyPage.prototype.onNewArticle = function (a) {
+        var reader = this.reader;
+        var link = $(a).find(".title").attr("href");
+        var entryId = $(a).attr(ext.articleEntryIdAttribute);
+        var attributes = {
+            class: "open-in-new-tab-button mark-as-read",
+            title: "Open in a new window/tab and mark as read",
+            type: "button"
+        };
+        if ($(a).hasClass("u0")) {
+            attributes.class += " tertiary button-icon-only-micro icon";
+        }
+        var e = $("<button>", attributes);
+        this.onClick(e.get(0), function (event) {
+            window.open(link, '_blank');
+            reader.askMarkEntryAsRead(entryId);
+            event.stopPropagation();
+        });
+        if ($(a).hasClass("u5")) {
+            $(a).find(".mark-as-read").before(e);
+        }
+        else if ($(a).hasClass("u4")) {
+            $(a).find(".ago").after(e);
+        }
+        else {
+            $(a).find(".condensed-tools .button-dropdown > :first-child").before(e);
+        }
+    };
+    FeedlyPage.prototype.onClick = function (e, listener) {
+        e.addEventListener('click', listener, true);
+    };
+    FeedlyPage.prototype.initStyling = function () {
+        NodeCreationObserver.onCreation("header > h1", function (e) {
+            $(e).removeClass("col-md-4").addClass("col-md-6");
+        });
+    };
+    FeedlyPage.prototype.reset = function () {
+        this.clearHiddingInfo();
+        this.eval("window.FFnS = ({});");
+    };
+    FeedlyPage.prototype.showHiddingInfo = function () {
+        var hiddenCount = 0;
+        $(ext.articleSelector).each(function (i, a) {
+            if ($(a).css("display") === "none") {
+                hiddenCount++;
+            }
+        });
+        if (hiddenCount == 0) {
+            return;
+        }
+        this.clearHiddingInfo();
+        $(ext.hidingInfoSibling).after("<div class='detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
+    };
+    FeedlyPage.prototype.clearHiddingInfo = function () {
+        $("." + this.hiddingInfoClass).remove();
+    };
+    FeedlyPage.prototype.put = function (id, value) {
+        this.eval("window.FFnS['" + id + "'] = " + JSON.stringify(value) + ";");
+    };
+    FeedlyPage.prototype.overrideMarkAsRead = function () {
+        var pagesPkg = window["devhd"].pkg("pages");
+        function get(id) {
+            return window["FFnS"][id];
+        }
+        function markEntryAsRead(id, thisArg) {
+            pagesPkg.BasePage.prototype.buryEntry.call(thisArg, id);
+        }
+        function getLastReadEntry(oldLastEntryObject, thisArg) {
+            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || get(ext.keepNewArticlesUnreadId) == null) {
+                return oldLastEntryObject;
+            }
+            var idsToMarkAsRead = get(ext.articlesToMarkAsReadId);
+            if (idsToMarkAsRead != null) {
+                idsToMarkAsRead.forEach(function (id) {
+                    markEntryAsRead(id, thisArg);
+                });
+            }
+            var lastReadEntryId = get(ext.lastReadEntryId);
+            if (lastReadEntryId == null) {
+                return null;
+            }
+            return { lastReadEntryId: lastReadEntryId };
+        }
+        var feedlyListPagePrototype = pagesPkg.ReactPage.prototype;
+        var oldMarkAllAsRead = feedlyListPagePrototype.markAsRead;
+        feedlyListPagePrototype.markAsRead = function (oldLastEntryObject) {
+            var lastEntryObject = getLastReadEntry(oldLastEntryObject, this);
+            if (!get(ext.keepNewArticlesUnreadId) || lastEntryObject) {
+                oldMarkAllAsRead.call(this, lastEntryObject);
+            }
+            this.feedly.jumpToNext();
+        };
+    };
+    FeedlyPage.prototype.overrideNavigation = function () {
+        function get(id) {
+            return document.getElementById(id + "_main");
+        }
+        function isRead(id) {
+            return $(get(id)).hasClass(ext.readArticleClass);
+        }
+        function removed(id) {
+            return get(id) == null;
+        }
+        function getSortedVisibleArticles() {
+            return window["FFnS"][ext.sortedVisibleArticlesId];
+        }
+        function lookupEntry(unreadOnly, isPrevious) {
+            var selectedEntryId = this.navigo.selectedEntryId;
+            var found = false;
+            this.getSelectedEntryId() || (found = true);
+            var sortedVisibleArticles = getSortedVisibleArticles();
+            var len = sortedVisibleArticles.length;
+            for (var c = 0; c < len; c++) {
+                var index = isPrevious ? len - 1 - c : c;
+                var entry = sortedVisibleArticles[index];
+                if (found) {
+                    if (removed(entry)) {
+                        continue;
+                    }
+                    if (unreadOnly) {
+                        if (!isRead(entry))
+                            return entry;
+                        continue;
+                    }
+                    return entry;
+                }
+                entry === this.getSelectedEntryId() && (found = true);
+            }
+            return null;
+        }
+        var prototype = window["devhd"].pkg("pages").ReactPage.prototype;
+        var onEntry = function (unreadOnly, b, isPrevious) {
+            var entryId = lookupEntry.call(this, unreadOnly, isPrevious);
+            entryId
+                ? b ? (this.uninlineEntry(), this.selectEntry(entryId, 'toview'), this.shouldMarkAsReadOnNP() && this.reader.askMarkEntryAsRead(entryId))
+                    : this.inlineEntry(entryId, !0)
+                : this.signs.setMessage(isPrevious ? 'At start' : 'At end');
+        };
+        prototype.onPreviousEntry = function (unreadOnly, b) {
+            onEntry.call(this, unreadOnly, b, true);
+        };
+        prototype.onNextEntry = function (unreadOnly, b) {
+            onEntry.call(this, unreadOnly, b, false);
+        };
+    };
+    return FeedlyPage;
+}());
+var FeedlyReader = (function () {
+    function FeedlyReader(page) {
+        this.eval = page.eval;
+    }
+    FeedlyReader.prototype.askMarkEntryAsRead = function (entryId) {
+        this.eval("window.streets.service('reader').askMarkEntryAsRead('" + entryId + "');");
+    };
+    return FeedlyReader;
+}());
 
 var UIManager = (function () {
     function UIManager() {
@@ -889,7 +940,8 @@ var UIManager = (function () {
     UIManager.prototype.init = function () {
         try {
             this.subscriptionManager = new SubscriptionManager();
-            this.articleManager = new ArticleManager(this.subscriptionManager);
+            this.page = new FeedlyPage(this.subscriptionManager);
+            this.articleManager = new ArticleManager(this.subscriptionManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
             this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
             this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
@@ -969,7 +1021,6 @@ var UIManager = (function () {
         this.initShowSettingsBtns();
         this.autoLoadAllArticlesCB.initUI();
         this.globalSettingsEnabledCB.initUI();
-        this.initStyling();
     };
     UIManager.prototype.initSettingsMenu = function () {
         var marginElementClass = this.getHTMLId("margin_element");
@@ -1171,6 +1222,7 @@ var UIManager = (function () {
                 return;
             }
             this.articleManager.addArticle(article);
+            this.page.onNewArticle(article);
             this.tryAutoLoadAllArticles();
         }
         catch (err) {
@@ -1254,11 +1306,6 @@ var UIManager = (function () {
             eraseBtnId: "DeleteAll_" + id,
             filetringKeywordsId: "FiletringKeywords_" + id
         };
-    };
-    UIManager.prototype.initStyling = function () {
-        NodeCreationObserver.onCreation("header > h1", function (e) {
-            $(e).removeClass("col-md-4").addClass("col-md-6");
-        });
     };
     UIManager.prototype.isVisible = function (e) {
         var displayProp = e.css('display');

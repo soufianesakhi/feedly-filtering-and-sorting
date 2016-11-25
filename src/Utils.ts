@@ -86,6 +86,9 @@ export function deepClone<T>(toClone: T, clone: T, alternativeToCloneByField): T
     }
     for (var field in typedClone) {
         var type = typeof (typedClone[field]);
+        if (!toClone[field]) {
+            continue;
+        }
         switch (type) {
             case "object":
                 if (!$.isArray(typedClone[field])) {

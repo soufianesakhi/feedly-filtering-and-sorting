@@ -8,6 +8,9 @@
     "filesGlob": [
         "src/*.ts"
     ],
+    "atom": {
+        "rewriteTsconfig": true
+    },
     "files": [
         "src/ArticleManager.ts",
         "src/DataTypes.ts",
@@ -25,8 +28,5 @@
         "src/UIManager.ts",
         "src/Utils.ts",
         "src/_references.d.ts"
-    ],
-    "atom": {
-        "rewriteTsconfig": true
-    }
+    ]
 }

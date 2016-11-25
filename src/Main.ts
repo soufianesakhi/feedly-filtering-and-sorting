@@ -2,6 +2,7 @@
 
 import { UIManager } from "./UIManager";
 import { callbackBindedTo } from "./Utils";
+import { FeedlyPage } from "./FeedlyPage";
 
 function injectResources() {
     $("head").append("<style>" + templates.styleCSS + "</style>");

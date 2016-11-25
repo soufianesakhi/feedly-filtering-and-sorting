@@ -174,3 +174,20 @@ input {
 .fx header h1 .detail.FFnS_Hiding_Info::before {
     content: '';
 }
+
+.fx .mark-as-read.open-in-new-tab-button {
+    background:url(http://s3.feedly.com/production/head/images/condensed-visit-black.png); 
+    background-size: 32px 32px;
+    background-repeat: no-repeat;
+    margin-right: 0px;
+}
+
+.fx .entry.u5 .mark-as-read.open-in-new-tab-button {
+    filter: brightness(0) invert(1);
+    margin-right: 4px;
+    margin-top: 4px;
+}
+
+.fx .entry.u0 .mark-as-read.open-in-new-tab-button {
+    background-size: 28px 28px;
+}

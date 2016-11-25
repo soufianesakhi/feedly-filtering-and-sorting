@@ -8,8 +8,10 @@ import { SubscriptionManager } from "./SubscriptionManager";
 import { GlobalSettingsCheckBox } from "./HTMLGlobalSettings";
 import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
 import { $id, bindMarkup } from "./Utils";
+import { FeedlyPage } from "./FeedlyPage";
 
 export class UIManager {
+    page: FeedlyPage;
     subscriptionManager: SubscriptionManager;
     htmlSubscriptionManager: HTMLSubscriptionManager;
     articleManager: ArticleManager;
@@ -43,7 +45,8 @@ export class UIManager {
     init() {
         try {
             this.subscriptionManager = new SubscriptionManager();
-            this.articleManager = new ArticleManager(this.subscriptionManager);
+            this.page = new FeedlyPage(this.subscriptionManager);
+            this.articleManager = new ArticleManager(this.subscriptionManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
             this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
             this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
@@ -131,7 +134,6 @@ export class UIManager {
         this.initShowSettingsBtns();
         this.autoLoadAllArticlesCB.initUI();
         this.globalSettingsEnabledCB.initUI();
-        this.initStyling();
     }
 
     initSettingsMenu() {
@@ -364,6 +366,7 @@ export class UIManager {
                 return;
             }
             this.articleManager.addArticle(article);
+            this.page.onNewArticle(article);
             this.tryAutoLoadAllArticles();
         } catch (err) {
             console.log(err);
@@ -456,12 +459,6 @@ export class UIManager {
             eraseBtnId: "DeleteAll_" + id,
             filetringKeywordsId: "FiletringKeywords_" + id
         };
-    }
-
-    initStyling() {
-        NodeCreationObserver.onCreation("header > h1", (e) => {
-            $(e).removeClass("col-md-4").addClass("col-md-6");
-        })
     }
 
     isVisible(e: JQuery) {

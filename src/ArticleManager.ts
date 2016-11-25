@@ -15,10 +15,10 @@ export class ArticleManager {
     lastReadArticleGroup: Article[];
     articlesToMarkAsRead: Article[];
 
-    constructor(subscriptionManager: SubscriptionManager) {
+    constructor(subscriptionManager: SubscriptionManager, page: FeedlyPage) {
         this.subscriptionManager = subscriptionManager;
         this.articleSorterFactory = new ArticleSorterFactory();
-        this.page = new FeedlyPage();
+        this.page = page;
     }
 
     refreshArticles() {
