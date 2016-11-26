@@ -18,6 +18,9 @@ export class FeedlyPage {
     }
 
     onNewArticle(a: Element) {
+        if (!this.subscriptionManager.getCurrentSubscription().isOpenAndMarkAsRead()) {
+            return;
+        }
         var reader = this.reader;
         var link = $(a).find(".title").attr("href");
         var entryId = $(a).attr(ext.articleEntryIdAttribute);

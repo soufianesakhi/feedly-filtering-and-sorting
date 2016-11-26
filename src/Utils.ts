@@ -86,7 +86,7 @@ export function deepClone<T>(toClone: T, clone: T, alternativeToCloneByField): T
     }
     for (var field in typedClone) {
         var type = typeof (typedClone[field]);
-        if (!toClone[field]) {
+        if (toClone[field] == null) {
             continue;
         }
         switch (type) {

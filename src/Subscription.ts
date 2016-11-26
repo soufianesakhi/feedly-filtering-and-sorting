@@ -42,6 +42,10 @@ export class Subscription {
         return this.dto.pinHotToTop;
     }
 
+    isOpenAndMarkAsRead(): boolean {
+        return this.dto.openAndMarkAsRead;
+    }
+
     getAdvancedControlsReceivedPeriod(): AdvancedControlsReceivedPeriod {
         return this.dto.advancedControlsReceivedPeriod;
     }

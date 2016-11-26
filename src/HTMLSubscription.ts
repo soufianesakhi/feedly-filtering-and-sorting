@@ -1,8 +1,8 @@
 /// <reference path="./_references.d.ts" />
 
-import {UIManager} from "./UIManager"
-import {HTMLElementType} from "./DataTypes"
-import {$id, setRadioChecked, isRadioChecked} from "./Utils";
+import { UIManager } from "./UIManager"
+import { HTMLElementType } from "./DataTypes"
+import { $id, setRadioChecked, isRadioChecked } from "./Utils";
 
 export interface HTMLSubscriptionSettingConfig {
     update: (subscriptionSetting: HTMLSubscriptionSetting) => void;
