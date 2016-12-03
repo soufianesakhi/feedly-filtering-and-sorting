@@ -393,7 +393,7 @@ export class UIManager {
     }
 
     tryAutoLoadAllArticles() {
-        if (!this.autoLoadAllArticlesCB.isEnabled()) {
+        if (!this.autoLoadAllArticlesCB.isEnabled() || $(ext.notFollowedPageSelector).length > 0) {
             return;
         }
         if (this.isVisible($(ext.fullyLoadedArticlesSelector))) {

@@ -18,6 +18,7 @@ var ext = {
 	"popularitySelector": ".engagement",
 	"hidingInfoSibling": "header > h1 > .button-dropdown",
 	"fullyLoadedArticlesSelector": ".giant-mark-as-read",
+	"notFollowedPageSelector": "button.follow",
 
 	"lastReadEntryId": "lastReadEntry",
 	"keepNewArticlesUnreadId": "keepNewArticlesUnread",

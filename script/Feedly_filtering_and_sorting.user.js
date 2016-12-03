@@ -35,6 +35,7 @@ var ext = {
     "popularitySelector": ".engagement",
     "hidingInfoSibling": "header > h1 > .button-dropdown",
     "fullyLoadedArticlesSelector": ".giant-mark-as-read",
+    "notFollowedPageSelector": "button.follow",
     "lastReadEntryId": "lastReadEntry",
     "keepNewArticlesUnreadId": "keepNewArticlesUnread",
     "articlesToMarkAsReadId": "articlesToMarkAsRead",
@@ -1255,7 +1256,7 @@ var UIManager = (function () {
         }
     };
     UIManager.prototype.tryAutoLoadAllArticles = function () {
-        if (!this.autoLoadAllArticlesCB.isEnabled()) {
+        if (!this.autoLoadAllArticlesCB.isEnabled() || $(ext.notFollowedPageSelector).length > 0) {
             return;
         }
         if (this.isVisible($(ext.fullyLoadedArticlesSelector))) {
