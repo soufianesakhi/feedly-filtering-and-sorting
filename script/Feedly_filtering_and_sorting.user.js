@@ -174,8 +174,9 @@ function getFilteringTypeId(type) {
 var LocalPersistence = (function () {
     function LocalPersistence() {
     }
-    LocalPersistence.get = function (id, defaultValue) {
-        return JSON.parse(GM_getValue(id, JSON.stringify(defaultValue)));
+    LocalPersistence.getAsync = function (id, defaultValue, callback, thisArg) {
+        var data = JSON.parse(GM_getValue(id, JSON.stringify(defaultValue)));
+        callback.call(thisArg, data);
     };
     LocalPersistence.put = function (id, value, replace) {
         GM_setValue(id, JSON.stringify(value, replace));
@@ -218,18 +219,9 @@ var AdvancedControlsReceivedPeriod = (function () {
 }());
 
 var Subscription = (function () {
-    function Subscription(url, dao) {
+    function Subscription(dao) {
         this.dao = dao;
-        this.update(url, true);
     }
-    Subscription.prototype.update = function (url, skipSave) {
-        var dto = this.dao.load(url);
-        var cloneURL = this.dto == null ? dto.url : this.getURL();
-        this.dto = this.dao.clone(dto, cloneURL);
-        if (!skipSave) {
-            this.dao.save(this.dto);
-        }
-    };
     Subscription.prototype.getURL = function () {
         return this.dto.url;
     };
@@ -271,22 +263,22 @@ var Subscription = (function () {
     Subscription.prototype.setMaxHours_AdvancedControlsReceivedPeriod = function (hours, days) {
         var maxHours = hours + 24 * days;
         this.getAdvancedControlsReceivedPeriod().maxHours = maxHours;
-        this.dao.save(this.dto);
+        this.save();
     };
     Subscription.prototype.getAdditionalSortingTypes = function () {
         return this.dto.additionalSortingTypes;
     };
     Subscription.prototype.setAdditionalSortingTypes = function (additionalSortingTypes) {
         this.dto.additionalSortingTypes = additionalSortingTypes;
-        this.dao.save(this.dto);
+        this.save();
     };
     Subscription.prototype.addAdditionalSortingType = function (additionalSortingType) {
         this.dto.additionalSortingTypes.push(additionalSortingType);
-        this.dao.save(this.dto);
+        this.save();
     };
     Subscription.prototype.addKeyword = function (keyword, type) {
         this.getFilteringList(type).push(keyword);
-        this.dao.save(this.dto);
+        this.save();
     };
     Subscription.prototype.removeKeyword = function (keyword, type) {
         var keywordList = this.getFilteringList(type);
@@ -294,10 +286,12 @@ var Subscription = (function () {
         if (index > -1) {
             keywordList.splice(index, 1);
         }
-        this.dao.save(this.dto);
+        this.save();
     };
     Subscription.prototype.resetFilteringList = function (type) {
         this.getFilteringList(type).length = 0;
+    };
+    Subscription.prototype.save = function () {
         this.dao.save(this.dto);
     };
     return Subscription;
@@ -308,40 +302,43 @@ var SubscriptionDAO = (function () {
         this.SUBSCRIPTION_ID_PREFIX = "subscription_";
         this.GLOBAL_SETTINGS_SUBSCRIPTION_URL = "---global settings---";
         registerAccessors(new SubscriptionDTO(""), "dto", Subscription.prototype, this.save, this);
-        this.defaultSubscription = new Subscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL, this);
-        this.defaultSubscriptionDTO = this.defaultSubscription.dto;
     }
+    SubscriptionDAO.prototype.loadSubscription = function (url, callback, thisArg) {
+        var _this = this;
+        var sub = new Subscription(this);
+        this.load(url, function (dto) {
+            sub.dto = _this.clone(dto, dto.url);
+            callback.call(thisArg, sub);
+        }, this);
+    };
+    ;
     SubscriptionDAO.prototype.save = function (dto) {
         var url = dto.url;
         var id = this.getSubscriptionId(url);
         LocalPersistence.put(id, dto);
         console.log("Subscription saved: " + JSON.stringify(dto));
     };
-    SubscriptionDAO.prototype.load = function (url) {
-        var subscriptionDTO;
-        var id = this.getSubscriptionId(url);
-        var dto = LocalPersistence.get(id, null);
-        if (dto != null) {
-            var linkedURL = dto.linkedUrl;
-            if (linkedURL != null) {
-                console.log("Loading linked subscription: " + linkedURL);
-                subscriptionDTO = this.load(linkedURL);
+    SubscriptionDAO.prototype.load = function (url, callback, thisArg) {
+        var _this = this;
+        LocalPersistence.getAsync(this.getSubscriptionId(url), null, function (dto) {
+            if (dto != null) {
+                var linkedURL = dto.linkedUrl;
+                if (linkedURL != null) {
+                    console.log("Loading linked subscription: " + linkedURL);
+                    _this.load(linkedURL, callback, thisArg);
+                    return;
+                }
+                else {
+                    console.log("Loaded saved subscription: " + JSON.stringify(dto));
+                }
             }
             else {
-                subscriptionDTO = dto;
-                console.log("Loaded saved subscription: " + JSON.stringify(subscriptionDTO));
+                _this.loadGlobalSettings(function (sub) {
+                    dto = _this.clone(sub.dto, url);
+                }, _this);
             }
-        }
-        if (subscriptionDTO == null) {
-            if (this.defaultSubscriptionDTO == null) {
-                subscriptionDTO = new SubscriptionDTO(url);
-                this.save(subscriptionDTO);
-            }
-            else {
-                subscriptionDTO = this.clone(this.defaultSubscriptionDTO, url);
-            }
-        }
-        return subscriptionDTO;
+            callback.call(thisArg, dto);
+        }, this);
     };
     SubscriptionDAO.prototype.delete = function (url) {
         LocalPersistence.delete(this.getSubscriptionId(url));
@@ -354,8 +351,17 @@ var SubscriptionDAO = (function () {
         clone.url = cloneUrl;
         return clone;
     };
-    SubscriptionDAO.prototype.getGlobalSettings = function () {
-        return this.defaultSubscription;
+    SubscriptionDAO.prototype.loadGlobalSettings = function (callback, thisArg) {
+        var _this = this;
+        if (!this.defaultSubscription) {
+            this.loadSubscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL, function (sub) {
+                _this.defaultSubscription = sub;
+                callback.call(thisArg, sub);
+            }, this);
+        }
+        else {
+            callback.call(thisArg, this.defaultSubscription);
+        }
     };
     SubscriptionDAO.prototype.getAllSubscriptionURLs = function () {
         var _this = this;
@@ -393,15 +399,18 @@ var SubscriptionManager = (function () {
         this.urlPrefixPattern = new RegExp(ext.urlPrefixPattern, "i");
         this.dao = new SubscriptionDAO();
     }
-    SubscriptionManager.prototype.loadSubscription = function (globalSettingsEnabled) {
-        var subscription;
+    SubscriptionManager.prototype.loadSubscription = function (globalSettingsEnabled, callback, thisArg) {
+        var _this = this;
+        var onLoad = function (sub) {
+            _this.currentSubscription = sub;
+            callback.call(thisArg, sub);
+        };
         if (globalSettingsEnabled) {
-            subscription = this.dao.getGlobalSettings();
+            this.dao.loadGlobalSettings(onLoad, this);
         }
         else {
-            subscription = new Subscription(this.getActualSubscriptionURL(), this.dao);
+            this.dao.loadSubscription(this.getActualSubscriptionURL(), onLoad, this);
         }
-        return this.currentSubscription = subscription;
     };
     SubscriptionManager.prototype.linkToSubscription = function (url) {
         if (url === this.getActualSubscriptionURL()) {
@@ -414,8 +423,12 @@ var SubscriptionManager = (function () {
     SubscriptionManager.prototype.deleteSubscription = function (url) {
         this.dao.delete(url);
     };
-    SubscriptionManager.prototype.importKeywords = function (url) {
-        this.currentSubscription.update(url);
+    SubscriptionManager.prototype.importSettings = function (url, callback, thisArg) {
+        var _this = this;
+        this.dao.loadSubscription(url, function (sub) {
+            _this.currentSubscription = sub;
+            callback.call(thisArg);
+        }, this);
     };
     SubscriptionManager.prototype.getAllSubscriptionURLs = function () {
         return this.dao.getAllSubscriptionURLs();
@@ -966,8 +979,7 @@ var UIManager = (function () {
     UIManager.prototype.updatePage = function () {
         try {
             this.resetPage();
-            this.updateSubscription();
-            this.updateMenu();
+            this.updateSubscription(this.updateMenu, this);
         }
         catch (err) {
             console.log(err);
@@ -984,10 +996,14 @@ var UIManager = (function () {
     UIManager.prototype.refreshFilteringAndSorting = function () {
         this.articleManager.refreshArticles();
     };
-    UIManager.prototype.updateSubscription = function () {
+    UIManager.prototype.updateSubscription = function (callback, thisArg) {
+        var _this = this;
         var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
-        this.subscription = this.subscriptionManager.loadSubscription(globalSettingsEnabled);
-        this.updateSubscriptionTitle(globalSettingsEnabled);
+        this.subscriptionManager.loadSubscription(globalSettingsEnabled, function (sub) {
+            _this.subscription = sub;
+            _this.updateSubscriptionTitle(globalSettingsEnabled);
+            callback.call(thisArg);
+        }, this);
     };
     UIManager.prototype.updateMenu = function () {
         var _this = this;
@@ -1268,9 +1284,8 @@ var UIManager = (function () {
     };
     UIManager.prototype.importFromOtherSub = function () {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
-        if (selectedURL && confirm("Import keywords from the subscription url /" + selectedURL + " ?")) {
-            this.subscriptionManager.importKeywords(selectedURL);
-            this.refreshPage();
+        if (selectedURL && confirm("Import settings from the subscription url /" + selectedURL + " ?")) {
+            this.subscriptionManager.importSettings(selectedURL, this.refreshPage, this);
         }
     };
     UIManager.prototype.linkToSub = function () {
@@ -1423,12 +1438,15 @@ var HTMLSubscriptionSetting = (function () {
 
 var GlobalSettingsCheckBox = (function () {
     function GlobalSettingsCheckBox(id, uiManager, fullRefreshOnChange) {
+        var _this = this;
         this.fullRefreshOnChange = true;
         this.id = id;
         this.uiManager = uiManager;
         this.htmlId = uiManager.getHTMLId(id);
-        this.enabled = LocalPersistence.get(this.id, true);
-        setRadioChecked(this.htmlId, this.enabled);
+        LocalPersistence.getAsync(this.id, true, function (enabled) {
+            _this.enabled = enabled;
+            setRadioChecked(_this.htmlId, _this.enabled);
+        }, this);
     }
     GlobalSettingsCheckBox.prototype.isEnabled = function () {
         return this.enabled;

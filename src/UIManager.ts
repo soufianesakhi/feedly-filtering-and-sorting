@@ -63,8 +63,7 @@ export class UIManager {
     updatePage() {
         try {
             this.resetPage();
-            this.updateSubscription();
-            this.updateMenu();
+            this.updateSubscription(this.updateMenu, this);
         } catch (err) {
             console.log(err);
         }
@@ -84,10 +83,13 @@ export class UIManager {
         this.articleManager.refreshArticles();
     }
 
-    updateSubscription() {
+    updateSubscription(callback: () => void, thisArg) {
         var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
-        this.subscription = this.subscriptionManager.loadSubscription(globalSettingsEnabled);
-        this.updateSubscriptionTitle(globalSettingsEnabled);
+        this.subscriptionManager.loadSubscription(globalSettingsEnabled, (sub) => {
+            this.subscription = sub;
+            this.updateSubscriptionTitle(globalSettingsEnabled);
+            callback.call(thisArg);
+        }, this);
     }
 
     updateMenu() {
@@ -406,9 +408,8 @@ export class UIManager {
 
     importFromOtherSub() {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
-        if (selectedURL && confirm("Import keywords from the subscription url /" + selectedURL + " ?")) {
-            this.subscriptionManager.importKeywords(selectedURL);
-            this.refreshPage();
+        if (selectedURL && confirm("Import settings from the subscription url /" + selectedURL + " ?")) {
+            this.subscriptionManager.importSettings(selectedURL, this.refreshPage, this);
         }
     }
 

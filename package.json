@@ -14,5 +14,17 @@
     "grunt-string-replace": "^1.2.1",
     "grunt-ts": "^5.4.0",
     "typings": "^1.5.0"
-  }
+  },
+  "keywords": [
+    "feedly",
+    "filtering",
+    "restricting",
+    "sorting",
+    "filters",
+    "filter",
+    "sort",
+    "articles",
+    "feeds",
+    "rss"
+  ]
 }

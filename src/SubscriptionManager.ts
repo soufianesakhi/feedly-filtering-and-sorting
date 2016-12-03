@@ -13,14 +13,16 @@ export class SubscriptionManager {
         this.dao = new SubscriptionDAO();
     }
 
-    loadSubscription(globalSettingsEnabled: boolean): Subscription {
-        var subscription: Subscription;
+    loadSubscription(globalSettingsEnabled: boolean, callback: (Subscription) => void, thisArg: any): void {
+        var onLoad = (sub: Subscription) => {
+            this.currentSubscription = sub;
+            callback.call(thisArg, sub)
+        };
         if (globalSettingsEnabled) {
-            subscription = this.dao.getGlobalSettings();
+            this.dao.loadGlobalSettings(onLoad, this);
         } else {
-            subscription = new Subscription(this.getActualSubscriptionURL(), this.dao);
+            this.dao.loadSubscription(this.getActualSubscriptionURL(), onLoad, this);
         }
-        return this.currentSubscription = subscription;
     }
 
     linkToSubscription(url: string) {
@@ -35,8 +37,11 @@ export class SubscriptionManager {
         this.dao.delete(url);
     }
 
-    importKeywords(url: string) {
-        this.currentSubscription.update(url);
+    importSettings(url: string, callback: () => void, thisArg: any) {
+        this.dao.loadSubscription(url, (sub) => {
+            this.currentSubscription = sub;
+            callback.call(thisArg);
+        }, this);
     }
 
     getAllSubscriptionURLs(): string[] {

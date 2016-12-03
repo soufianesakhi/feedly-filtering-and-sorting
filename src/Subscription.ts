@@ -8,18 +8,8 @@ export class Subscription {
     dto: SubscriptionDTO;
     private dao: SubscriptionDAO;
 
-    constructor(url: string, dao: SubscriptionDAO) {
+    constructor(dao: SubscriptionDAO) {
         this.dao = dao;
-        this.update(url, true);
-    }
-
-    update(url: string, skipSave?: boolean) {
-        var dto = this.dao.load(url);
-        var cloneURL = this.dto == null ? dto.url : this.getURL();
-        this.dto = this.dao.clone(dto, cloneURL);
-        if (!skipSave) {
-            this.dao.save(this.dto);
-        }
     }
 
     getURL(): string {
@@ -74,7 +64,7 @@ export class Subscription {
     setMaxHours_AdvancedControlsReceivedPeriod(hours: number, days: number) {
         var maxHours = hours + 24 * days;
         this.getAdvancedControlsReceivedPeriod().maxHours = maxHours;
-        this.dao.save(this.dto);
+        this.save();
     }
 
     getAdditionalSortingTypes(): SortingType[] {
@@ -83,17 +73,17 @@ export class Subscription {
 
     setAdditionalSortingTypes(additionalSortingTypes: SortingType[]) {
         this.dto.additionalSortingTypes = additionalSortingTypes;
-        this.dao.save(this.dto);
+        this.save();
     }
 
     addAdditionalSortingType(additionalSortingType: SortingType) {
         this.dto.additionalSortingTypes.push(additionalSortingType);
-        this.dao.save(this.dto);
+        this.save();
     }
 
     addKeyword(keyword: string, type: FilteringType) {
         this.getFilteringList(type).push(keyword);
-        this.dao.save(this.dto);
+        this.save();
     }
 
     removeKeyword(keyword: string, type: FilteringType) {
@@ -102,11 +92,14 @@ export class Subscription {
         if (index > -1) {
             keywordList.splice(index, 1);
         }
-        this.dao.save(this.dto);
+        this.save();
     }
 
     resetFilteringList(type: FilteringType) {
         this.getFilteringList(type).length = 0;
+    }
+
+    save() {
         this.dao.save(this.dto);
     }
 }

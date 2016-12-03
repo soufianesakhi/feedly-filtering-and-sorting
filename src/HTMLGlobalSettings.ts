@@ -1,8 +1,8 @@
 /// <reference path="./_references.d.ts" />
 
-import {LocalPersistence} from "./LocalPersistence";
-import {UIManager} from "./UIManager"
-import {$id, setRadioChecked, isRadioChecked} from "./Utils";
+import { LocalPersistence } from "./LocalPersistence";
+import { UIManager } from "./UIManager"
+import { $id, setRadioChecked, isRadioChecked } from "./Utils";
 
 export class GlobalSettingsCheckBox {
     id: string;
@@ -10,15 +10,17 @@ export class GlobalSettingsCheckBox {
     uiManager: UIManager;
     enabled: boolean;
     fullRefreshOnChange = true;
-    
+
     constructor(id: string, uiManager: UIManager, fullRefreshOnChange?: boolean) {
         this.id = id;
         this.uiManager = uiManager;
         this.htmlId = uiManager.getHTMLId(id);
-        this.enabled = LocalPersistence.get(this.id, true);
-        setRadioChecked(this.htmlId, this.enabled);
+        LocalPersistence.getAsync(this.id, true, (enabled) => {
+            this.enabled = enabled;
+            setRadioChecked(this.htmlId, this.enabled);
+        }, this);
     }
-    
+
     isEnabled(): boolean {
         return this.enabled;
     }
@@ -28,7 +30,7 @@ export class GlobalSettingsCheckBox {
         this.enabled = enabled;
         this.refreshUI();
     }
-    
+
     initUI() {
         var this_ = this;
         $id(this.htmlId).click(function () {
@@ -37,9 +39,9 @@ export class GlobalSettingsCheckBox {
         });
         this.refreshUI();
     }
-    
+
     refreshUI() {
         setRadioChecked(this.htmlId, this.enabled);
     }
-    
+
 }
