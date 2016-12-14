@@ -10,7 +10,7 @@
 // @require     http://code.jquery.com/jquery.min.js
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
 // @include     *://feedly.com/*
-// @version     2.1.0
+// @version     2.1.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -22,7 +22,7 @@ var ext = {
     "eraseIconLink": "https://cdn2.iconfinder.com/data/icons/large-glossy-svg-icons/512/erase_delete_remove_wipe_out-128.png",
     "closeIconLink": "https://cdn2.iconfinder.com/data/icons/social-productivity-line-art-1/128/close-cancel-128.png",
     "urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
-    "settingsBtnPredecessorSelector": ".button-markasread",
+    "settingsBtnPredecessorSelector": ".actions-and-details-container > .button-refresh",
     "articleSelector": ".list-entries > .entry",
     "sectionSelector": "#timeline > .section",
     "publishAgeSpanSelector": ".ago",
@@ -1094,9 +1094,6 @@ var UIManager = (function () {
             var clone = $(element).clone();
             $(clone).empty().removeAttr('class').removeAttr('title').addClass("ShowSettingsBtn");
             $(element).after(clone);
-            var actionsDiv = $(".actions-and-details-container").parent();
-            actionsDiv.removeClass('col-xs-4').removeClass("col-md-4");
-            actionsDiv.prev().removeAttr('class').addClass('col-xs-4').addClass("col-md-4");
             $(clone).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
             });
