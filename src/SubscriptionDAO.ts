@@ -1,10 +1,13 @@
+/// <reference path="./_references.d.ts" />
 
 import { FilteringType, SortingType, getFilteringTypes, getFilteringTypeId } from "./DataTypes";
 import { Subscription } from "./Subscription";
 import { SubscriptionDTO, AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
 import { SubscriptionManager } from "./SubscriptionManager";
-import { LocalPersistence } from "./LocalPersistence";
 import { registerAccessors, deepClone } from "./Utils";
+import { LocalStorage } from "./dao/LocalStorage";
+
+declare var LocalPersistence: LocalStorage;
 
 export class SubscriptionDAO {
     private SUBSCRIPTION_ID_PREFIX = "subscription_";
@@ -13,6 +16,13 @@ export class SubscriptionDAO {
 
     constructor() {
         registerAccessors(new SubscriptionDTO(""), "dto", Subscription.prototype, this.save, this);
+    }
+
+    init(callback: () => void, thisArg) {
+        this.loadSubscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL, (sub) => {
+            this.defaultSubscription = sub;
+            callback.call(thisArg);
+        }, this);
     }
 
     loadSubscription(url: string, callback: (sub: Subscription) => void, thisArg: any): void {
@@ -32,21 +42,18 @@ export class SubscriptionDAO {
 
     load(url: string, callback: (dto: SubscriptionDTO) => void, thisArg: any): void {
         LocalPersistence.getAsync(this.getSubscriptionId(url), null, (dto) => {
-            if (dto != null) {
-                var linkedURL = (<LinkedSubscriptionDTO>dto).linkedUrl;
-                if (linkedURL != null) {
-                    console.log("Loading linked subscription: " + linkedURL);
-                    this.load(linkedURL, callback, thisArg);
-                    return;
-                } else {
-                    console.log("Loaded saved subscription: " + JSON.stringify(dto));
-                }
-            } else {
-                this.loadGlobalSettings((sub) => {
-                    dto = this.clone(sub.dto, url);
-                }, this);
+            if (dto == null) {
+                callback.call(thisArg, dto);
             }
-            callback.call(thisArg, dto);
+            var linkedURL = (<LinkedSubscriptionDTO>dto).linkedUrl;
+            if (linkedURL != null) {
+                console.log("Loading linked subscription: " + linkedURL);
+                this.load(linkedURL, callback, thisArg);
+                return;
+            } else {
+                console.log("Loaded saved subscription: " + JSON.stringify(dto));
+                callback.call(thisArg, dto);
+            }
         }, this);
     }
 
@@ -64,14 +71,7 @@ export class SubscriptionDAO {
     }
 
     loadGlobalSettings(callback: (Subscription) => void, thisArg: any): void {
-        if (!this.defaultSubscription) {
-            this.loadSubscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL, (sub) => {
-                this.defaultSubscription = sub;
-                callback.call(thisArg, sub);
-            }, this);
-        } else {
-            callback.call(thisArg, this.defaultSubscription);
-        }
+        callback.call(thisArg, this.defaultSubscription);
     }
 
     getAllSubscriptionURLs(): string[] {

@@ -13,6 +13,10 @@ export class SubscriptionManager {
         this.dao = new SubscriptionDAO();
     }
 
+    init(callback: () => void, thisArg) {
+        this.dao.init(callback, thisArg)
+    }
+
     loadSubscription(globalSettingsEnabled: boolean, callback: (Subscription) => void, thisArg: any): void {
         var onLoad = (sub: Subscription) => {
             this.currentSubscription = sub;

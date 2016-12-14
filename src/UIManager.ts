@@ -43,7 +43,7 @@ export class UIManager {
     settingsDivContainerId = this.getHTMLId("settingsDivContainer");
     closeBtnId = this.getHTMLId("CloseSettingsBtn");
 
-    init() {
+    init(callback: () => void, thisArg) {
         try {
             this.subscriptionManager = new SubscriptionManager();
             this.page = new FeedlyPage(this.subscriptionManager);
@@ -53,8 +53,13 @@ export class UIManager {
             this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
             this.initUI();
             this.registerSettings();
-            this.updatePage();
-            this.initSettingsCallbacks();
+            this.subscriptionManager.init(() => {
+                this.updateSubscription(() => {
+                    this.updateMenu();
+                    this.initSettingsCallbacks();
+                    callback.call(thisArg);
+                }, this);
+            }, this);
         } catch (err) {
             console.log(err);
         }

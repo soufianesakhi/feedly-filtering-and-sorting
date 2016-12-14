@@ -1,21 +1,3 @@
-// ==UserScript==
-// @name        Feedly filtering and sorting
-// @namespace   https://github.com/soufianesakhi/feedly-filtering-and-sorting
-// @description Enhance the feedly website with advanced filtering and sorting capabilities
-// @author      Soufiane Sakhi
-// @license     MIT licensed, Copyright (c) 2016 Soufiane Sakhi (https://opensource.org/licenses/MIT)
-// @homepage    https://github.com/soufianesakhi/feedly-filtering-and-sorting
-// @supportURL  https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues
-// @icon        http://s3.feedly.com/img/feedly-512.png
-// @require     http://code.jquery.com/jquery.min.js
-// @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
-// @include     *://feedly.com/*
-// @version     2.1.0
-// @grant       GM_setValue
-// @grant       GM_getValue
-// @grant       GM_deleteValue
-// @grant       GM_listValues
-// ==/UserScript==
 
 var ext = {
     "plusIconLink": "https://cdn0.iconfinder.com/data/icons/social-messaging-ui-color-shapes/128/add-circle-blue-128.png",
@@ -171,22 +153,35 @@ function getFilteringTypeId(type) {
     return FilteringType[type];
 }
 
-var UserScriptStorage = (function () {
-    function UserScriptStorage() {
+var LocalPersistence = (function () {
+    function LocalPersistence() {
     }
-    UserScriptStorage.prototype.getAsync = function (id, defaultValue, callback, thisArg) {
-        var data = JSON.parse(GM_getValue(id, JSON.stringify(defaultValue)));
-        callback.call(thisArg, data);
+    function onError(error) {
+        console.log("Error: " + error);
+    }
+    LocalPersistence.getAsync = function (id, defaultValue, callback, thisArg) {
+        var promise = browser.storage.local.get(id);
+        promise.then((result) => {
+            var data = result[id];
+            if (data == null) {
+                data = defaultValue;
+            }
+            callback.call(thisArg, data);
+        }, (error) => {
+            console.log("Error: " + error);
+            callback.call(thisArg, defaultValue);
+        });
     };
-    UserScriptStorage.prototype.put = function (id, value, replace) {
-        GM_setValue(id, JSON.stringify(value, replace));
+    LocalPersistence.put = function (id, value) {
+        var promise = browser.storage.local.set({ id: value });
+        promise.then(null, onError);
     };
-    UserScriptStorage.prototype.delete = function (id) {
-        GM_deleteValue(id);
+    LocalPersistence.delete = function (id) {
+        var promise = browser.storage.local.remove(id);
+        promise.then(null, onError);
     };
-    return UserScriptStorage;
-}());
-var LocalPersistence = new UserScriptStorage();
+    return LocalPersistence;
+} ());
 
 var SubscriptionDTO = (function () {
     function SubscriptionDTO(url) {
@@ -206,7 +201,7 @@ var SubscriptionDTO = (function () {
         });
     }
     return SubscriptionDTO;
-}());
+} ());
 var AdvancedControlsReceivedPeriod = (function () {
     function AdvancedControlsReceivedPeriod() {
         this.maxHours = 6;
@@ -217,7 +212,7 @@ var AdvancedControlsReceivedPeriod = (function () {
         this.markAsReadVisible = false;
     }
     return AdvancedControlsReceivedPeriod;
-}());
+} ());
 
 var Subscription = (function () {
     function Subscription(dao) {
@@ -296,7 +291,7 @@ var Subscription = (function () {
         this.dao.save(this.dto);
     };
     return Subscription;
-}());
+} ());
 
 var SubscriptionDAO = (function () {
     function SubscriptionDAO() {
@@ -359,14 +354,7 @@ var SubscriptionDAO = (function () {
         callback.call(thisArg, this.defaultSubscription);
     };
     SubscriptionDAO.prototype.getAllSubscriptionURLs = function () {
-        var _this = this;
-        var urls = GM_listValues().filter(function (value) {
-            return value.indexOf(_this.SUBSCRIPTION_ID_PREFIX) == 0;
-        });
-        urls = urls.map(function (value) {
-            return value.substring(_this.SUBSCRIPTION_ID_PREFIX.length);
-        });
-        return urls;
+        return [];
     };
     SubscriptionDAO.prototype.getSubscriptionId = function (url) {
         return this.SUBSCRIPTION_ID_PREFIX + url;
@@ -381,13 +369,13 @@ var SubscriptionDAO = (function () {
         return url === this.GLOBAL_SETTINGS_SUBSCRIPTION_URL;
     };
     return SubscriptionDAO;
-}());
+} ());
 var LinkedSubscriptionDTO = (function () {
     function LinkedSubscriptionDTO(linkedUrl) {
         this.linkedUrl = linkedUrl;
     }
     return LinkedSubscriptionDTO;
-}());
+} ());
 
 var SubscriptionManager = (function () {
     function SubscriptionManager() {
@@ -441,7 +429,7 @@ var SubscriptionManager = (function () {
         return this.currentSubscription;
     };
     return SubscriptionManager;
-}());
+} ());
 
 var ArticleManager = (function () {
     function ArticleManager(subscriptionManager, page) {
@@ -642,7 +630,7 @@ var ArticleManager = (function () {
         }
     };
     return ArticleManager;
-}());
+} ());
 var ArticleSorterFactory = (function () {
     function ArticleSorterFactory() {
         this.sorterByType = {};
@@ -696,7 +684,7 @@ var ArticleSorterFactory = (function () {
         };
     };
     return ArticleSorterFactory;
-}());
+} ());
 var Article = (function () {
     function Article(article) {
         this.article = $(article);
@@ -751,7 +739,7 @@ var Article = (function () {
         return !(this.article.css("display") === "none");
     };
     return Article;
-}());
+} ());
 
 var templates = {
     "settingsHTML": "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' class='pageAction requiresLogin'> <fieldset> <legend>General settings</legend> <span class='setting_group'> <span class='tooltip'> Auto load all unread articles <span class='tooltiptext'>Not applied if there are no unread articles</span> </span> <input id='FFnS_autoLoadAllArticles' type='checkbox'> </span> <span class='setting_group'> <span class='tooltip'> Always use global settings <span class='tooltiptext'>Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span> </span> <input id='FFnS_globalSettingsEnabled' type='checkbox'> </span> </fieldset> <fieldset> <legend><span id='FFnS_subscription_title'></span></legend> <span class='setting_group'> <span class='tooltip'> Filtering enabled <span class='tooltiptext'>Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span> </span> <input id='FFnS_FilteringEnabled' type='checkbox'> </span> <span class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext'>Show only articles that contain at least one of the restricting keywords (not applied if empty)</span> </span> <input id='FFnS_RestrictingEnabled' type='checkbox'> </span> <span class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> {{SortingSelect}} </span> <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li> <a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a> </li> <li> <a href='#FFnS_Tab_UIControls'>UI controls</a> </li> <li> <a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a> </li> <li> <a href='#FFnS_Tab_SettingsControls'>Settings controls</a> </li> </ul> <div id='FFnS_tabs_content'> {{FilteringList.Type.FilteredOut}} {{FilteringList.Type.RestrictedOn}} <div id='FFnS_Tab_UIControls' class='FFnS_Tab_Menu'> <span>Add a button to open articles in a new window/tab and mark them as read</span> <input id='FFnS_OpenAndMarkAsRead' type='checkbox'> </div> <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently published articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles published less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23'> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0'> <span>days</span> <span>ago should be:</span> </div> <span class='setting_group'> <span>Kept unread</span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' step='100'> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Marked as read if visible:</span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox'> </span> </fieldset> <fieldset> <legend>Hot articles</legend> <span class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox'> </span> </fieldset> <fieldset> <legend>Additional sorting levels (applied when two entries have equal sorting)</legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <span>Selected subscription:</span> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input'> {{ImportMenu.SubscriptionOptions}} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'>Import settings from selected subscription</button> <button id='FFnS_SettingsControls_DeleteSub'>Delete selected subscription</button> <fieldset> <legend>Linking</legend> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'>Link current subscription to selected subscription</button> </fieldset> </div> </div> </fieldset> </div> </div>",
@@ -922,7 +910,7 @@ var FeedlyPage = (function () {
         };
     };
     return FeedlyPage;
-}());
+} ());
 var FeedlyReader = (function () {
     function FeedlyReader(page) {
         this.eval = page.eval;
@@ -931,7 +919,7 @@ var FeedlyReader = (function () {
         this.eval("window.streets.service('reader').askMarkEntryAsRead('" + entryId + "');");
     };
     return FeedlyReader;
-}());
+} ());
 
 var UIManager = (function () {
     function UIManager() {
@@ -1340,7 +1328,7 @@ var UIManager = (function () {
         return displayProp != null && displayProp != 'none';
     };
     return UIManager;
-}());
+} ());
 
 var HTMLSubscriptionManager = (function () {
     function HTMLSubscriptionManager(manager) {
@@ -1412,7 +1400,7 @@ var HTMLSubscriptionManager = (function () {
         });
     };
     return HTMLSubscriptionManager;
-}());
+} ());
 var HTMLSubscriptionSetting = (function () {
     function HTMLSubscriptionSetting(manager, id, config, subscriptionSettingConfig) {
         this.manager = manager;
@@ -1438,7 +1426,7 @@ var HTMLSubscriptionSetting = (function () {
         this.config.setUpChangeCallback(this);
     };
     return HTMLSubscriptionSetting;
-}());
+} ());
 
 var GlobalSettingsCheckBox = (function () {
     function GlobalSettingsCheckBox(id, uiManager, fullRefreshOnChange) {
@@ -1472,7 +1460,7 @@ var GlobalSettingsCheckBox = (function () {
         setRadioChecked(this.htmlId, this.enabled);
     };
     return GlobalSettingsCheckBox;
-}());
+} ());
 
 function injectResources() {
     $("head").append("<style>" + templates.styleCSS + "</style>");

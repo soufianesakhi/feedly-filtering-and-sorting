@@ -6,7 +6,8 @@
         "watch": true
     },
     "filesGlob": [
-        "src/*.ts"
+        "src/*.ts",
+        "src/**/*.ts"
     ],
     "atom": {
         "rewriteTsconfig": true
@@ -18,7 +19,6 @@
         "src/FeedlyPage.ts",
         "src/HTMLGlobalSettings.ts",
         "src/HTMLSubscription.ts",
-        "src/LocalPersistence.ts",
         "src/Main.ts",
         "src/Subscription.ts",
         "src/SubscriptionDAO.ts",
@@ -27,6 +27,9 @@
         "src/Templates.ts",
         "src/UIManager.ts",
         "src/Utils.ts",
-        "src/_references.d.ts"
+        "src/_references.d.ts",
+        "src/dao/LocalStorage.d.ts",
+        "src/dao/UserScriptStorage.ts",
+        "src/dao/WebExtLocalStorage.ts"
     ]
 }

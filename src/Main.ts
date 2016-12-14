@@ -19,9 +19,10 @@ $(document).ready(function () {
 
     NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
         console.log("Feedly page fully loaded");
-        uiManager.init();
-        NodeCreationObserver.onCreation(ext.articleSelector, uiManagerBind(uiManager.addArticle));
-        NodeCreationObserver.onCreation(ext.sectionSelector, uiManagerBind(uiManager.addSection));
-        NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, uiManagerBind(uiManager.updatePage));
+        uiManager.init(() => {
+            NodeCreationObserver.onCreation(ext.articleSelector, uiManagerBind(uiManager.addArticle));
+            NodeCreationObserver.onCreation(ext.sectionSelector, uiManagerBind(uiManager.addSection));
+            NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, uiManagerBind(uiManager.updatePage));
+        }, this);
     }, true);
 });

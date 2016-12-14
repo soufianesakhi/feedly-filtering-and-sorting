@@ -1,14 +1,22 @@
-module.exports = function(grunt) {
-    var files = grunt.file.readJSON('compile.json').files;
-    var srcFiles = [], targetFiles = [], srcReplacements = [];
-    files.forEach(function(file) {
-        srcFiles.push("src/" + file + ".ts");
-        targetFiles.push("target/" + file + ".js");
+module.exports = function (grunt) {
+    var srcFiles = grunt.file.readJSON('tsconfig.json').files;
+    var watchedFiles = grunt.file.expand("*.js*", "resources/*").concat(srcFiles);
+    var srcReplacements = [];
+    srcFiles.forEach(function (srcFile) {
+        var file = srcFile.replace(/.*[\\\/]/g, "").replace(/\..*/g, "");
         srcReplacements.push({
             pattern: new RegExp(file + "_[0-9]+\.", "ig"),
             replacement: ''
         });
     });
+    var compile = grunt.file.readJSON('compile.json');
+    for (var c in compile) {
+        var targetFiles = [];
+        compile[c]["src"].forEach(function (file) {
+            targetFiles.push("target/" + file + ".js");
+        });
+        compile[c]["src"] = targetFiles;
+    }
 
     var templates = grunt.file.readJSON('templates.json');
     var replacements = [];
@@ -33,7 +41,7 @@ module.exports = function(grunt) {
             }
         },
         watch: {
-            files: ['resources/Header.js', 'resources/style.css', 'resources/settings.html', 'Gruntfile.js', 'package.json'].concat(srcFiles),
+            files: watchedFiles,
             tasks: ['default'],
             options: {
                 interrupt: true
@@ -72,13 +80,13 @@ module.exports = function(grunt) {
                 }
             },
             'templates': {
-                files: [{src: 'target/Templates.js', dest: 'target/Templates.js'}],
+                files: [{ src: 'target/Templates.js', dest: 'target/Templates.js' }],
                 options: {
                     replacements: replacements
                 }
             },
             'version': {
-                files: [{src: 'resources/Header.js', dest: 'target/Header.js'}],
+                files: [{ src: 'resources/Header.js', dest: 'target/Header.js' }],
                 options: {
                     replacements: [{
                         pattern: '{{version}}',
@@ -87,17 +95,12 @@ module.exports = function(grunt) {
                 }
             }
         },
-        concat: {
-            script: {
-                src: ['target/Header.js'].concat(targetFiles),
-                dest: 'script/<%= pkg.finalName %>.user.js'
-            }
-        },
+        concat: compile,
         copy: {
             deploy: {
-                src: 'script/<%= pkg.finalName %>.user.js',
+                src: 'script/<%= pkg.scriptName %>.user.js',
                 dest: '<%= deploy.path %>',
-                filter: function(filepath) {
+                filter: function (filepath) {
                     var dest = grunt.config('copy.deploy.dest');
                     return dest !== "";
                 }
@@ -116,7 +119,7 @@ module.exports = function(grunt) {
         'string-replace:ts',
         'string-replace:templates',
         'string-replace:version',
-        'concat:script',
+        'concat',
         'copy:deploy'
     ]);
 };

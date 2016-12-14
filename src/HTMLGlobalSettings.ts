@@ -1,8 +1,10 @@
 /// <reference path="./_references.d.ts" />
 
-import { LocalPersistence } from "./LocalPersistence";
 import { UIManager } from "./UIManager"
 import { $id, setRadioChecked, isRadioChecked } from "./Utils";
+import { LocalStorage } from "./dao/LocalStorage";
+
+declare var LocalPersistence: LocalStorage;
 
 export class GlobalSettingsCheckBox {
     id: string;

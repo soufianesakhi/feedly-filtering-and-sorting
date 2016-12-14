@@ -1,19 +1,43 @@
 {
-    "files": [
-        "Externals",
-        "Utils",
-        "DataTypes",
-        "LocalPersistence",
-        "SubscriptionDTO",
-        "Subscription",
-        "SubscriptionDAO",
-        "SubscriptionManager",
-        "ArticleManager",
-        "Templates",
-        "FeedlyPage",
-        "UIManager",
-        "HTMLSubscription",
-        "HTMLGlobalSettings",
-        "Main"
-    ]
+    "script": {
+        "src": [
+            "Header",
+            "Externals",
+            "Utils",
+            "DataTypes",
+            "dao/UserScriptStorage",
+            "SubscriptionDTO",
+            "Subscription",
+            "SubscriptionDAO",
+            "SubscriptionManager",
+            "ArticleManager",
+            "Templates",
+            "FeedlyPage",
+            "UIManager",
+            "HTMLSubscription",
+            "HTMLGlobalSettings",
+            "Main"
+        ],
+        "dest": "script/<%= pkg.scriptName %>.user.js"
+    },
+    "web-ext": {
+        "src": [
+            "Externals",
+            "Utils",
+            "DataTypes",
+            "dao/WebExtLocalStorage",
+            "SubscriptionDTO",
+            "Subscription",
+            "SubscriptionDAO",
+            "SubscriptionManager",
+            "ArticleManager",
+            "Templates",
+            "FeedlyPage",
+            "UIManager",
+            "HTMLSubscription",
+            "HTMLGlobalSettings",
+            "Main"
+        ],
+        "dest": "web-ext/<%= pkg.name %>.js"
+    }
 }

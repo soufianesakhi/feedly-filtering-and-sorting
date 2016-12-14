@@ -1,22 +1,3 @@
-// ==UserScript==
-// @name        Feedly filtering and sorting
-// @namespace   https://github.com/soufianesakhi/feedly-filtering-and-sorting
-// @description Enhance the feedly website with advanced filtering and sorting capabilities
-// @author      Soufiane Sakhi
-// @license     MIT licensed, Copyright (c) 2016 Soufiane Sakhi (https://opensource.org/licenses/MIT)
-// @homepage    https://github.com/soufianesakhi/feedly-filtering-and-sorting
-// @supportURL  https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues
-// @icon        http://s3.feedly.com/img/feedly-512.png
-// @require     http://code.jquery.com/jquery.min.js
-// @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
-// @include     *://feedly.com/*
-// @version     2.1.0
-// @grant       GM_setValue
-// @grant       GM_getValue
-// @grant       GM_deleteValue
-// @grant       GM_listValues
-// ==/UserScript==
-
 var ext = {
     "plusIconLink": "https://cdn0.iconfinder.com/data/icons/social-messaging-ui-color-shapes/128/add-circle-blue-128.png",
     "eraseIconLink": "https://cdn2.iconfinder.com/data/icons/large-glossy-svg-icons/512/erase_delete_remove_wipe_out-128.png",
@@ -171,22 +152,34 @@ function getFilteringTypeId(type) {
     return FilteringType[type];
 }
 
-var UserScriptStorage = (function () {
-    function UserScriptStorage() {
+var WebExtLocalStorage = (function () {
+    function WebExtLocalStorage() {
+        this.storage = browser.storage.local;
+        this.onError = function (error) {
+            console.log("Error: " + error);
+        };
     }
-    UserScriptStorage.prototype.getAsync = function (id, defaultValue, callback, thisArg) {
-        var data = JSON.parse(GM_getValue(id, JSON.stringify(defaultValue)));
-        callback.call(thisArg, data);
+    WebExtLocalStorage.prototype.getAsync = function (id, defaultValue, callback, thisArg) {
+        this.storage.get(id).then(function (result) {
+            var data = result[id];
+            if (data == null) {
+                data = defaultValue;
+            }
+            callback.call(thisArg, data);
+        }, function (error) {
+            console.log("Error: " + error);
+            callback.call(thisArg, defaultValue);
+        });
     };
-    UserScriptStorage.prototype.put = function (id, value, replace) {
-        GM_setValue(id, JSON.stringify(value, replace));
+    WebExtLocalStorage.prototype.put = function (id, value, replace) {
+        this.storage.set({ id: value }).then(null, this.onError);
     };
-    UserScriptStorage.prototype.delete = function (id) {
-        GM_deleteValue(id);
+    WebExtLocalStorage.prototype.delete = function (id) {
+        this.storage.remove(id).then(null, this.onError);
     };
-    return UserScriptStorage;
+    return WebExtLocalStorage;
 }());
-var LocalPersistence = new UserScriptStorage();
+var Storage = new WebExtLocalStorage();
 
 var SubscriptionDTO = (function () {
     function SubscriptionDTO(url) {
