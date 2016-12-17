@@ -1,12 +1,14 @@
 /// <reference path="../_references.d.ts" />
 
 import { LocalStorage } from "./LocalStorage";
+import { AsyncResult } from "../AsyncResult";
 
 export class UserScriptStorage implements LocalStorage {
 
-    public getAsync<t>(id: string, defaultValue: t, callback: (data: t) => void, thisArg): void {
-        var data = JSON.parse(GM_getValue(id, JSON.stringify(defaultValue)));
-        callback.call(thisArg, data);
+    public getAsync<t>(id: string, defaultValue: t): AsyncResult<t> {
+        return new AsyncResult<t>((p) => {
+            p.result(JSON.parse(GM_getValue(id, JSON.stringify(defaultValue))));
+        }, this);
     }
 
     public put(id: string, value: any, replace?: (key: string, value: any) => any) {
@@ -16,6 +18,17 @@ export class UserScriptStorage implements LocalStorage {
     public delete(id: string) {
         GM_deleteValue(id);
     }
+
+    public listKeys(): string[] {
+        return GM_listValues();
+    }
+
+    public init(): AsyncResult<any> {
+        return new AsyncResult<any>((p) => {
+            p.done();
+        }, this);
+    }
+
 }
 
 var LocalPersistence = new UserScriptStorage();

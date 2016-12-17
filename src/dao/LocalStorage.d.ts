@@ -1,10 +1,13 @@
 /// <reference path="../_references.d.ts" />
 
-export interface LocalStorage {
+import { AsyncResult } from "../AsyncResult";
 
-    getAsync<t>(id: string, defaultValue: t, callback: (data: t) => void, thisArg): void;
+export interface LocalStorage {
+    getAsync<t>(id: string, defaultValue: t): AsyncResult<t>;
     put(id: string, value: any, replace?: (key: string, value: any) => any);
     delete(id: string);
+    listKeys(): string[];
+    init(): AsyncResult<any>;
 }
 
 export interface LocalStorageArea {

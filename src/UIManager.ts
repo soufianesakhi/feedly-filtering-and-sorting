@@ -9,6 +9,7 @@ import { GlobalSettingsCheckBox } from "./HTMLGlobalSettings";
 import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
 import { $id, bindMarkup } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
+import { AsyncResult } from "./AsyncResult";
 
 export class UIManager {
     page: FeedlyPage;
@@ -43,32 +44,30 @@ export class UIManager {
     settingsDivContainerId = this.getHTMLId("settingsDivContainer");
     closeBtnId = this.getHTMLId("CloseSettingsBtn");
 
-    init(callback: () => void, thisArg) {
-        try {
+    init() {
+        return new AsyncResult<any>((p) => {
             this.subscriptionManager = new SubscriptionManager();
             this.page = new FeedlyPage(this.subscriptionManager);
             this.articleManager = new ArticleManager(this.subscriptionManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
             this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
             this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
-            this.initUI();
-            this.registerSettings();
-            this.subscriptionManager.init(() => {
-                this.updateSubscription(() => {
+            this.subscriptionManager.init().then(() => {
+                this.updateSubscription().then(() => {
+                    this.initUI();
+                    this.registerSettings();
                     this.updateMenu();
                     this.initSettingsCallbacks();
-                    callback.call(thisArg);
+                    p.done();
                 }, this);
             }, this);
-        } catch (err) {
-            console.log(err);
-        }
+        }, this);
     }
 
     updatePage() {
         try {
             this.resetPage();
-            this.updateSubscription(this.updateMenu, this);
+            this.updateSubscription().then(this.updateMenu, this);
         } catch (err) {
             console.log(err);
         }
@@ -88,12 +87,14 @@ export class UIManager {
         this.articleManager.refreshArticles();
     }
 
-    updateSubscription(callback: () => void, thisArg) {
-        var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
-        this.subscriptionManager.loadSubscription(globalSettingsEnabled, (sub) => {
-            this.subscription = sub;
-            this.updateSubscriptionTitle(globalSettingsEnabled);
-            callback.call(thisArg);
+    updateSubscription(): AsyncResult<any> {
+        return new AsyncResult<any>((p) => {
+            var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
+            this.subscriptionManager.loadSubscription(globalSettingsEnabled).then((sub) => {
+                this.subscription = sub;
+                this.updateSubscriptionTitle(globalSettingsEnabled);
+                p.done();
+            }, this);
         }, this);
     }
 
@@ -410,7 +411,7 @@ export class UIManager {
     importFromOtherSub() {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
         if (selectedURL && confirm("Import settings from the subscription url /" + selectedURL + " ?")) {
-            this.subscriptionManager.importSettings(selectedURL, this.refreshPage, this);
+            this.subscriptionManager.importSettings(selectedURL).then(this.refreshPage, this);
         }
     }
 

@@ -3,6 +3,7 @@
 import { FilteringType, SortingType } from "./DataTypes";
 import { Subscription } from "./Subscription";
 import { SubscriptionDAO } from "./SubscriptionDAO";
+import { AsyncResult } from "./AsyncResult";
 
 export class SubscriptionManager {
     private currentSubscription: Subscription;
@@ -13,20 +14,24 @@ export class SubscriptionManager {
         this.dao = new SubscriptionDAO();
     }
 
-    init(callback: () => void, thisArg) {
-        this.dao.init(callback, thisArg)
+    init(): AsyncResult<any> {
+        return new AsyncResult<any>((p) => {
+            this.dao.init().chain(p);
+        }, this);
     }
 
-    loadSubscription(globalSettingsEnabled: boolean, callback: (Subscription) => void, thisArg: any): void {
-        var onLoad = (sub: Subscription) => {
-            this.currentSubscription = sub;
-            callback.call(thisArg, sub)
-        };
-        if (globalSettingsEnabled) {
-            this.dao.loadGlobalSettings(onLoad, this);
-        } else {
-            this.dao.loadSubscription(this.getActualSubscriptionURL(), onLoad, this);
-        }
+    loadSubscription(globalSettingsEnabled: boolean): AsyncResult<any> {
+        return new AsyncResult<any>((p) => {
+            var onLoad = (sub: Subscription) => {
+                this.currentSubscription = sub;
+                p.result(sub);
+            };
+            if (globalSettingsEnabled) {
+                onLoad.call(this, this.dao.getGlobalSettings());
+            } else {
+                this.dao.loadSubscription(this.getActualSubscriptionURL()).then(onLoad, this);
+            }
+        }, this);
     }
 
     linkToSubscription(url: string) {
@@ -41,10 +46,12 @@ export class SubscriptionManager {
         this.dao.delete(url);
     }
 
-    importSettings(url: string, callback: () => void, thisArg: any) {
-        this.dao.loadSubscription(url, (sub) => {
-            this.currentSubscription = sub;
-            callback.call(thisArg);
+    importSettings(url: string): AsyncResult<any> {
+        return new AsyncResult<any>((p) => {
+            this.dao.loadSubscription(url).then((sub) => {
+                this.currentSubscription = sub;
+                p.done();
+            }, this);
         }, this);
     }
 

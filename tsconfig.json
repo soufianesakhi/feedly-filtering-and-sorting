@@ -14,6 +14,7 @@
     },
     "files": [
         "src/ArticleManager.ts",
+        "src/AsyncResult.ts",
         "src/DataTypes.ts",
         "src/Externals.ts",
         "src/FeedlyPage.ts",

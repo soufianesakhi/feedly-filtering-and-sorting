@@ -8,8 +8,11 @@ export class Subscription {
     dto: SubscriptionDTO;
     private dao: SubscriptionDAO;
 
-    constructor(dao: SubscriptionDAO) {
+    constructor(dao: SubscriptionDAO, dto?: SubscriptionDTO) {
         this.dao = dao;
+        if (dto) {
+            this.dto = dto;
+        }
     }
 
     getURL(): string {

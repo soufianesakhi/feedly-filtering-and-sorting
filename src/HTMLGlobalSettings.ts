@@ -17,7 +17,7 @@ export class GlobalSettingsCheckBox {
         this.id = id;
         this.uiManager = uiManager;
         this.htmlId = uiManager.getHTMLId(id);
-        LocalPersistence.getAsync(this.id, true, (enabled) => {
+        LocalPersistence.getAsync(this.id, true).then((enabled) => {
             this.enabled = enabled;
             setRadioChecked(this.htmlId, this.enabled);
         }, this);

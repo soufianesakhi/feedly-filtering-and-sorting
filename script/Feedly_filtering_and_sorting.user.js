@@ -22,7 +22,7 @@ var ext = {
     "eraseIconLink": "https://cdn2.iconfinder.com/data/icons/large-glossy-svg-icons/512/erase_delete_remove_wipe_out-128.png",
     "closeIconLink": "https://cdn2.iconfinder.com/data/icons/social-productivity-line-art-1/128/close-cancel-128.png",
     "urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
-    "settingsBtnPredecessorSelector": ".button-markasread",
+    "settingsBtnPredecessorSelector": ".button-refresh",
     "articleSelector": ".list-entries > .entry",
     "sectionSelector": "#timeline > .section",
     "publishAgeSpanSelector": ".ago",
@@ -171,18 +171,68 @@ function getFilteringTypeId(type) {
     return FilteringType[type];
 }
 
+var AsyncResult = (function () {
+    function AsyncResult(task, taskThisArg) {
+        this.task = task;
+        this.taskThisArg = taskThisArg;
+    }
+    AsyncResult.prototype.then = function (callback, thisArg) {
+        try {
+            this.resultCallback = callback;
+            this.resultThisArg = thisArg;
+            this.task.call(this.taskThisArg, this);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    };
+    ;
+    AsyncResult.prototype.result = function (result) {
+        try {
+            this.resultCallback.call(this.resultThisArg, result);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    };
+    ;
+    AsyncResult.prototype.chain = function (asyncResult) {
+        this.then(function () {
+            asyncResult.done();
+        }, this);
+    };
+    AsyncResult.prototype.done = function () {
+        try {
+            this.resultCallback.apply(this.resultThisArg);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    };
+    return AsyncResult;
+}());
+
 var UserScriptStorage = (function () {
     function UserScriptStorage() {
     }
-    UserScriptStorage.prototype.getAsync = function (id, defaultValue, callback, thisArg) {
-        var data = JSON.parse(GM_getValue(id, JSON.stringify(defaultValue)));
-        callback.call(thisArg, data);
+    UserScriptStorage.prototype.getAsync = function (id, defaultValue) {
+        return new AsyncResult(function (p) {
+            p.result(JSON.parse(GM_getValue(id, JSON.stringify(defaultValue))));
+        }, this);
     };
     UserScriptStorage.prototype.put = function (id, value, replace) {
         GM_setValue(id, JSON.stringify(value, replace));
     };
     UserScriptStorage.prototype.delete = function (id) {
         GM_deleteValue(id);
+    };
+    UserScriptStorage.prototype.listKeys = function () {
+        return GM_listValues();
+    };
+    UserScriptStorage.prototype.init = function () {
+        return new AsyncResult(function (p) {
+            p.done();
+        }, this);
     };
     return UserScriptStorage;
 }());
@@ -220,8 +270,11 @@ var AdvancedControlsReceivedPeriod = (function () {
 }());
 
 var Subscription = (function () {
-    function Subscription(dao) {
+    function Subscription(dao, dto) {
         this.dao = dao;
+        if (dto) {
+            this.dto = dto;
+        }
     }
     Subscription.prototype.getURL = function () {
         return this.dto.url;
@@ -304,19 +357,33 @@ var SubscriptionDAO = (function () {
         this.GLOBAL_SETTINGS_SUBSCRIPTION_URL = "---global settings---";
         registerAccessors(new SubscriptionDTO(""), "dto", Subscription.prototype, this.save, this);
     }
-    SubscriptionDAO.prototype.init = function (callback, thisArg) {
+    SubscriptionDAO.prototype.init = function () {
         var _this = this;
-        this.loadSubscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL, function (sub) {
-            _this.defaultSubscription = sub;
-            callback.call(thisArg);
+        return new AsyncResult(function (p) {
+            LocalPersistence.init().then(function () {
+                var onLoad = function (sub) {
+                    this.defaultSubscription = sub;
+                    p.done();
+                };
+                if (LocalPersistence.listKeys().indexOf(_this.getSubscriptionId(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL)) > -1) {
+                    _this.loadSubscription(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL).then(onLoad, _this);
+                }
+                else {
+                    var dto = new SubscriptionDTO(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL);
+                    _this.save(dto);
+                    onLoad.call(_this, new Subscription(_this, dto));
+                }
+            }, _this);
         }, this);
     };
-    SubscriptionDAO.prototype.loadSubscription = function (url, callback, thisArg) {
+    SubscriptionDAO.prototype.loadSubscription = function (url) {
         var _this = this;
-        var sub = new Subscription(this);
-        this.load(url, function (dto) {
-            sub.dto = _this.clone(dto, dto.url);
-            callback.call(thisArg, sub);
+        return new AsyncResult(function (p) {
+            var sub = new Subscription(_this);
+            _this.load(url).then(function (dto) {
+                sub.dto = dto;
+                p.result(sub);
+            }, _this);
         }, this);
     };
     ;
@@ -326,22 +393,32 @@ var SubscriptionDAO = (function () {
         LocalPersistence.put(id, dto);
         console.log("Subscription saved: " + JSON.stringify(dto));
     };
-    SubscriptionDAO.prototype.load = function (url, callback, thisArg) {
+    SubscriptionDAO.prototype.load = function (url) {
         var _this = this;
-        LocalPersistence.getAsync(this.getSubscriptionId(url), null, function (dto) {
-            if (dto == null) {
-                callback.call(thisArg, dto);
-            }
-            var linkedURL = dto.linkedUrl;
-            if (linkedURL != null) {
-                console.log("Loading linked subscription: " + linkedURL);
-                _this.load(linkedURL, callback, thisArg);
-                return;
-            }
-            else {
-                console.log("Loaded saved subscription: " + JSON.stringify(dto));
-                callback.call(thisArg, dto);
-            }
+        return new AsyncResult(function (p) {
+            LocalPersistence.getAsync(_this.getSubscriptionId(url), null).then(function (dto) {
+                var cloneURL;
+                if (dto) {
+                    var linkedURL = dto.linkedUrl;
+                    if (linkedURL != null) {
+                        console.log("Loading linked subscription: " + linkedURL);
+                        _this.load(linkedURL).then(function (dto) {
+                            p.result(dto);
+                        }, _this);
+                        return;
+                    }
+                    else {
+                        cloneURL = dto.url;
+                        console.log("Loaded saved subscription: " + JSON.stringify(dto));
+                    }
+                }
+                else {
+                    dto = _this.defaultSubscription ? _this.defaultSubscription.dto : new SubscriptionDTO(url);
+                    cloneURL = url;
+                }
+                dto = _this.clone(dto, cloneURL);
+                p.result(dto);
+            }, _this);
         }, this);
     };
     SubscriptionDAO.prototype.delete = function (url) {
@@ -355,12 +432,12 @@ var SubscriptionDAO = (function () {
         clone.url = cloneUrl;
         return clone;
     };
-    SubscriptionDAO.prototype.loadGlobalSettings = function (callback, thisArg) {
-        callback.call(thisArg, this.defaultSubscription);
+    SubscriptionDAO.prototype.getGlobalSettings = function () {
+        return this.defaultSubscription;
     };
     SubscriptionDAO.prototype.getAllSubscriptionURLs = function () {
         var _this = this;
-        var urls = GM_listValues().filter(function (value) {
+        var urls = LocalPersistence.listKeys().filter(function (value) {
             return value.indexOf(_this.SUBSCRIPTION_ID_PREFIX) == 0;
         });
         urls = urls.map(function (value) {
@@ -394,21 +471,26 @@ var SubscriptionManager = (function () {
         this.urlPrefixPattern = new RegExp(ext.urlPrefixPattern, "i");
         this.dao = new SubscriptionDAO();
     }
-    SubscriptionManager.prototype.init = function (callback, thisArg) {
-        this.dao.init(callback, thisArg);
-    };
-    SubscriptionManager.prototype.loadSubscription = function (globalSettingsEnabled, callback, thisArg) {
+    SubscriptionManager.prototype.init = function () {
         var _this = this;
-        var onLoad = function (sub) {
-            _this.currentSubscription = sub;
-            callback.call(thisArg, sub);
-        };
-        if (globalSettingsEnabled) {
-            this.dao.loadGlobalSettings(onLoad, this);
-        }
-        else {
-            this.dao.loadSubscription(this.getActualSubscriptionURL(), onLoad, this);
-        }
+        return new AsyncResult(function (p) {
+            _this.dao.init().chain(p);
+        }, this);
+    };
+    SubscriptionManager.prototype.loadSubscription = function (globalSettingsEnabled) {
+        var _this = this;
+        return new AsyncResult(function (p) {
+            var onLoad = function (sub) {
+                _this.currentSubscription = sub;
+                p.result(sub);
+            };
+            if (globalSettingsEnabled) {
+                onLoad.call(_this, _this.dao.getGlobalSettings());
+            }
+            else {
+                _this.dao.loadSubscription(_this.getActualSubscriptionURL()).then(onLoad, _this);
+            }
+        }, this);
     };
     SubscriptionManager.prototype.linkToSubscription = function (url) {
         if (url === this.getActualSubscriptionURL()) {
@@ -421,11 +503,13 @@ var SubscriptionManager = (function () {
     SubscriptionManager.prototype.deleteSubscription = function (url) {
         this.dao.delete(url);
     };
-    SubscriptionManager.prototype.importSettings = function (url, callback, thisArg) {
+    SubscriptionManager.prototype.importSettings = function (url) {
         var _this = this;
-        this.dao.loadSubscription(url, function (sub) {
-            _this.currentSubscription = sub;
-            callback.call(thisArg);
+        return new AsyncResult(function (p) {
+            _this.dao.loadSubscription(url).then(function (sub) {
+                _this.currentSubscription = sub;
+                p.done();
+            }, _this);
         }, this);
     };
     SubscriptionManager.prototype.getAllSubscriptionURLs = function () {
@@ -759,7 +843,7 @@ var templates = {
     "filteringKeywordHTML": "<button id='{{keywordId}}' type='button' class='FFnS_keyword'>{{keyword}}</button>",
     "sortingSelectHTML": "<select id='{{Id}}' class='FFnS_input'> <option value='{{PopularityDesc}}'>Sort by popularity (highest to lowest)</option> <option value='{{PopularityAsc}} '>Sort by popularity (lowest to highest)</option> <option value='{{TitleAsc}}'>Sort by title (a -&gt; z)</option> <option value='{{TitleDesc}}'>Sort by title (z -&gt; a)</option> <option value='{{PublishDateNewFirst}}'>Sort by publish date (new first)</option> <option value='{{PublishDateOldFirst}}'>Sort by publish date (old first)</option> <option value='{{SourceAsc}}'>Sort by source title (a -&gt; z)</option> <option value='{{SourceDesc}}'>Sort by source title (z -&gt; a)</option> </select>",
     "optionHTML": "<option value='{{value}}'>{{value}}</option>",
-    "styleCSS": "#FFnS_settingsDivContainer { display: none; background: rgba(0,0,0,0.9); width: 100%; height: 100%; z-index: 500; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 500px; margin-top: 1%; margin-left: 15%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #E0F5FF; padding: 2%; opacity: 1; } .FFnS_input { font-size:12px; } #FFnS_tabs_menu { height: 30px; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #B9E0ED; } #FFnS_tabs_menu li a { padding: 10px; color: #2A687D; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; max-height: 300px; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35A5E2; border-radius: 20px; color: #FFF; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn { float:right; width: 24px; height: 24px; } #FFnS_Tab_SettingsControls button { margin-top: 1%; font-size: 12px; display: block; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type=number]{ width: 30px; margin-left: 1%; margin-right: 1%; } #FFnS_MinPopularity_AdvancedControlsReceivedPeriod { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: sold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 2% } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('http://megaicons.net/static/img/icons_sizes/8/178/512/objects-empty-filter-icon.png'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; color: #757575; background-color: transparent; font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .header + div > div:first-child > div h4 { display: none; } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .fx .mark-as-read.open-in-new-tab-button { background:url(http://s3.feedly.com/production/head/images/condensed-visit-black.png); background-size: 32px 32px; background-repeat: no-repeat; margin-right: 0px; } .fx .entry.u5 .mark-as-read.open-in-new-tab-button { filter: brightness(0) invert(1); margin-right: 4px; margin-top: 4px; } .fx .entry.u0 .mark-as-read.open-in-new-tab-button { background-size: 28px 28px; }"
+    "styleCSS": "#FFnS_settingsDivContainer { display: none; background: rgba(0,0,0,0.9); width: 100%; height: 100%; z-index: 500; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 500px; margin-top: 1%; margin-left: 15%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #E0F5FF; padding: 2%; opacity: 1; } .FFnS_input { font-size:12px; } #FFnS_tabs_menu { height: 30px; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #B9E0ED; } #FFnS_tabs_menu li a { padding: 10px; color: #2A687D; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; max-height: 300px; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35A5E2; border-radius: 20px; color: #FFF; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn { float:right; width: 24px; height: 24px; } #FFnS_Tab_SettingsControls button { margin-top: 1%; font-size: 12px; display: block; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type=number]{ width: 30px; margin-left: 1%; margin-right: 1%; } #FFnS_MinPopularity_AdvancedControlsReceivedPeriod { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: sold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 2% } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('http://megaicons.net/static/img/icons_sizes/8/178/512/objects-empty-filter-icon.png'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; color: #757575; background-color: transparent; font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0,0,0,0.05); } .header + div > div:first-child > div h4 { display: none; } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .fx .mark-as-read.open-in-new-tab-button { background:url(http://s3.feedly.com/production/head/images/condensed-visit-black.png); background-size: 32px 32px; background-repeat: no-repeat; margin-right: 0px; } .fx .entry.u5 .mark-as-read.open-in-new-tab-button { filter: brightness(0) invert(1); margin-right: 4px; margin-top: 4px; } .fx .entry.u0 .mark-as-read.open-in-new-tab-button { background-size: 28px 28px; }"
 };
 
 var FeedlyPage = (function () {
@@ -957,33 +1041,30 @@ var UIManager = (function () {
         this.settingsDivContainerId = this.getHTMLId("settingsDivContainer");
         this.closeBtnId = this.getHTMLId("CloseSettingsBtn");
     }
-    UIManager.prototype.init = function (callback, thisArg) {
+    UIManager.prototype.init = function () {
         var _this = this;
-        try {
-            this.subscriptionManager = new SubscriptionManager();
-            this.page = new FeedlyPage(this.subscriptionManager);
-            this.articleManager = new ArticleManager(this.subscriptionManager, this.page);
-            this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
-            this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
-            this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
-            this.initUI();
-            this.registerSettings();
-            this.subscriptionManager.init(function () {
-                _this.updateSubscription(function () {
+        return new AsyncResult(function (p) {
+            _this.subscriptionManager = new SubscriptionManager();
+            _this.page = new FeedlyPage(_this.subscriptionManager);
+            _this.articleManager = new ArticleManager(_this.subscriptionManager, _this.page);
+            _this.htmlSubscriptionManager = new HTMLSubscriptionManager(_this);
+            _this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", _this, false);
+            _this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", _this);
+            _this.subscriptionManager.init().then(function () {
+                _this.updateSubscription().then(function () {
+                    _this.initUI();
+                    _this.registerSettings();
                     _this.updateMenu();
                     _this.initSettingsCallbacks();
-                    callback.call(thisArg);
+                    p.done();
                 }, _this);
-            }, this);
-        }
-        catch (err) {
-            console.log(err);
-        }
+            }, _this);
+        }, this);
     };
     UIManager.prototype.updatePage = function () {
         try {
             this.resetPage();
-            this.updateSubscription(this.updateMenu, this);
+            this.updateSubscription().then(this.updateMenu, this);
         }
         catch (err) {
             console.log(err);
@@ -1000,13 +1081,15 @@ var UIManager = (function () {
     UIManager.prototype.refreshFilteringAndSorting = function () {
         this.articleManager.refreshArticles();
     };
-    UIManager.prototype.updateSubscription = function (callback, thisArg) {
+    UIManager.prototype.updateSubscription = function () {
         var _this = this;
-        var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
-        this.subscriptionManager.loadSubscription(globalSettingsEnabled, function (sub) {
-            _this.subscription = sub;
-            _this.updateSubscriptionTitle(globalSettingsEnabled);
-            callback.call(thisArg);
+        return new AsyncResult(function (p) {
+            var globalSettingsEnabled = _this.globalSettingsEnabledCB.isEnabled();
+            _this.subscriptionManager.loadSubscription(globalSettingsEnabled).then(function (sub) {
+                _this.subscription = sub;
+                _this.updateSubscriptionTitle(globalSettingsEnabled);
+                p.done();
+            }, _this);
         }, this);
     };
     UIManager.prototype.updateMenu = function () {
@@ -1114,9 +1197,6 @@ var UIManager = (function () {
             var clone = $(element).clone();
             $(clone).empty().removeAttr('class').removeAttr('title').addClass("ShowSettingsBtn");
             $(element).after(clone);
-            var actionsDiv = $(".actions-and-details-container").parent();
-            actionsDiv.removeClass('col-xs-4').removeClass("col-md-4");
-            actionsDiv.prev().removeAttr('class').addClass('col-xs-4').addClass("col-md-4");
             $(clone).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
             });
@@ -1289,7 +1369,7 @@ var UIManager = (function () {
     UIManager.prototype.importFromOtherSub = function () {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
         if (selectedURL && confirm("Import settings from the subscription url /" + selectedURL + " ?")) {
-            this.subscriptionManager.importSettings(selectedURL, this.refreshPage, this);
+            this.subscriptionManager.importSettings(selectedURL).then(this.refreshPage, this);
         }
     };
     UIManager.prototype.linkToSub = function () {
@@ -1447,7 +1527,7 @@ var GlobalSettingsCheckBox = (function () {
         this.id = id;
         this.uiManager = uiManager;
         this.htmlId = uiManager.getHTMLId(id);
-        LocalPersistence.getAsync(this.id, true, function (enabled) {
+        LocalPersistence.getAsync(this.id, true).then(function (enabled) {
             _this.enabled = enabled;
             setRadioChecked(_this.htmlId, _this.enabled);
         }, this);
@@ -1487,7 +1567,7 @@ $(document).ready(function () {
     injectResources();
     NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
         console.log("Feedly page fully loaded");
-        uiManager.init(function () {
+        uiManager.init().then(function () {
             NodeCreationObserver.onCreation(ext.articleSelector, uiManagerBind(uiManager.addArticle));
             NodeCreationObserver.onCreation(ext.sectionSelector, uiManagerBind(uiManager.addSection));
             NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, uiManagerBind(uiManager.updatePage));
