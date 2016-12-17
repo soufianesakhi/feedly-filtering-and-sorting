@@ -28,7 +28,7 @@ export class SubscriptionDAO {
     loadSubscription(url: string, callback: (sub: Subscription) => void, thisArg: any): void {
         var sub = new Subscription(this);
         this.load(url, (dto) => {
-            sub.dto = this.clone(dto, dto.url);
+            sub.dto = dto;
             callback.call(thisArg, sub);
         }, this);
     };
@@ -42,18 +42,23 @@ export class SubscriptionDAO {
 
     load(url: string, callback: (dto: SubscriptionDTO) => void, thisArg: any): void {
         LocalPersistence.getAsync(this.getSubscriptionId(url), null, (dto) => {
-            if (dto == null) {
-                callback.call(thisArg, dto);
-            }
-            var linkedURL = (<LinkedSubscriptionDTO>dto).linkedUrl;
-            if (linkedURL != null) {
-                console.log("Loading linked subscription: " + linkedURL);
-                this.load(linkedURL, callback, thisArg);
-                return;
+            var cloneURL;
+            if (dto) {
+                var linkedURL = (<LinkedSubscriptionDTO>dto).linkedUrl;
+                if (linkedURL != null) {
+                    console.log("Loading linked subscription: " + linkedURL);
+                    this.load(linkedURL, callback, thisArg);
+                    return;
+                } else {
+                    cloneURL = dto.url;
+                    console.log("Loaded saved subscription: " + JSON.stringify(dto));
+                }
             } else {
-                console.log("Loaded saved subscription: " + JSON.stringify(dto));
-                callback.call(thisArg, dto);
+                dto = this.defaultSubscription.dto;
+                cloneURL = url;
             }
+            dto = this.clone(dto, cloneURL);
+            callback.call(thisArg, dto);
         }, this);
     }
 
