@@ -214,10 +214,6 @@ export class UIManager {
             $(clone).empty().removeAttr('class').removeAttr('title').addClass("ShowSettingsBtn");
             $(element).after(clone);
 
-            var actionsDiv = $(".actions-and-details-container").parent();
-            actionsDiv.removeClass('col-xs-4').removeClass("col-md-4");
-            actionsDiv.prev().removeAttr('class').addClass('col-xs-4').addClass("col-md-4");
-
             $(clone).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
             });
