@@ -30,7 +30,7 @@ export class FeedlyPage {
             type: "button"
         };
         if ($(a).hasClass("u0")) {
-            attributes.class += " tertiary button-icon-only-micro icon";
+            attributes.class += " condensed-toolbar-icon icon";
         }
         var e = $("<button>", attributes);
         this.onClick(e.get(0), event => {

@@ -5,7 +5,7 @@ var ext = {
 
 	"urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
 
-	"settingsBtnPredecessorSelector": ".actions-and-details-container > .button-refresh",
+	"settingsBtnPredecessorSelector": ".button-refresh",
 	"articleSelector": ".list-entries > .entry",
 	"sectionSelector": "#timeline > .section",
 	"publishAgeSpanSelector": ".ago",

@@ -175,19 +175,24 @@ input {
     content: '';
 }
 
-.fx .mark-as-read.open-in-new-tab-button {
+.fx .open-in-new-tab-button.mark-as-read {
     background:url(http://s3.feedly.com/production/head/images/condensed-visit-black.png); 
     background-size: 32px 32px;
     background-repeat: no-repeat;
     margin-right: 0px;
 }
 
-.fx .entry.u5 .mark-as-read.open-in-new-tab-button {
+.fx .entry.u5 .open-in-new-tab-button {
     filter: brightness(0) invert(1);
     margin-right: 4px;
     margin-top: 4px;
 }
 
-.fx .entry.u0 .mark-as-read.open-in-new-tab-button {
-    background-size: 28px 28px;
+.fx .entry.u0 .open-in-new-tab-button.condensed-toolbar-icon {
+    background-size: 32px 32px;
+}
+
+.ShowSettingsBtn:hover {
+    color: #636363;
+    background-color: rgba(0,0,0,0.05);
 }
