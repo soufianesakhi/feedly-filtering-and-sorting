@@ -8,8 +8,14 @@ export class WebExtLocalStorage implements LocalStorage {
     storage: LocalStorageArea = browser.storage.local;
     keys: string[] = [];
 
-    onError = function (error) {
-        console.log("Error: " + error);
+    onError = function (e) {
+        throw e;
+    }
+
+    onSave = function () {
+        if (DEBUG) {
+            console.log("Storage save success");
+        }
     }
 
     public getAsync<t>(id: string, defaultValue: t): AsyncResult<t> {
@@ -20,9 +26,7 @@ export class WebExtLocalStorage implements LocalStorage {
                     data = defaultValue;
                 }
                 p.result(data);
-            }, (e) => {
-                throw e;
-            });
+            }, this.onError);
         }, this);
     }
 
@@ -30,7 +34,9 @@ export class WebExtLocalStorage implements LocalStorage {
         if (this.keys.indexOf(id) == -1) {
             this.keys.push(id);
         }
-        this.storage.set({ id: value }).then(null, this.onError);
+        var toStore = {};
+        toStore[id] = value;
+        this.storage.set(toStore).then(this.onSave, this.onError);
     }
 
     public delete(id: string) {
@@ -38,7 +44,7 @@ export class WebExtLocalStorage implements LocalStorage {
         if (i > -1) {
             this.keys.splice(i, 1);
         }
-        this.storage.remove(id).then(null, this.onError);
+        this.storage.remove(id).then(this.onSave, this.onError);
     }
 
     public listKeys(): string[] {

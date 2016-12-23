@@ -197,8 +197,13 @@ var WebExtLocalStorage = (function () {
     function WebExtLocalStorage() {
         this.storage = browser.storage.local;
         this.keys = [];
-        this.onError = function (error) {
-            console.log("Error: " + error);
+        this.onError = function (e) {
+            throw e;
+        };
+        this.onSave = function () {
+            if (DEBUG) {
+                console.log("Storage save success");
+            }
         };
     }
     WebExtLocalStorage.prototype.getAsync = function (id, defaultValue) {
@@ -210,23 +215,23 @@ var WebExtLocalStorage = (function () {
                     data = defaultValue;
                 }
                 p.result(data);
-            }, function (e) {
-                throw e;
-            });
+            }, _this.onError);
         }, this);
     };
     WebExtLocalStorage.prototype.put = function (id, value, replace) {
         if (this.keys.indexOf(id) == -1) {
             this.keys.push(id);
         }
-        this.storage.set({ id: value }).then(null, this.onError);
+        var toStore = {};
+        toStore[id] = value;
+        this.storage.set(toStore).then(this.onSave, this.onError);
     };
     WebExtLocalStorage.prototype.delete = function (id) {
         var i = this.keys.indexOf(id);
         if (i > -1) {
             this.keys.splice(i, 1);
         }
-        this.storage.remove(id).then(null, this.onError);
+        this.storage.remove(id).then(this.onSave, this.onError);
     };
     WebExtLocalStorage.prototype.listKeys = function () {
         return this.keys;
@@ -1564,6 +1569,7 @@ var GlobalSettingsCheckBox = (function () {
     return GlobalSettingsCheckBox;
 }());
 
+var DEBUG = true;
 function injectResources() {
     $("head").append("<style>" + templates.styleCSS + "</style>");
     var head = document.getElementsByTagName("head")[0];

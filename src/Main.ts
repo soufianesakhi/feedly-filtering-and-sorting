@@ -4,6 +4,8 @@ import { UIManager } from "./UIManager";
 import { callbackBindedTo } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 
+var DEBUG = true;
+
 function injectResources() {
     $("head").append("<style>" + templates.styleCSS + "</style>");
     var head = document.getElementsByTagName("head")[0];

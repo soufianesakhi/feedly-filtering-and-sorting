@@ -3,3 +3,4 @@
 /// <reference path="./Templates.ts" />
 
 declare var browser;
+declare var DEBUG: boolean;

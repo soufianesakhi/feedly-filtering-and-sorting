@@ -1554,6 +1554,7 @@ var GlobalSettingsCheckBox = (function () {
     return GlobalSettingsCheckBox;
 }());
 
+var DEBUG = true;
 function injectResources() {
     $("head").append("<style>" + templates.styleCSS + "</style>");
     var head = document.getElementsByTagName("head")[0];
