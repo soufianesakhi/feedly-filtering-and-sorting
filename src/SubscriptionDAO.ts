@@ -22,8 +22,9 @@ export class SubscriptionDAO {
     init(): AsyncResult<any> {
         return new AsyncResult<any>((p) => {
             LocalPersistence.init().then(() => {
+                var t = this;
                 var onLoad = function (sub: Subscription) {
-                    this.defaultSubscription = sub;
+                    t.defaultSubscription = sub;
                     p.done();
                 };
                 if (LocalPersistence.listKeys().indexOf(this.getSubscriptionId(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL)) > -1) {

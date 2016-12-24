@@ -50,9 +50,9 @@ export class UIManager {
             this.page = new FeedlyPage(this.subscriptionManager);
             this.articleManager = new ArticleManager(this.subscriptionManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
-            this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
-            this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
             this.subscriptionManager.init().then(() => {
+                this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
+                this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
                 this.updateSubscription().then(() => {
                     this.initUI();
                     this.registerSettings();

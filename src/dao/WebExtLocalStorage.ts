@@ -21,7 +21,7 @@ export class WebExtLocalStorage implements LocalStorage {
     public getAsync<t>(id: string, defaultValue: t): AsyncResult<t> {
         return new AsyncResult<t>((p) => {
             this.storage.get(id).then((result) => {
-                var data = result[id];
+                var data = result[0][id];
                 if (data == null) {
                     data = defaultValue;
                 }
@@ -53,10 +53,10 @@ export class WebExtLocalStorage implements LocalStorage {
 
     public init(): AsyncResult<any> {
         return new AsyncResult<any>((p) => {
-            var keys = this.keys;
+            var t = this;
             this.storage.get(null).then((result) => {
-                keys.concat(Object.keys(result));
-                console.log("Stored keys: " + keys);
+                t.keys = t.keys.concat(Object.keys(result[0]));
+                console.log("Stored keys: " + t.keys);
                 p.done();
             }, (e) => {
                 throw e;

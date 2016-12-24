@@ -361,8 +361,9 @@ var SubscriptionDAO = (function () {
         var _this = this;
         return new AsyncResult(function (p) {
             LocalPersistence.init().then(function () {
+                var t = _this;
                 var onLoad = function (sub) {
-                    this.defaultSubscription = sub;
+                    t.defaultSubscription = sub;
                     p.done();
                 };
                 if (LocalPersistence.listKeys().indexOf(_this.getSubscriptionId(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL)) > -1) {
@@ -1048,9 +1049,9 @@ var UIManager = (function () {
             _this.page = new FeedlyPage(_this.subscriptionManager);
             _this.articleManager = new ArticleManager(_this.subscriptionManager, _this.page);
             _this.htmlSubscriptionManager = new HTMLSubscriptionManager(_this);
-            _this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", _this, false);
-            _this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", _this);
             _this.subscriptionManager.init().then(function () {
+                _this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", _this, false);
+                _this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", _this);
                 _this.updateSubscription().then(function () {
                     _this.initUI();
                     _this.registerSettings();
