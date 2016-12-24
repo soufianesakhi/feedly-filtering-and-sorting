@@ -102,15 +102,13 @@ export class ArticleManager {
                         this.lastReadArticleAge = publishAge;
                     }
                 } else {
-                    if (advControls.hide) {
-                        if (advControls.showIfHot && (article.isHot()
-                            || article.getPopularity() >= advControls.minPopularity)) {
-                            if (advControls.keepUnread && advControls.markAsReadVisible) {
-                                this.articlesToMarkAsRead.push(article);
-                            }
-                        } else {
-                            article.setVisible(false);
+                    if (advControls.showIfHot && (article.isHot() ||
+                        article.getPopularity() >= advControls.minPopularity)) {
+                        if (advControls.keepUnread && advControls.markAsReadVisible) {
+                            this.articlesToMarkAsRead.push(article);
                         }
+                    } else if (advControls.hide) {
+                        article.setVisible(false);
                     }
                 }
             } catch (err) {

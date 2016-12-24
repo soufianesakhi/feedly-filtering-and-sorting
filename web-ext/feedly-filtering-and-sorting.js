@@ -629,16 +629,14 @@ var ArticleManager = (function () {
                     }
                 }
                 else {
-                    if (advControls.hide) {
-                        if (advControls.showIfHot && (article.isHot()
-                            || article.getPopularity() >= advControls.minPopularity)) {
-                            if (advControls.keepUnread && advControls.markAsReadVisible) {
-                                this.articlesToMarkAsRead.push(article);
-                            }
+                    if (advControls.showIfHot && (article.isHot() ||
+                        article.getPopularity() >= advControls.minPopularity)) {
+                        if (advControls.keepUnread && advControls.markAsReadVisible) {
+                            this.articlesToMarkAsRead.push(article);
                         }
-                        else {
-                            article.setVisible(false);
-                        }
+                    }
+                    else if (advControls.hide) {
+                        article.setVisible(false);
                     }
                 }
             }
