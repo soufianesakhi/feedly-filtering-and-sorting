@@ -8,13 +8,16 @@
 // @supportURL  https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues
 // @icon        http://s3.feedly.com/img/feedly-512.png
 // @require     http://code.jquery.com/jquery.min.js
+// @resource    jquery.min.js http://code.jquery.com/jquery.min.js
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
+// @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
 // @include     *://feedly.com/*
 // @version     2.1.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
 // @grant       GM_listValues
+// @grant       GM_getResourceText
 // ==/UserScript==
 
 var ext = {
@@ -39,7 +42,8 @@ var ext = {
     "lastReadEntryId": "lastReadEntry",
     "keepNewArticlesUnreadId": "keepNewArticlesUnread",
     "articlesToMarkAsReadId": "articlesToMarkAsRead",
-    "sortedVisibleArticlesId": "sortedVisibleArticles"
+    "sortedVisibleArticlesId": "sortedVisibleArticles",
+    "isOpenAndMarkAsReadId": "isOpenAndMarkAsRead"
 };
 
 var exported = {};
@@ -127,7 +131,8 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
                     clone[field] = deepClone(toClone[field], alternativeToCloneByField[field], alternativeToCloneByField);
                 }
                 else {
-                    clone[field] = toClone[field].slice(0);
+                    var array = toClone[field];
+                    clone[field] = array.slice(0);
                 }
                 break;
             case "number":
@@ -140,6 +145,34 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
         }
     }
     return clone;
+}
+function executeWindow() {
+    var functions = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        functions[_i - 0] = arguments[_i];
+    }
+    var srcTxt = "";
+    for (var i = 0; i < functions.length; i++) {
+        srcTxt += "(" + functions[i].toString() + ")();\n";
+    }
+    injectScriptText(srcTxt);
+}
+function injectToWindow(functionNames) {
+    var functions = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        functions[_i - 1] = arguments[_i];
+    }
+    var srcTxt = "";
+    for (var i = 0; i < functions.length; i++) {
+        srcTxt += functions[i].toString().replace(/^function/, "function " + functionNames[i]) + "\n";
+    }
+    injectScriptText(srcTxt);
+}
+function injectScriptText(srcTxt) {
+    var script = document.createElement("script");
+    script.type = 'text/javascript';
+    script.text = srcTxt;
+    document.body.appendChild(script);
 }
 
 (function (SortingType) {
@@ -233,6 +266,9 @@ var UserScriptStorage = (function () {
         return new AsyncResult(function (p) {
             p.done();
         }, this);
+    };
+    UserScriptStorage.prototype.loadScript = function (name) {
+        injectScriptText(GM_getResourceText(name));
     };
     return UserScriptStorage;
 }());
@@ -545,7 +581,6 @@ var ArticleManager = (function () {
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
-        this.page.reset();
     };
     ArticleManager.prototype.getCurrentSub = function () {
         return this.subscriptionManager.getCurrentSubscription();
@@ -701,9 +736,6 @@ var ArticleManager = (function () {
             });
             this.page.put(ext.articlesToMarkAsReadId, ids);
         }
-        if (this.getCurrentSub().getAdvancedControlsReceivedPeriod().keepUnread) {
-            this.page.put(ext.keepNewArticlesUnreadId, true);
-        }
     };
     ArticleManager.prototype.sortArticleArray = function (articles) {
         var sub = this.getCurrentSub();
@@ -847,57 +879,67 @@ var templates = {
 
 var FeedlyPage = (function () {
     function FeedlyPage(subscriptionManager) {
-        this.eval = window["eval"];
         this.hiddingInfoClass = "FFnS_Hiding_Info";
-        this.subscriptionManager = subscriptionManager;
-        this.eval("(" + this.overrideMarkAsRead.toString() + ")();");
-        this.eval("(" + this.overrideNavigation.toString() + ")();");
-        this.eval("window.ext = (" + JSON.stringify(ext).replace(/\s+/g, ' ') + ");");
-        this.reader = new FeedlyReader(this);
-        this.initStyling();
+        this.put("ext", ext);
+        injectToWindow(["getFFnS"], this.getFFnS);
+        executeWindow(this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
     }
-    FeedlyPage.prototype.onNewArticle = function (a) {
-        if (!this.subscriptionManager.getCurrentSubscription().isOpenAndMarkAsRead()) {
-            return;
+    FeedlyPage.prototype.update = function (sub) {
+        if (sub.isOpenAndMarkAsRead()) {
+            this.put(ext.isOpenAndMarkAsReadId, true);
+            $(".open-in-new-tab-button").show();
         }
-        var reader = this.reader;
-        var link = $(a).find(".title").attr("href");
-        var entryId = $(a).attr(ext.articleEntryIdAttribute);
-        var attributes = {
-            class: "open-in-new-tab-button mark-as-read",
-            title: "Open in a new window/tab and mark as read",
-            type: "button"
-        };
-        if ($(a).hasClass("u0")) {
-            attributes.class += " tertiary button-icon-only-micro icon";
-        }
-        var e = $("<button>", attributes);
-        this.onClick(e.get(0), function (event) {
-            window.open(link, '_blank');
-            reader.askMarkEntryAsRead(entryId);
-            event.stopPropagation();
-        });
-        if ($(a).hasClass("u5")) {
-            $(a).find(".mark-as-read").before(e);
-        }
-        else if ($(a).hasClass("u4")) {
-            $(a).find(".ago").after(e);
-        }
-        else {
-            $(a).find(".condensed-tools .button-dropdown > :first-child").before(e);
+        if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
+            this.put(ext.keepNewArticlesUnreadId, true);
         }
     };
-    FeedlyPage.prototype.onClick = function (e, listener) {
-        e.addEventListener('click', listener, true);
+    FeedlyPage.prototype.initWindow = function () {
+        window["ext"] = getFFnS("ext");
     };
-    FeedlyPage.prototype.initStyling = function () {
-        NodeCreationObserver.onCreation("header > h1", function (e) {
-            $(e).removeClass("col-md-4").addClass("col-md-6");
+    FeedlyPage.prototype.onNewArticle = function () {
+        NodeCreationObserver.onCreation(ext.articleSelector + " .content", function (element) {
+            var a = $(element).closest(ext.articleSelector);
+            var style = "display: none";
+            if (getFFnS(ext.isOpenAndMarkAsReadId)) {
+                style = "";
+            }
+            var attributes = {
+                class: "open-in-new-tab-button mark-as-read",
+                title: "Open in a new window/tab and mark as read",
+                type: "button",
+                style: style
+            };
+            if (a.hasClass("u0")) {
+                attributes.class += " tertiary button-icon-only-micro icon";
+            }
+            var e = $("<button>", attributes);
+            if (a.hasClass("u5")) {
+                a.find(".mark-as-read").before(e);
+            }
+            else if ($(a).hasClass("u4")) {
+                a.find(".ago").after(e);
+            }
+            else {
+                a.find(".condensed-tools .button-dropdown > :first-child").before(e);
+            }
+            var link = $(a).find(".title").attr("href");
+            var entryId = $(a).attr(ext.articleEntryIdAttribute);
+            e.get(0).addEventListener('click', function (event) {
+                window.open(link, '_blank');
+                window["streets"].service('reader').askMarkEntryAsRead(entryId);
+                event.stopPropagation();
+            }, true);
         });
     };
     FeedlyPage.prototype.reset = function () {
         this.clearHiddingInfo();
-        this.eval("window.FFnS = ({});");
+        var i = sessionStorage.length;
+        while (i--) {
+            var key = sessionStorage.key(i);
+            if (/^FFnS_/.test(key)) {
+                sessionStorage.removeItem(key);
+            }
+        }
     };
     FeedlyPage.prototype.showHiddingInfo = function () {
         var hiddenCount = 0;
@@ -916,27 +958,27 @@ var FeedlyPage = (function () {
         $("." + this.hiddingInfoClass).remove();
     };
     FeedlyPage.prototype.put = function (id, value) {
-        this.eval("window.FFnS['" + id + "'] = " + JSON.stringify(value) + ";");
+        sessionStorage.setItem("FFnS_" + id, JSON.stringify(value));
+    };
+    FeedlyPage.prototype.getFFnS = function (id) {
+        return JSON.parse(sessionStorage.getItem("FFnS_" + id));
     };
     FeedlyPage.prototype.overrideMarkAsRead = function () {
         var pagesPkg = window["devhd"].pkg("pages");
-        function get(id) {
-            return window["FFnS"][id];
-        }
         function markEntryAsRead(id, thisArg) {
             pagesPkg.BasePage.prototype.buryEntry.call(thisArg, id);
         }
         function getLastReadEntry(oldLastEntryObject, thisArg) {
-            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || get(ext.keepNewArticlesUnreadId) == null) {
+            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || getFFnS(ext.keepNewArticlesUnreadId) == null) {
                 return oldLastEntryObject;
             }
-            var idsToMarkAsRead = get(ext.articlesToMarkAsReadId);
+            var idsToMarkAsRead = getFFnS(ext.articlesToMarkAsReadId);
             if (idsToMarkAsRead != null) {
                 idsToMarkAsRead.forEach(function (id) {
                     markEntryAsRead(id, thisArg);
                 });
             }
-            var lastReadEntryId = get(ext.lastReadEntryId);
+            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
             if (lastReadEntryId == null) {
                 return null;
             }
@@ -946,24 +988,24 @@ var FeedlyPage = (function () {
         var oldMarkAllAsRead = feedlyListPagePrototype.markAsRead;
         feedlyListPagePrototype.markAsRead = function (oldLastEntryObject) {
             var lastEntryObject = getLastReadEntry(oldLastEntryObject, this);
-            if (!get(ext.keepNewArticlesUnreadId) || lastEntryObject) {
+            if (!getFFnS(ext.keepNewArticlesUnreadId) || lastEntryObject) {
                 oldMarkAllAsRead.call(this, lastEntryObject);
             }
             this.feedly.jumpToNext();
         };
     };
     FeedlyPage.prototype.overrideNavigation = function () {
-        function get(id) {
+        function getId(id) {
             return document.getElementById(id + "_main");
         }
         function isRead(id) {
-            return $(get(id)).hasClass(ext.readArticleClass);
+            return $(getId(id)).hasClass(ext.readArticleClass);
         }
         function removed(id) {
-            return get(id) == null;
+            return getId(id) == null;
         }
         function getSortedVisibleArticles() {
-            return window["FFnS"][ext.sortedVisibleArticlesId];
+            return getFFnS(ext.sortedVisibleArticlesId);
         }
         function lookupEntry(unreadOnly, isPrevious) {
             var selectedEntryId = this.navigo.selectedEntryId;
@@ -1005,15 +1047,6 @@ var FeedlyPage = (function () {
         };
     };
     return FeedlyPage;
-}());
-var FeedlyReader = (function () {
-    function FeedlyReader(page) {
-        this.eval = page.eval;
-    }
-    FeedlyReader.prototype.askMarkEntryAsRead = function (entryId) {
-        this.eval("window.streets.service('reader').askMarkEntryAsRead('" + entryId + "');");
-    };
-    return FeedlyReader;
 }());
 
 var UIManager = (function () {
@@ -1072,6 +1105,7 @@ var UIManager = (function () {
     UIManager.prototype.resetPage = function () {
         this.containsReadArticles = false;
         this.articleManager.resetArticles();
+        this.page.reset();
     };
     UIManager.prototype.refreshPage = function () {
         this.updatePage();
@@ -1086,6 +1120,7 @@ var UIManager = (function () {
             var globalSettingsEnabled = _this.globalSettingsEnabledCB.isEnabled();
             _this.subscriptionManager.loadSubscription(globalSettingsEnabled).then(function (sub) {
                 _this.subscription = sub;
+                _this.page.update(sub);
                 _this.updateSubscriptionTitle(globalSettingsEnabled);
                 p.done();
             }, _this);
@@ -1330,7 +1365,6 @@ var UIManager = (function () {
                 return;
             }
             this.articleManager.addArticle(article);
-            this.page.onNewArticle(article);
             this.tryAutoLoadAllArticles();
         }
         catch (err) {
@@ -1556,15 +1590,13 @@ var GlobalSettingsCheckBox = (function () {
 var DEBUG = true;
 function injectResources() {
     $("head").append("<style>" + templates.styleCSS + "</style>");
-    var head = document.getElementsByTagName("head")[0];
-    var script = document.createElement("script");
-    script.src = "//code.jquery.com/jquery.min.js";
-    head.appendChild(script);
+    LocalPersistence.loadScript("jquery.min.js");
+    LocalPersistence.loadScript("node-creation-observer.js");
 }
 $(document).ready(function () {
+    injectResources();
     var uiManager = new UIManager();
     var uiManagerBind = callbackBindedTo(uiManager);
-    injectResources();
     NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
         console.log("Feedly page fully loaded");
         uiManager.init().then(function () {

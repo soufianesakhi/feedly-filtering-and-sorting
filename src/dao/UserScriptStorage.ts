@@ -2,6 +2,7 @@
 
 import { LocalStorage } from "./LocalStorage";
 import { AsyncResult } from "../AsyncResult";
+import { injectScriptText } from "../Utils";
 
 export class UserScriptStorage implements LocalStorage {
 
@@ -27,6 +28,10 @@ export class UserScriptStorage implements LocalStorage {
         return new AsyncResult<any>((p) => {
             p.done();
         }, this);
+    }
+
+    loadScript(name: string) {
+        injectScriptText(GM_getResourceText(name));
     }
 
 }

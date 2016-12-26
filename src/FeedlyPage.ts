@@ -1,65 +1,79 @@
 /// <reference path="./_references.d.ts" />
 
+import { Subscription } from "./Subscription";
 import { SubscriptionManager } from "./SubscriptionManager";
+import { executeWindow, injectToWindow } from "./Utils";
+
+declare var onOpenEntryAndMarkAsRead: (event: MouseEvent) => any;
+declare var getFFnS: (id: string) => any;
 
 export class FeedlyPage {
-    public eval = window["eval"];
     hiddingInfoClass = "FFnS_Hiding_Info";
-    reader: FeedlyReader;
-    subscriptionManager: SubscriptionManager;
 
     constructor(subscriptionManager: SubscriptionManager) {
-        this.subscriptionManager = subscriptionManager;
-        this.eval("(" + this.overrideMarkAsRead.toString() + ")();");
-        this.eval("(" + this.overrideNavigation.toString() + ")();");
-        this.eval("window.ext = (" + JSON.stringify(ext).replace(/\s+/g, ' ') + ");");
-        this.reader = new FeedlyReader(this);
-        this.initStyling();
+        this.put("ext", ext);
+        injectToWindow(["getFFnS"], this.getFFnS);
+        executeWindow(this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
     }
 
-    onNewArticle(a: Element) {
-        if (!this.subscriptionManager.getCurrentSubscription().isOpenAndMarkAsRead()) {
-            return;
+    update(sub: Subscription) {
+        if (sub.isOpenAndMarkAsRead()) {
+            this.put(ext.isOpenAndMarkAsReadId, true);
+            $(".open-in-new-tab-button").show();
         }
-        var reader = this.reader;
-        var link = $(a).find(".title").attr("href");
-        var entryId = $(a).attr(ext.articleEntryIdAttribute);
-        var attributes = {
-            class: "open-in-new-tab-button mark-as-read",
-            title: "Open in a new window/tab and mark as read",
-            type: "button"
-        };
-        if ($(a).hasClass("u0")) {
-            attributes.class += " tertiary button-icon-only-micro icon";
+        if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
+            this.put(ext.keepNewArticlesUnreadId, true);
         }
-        var e = $("<button>", attributes);
-        this.onClick(e.get(0), event => {
-            window.open(link, '_blank');
-            reader.askMarkEntryAsRead(entryId);
-            event.stopPropagation();
+    }
+
+    initWindow() {
+        window["ext"] = getFFnS("ext");
+    }
+
+    onNewArticle() {
+        NodeCreationObserver.onCreation(ext.articleSelector + " .content", element => {
+            var a = $(element).closest(ext.articleSelector);
+            var style = "display: none"
+            if (getFFnS(ext.isOpenAndMarkAsReadId)) {
+                style = "";
+            }
+            var attributes = {
+                class: "open-in-new-tab-button mark-as-read",
+                title: "Open in a new window/tab and mark as read",
+                type: "button",
+                style: style
+            };
+            if (a.hasClass("u0")) {
+                attributes.class += " tertiary button-icon-only-micro icon";
+            }
+            var e = $("<button>", attributes);
+            if (a.hasClass("u5")) {
+                a.find(".mark-as-read").before(e);
+            } else if ($(a).hasClass("u4")) {
+                a.find(".ago").after(e);
+            } else {
+                a.find(".condensed-tools .button-dropdown > :first-child").before(e);
+            }
+
+            var link = $(a).find(".title").attr("href");
+            var entryId = $(a).attr(ext.articleEntryIdAttribute);
+            e.get(0).addEventListener('click', event => {
+                window.open(link, '_blank');
+                window["streets"].service('reader').askMarkEntryAsRead(entryId);
+                event.stopPropagation();
+            }, true);
         });
-        if ($(a).hasClass("u5")) {
-            $(a).find(".mark-as-read").before(e);
-        } else if ($(a).hasClass("u4")) {
-            $(a).find(".ago").after(e);
-        } else {
-            $(a).find(".condensed-tools .button-dropdown > :first-child").before(e);
-        }
-    }
-
-    onClick(e: Element, listener: (event: MouseEvent) => any) {
-        e.addEventListener('click', listener, true);
-    }
-
-    initStyling() {
-        NodeCreationObserver.onCreation("header > h1", (e) => {
-            $(e).removeClass("col-md-4").addClass("col-md-6");
-        })
     }
 
     reset() {
         this.clearHiddingInfo();
-        this.eval("window.FFnS = ({});");
+        var i = sessionStorage.length;
+        while (i--) {
+            var key = sessionStorage.key(i);
+            if (/^FFnS_/.test(key)) {
+                sessionStorage.removeItem(key);
+            }
+        }
     }
 
     showHiddingInfo() {
@@ -81,28 +95,30 @@ export class FeedlyPage {
     }
 
     put(id: string, value: any) {
-        this.eval("window.FFnS['" + id + "'] = " + JSON.stringify(value) + ";");
+        sessionStorage.setItem("FFnS_" + id, JSON.stringify(value));
+    }
+
+
+    getFFnS(id: string) {
+        return JSON.parse(sessionStorage.getItem("FFnS_" + id));
     }
 
     overrideMarkAsRead() {
         var pagesPkg = window["devhd"].pkg("pages");
-        function get(id: string) {
-            return window["FFnS"][id];
-        }
         function markEntryAsRead(id, thisArg) {
             pagesPkg.BasePage.prototype.buryEntry.call(thisArg, id);
         }
         function getLastReadEntry(oldLastEntryObject, thisArg) {
-            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || get(ext.keepNewArticlesUnreadId) == null) {
+            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || getFFnS(ext.keepNewArticlesUnreadId) == null) {
                 return oldLastEntryObject;
             }
-            var idsToMarkAsRead: string[] = get(ext.articlesToMarkAsReadId);
+            var idsToMarkAsRead: string[] = getFFnS(ext.articlesToMarkAsReadId);
             if (idsToMarkAsRead != null) {
                 idsToMarkAsRead.forEach(id => {
                     markEntryAsRead(id, thisArg)
                 });
             }
-            var lastReadEntryId = get(ext.lastReadEntryId);
+            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
             if (lastReadEntryId == null) {
                 return null;
             }
@@ -113,7 +129,7 @@ export class FeedlyPage {
         var oldMarkAllAsRead: Function = feedlyListPagePrototype.markAsRead;
         feedlyListPagePrototype.markAsRead = function (oldLastEntryObject) {
             var lastEntryObject = getLastReadEntry(oldLastEntryObject, this);
-            if (!get(ext.keepNewArticlesUnreadId) || lastEntryObject) {
+            if (!getFFnS(ext.keepNewArticlesUnreadId) || lastEntryObject) {
                 oldMarkAllAsRead.call(this, lastEntryObject);
             }
             this.feedly.jumpToNext();
@@ -121,17 +137,17 @@ export class FeedlyPage {
     }
 
     overrideNavigation() {
-        function get(id) {
+        function getId(id) {
             return document.getElementById(id + "_main");
         }
         function isRead(id) {
-            return $(get(id)).hasClass(ext.readArticleClass);
+            return $(getId(id)).hasClass(ext.readArticleClass);
         }
         function removed(id): boolean {
-            return get(id) == null;
+            return getId(id) == null;
         }
         function getSortedVisibleArticles(): String[] {
-            return window["FFnS"][ext.sortedVisibleArticlesId];
+            return getFFnS(ext.sortedVisibleArticlesId);
         }
         function lookupEntry(unreadOnly, isPrevious: boolean) {
             var selectedEntryId = this.navigo.selectedEntryId;
@@ -170,15 +186,5 @@ export class FeedlyPage {
         prototype.onNextEntry = function (unreadOnly, b) {
             onEntry.call(this, unreadOnly, b, false);
         }
-    }
-}
-
-class FeedlyReader {
-    eval;
-    constructor(page: FeedlyPage) {
-        this.eval = page.eval;
-    }
-    askMarkEntryAsRead(entryId: string) {
-        this.eval("window.streets.service('reader').askMarkEntryAsRead('" + entryId + "');");
     }
 }

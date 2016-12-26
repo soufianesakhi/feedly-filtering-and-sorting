@@ -31,7 +31,6 @@ export class ArticleManager {
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
-        this.page.reset();
     }
 
     getCurrentSub(): Subscription {
@@ -187,10 +186,6 @@ export class ArticleManager {
                 return article.getEntryId();
             })
             this.page.put(ext.articlesToMarkAsReadId, ids);
-        }
-
-        if (this.getCurrentSub().getAdvancedControlsReceivedPeriod().keepUnread) {
-            this.page.put(ext.keepNewArticlesUnreadId, true);
         }
     }
 

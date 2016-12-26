@@ -76,6 +76,7 @@ export class UIManager {
     resetPage() {
         this.containsReadArticles = false;
         this.articleManager.resetArticles();
+        this.page.reset();
     }
 
     refreshPage() {
@@ -92,6 +93,7 @@ export class UIManager {
             var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
             this.subscriptionManager.loadSubscription(globalSettingsEnabled).then((sub) => {
                 this.subscription = sub;
+                this.page.update(sub);
                 this.updateSubscriptionTitle(globalSettingsEnabled);
                 p.done();
             }, this);
@@ -371,7 +373,6 @@ export class UIManager {
                 return;
             }
             this.articleManager.addArticle(article);
-            this.page.onNewArticle(article);
             this.tryAutoLoadAllArticles();
         } catch (err) {
             console.log(err);

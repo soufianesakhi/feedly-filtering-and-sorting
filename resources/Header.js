@@ -8,11 +8,14 @@
 // @supportURL  https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues
 // @icon        http://s3.feedly.com/img/feedly-512.png
 // @require     http://code.jquery.com/jquery.min.js
+// @resource    jquery.min.js http://code.jquery.com/jquery.min.js
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
+// @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
 // @include     *://feedly.com/*
 // @version     {{version}}
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
 // @grant       GM_listValues
+// @grant       GM_getResourceText
 // ==/UserScript==

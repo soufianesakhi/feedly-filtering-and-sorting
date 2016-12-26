@@ -19,6 +19,10 @@
             ]
         }
     ],
+    "web_accessible_resources": [
+        "node-creation-observer.js",
+        "jquery.min.js"
+    ],
     "applications": {
         "gecko": {
             "id": "feedly-filtering-and-sorting@mozilla.org"

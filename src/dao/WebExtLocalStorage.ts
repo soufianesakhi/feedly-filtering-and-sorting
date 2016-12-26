@@ -1,12 +1,18 @@
 /// <reference path="../_references.d.ts" />
 
-import { LocalStorage, LocalStorageArea } from "./LocalStorage";
+import { LocalStorage, LocalStorageArea, PromiseLocalStorageArea } from "./LocalStorage";
 import { AsyncResult } from "../AsyncResult";
+import { injectScriptText } from "../Utils";
 
 export class WebExtLocalStorage implements LocalStorage {
-
-    storage: LocalStorageArea = browser.storage.local;
+    storage: LocalStorageArea;
+    promiseStorage: PromiseLocalStorageArea;
     keys: string[] = [];
+    isArray = false;
+
+    constructor() {
+        this.promiseStorage = chrome.storage.local;
+    }
 
     onError = function (e) {
         throw e;
@@ -20,13 +26,17 @@ export class WebExtLocalStorage implements LocalStorage {
 
     public getAsync<t>(id: string, defaultValue: t): AsyncResult<t> {
         return new AsyncResult<t>((p) => {
-            this.storage.get(id).then((result) => {
-                var data = result[0][id];
+            var isArr = this.isArray;
+            var callback = (result) => {
+                var data = (isArr ? result[0] : result)[id];
                 if (data == null) {
                     data = defaultValue;
                 }
                 p.result(data);
-            }, this.onError);
+            };
+            this.promiseStorage ?
+                this.promiseStorage.get(id).then(callback, this.onError) :
+                this.storage.get(id, callback);
         }, this);
     }
 
@@ -36,7 +46,9 @@ export class WebExtLocalStorage implements LocalStorage {
         }
         var toStore = {};
         toStore[id] = value;
-        this.storage.set(toStore).then(this.onSave, this.onError);
+        this.promiseStorage ?
+            this.promiseStorage.set(toStore).then(this.onSave, this.onError) :
+            this.storage.set(toStore);
     }
 
     public delete(id: string) {
@@ -44,7 +56,9 @@ export class WebExtLocalStorage implements LocalStorage {
         if (i > -1) {
             this.keys.splice(i, 1);
         }
-        this.storage.remove(id).then(this.onSave, this.onError);
+        this.promiseStorage ?
+            this.promiseStorage.remove(id).then(this.onSave, this.onError) :
+            this.storage.remove(id);
     }
 
     public listKeys(): string[] {
@@ -54,14 +68,37 @@ export class WebExtLocalStorage implements LocalStorage {
     public init(): AsyncResult<any> {
         return new AsyncResult<any>((p) => {
             var t = this;
-            this.storage.get(null).then((result) => {
-                t.keys = t.keys.concat(Object.keys(result[0]));
-                console.log("Stored keys: " + t.keys);
+            var callback = (result) => {
+                if ($.isArray(result)) {
+                    t.isArray = true;
+                }
+                t.keys = t.keys.concat(Object.keys(t.isArray ? result[0] : result));
                 p.done();
-            }, (e) => {
-                throw e;
-            });
+            };
+            try {
+                this.promiseStorage.get(null).then(callback, (e) => {
+                    throw e;
+                });
+            } catch (e) {
+                this.promiseStorage = null;
+                this.storage = chrome.storage.local;
+                this.storage.get(null, callback);
+            }
         }, this);
+    }
+
+    loadScript(name: string) {
+        $.ajax({
+            url: chrome.extension.getURL(name),
+            dataType: "text",
+            async: false,
+            success: (result) => {
+                injectScriptText(result);
+            },
+            error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+                console.log(errorThrown);
+            }
+        });
     }
 }
 

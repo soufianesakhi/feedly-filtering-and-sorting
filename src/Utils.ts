@@ -94,7 +94,8 @@ export function deepClone<T>(toClone: T, clone: T, alternativeToCloneByField): T
                 if (!$.isArray(typedClone[field])) {
                     clone[field] = deepClone(toClone[field], alternativeToCloneByField[field], alternativeToCloneByField);
                 } else {
-                    clone[field] = (<Array<any>>toClone[field]).slice(0);
+                    var array: any = toClone[field];
+                    clone[field] = array.slice(0);
                 }
                 break;
             case "number":
@@ -107,4 +108,27 @@ export function deepClone<T>(toClone: T, clone: T, alternativeToCloneByField): T
         }
     }
     return clone;
+}
+
+export function executeWindow(...functions: Function[]) {
+    var srcTxt = "";
+    for (var i = 0; i < functions.length; i++) {
+        srcTxt += "(" + functions[i].toString() + ")();\n";
+    }
+    injectScriptText(srcTxt);
+}
+
+export function injectToWindow(functionNames: string[], ...functions: Function[]) {
+    var srcTxt = "";
+    for (var i = 0; i < functions.length; i++) {
+        srcTxt += functions[i].toString().replace(/^function/, "function " + functionNames[i]) + "\n";
+    }
+    injectScriptText(srcTxt);
+}
+
+export function injectScriptText(srcTxt: string) {
+    var script = document.createElement("script");
+    script.type = 'text/javascript';
+    script.text = srcTxt;
+    document.body.appendChild(script);
 }
