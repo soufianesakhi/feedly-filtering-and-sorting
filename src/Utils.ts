@@ -110,11 +110,12 @@ export function deepClone<T>(toClone: T, clone: T, alternativeToCloneByField): T
     return clone;
 }
 
-export function executeWindow(...functions: Function[]) {
+export function executeWindow(sourceName: String, ...functions: Function[]) {
     var srcTxt = "";
     for (var i = 0; i < functions.length; i++) {
         srcTxt += "(" + functions[i].toString() + ")();\n";
     }
+    srcTxt += "//# sourceURL=" + sourceName;
     injectScriptText(srcTxt);
 }
 

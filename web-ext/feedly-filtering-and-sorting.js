@@ -21,7 +21,8 @@ var ext = {
     "keepNewArticlesUnreadId": "keepNewArticlesUnread",
     "articlesToMarkAsReadId": "articlesToMarkAsRead",
     "sortedVisibleArticlesId": "sortedVisibleArticles",
-    "isOpenAndMarkAsReadId": "isOpenAndMarkAsRead"
+    "isOpenAndMarkAsReadId": "isOpenAndMarkAsRead",
+    "openAndMarkAsReadClass": "open-in-new-tab-button"
 };
 
 var exported = {};
@@ -124,15 +125,16 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
     }
     return clone;
 }
-function executeWindow() {
+function executeWindow(sourceName) {
     var functions = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        functions[_i - 0] = arguments[_i];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        functions[_i - 1] = arguments[_i];
     }
     var srcTxt = "";
     for (var i = 0; i < functions.length; i++) {
         srcTxt += "(" + functions[i].toString() + ")();\n";
     }
+    srcTxt += "//# sourceURL=" + sourceName;
     injectScriptText(srcTxt);
 }
 function injectToWindow(functionNames) {
@@ -923,12 +925,15 @@ var FeedlyPage = (function () {
         this.hiddingInfoClass = "FFnS_Hiding_Info";
         this.put("ext", ext);
         injectToWindow(["getFFnS"], this.getFFnS);
-        executeWindow(this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
+        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
     }
     FeedlyPage.prototype.update = function (sub) {
         if (sub.isOpenAndMarkAsRead()) {
             this.put(ext.isOpenAndMarkAsReadId, true);
-            $(".open-in-new-tab-button").show();
+            $("." + ext.openAndMarkAsReadClass).css("display", "");
+        }
+        else {
+            $("." + ext.openAndMarkAsReadClass).css("display", "none");
         }
         if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
             this.put(ext.keepNewArticlesUnreadId, true);
@@ -945,7 +950,7 @@ var FeedlyPage = (function () {
                 style = "";
             }
             var attributes = {
-                class: "open-in-new-tab-button mark-as-read",
+                class: ext.openAndMarkAsReadClass + " mark-as-read",
                 title: "Open in a new window/tab and mark as read",
                 type: "button",
                 style: style
@@ -989,10 +994,10 @@ var FeedlyPage = (function () {
                 hiddenCount++;
             }
         });
+        this.clearHiddingInfo();
         if (hiddenCount == 0) {
             return;
         }
-        this.clearHiddingInfo();
         $(ext.hidingInfoSibling).after("<div class='detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
     };
     FeedlyPage.prototype.clearHiddingInfo = function () {
@@ -1032,7 +1037,9 @@ var FeedlyPage = (function () {
             if (!getFFnS(ext.keepNewArticlesUnreadId) || lastEntryObject) {
                 oldMarkAllAsRead.call(this, lastEntryObject);
             }
-            this.feedly.jumpToNext();
+            if (!(oldLastEntryObject && oldLastEntryObject.asOf)) {
+                this.feedly.jumpToNext();
+            }
         };
     };
     FeedlyPage.prototype.overrideNavigation = function () {
@@ -1146,14 +1153,15 @@ var UIManager = (function () {
     UIManager.prototype.resetPage = function () {
         this.containsReadArticles = false;
         this.articleManager.resetArticles();
-        this.page.reset();
     };
     UIManager.prototype.refreshPage = function () {
         this.updatePage();
         this.refreshFilteringAndSorting();
     };
     UIManager.prototype.refreshFilteringAndSorting = function () {
+        this.page.reset();
         this.articleManager.refreshArticles();
+        this.page.update(this.subscription);
     };
     UIManager.prototype.updateSubscription = function () {
         var _this = this;
@@ -1161,7 +1169,6 @@ var UIManager = (function () {
             var globalSettingsEnabled = _this.globalSettingsEnabledCB.isEnabled();
             _this.subscriptionManager.loadSubscription(globalSettingsEnabled).then(function (sub) {
                 _this.subscription = sub;
-                _this.page.update(sub);
                 _this.updateSubscriptionTitle(globalSettingsEnabled);
                 p.done();
             }, _this);
@@ -1170,8 +1177,9 @@ var UIManager = (function () {
     UIManager.prototype.updateMenu = function () {
         var _this = this;
         this.htmlSubscriptionManager.update();
+        this.refreshFilteringAndSorting();
         getFilteringTypes().forEach(function (type) {
-            _this.updateFilteringList(type);
+            _this.prepareFilteringList(type);
         });
         this.updateSettingsControls();
         // Additional sorting types
@@ -1378,6 +1386,10 @@ var UIManager = (function () {
         }
     };
     UIManager.prototype.updateFilteringList = function (type) {
+        this.prepareFilteringList(type);
+        this.refreshFilteringAndSorting();
+    };
+    UIManager.prototype.prepareFilteringList = function (type) {
         var ids = this.getIds(type);
         var filteringList = this.subscription.getFilteringList(type);
         var filteringKeywordsHTML = "";
@@ -1391,7 +1403,6 @@ var UIManager = (function () {
             filteringKeywordsHTML += filteringKeywordHTML;
         }
         $id(ids.filetringKeywordsId).html(filteringKeywordsHTML);
-        this.refreshFilteringAndSorting();
         this.setUpKeywordButtonsEvents(type);
     };
     UIManager.prototype.updateAdditionalSortingTypes = function () {

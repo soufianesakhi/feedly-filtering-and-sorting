@@ -76,7 +76,6 @@ export class UIManager {
     resetPage() {
         this.containsReadArticles = false;
         this.articleManager.resetArticles();
-        this.page.reset();
     }
 
     refreshPage() {
@@ -85,7 +84,9 @@ export class UIManager {
     }
 
     refreshFilteringAndSorting() {
+        this.page.reset();
         this.articleManager.refreshArticles();
+        this.page.update(this.subscription);
     }
 
     updateSubscription(): AsyncResult<any> {
@@ -93,7 +94,6 @@ export class UIManager {
             var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
             this.subscriptionManager.loadSubscription(globalSettingsEnabled).then((sub) => {
                 this.subscription = sub;
-                this.page.update(sub);
                 this.updateSubscriptionTitle(globalSettingsEnabled);
                 p.done();
             }, this);
@@ -103,8 +103,9 @@ export class UIManager {
     updateMenu() {
         this.htmlSubscriptionManager.update();
 
+        this.refreshFilteringAndSorting();
         getFilteringTypes().forEach((type) => {
-            this.updateFilteringList(type);
+            this.prepareFilteringList(type);
         });
         this.updateSettingsControls();
 
@@ -341,6 +342,11 @@ export class UIManager {
     }
 
     updateFilteringList(type: FilteringType) {
+        this.prepareFilteringList(type);
+        this.refreshFilteringAndSorting();
+    }
+
+    prepareFilteringList(type: FilteringType) {
         var ids = this.getIds(type);
         var filteringList = this.subscription.getFilteringList(type);
         var filteringKeywordsHTML = "";
@@ -356,7 +362,6 @@ export class UIManager {
         }
 
         $id(ids.filetringKeywordsId).html(filteringKeywordsHTML);
-        this.refreshFilteringAndSorting();
         this.setUpKeywordButtonsEvents(type);
     }
 

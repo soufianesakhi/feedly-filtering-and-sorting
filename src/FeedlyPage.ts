@@ -13,13 +13,15 @@ export class FeedlyPage {
     constructor(subscriptionManager: SubscriptionManager) {
         this.put("ext", ext);
         injectToWindow(["getFFnS"], this.getFFnS);
-        executeWindow(this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
+        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
     }
 
     update(sub: Subscription) {
         if (sub.isOpenAndMarkAsRead()) {
             this.put(ext.isOpenAndMarkAsReadId, true);
-            $(".open-in-new-tab-button").show();
+            $("." + ext.openAndMarkAsReadClass).css("display", "");
+        } else {
+            $("." + ext.openAndMarkAsReadClass).css("display", "none");
         }
         if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
             this.put(ext.keepNewArticlesUnreadId, true);
@@ -38,7 +40,7 @@ export class FeedlyPage {
                 style = "";
             }
             var attributes = {
-                class: "open-in-new-tab-button mark-as-read",
+                class: ext.openAndMarkAsReadClass + " mark-as-read",
                 title: "Open in a new window/tab and mark as read",
                 type: "button",
                 style: style
@@ -83,10 +85,10 @@ export class FeedlyPage {
                 hiddenCount++;
             }
         })
+        this.clearHiddingInfo();
         if (hiddenCount == 0) {
             return;
         }
-        this.clearHiddingInfo();
         $(ext.hidingInfoSibling).after("<div class='detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
     }
 
@@ -132,7 +134,9 @@ export class FeedlyPage {
             if (!getFFnS(ext.keepNewArticlesUnreadId) || lastEntryObject) {
                 oldMarkAllAsRead.call(this, lastEntryObject);
             }
-            this.feedly.jumpToNext();
+            if (!(oldLastEntryObject && oldLastEntryObject.asOf)) {
+                this.feedly.jumpToNext();
+            }
         }
     }
 
