@@ -1,22 +1,52 @@
+/// <reference path="./_references.d.ts" />
 
 import { FilteringType, SortingType, getFilteringTypes, getFilteringTypeId } from "./DataTypes";
 import { Subscription } from "./Subscription";
 import { SubscriptionDTO, AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
 import { SubscriptionManager } from "./SubscriptionManager";
-import { LocalPersistence } from "./LocalPersistence";
 import { registerAccessors, deepClone } from "./Utils";
+import { LocalStorage } from "./dao/LocalStorage";
+import { AsyncResult } from "./AsyncResult";
+
+declare var LocalPersistence: LocalStorage;
 
 export class SubscriptionDAO {
     private SUBSCRIPTION_ID_PREFIX = "subscription_";
     private GLOBAL_SETTINGS_SUBSCRIPTION_URL = "---global settings---";
     private defaultSubscription: Subscription;
-    private defaultSubscriptionDTO: SubscriptionDTO;
 
     constructor() {
         registerAccessors(new SubscriptionDTO(""), "dto", Subscription.prototype, this.save, this);
-        this.defaultSubscription = new Subscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL, this);
-        this.defaultSubscriptionDTO = this.defaultSubscription.dto;
     }
+
+    init(): AsyncResult<any> {
+        return new AsyncResult<any>((p) => {
+            LocalPersistence.init().then(() => {
+                var t = this;
+                var onLoad = function (sub: Subscription) {
+                    t.defaultSubscription = sub;
+                    p.done();
+                };
+                if (LocalPersistence.listKeys().indexOf(this.getSubscriptionId(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL)) > -1) {
+                    this.loadSubscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL).then(onLoad, this);
+                } else { // First time installing
+                    var dto = new SubscriptionDTO(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL);
+                    this.save(dto);
+                    onLoad.call(this, new Subscription(this, dto));
+                }
+            }, this);
+        }, this);
+    }
+
+    loadSubscription(url: string): AsyncResult<Subscription> {
+        return new AsyncResult<Subscription>((p) => {
+            var sub = new Subscription(this);
+            this.load(url).then((dto) => {
+                sub.dto = dto;
+                p.result(sub);
+            }, this);
+        }, this);
+    };
 
     save(dto: SubscriptionDTO) {
         var url = dto.url;
@@ -25,29 +55,30 @@ export class SubscriptionDAO {
         console.log("Subscription saved: " + JSON.stringify(dto));
     }
 
-    load(url: string): SubscriptionDTO {
-        var subscriptionDTO: SubscriptionDTO;
-        var id = this.getSubscriptionId(url);
-        var dto = LocalPersistence.get(id, null);
-        if (dto != null) {
-            var linkedURL = (<LinkedSubscriptionDTO>dto).linkedUrl;
-            if (linkedURL != null) {
-                console.log("Loading linked subscription: " + linkedURL);
-                subscriptionDTO = this.load(linkedURL);
-            } else {
-                subscriptionDTO = <SubscriptionDTO>dto;
-                console.log("Loaded saved subscription: " + JSON.stringify(subscriptionDTO));
-            }
-        }
-        if (subscriptionDTO == null) {
-            if (this.defaultSubscriptionDTO == null) {
-                subscriptionDTO = new SubscriptionDTO(url);
-                this.save(subscriptionDTO);
-            } else {
-                subscriptionDTO = this.clone(this.defaultSubscriptionDTO, url);
-            }
-        }
-        return subscriptionDTO;
+    load(url: string): AsyncResult<SubscriptionDTO> {
+        return new AsyncResult<SubscriptionDTO>((p) => {
+            LocalPersistence.getAsync(this.getSubscriptionId(url), null).then((dto) => {
+                var cloneURL;
+                if (dto) {
+                    var linkedURL = (<LinkedSubscriptionDTO>dto).linkedUrl;
+                    if (linkedURL != null) {
+                        console.log("Loading linked subscription: " + linkedURL);
+                        this.load(linkedURL).then((dto) => {
+                            p.result(dto);
+                        }, this);
+                        return;
+                    } else {
+                        cloneURL = dto.url;
+                        console.log("Loaded saved subscription: " + JSON.stringify(dto));
+                    }
+                } else {
+                    dto = this.defaultSubscription ? this.defaultSubscription.dto : new SubscriptionDTO(url);
+                    cloneURL = url;
+                }
+                dto = this.clone(dto, cloneURL);
+                p.result(dto);
+            }, this);
+        }, this);
     }
 
     delete(url: string) {
@@ -68,7 +99,7 @@ export class SubscriptionDAO {
     }
 
     getAllSubscriptionURLs(): string[] {
-        var urls = GM_listValues().filter((value: string) => {
+        var urls = LocalPersistence.listKeys().filter((value: string) => {
             return value.indexOf(this.SUBSCRIPTION_ID_PREFIX) == 0;
         });
         urls = urls.map<string>((value: string) => {

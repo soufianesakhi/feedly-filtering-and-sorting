@@ -9,6 +9,7 @@ import { GlobalSettingsCheckBox } from "./HTMLGlobalSettings";
 import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
 import { $id, bindMarkup } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
+import { AsyncResult } from "./AsyncResult";
 
 export class UIManager {
     page: FeedlyPage;
@@ -44,27 +45,29 @@ export class UIManager {
     closeBtnId = this.getHTMLId("CloseSettingsBtn");
 
     init() {
-        try {
+        return new AsyncResult<any>((p) => {
             this.subscriptionManager = new SubscriptionManager();
             this.page = new FeedlyPage(this.subscriptionManager);
             this.articleManager = new ArticleManager(this.subscriptionManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
-            this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
-            this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
-            this.initUI();
-            this.registerSettings();
-            this.updatePage();
-            this.initSettingsCallbacks();
-        } catch (err) {
-            console.log(err);
-        }
+            this.subscriptionManager.init().then(() => {
+                this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
+                this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
+                this.updateSubscription().then(() => {
+                    this.initUI();
+                    this.registerSettings();
+                    this.updateMenu();
+                    this.initSettingsCallbacks();
+                    p.done();
+                }, this);
+            }, this);
+        }, this);
     }
 
     updatePage() {
         try {
             this.resetPage();
-            this.updateSubscription();
-            this.updateMenu();
+            this.updateSubscription().then(this.updateMenu, this);
         } catch (err) {
             console.log(err);
         }
@@ -81,20 +84,28 @@ export class UIManager {
     }
 
     refreshFilteringAndSorting() {
+        this.page.reset();
         this.articleManager.refreshArticles();
+        this.page.update(this.subscription);
     }
 
-    updateSubscription() {
-        var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
-        this.subscription = this.subscriptionManager.loadSubscription(globalSettingsEnabled);
-        this.updateSubscriptionTitle(globalSettingsEnabled);
+    updateSubscription(): AsyncResult<any> {
+        return new AsyncResult<any>((p) => {
+            var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
+            this.subscriptionManager.loadSubscription(globalSettingsEnabled).then((sub) => {
+                this.subscription = sub;
+                this.updateSubscriptionTitle(globalSettingsEnabled);
+                p.done();
+            }, this);
+        }, this);
     }
 
     updateMenu() {
         this.htmlSubscriptionManager.update();
 
+        this.refreshFilteringAndSorting();
         getFilteringTypes().forEach((type) => {
-            this.updateFilteringList(type);
+            this.prepareFilteringList(type);
         });
         this.updateSettingsControls();
 
@@ -330,6 +341,11 @@ export class UIManager {
     }
 
     updateFilteringList(type: FilteringType) {
+        this.prepareFilteringList(type);
+        this.refreshFilteringAndSorting();
+    }
+
+    prepareFilteringList(type: FilteringType) {
         var ids = this.getIds(type);
         var filteringList = this.subscription.getFilteringList(type);
         var filteringKeywordsHTML = "";
@@ -345,7 +361,6 @@ export class UIManager {
         }
 
         $id(ids.filetringKeywordsId).html(filteringKeywordsHTML);
-        this.refreshFilteringAndSorting();
         this.setUpKeywordButtonsEvents(type);
     }
 
@@ -362,7 +377,6 @@ export class UIManager {
                 return;
             }
             this.articleManager.addArticle(article);
-            this.page.onNewArticle(article);
             this.tryAutoLoadAllArticles();
         } catch (err) {
             console.log(err);
@@ -401,9 +415,8 @@ export class UIManager {
 
     importFromOtherSub() {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
-        if (selectedURL && confirm("Import keywords from the subscription url /" + selectedURL + " ?")) {
-            this.subscriptionManager.importKeywords(selectedURL);
-            this.refreshPage();
+        if (selectedURL && confirm("Import settings from the subscription url /" + selectedURL + " ?")) {
+            this.subscriptionManager.importSettings(selectedURL).then(this.refreshPage, this);
         }
     }
 

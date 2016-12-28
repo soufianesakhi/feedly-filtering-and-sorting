@@ -1,6 +1,6 @@
 {
   "name": "feedly-filtering-and-sorting",
-  "finalName": "Feedly_filtering_and_sorting",
+  "scriptName": "Feedly_filtering_and_sorting",
   "version": "2.1.2",
   "description": "Enhance the feedly website with advanced filtering and sorting capabilities",
   "main": "src/Main.ts",
@@ -13,6 +13,18 @@
     "grunt-contrib-watch": "^1.0.0",
     "grunt-string-replace": "^1.2.1",
     "grunt-ts": "^5.4.0",
-    "typings": "^1.5.0"
-  }
+    "typings": "^2.0.0"
+  },
+  "keywords": [
+    "feedly",
+    "filtering",
+    "restricting",
+    "sorting",
+    "filters",
+    "filter",
+    "sort",
+    "articles",
+    "feeds",
+    "rss"
+  ]
 }

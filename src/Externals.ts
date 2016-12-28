@@ -23,5 +23,7 @@ var ext = {
 	"lastReadEntryId": "lastReadEntry",
 	"keepNewArticlesUnreadId": "keepNewArticlesUnread",
 	"articlesToMarkAsReadId": "articlesToMarkAsRead",
-	"sortedVisibleArticlesId": "sortedVisibleArticles"
+	"sortedVisibleArticlesId": "sortedVisibleArticles",
+	"isOpenAndMarkAsReadId": "isOpenAndMarkAsRead",
+	"openAndMarkAsReadClass": "open-in-new-tab-button"
 }

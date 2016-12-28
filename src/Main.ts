@@ -3,25 +3,28 @@
 import { UIManager } from "./UIManager";
 import { callbackBindedTo } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
+import { LocalStorage } from "./dao/LocalStorage";
+
+var DEBUG = true;
+declare var LocalPersistence: LocalStorage;
 
 function injectResources() {
     $("head").append("<style>" + templates.styleCSS + "</style>");
-    var head = document.getElementsByTagName("head")[0];
-    var script = document.createElement("script");
-    script.src = "//code.jquery.com/jquery.min.js";
-    head.appendChild(script);
+    LocalPersistence.loadScript("jquery.min.js");
+    LocalPersistence.loadScript("node-creation-observer.js");
 }
 
 $(document).ready(function () {
+    injectResources();
     var uiManager = new UIManager();
     var uiManagerBind = callbackBindedTo(uiManager);
-    injectResources();
 
     NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
         console.log("Feedly page fully loaded");
-        uiManager.init();
-        NodeCreationObserver.onCreation(ext.articleSelector, uiManagerBind(uiManager.addArticle));
-        NodeCreationObserver.onCreation(ext.sectionSelector, uiManagerBind(uiManager.addSection));
-        NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, uiManagerBind(uiManager.updatePage));
+        uiManager.init().then(() => {
+            NodeCreationObserver.onCreation(ext.articleSelector, uiManagerBind(uiManager.addArticle));
+            NodeCreationObserver.onCreation(ext.sectionSelector, uiManagerBind(uiManager.addSection));
+            NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, uiManagerBind(uiManager.updatePage));
+        }, this);
     }, true);
 });

@@ -167,6 +167,11 @@ input {
 	margin-right: 0px;
 }
 
+.ShowSettingsBtn:hover {
+    color: #636363;
+    background-color: rgba(0,0,0,0.05);
+}
+
 .header + div > div:first-child > div h4 {
     display: none;
 }

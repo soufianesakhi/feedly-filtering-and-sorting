@@ -31,7 +31,6 @@ export class ArticleManager {
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
-        this.page.reset();
     }
 
     getCurrentSub(): Subscription {
@@ -102,15 +101,13 @@ export class ArticleManager {
                         this.lastReadArticleAge = publishAge;
                     }
                 } else {
-                    if (advControls.hide) {
-                        if (advControls.showIfHot && (article.isHot()
-                            || article.getPopularity() >= advControls.minPopularity)) {
-                            if (advControls.keepUnread && advControls.markAsReadVisible) {
-                                this.articlesToMarkAsRead.push(article);
-                            }
-                        } else {
-                            article.setVisible(false);
+                    if (advControls.showIfHot && (article.isHot() ||
+                        article.getPopularity() >= advControls.minPopularity)) {
+                        if (advControls.keepUnread && advControls.markAsReadVisible) {
+                            this.articlesToMarkAsRead.push(article);
                         }
+                    } else if (advControls.hide) {
+                        article.setVisible(false);
                     }
                 }
             } catch (err) {
@@ -189,10 +186,6 @@ export class ArticleManager {
                 return article.getEntryId();
             })
             this.page.put(ext.articlesToMarkAsReadId, ids);
-        }
-
-        if (this.getCurrentSub().getAdvancedControlsReceivedPeriod().keepUnread) {
-            this.page.put(ext.keepNewArticlesUnreadId, true);
         }
     }
 

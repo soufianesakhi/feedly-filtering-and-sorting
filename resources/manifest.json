@@ -1,0 +1,36 @@
+{
+    "manifest_version": 2,
+    "name": "Feedly filtering and sorting",
+    "version": "{{version}}",
+    "description": "Enhance the feedly website with advanced filtering and sorting capabilities",
+    "icons": {
+        "48": "icons/48.png",
+        "128": "icons/128.png"
+    },
+    "homepage_url": "https://github.com/soufianesakhi/feedly-filtering-and-sorting",
+    "author": "Soufiane Sakhi",
+    "permissions": [
+        "storage"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "*://feedly.com/*"
+            ],
+            "js": [
+                "node-creation-observer.js",
+                "jquery.min.js",
+                "feedly-filtering-and-sorting.js"
+            ]
+        }
+    ],
+    "web_accessible_resources": [
+        "node-creation-observer.js",
+        "jquery.min.js"
+    ],
+    "applications": {
+        "gecko": {
+            "id": "feedly-filtering-and-sorting@mozilla.org"
+        }
+    }
+}
