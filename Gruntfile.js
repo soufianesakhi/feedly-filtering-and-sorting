@@ -86,7 +86,10 @@ module.exports = function (grunt) {
                 }
             },
             'version': {
-                files: [{ src: 'resources/Header.js', dest: 'target/Header.js' }],
+                files: [
+                    { src: 'resources/Header.js', dest: 'target/Header.js' },
+                    { src: 'resources/manifest.json', dest: 'web-ext/manifest.json' }
+                ],
                 options: {
                     replacements: [{
                         pattern: '{{version}}',

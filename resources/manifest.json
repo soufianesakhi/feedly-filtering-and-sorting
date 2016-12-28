@@ -1,9 +1,14 @@
 {
     "manifest_version": 2,
     "name": "Feedly filtering and sorting",
-    "version": "1.5.4",
+    "version": "{{version}}",
     "description": "Enhance the feedly website with advanced filtering and sorting capabilities",
+    "icons": {
+        "48": "icons/48.png",
+        "128": "icons/128.png"
+    },
     "homepage_url": "https://github.com/soufianesakhi/feedly-filtering-and-sorting",
+    "author": "Soufiane Sakhi",
     "permissions": [
         "storage"
     ],

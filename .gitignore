@@ -7,3 +7,5 @@ node_modules/
 typings/
 target/
 deploy.json
+web-ext/feedly-filtering-and-sorting.js
+web-ext/manifest.json
