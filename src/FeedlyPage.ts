@@ -10,7 +10,7 @@ declare var getFFnS: (id: string) => any;
 export class FeedlyPage {
     hiddingInfoClass = "FFnS_Hiding_Info";
 
-    constructor(subscriptionManager: SubscriptionManager) {
+    constructor() {
         this.put("ext", ext);
         injectToWindow(["getFFnS"], this.getFFnS);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);

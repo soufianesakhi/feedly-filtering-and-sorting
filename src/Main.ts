@@ -5,7 +5,7 @@ import { callbackBindedTo } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 import { LocalStorage } from "./dao/LocalStorage";
 
-var DEBUG = true;
+var DEBUG = false;
 declare var LocalPersistence: LocalStorage;
 
 function injectResources() {

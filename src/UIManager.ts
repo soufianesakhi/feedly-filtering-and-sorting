@@ -47,18 +47,22 @@ export class UIManager {
     init() {
         return new AsyncResult<any>((p) => {
             this.subscriptionManager = new SubscriptionManager();
-            this.page = new FeedlyPage(this.subscriptionManager);
+            this.page = new FeedlyPage();
             this.articleManager = new ArticleManager(this.subscriptionManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
             this.subscriptionManager.init().then(() => {
                 this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
                 this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
-                this.updateSubscription().then(() => {
-                    this.initUI();
-                    this.registerSettings();
-                    this.updateMenu();
-                    this.initSettingsCallbacks();
-                    p.done();
+                this.autoLoadAllArticlesCB.init().then(() => {
+                    this.globalSettingsEnabledCB.init().then(() => {
+                        this.updateSubscription().then(() => {
+                            this.initUI();
+                            this.registerSettings();
+                            this.updateMenu();
+                            this.initSettingsCallbacks();
+                            p.done();
+                        }, this);
+                    }, this);
                 }, this);
             }, this);
         }, this);

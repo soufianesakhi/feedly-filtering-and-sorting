@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name        Feedly filtering and sorting
 // @namespace   https://github.com/soufianesakhi/feedly-filtering-and-sorting
-// @description Enhance the feedly website with advanced filtering and sorting capabilities
+// @description Enhance the feedly website with advanced filtering, sorting and more
 // @author      Soufiane Sakhi
 // @license     MIT licensed, Copyright (c) 2016 Soufiane Sakhi (https://opensource.org/licenses/MIT)
 // @homepage    https://github.com/soufianesakhi/feedly-filtering-and-sorting

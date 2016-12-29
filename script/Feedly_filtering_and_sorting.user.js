@@ -1,20 +1,23 @@
 // ==UserScript==
 // @name        Feedly filtering and sorting
 // @namespace   https://github.com/soufianesakhi/feedly-filtering-and-sorting
-// @description Enhance the feedly website with advanced filtering and sorting capabilities
+// @description Enhance the feedly website with advanced filtering, sorting and more
 // @author      Soufiane Sakhi
 // @license     MIT licensed, Copyright (c) 2016 Soufiane Sakhi (https://opensource.org/licenses/MIT)
 // @homepage    https://github.com/soufianesakhi/feedly-filtering-and-sorting
 // @supportURL  https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues
-// @icon        http://s3.feedly.com/img/feedly-512.png
+// @icon        https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/web-ext/icons/128.png
 // @require     http://code.jquery.com/jquery.min.js
+// @resource    jquery.min.js http://code.jquery.com/jquery.min.js
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
+// @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
 // @include     *://feedly.com/*
-// @version     2.1.2
+// @version     2.2.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
 // @grant       GM_listValues
+// @grant       GM_getResourceText
 // ==/UserScript==
 
 var ext = {
@@ -39,7 +42,9 @@ var ext = {
     "lastReadEntryId": "lastReadEntry",
     "keepNewArticlesUnreadId": "keepNewArticlesUnread",
     "articlesToMarkAsReadId": "articlesToMarkAsRead",
-    "sortedVisibleArticlesId": "sortedVisibleArticles"
+    "sortedVisibleArticlesId": "sortedVisibleArticles",
+    "isOpenAndMarkAsReadId": "isOpenAndMarkAsRead",
+    "openAndMarkAsReadClass": "open-in-new-tab-button"
 };
 
 var exported = {};
@@ -127,7 +132,8 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
                     clone[field] = deepClone(toClone[field], alternativeToCloneByField[field], alternativeToCloneByField);
                 }
                 else {
-                    clone[field] = toClone[field].slice(0);
+                    var array = toClone[field];
+                    clone[field] = array.slice(0);
                 }
                 break;
             case "number":
@@ -140,6 +146,35 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
         }
     }
     return clone;
+}
+function executeWindow(sourceName) {
+    var functions = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        functions[_i - 1] = arguments[_i];
+    }
+    var srcTxt = "";
+    for (var i = 0; i < functions.length; i++) {
+        srcTxt += "(" + functions[i].toString() + ")();\n";
+    }
+    srcTxt += "//# sourceURL=" + sourceName;
+    injectScriptText(srcTxt);
+}
+function injectToWindow(functionNames) {
+    var functions = [];
+    for (var _i = 1; _i < arguments.length; _i++) {
+        functions[_i - 1] = arguments[_i];
+    }
+    var srcTxt = "";
+    for (var i = 0; i < functions.length; i++) {
+        srcTxt += functions[i].toString().replace(/^function/, "function " + functionNames[i]) + "\n";
+    }
+    injectScriptText(srcTxt);
+}
+function injectScriptText(srcTxt) {
+    var script = document.createElement("script");
+    script.type = 'text/javascript';
+    script.text = srcTxt;
+    document.body.appendChild(script);
 }
 
 (function (SortingType) {
@@ -171,20 +206,75 @@ function getFilteringTypeId(type) {
     return FilteringType[type];
 }
 
-var LocalPersistence = (function () {
-    function LocalPersistence() {
+var AsyncResult = (function () {
+    function AsyncResult(task, taskThisArg) {
+        this.task = task;
+        this.taskThisArg = taskThisArg;
     }
-    LocalPersistence.get = function (id, defaultValue) {
-        return JSON.parse(GM_getValue(id, JSON.stringify(defaultValue)));
+    AsyncResult.prototype.then = function (callback, thisArg) {
+        try {
+            this.resultCallback = callback;
+            this.resultThisArg = thisArg;
+            this.task.call(this.taskThisArg, this);
+        }
+        catch (e) {
+            console.log(e);
+        }
     };
-    LocalPersistence.put = function (id, value, replace) {
+    ;
+    AsyncResult.prototype.result = function (result) {
+        try {
+            this.resultCallback.call(this.resultThisArg, result);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    };
+    ;
+    AsyncResult.prototype.chain = function (asyncResult) {
+        this.then(function () {
+            asyncResult.done();
+        }, this);
+    };
+    AsyncResult.prototype.done = function () {
+        try {
+            this.resultCallback.apply(this.resultThisArg);
+        }
+        catch (e) {
+            console.log(e);
+        }
+    };
+    return AsyncResult;
+}());
+
+var UserScriptStorage = (function () {
+    function UserScriptStorage() {
+    }
+    UserScriptStorage.prototype.getAsync = function (id, defaultValue) {
+        return new AsyncResult(function (p) {
+            p.result(JSON.parse(GM_getValue(id, JSON.stringify(defaultValue))));
+        }, this);
+    };
+    UserScriptStorage.prototype.put = function (id, value, replace) {
         GM_setValue(id, JSON.stringify(value, replace));
     };
-    LocalPersistence.delete = function (id) {
+    UserScriptStorage.prototype.delete = function (id) {
         GM_deleteValue(id);
     };
-    return LocalPersistence;
+    UserScriptStorage.prototype.listKeys = function () {
+        return GM_listValues();
+    };
+    UserScriptStorage.prototype.init = function () {
+        return new AsyncResult(function (p) {
+            p.done();
+        }, this);
+    };
+    UserScriptStorage.prototype.loadScript = function (name) {
+        injectScriptText(GM_getResourceText(name));
+    };
+    return UserScriptStorage;
 }());
+var LocalPersistence = new UserScriptStorage();
 
 var SubscriptionDTO = (function () {
     function SubscriptionDTO(url) {
@@ -218,18 +308,12 @@ var AdvancedControlsReceivedPeriod = (function () {
 }());
 
 var Subscription = (function () {
-    function Subscription(url, dao) {
+    function Subscription(dao, dto) {
         this.dao = dao;
-        this.update(url, true);
-    }
-    Subscription.prototype.update = function (url, skipSave) {
-        var dto = this.dao.load(url);
-        var cloneURL = this.dto == null ? dto.url : this.getURL();
-        this.dto = this.dao.clone(dto, cloneURL);
-        if (!skipSave) {
-            this.dao.save(this.dto);
+        if (dto) {
+            this.dto = dto;
         }
-    };
+    }
     Subscription.prototype.getURL = function () {
         return this.dto.url;
     };
@@ -271,22 +355,22 @@ var Subscription = (function () {
     Subscription.prototype.setMaxHours_AdvancedControlsReceivedPeriod = function (hours, days) {
         var maxHours = hours + 24 * days;
         this.getAdvancedControlsReceivedPeriod().maxHours = maxHours;
-        this.dao.save(this.dto);
+        this.save();
     };
     Subscription.prototype.getAdditionalSortingTypes = function () {
         return this.dto.additionalSortingTypes;
     };
     Subscription.prototype.setAdditionalSortingTypes = function (additionalSortingTypes) {
         this.dto.additionalSortingTypes = additionalSortingTypes;
-        this.dao.save(this.dto);
+        this.save();
     };
     Subscription.prototype.addAdditionalSortingType = function (additionalSortingType) {
         this.dto.additionalSortingTypes.push(additionalSortingType);
-        this.dao.save(this.dto);
+        this.save();
     };
     Subscription.prototype.addKeyword = function (keyword, type) {
         this.getFilteringList(type).push(keyword);
-        this.dao.save(this.dto);
+        this.save();
     };
     Subscription.prototype.removeKeyword = function (keyword, type) {
         var keywordList = this.getFilteringList(type);
@@ -294,10 +378,12 @@ var Subscription = (function () {
         if (index > -1) {
             keywordList.splice(index, 1);
         }
-        this.dao.save(this.dto);
+        this.save();
     };
     Subscription.prototype.resetFilteringList = function (type) {
         this.getFilteringList(type).length = 0;
+    };
+    Subscription.prototype.save = function () {
         this.dao.save(this.dto);
     };
     return Subscription;
@@ -308,9 +394,38 @@ var SubscriptionDAO = (function () {
         this.SUBSCRIPTION_ID_PREFIX = "subscription_";
         this.GLOBAL_SETTINGS_SUBSCRIPTION_URL = "---global settings---";
         registerAccessors(new SubscriptionDTO(""), "dto", Subscription.prototype, this.save, this);
-        this.defaultSubscription = new Subscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL, this);
-        this.defaultSubscriptionDTO = this.defaultSubscription.dto;
     }
+    SubscriptionDAO.prototype.init = function () {
+        var _this = this;
+        return new AsyncResult(function (p) {
+            LocalPersistence.init().then(function () {
+                var t = _this;
+                var onLoad = function (sub) {
+                    t.defaultSubscription = sub;
+                    p.done();
+                };
+                if (LocalPersistence.listKeys().indexOf(_this.getSubscriptionId(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL)) > -1) {
+                    _this.loadSubscription(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL).then(onLoad, _this);
+                }
+                else {
+                    var dto = new SubscriptionDTO(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL);
+                    _this.save(dto);
+                    onLoad.call(_this, new Subscription(_this, dto));
+                }
+            }, _this);
+        }, this);
+    };
+    SubscriptionDAO.prototype.loadSubscription = function (url) {
+        var _this = this;
+        return new AsyncResult(function (p) {
+            var sub = new Subscription(_this);
+            _this.load(url).then(function (dto) {
+                sub.dto = dto;
+                p.result(sub);
+            }, _this);
+        }, this);
+    };
+    ;
     SubscriptionDAO.prototype.save = function (dto) {
         var url = dto.url;
         var id = this.getSubscriptionId(url);
@@ -318,30 +433,32 @@ var SubscriptionDAO = (function () {
         console.log("Subscription saved: " + JSON.stringify(dto));
     };
     SubscriptionDAO.prototype.load = function (url) {
-        var subscriptionDTO;
-        var id = this.getSubscriptionId(url);
-        var dto = LocalPersistence.get(id, null);
-        if (dto != null) {
-            var linkedURL = dto.linkedUrl;
-            if (linkedURL != null) {
-                console.log("Loading linked subscription: " + linkedURL);
-                subscriptionDTO = this.load(linkedURL);
-            }
-            else {
-                subscriptionDTO = dto;
-                console.log("Loaded saved subscription: " + JSON.stringify(subscriptionDTO));
-            }
-        }
-        if (subscriptionDTO == null) {
-            if (this.defaultSubscriptionDTO == null) {
-                subscriptionDTO = new SubscriptionDTO(url);
-                this.save(subscriptionDTO);
-            }
-            else {
-                subscriptionDTO = this.clone(this.defaultSubscriptionDTO, url);
-            }
-        }
-        return subscriptionDTO;
+        var _this = this;
+        return new AsyncResult(function (p) {
+            LocalPersistence.getAsync(_this.getSubscriptionId(url), null).then(function (dto) {
+                var cloneURL;
+                if (dto) {
+                    var linkedURL = dto.linkedUrl;
+                    if (linkedURL != null) {
+                        console.log("Loading linked subscription: " + linkedURL);
+                        _this.load(linkedURL).then(function (dto) {
+                            p.result(dto);
+                        }, _this);
+                        return;
+                    }
+                    else {
+                        cloneURL = dto.url;
+                        console.log("Loaded saved subscription: " + JSON.stringify(dto));
+                    }
+                }
+                else {
+                    dto = _this.defaultSubscription ? _this.defaultSubscription.dto : new SubscriptionDTO(url);
+                    cloneURL = url;
+                }
+                dto = _this.clone(dto, cloneURL);
+                p.result(dto);
+            }, _this);
+        }, this);
     };
     SubscriptionDAO.prototype.delete = function (url) {
         LocalPersistence.delete(this.getSubscriptionId(url));
@@ -359,7 +476,7 @@ var SubscriptionDAO = (function () {
     };
     SubscriptionDAO.prototype.getAllSubscriptionURLs = function () {
         var _this = this;
-        var urls = GM_listValues().filter(function (value) {
+        var urls = LocalPersistence.listKeys().filter(function (value) {
             return value.indexOf(_this.SUBSCRIPTION_ID_PREFIX) == 0;
         });
         urls = urls.map(function (value) {
@@ -393,15 +510,26 @@ var SubscriptionManager = (function () {
         this.urlPrefixPattern = new RegExp(ext.urlPrefixPattern, "i");
         this.dao = new SubscriptionDAO();
     }
+    SubscriptionManager.prototype.init = function () {
+        var _this = this;
+        return new AsyncResult(function (p) {
+            _this.dao.init().chain(p);
+        }, this);
+    };
     SubscriptionManager.prototype.loadSubscription = function (globalSettingsEnabled) {
-        var subscription;
-        if (globalSettingsEnabled) {
-            subscription = this.dao.getGlobalSettings();
-        }
-        else {
-            subscription = new Subscription(this.getActualSubscriptionURL(), this.dao);
-        }
-        return this.currentSubscription = subscription;
+        var _this = this;
+        return new AsyncResult(function (p) {
+            var onLoad = function (sub) {
+                _this.currentSubscription = sub;
+                p.result(sub);
+            };
+            if (globalSettingsEnabled) {
+                onLoad.call(_this, _this.dao.getGlobalSettings());
+            }
+            else {
+                _this.dao.loadSubscription(_this.getActualSubscriptionURL()).then(onLoad, _this);
+            }
+        }, this);
     };
     SubscriptionManager.prototype.linkToSubscription = function (url) {
         if (url === this.getActualSubscriptionURL()) {
@@ -414,8 +542,14 @@ var SubscriptionManager = (function () {
     SubscriptionManager.prototype.deleteSubscription = function (url) {
         this.dao.delete(url);
     };
-    SubscriptionManager.prototype.importKeywords = function (url) {
-        this.currentSubscription.update(url);
+    SubscriptionManager.prototype.importSettings = function (url) {
+        var _this = this;
+        return new AsyncResult(function (p) {
+            _this.dao.loadSubscription(url).then(function (sub) {
+                _this.currentSubscription = sub;
+                p.done();
+            }, _this);
+        }, this);
     };
     SubscriptionManager.prototype.getAllSubscriptionURLs = function () {
         return this.dao.getAllSubscriptionURLs();
@@ -449,7 +583,6 @@ var ArticleManager = (function () {
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
-        this.page.reset();
     };
     ArticleManager.prototype.getCurrentSub = function () {
         return this.subscriptionManager.getCurrentSubscription();
@@ -518,16 +651,14 @@ var ArticleManager = (function () {
                     }
                 }
                 else {
-                    if (advControls.hide) {
-                        if (advControls.showIfHot && (article.isHot()
-                            || article.getPopularity() >= advControls.minPopularity)) {
-                            if (advControls.keepUnread && advControls.markAsReadVisible) {
-                                this.articlesToMarkAsRead.push(article);
-                            }
+                    if (advControls.showIfHot && (article.isHot() ||
+                        article.getPopularity() >= advControls.minPopularity)) {
+                        if (advControls.keepUnread && advControls.markAsReadVisible) {
+                            this.articlesToMarkAsRead.push(article);
                         }
-                        else {
-                            article.setVisible(false);
-                        }
+                    }
+                    else if (advControls.hide) {
+                        article.setVisible(false);
                     }
                 }
             }
@@ -606,9 +737,6 @@ var ArticleManager = (function () {
                 return article.getEntryId();
             });
             this.page.put(ext.articlesToMarkAsReadId, ids);
-        }
-        if (this.getCurrentSub().getAdvancedControlsReceivedPeriod().keepUnread) {
-            this.page.put(ext.keepNewArticlesUnreadId, true);
         }
     };
     ArticleManager.prototype.sortArticleArray = function (articles) {
@@ -743,68 +871,80 @@ var Article = (function () {
 }());
 
 var templates = {
-    "settingsHTML": "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' class='pageAction requiresLogin'> <fieldset> <legend>General settings</legend> <span class='setting_group'> <span class='tooltip'> Auto load all unread articles <span class='tooltiptext'>Not applied if there are no unread articles</span> </span> <input id='FFnS_autoLoadAllArticles' type='checkbox'> </span> <span class='setting_group'> <span class='tooltip'> Always use global settings <span class='tooltiptext'>Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span> </span> <input id='FFnS_globalSettingsEnabled' type='checkbox'> </span> </fieldset> <fieldset> <legend><span id='FFnS_subscription_title'></span></legend> <span class='setting_group'> <span class='tooltip'> Filtering enabled <span class='tooltiptext'>Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span> </span> <input id='FFnS_FilteringEnabled' type='checkbox'> </span> <span class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext'>Show only articles that contain at least one of the restricting keywords (not applied if empty)</span> </span> <input id='FFnS_RestrictingEnabled' type='checkbox'> </span> <span class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> {{SortingSelect}} </span> <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li> <a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a> </li> <li> <a href='#FFnS_Tab_UIControls'>UI controls</a> </li> <li> <a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a> </li> <li> <a href='#FFnS_Tab_SettingsControls'>Settings controls</a> </li> </ul> <div id='FFnS_tabs_content'> {{FilteringList.Type.FilteredOut}} {{FilteringList.Type.RestrictedOn}} <div id='FFnS_Tab_UIControls' class='FFnS_Tab_Menu'> <span>Add a button to open articles in a new window/tab and mark them as read</span> <input id='FFnS_OpenAndMarkAsRead' type='checkbox'> </div> <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently published articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles published less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23'> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0'> <span>days</span> <span>ago should be:</span> </div> <span class='setting_group'> <span>Kept unread</span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' step='100'> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Marked as read if visible:</span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox'> </span> </fieldset> <fieldset> <legend>Hot articles</legend> <span class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox'> </span> </fieldset> <fieldset> <legend>Additional sorting levels (applied when two entries have equal sorting)</legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <span>Selected subscription:</span> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input'> {{I
-mportMenu.SubscriptionOptions}} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'>Import settings from selected subscription</button> <button id='FFnS_SettingsControls_DeleteSub'>Delete selected subscription</button> <fieldset> <legend>Linking</legend> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'>Link current subscription to selected subscription</button> </fieldset> </div> </div> </fieldset> </div> </div>",
+    "settingsHTML": "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' class='pageAction requiresLogin'> <fieldset> <legend>General settings</legend> <span class='setting_group'> <span class='tooltip'> Auto load all unread articles <span class='tooltiptext'>Not applied if there are no unread articles</span> </span> <input id='FFnS_autoLoadAllArticles' type='checkbox'> </span> <span class='setting_group'> <span class='tooltip'> Always use global settings <span class='tooltiptext'>Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span> </span> <input id='FFnS_globalSettingsEnabled' type='checkbox'> </span> </fieldset> <fieldset> <legend><span id='FFnS_subscription_title'></span></legend> <span class='setting_group'> <span class='tooltip'> Filtering enabled <span class='tooltiptext'>Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span> </span> <input id='FFnS_FilteringEnabled' type='checkbox'> </span> <span class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext'>Show only articles that contain at least one of the restricting keywords (not applied if empty)</span> </span> <input id='FFnS_RestrictingEnabled' type='checkbox'> </span> <span class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> {{SortingSelect}} </span> <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li> <a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a> </li> <li> <a href='#FFnS_Tab_UIControls'>UI controls</a> </li> <li> <a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a> </li> <li> <a href='#FFnS_Tab_SettingsControls'>Settings controls</a> </li> </ul> <div id='FFnS_tabs_content'> {{FilteringList.Type.FilteredOut}} {{FilteringList.Type.RestrictedOn}} <div id='FFnS_Tab_UIControls' class='FFnS_Tab_Menu'> <span>Add a button to open articles in a new window/tab and mark them as read</span> <input id='FFnS_OpenAndMarkAsRead' type='checkbox'> </div> <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently published articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles published less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23'> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0'> <span>days</span> <span>ago should be:</span> </div> <span class='setting_group'> <span>Kept unread</span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' step='100'> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox'> </span> <span class='setting_group'> <span>Marked as read if visible:</span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox'> </span> </fieldset> <fieldset> <legend>Hot articles</legend> <span class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox'> </span> </fieldset> <fieldset> <legend>Additional sorting levels (applied when two entries have equal sorting)</legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <span>Selected subscription:</span> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input'> {{ImportMenu.SubscriptionOptions}} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'>Import settings from selected subscription</button> <button id='FFnS_SettingsControls_DeleteSub'>Delete selected subscription</button> <fieldset> <legend>Linking</legend> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'>Link current subscription to selected subscription</button> </fieldset> </div> </div> </fieldset> </div> </div>",
     "filteringListHTML": "<div id='{{FilteringTypeTabId}}' class='FFnS_Tab_Menu'> <input id='{{inputId}}' class='FFnS_input' size='10' type='text'> <span id='{{plusBtnId}}'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='{{filetringKeywordsId}}'></span> <span id='{{eraseBtnId}}'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div>",
     "filteringKeywordHTML": "<button id='{{keywordId}}' type='button' class='FFnS_keyword'>{{keyword}}</button>",
     "sortingSelectHTML": "<select id='{{Id}}' class='FFnS_input'> <option value='{{PopularityDesc}}'>Sort by popularity (highest to lowest)</option> <option value='{{PopularityAsc}} '>Sort by popularity (lowest to highest)</option> <option value='{{TitleAsc}}'>Sort by title (a -&gt; z)</option> <option value='{{TitleDesc}}'>Sort by title (z -&gt; a)</option> <option value='{{PublishDateNewFirst}}'>Sort by publish date (new first)</option> <option value='{{PublishDateOldFirst}}'>Sort by publish date (old first)</option> <option value='{{SourceAsc}}'>Sort by source title (a -&gt; z)</option> <option value='{{SourceDesc}}'>Sort by source title (z -&gt; a)</option> </select>",
     "optionHTML": "<option value='{{value}}'>{{value}}</option>",
-    "styleCSS": "#FFnS_settingsDivContainer { display: none; background: rgba(0,0,0,0.9); width: 100%; height: 100%; z-index: 500; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 500px; margin-top: 1%; margin-left: 15%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #E0F5FF; padding: 2%; opacity: 1; } .FFnS_input { font-size:12px; } #FFnS_tabs_menu { height: 30px; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #B9E0ED; } #FFnS_tabs_menu li a { padding: 10px; color: #2A687D; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; max-height: 300px; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35A5E2; border-radius: 20px; color: #FFF; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn { float:right; width: 24px; height: 24px; } #FFnS_Tab_SettingsControls button { margin-top: 1%; font-size: 12px; display: block; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type=number]{ width: 30px; margin-left: 1%; margin-right: 1%; } #FFnS_MinPopularity_AdvancedControlsReceivedPeriod { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: sold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 2% } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('http://megaicons.net/static/img/icons_sizes/8/178/512/objects-empty-filter-icon.png'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; color: #757575; background-color: transparent; font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .header + div > div:first-child > div h4 { display: none; } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .fx .open-in-new-tab-button.mark-as-read { background:url(http://s3.feedly.com/production/head/images/condensed-visit-black.png); background-size: 32px 32px; background-repeat: no-repeat; margin-right: 0px; } .fx .entry.u5 .open-in-new-tab-button { filter: brightness(0) invert(1); margin-right: 4px; margin-top: 4px; } .fx .entry.u0 .open-in-new-tab-button.condensed-toolbar-icon { background-size: 32px 32px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0,0,0,0.05); } "
+    "styleCSS": "#FFnS_settingsDivContainer { display: none; background: rgba(0,0,0,0.9); width: 100%; height: 100%; z-index: 500; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 500px; margin-top: 1%; margin-left: 15%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #E0F5FF; padding: 2%; opacity: 1; } .FFnS_input { font-size:12px; } #FFnS_tabs_menu { height: 30px; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #B9E0ED; } #FFnS_tabs_menu li a { padding: 10px; color: #2A687D; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; max-height: 300px; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35A5E2; border-radius: 20px; color: #FFF; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn { float:right; width: 24px; height: 24px; } #FFnS_Tab_SettingsControls button { margin-top: 1%; font-size: 12px; display: block; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type=number]{ width: 30px; margin-left: 1%; margin-right: 1%; } #FFnS_MinPopularity_AdvancedControlsReceivedPeriod { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: sold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 2% } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('http://megaicons.net/static/img/icons_sizes/8/178/512/objects-empty-filter-icon.png'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; color: #757575; background-color: transparent; font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0,0,0,0.05); } .header + div > div:first-child > div h4 { display: none; } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .fx .open-in-new-tab-button.mark-as-read { background:url(http://s3.feedly.com/production/head/images/condensed-visit-black.png); background-size: 32px 32px; background-repeat: no-repeat; margin-right: 0px; } .fx .entry.u5 .open-in-new-tab-button { filter: brightness(0) invert(1); margin-right: 4px; margin-top: 4px; } .fx .entry.u0 .open-in-new-tab-button.condensed-toolbar-icon { background-size: 32px 32px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0,0,0,0.05); } "
 };
 
 var FeedlyPage = (function () {
-    function FeedlyPage(subscriptionManager) {
-        this.eval = window["eval"];
+    function FeedlyPage() {
         this.hiddingInfoClass = "FFnS_Hiding_Info";
-        this.subscriptionManager = subscriptionManager;
-        this.eval("(" + this.overrideMarkAsRead.toString() + ")();");
-        this.eval("(" + this.overrideNavigation.toString() + ")();");
-        this.eval("window.ext = (" + JSON.stringify(ext).replace(/\s+/g, ' ') + ");");
-        this.reader = new FeedlyReader(this);
-        this.initStyling();
+        this.put("ext", ext);
+        injectToWindow(["getFFnS"], this.getFFnS);
+        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
     }
-    FeedlyPage.prototype.onNewArticle = function (a) {
-        if (!this.subscriptionManager.getCurrentSubscription().isOpenAndMarkAsRead()) {
-            return;
-        }
-        var reader = this.reader;
-        var link = $(a).find(".title").attr("href");
-        var entryId = $(a).attr(ext.articleEntryIdAttribute);
-        var attributes = {
-            class: "open-in-new-tab-button mark-as-read",
-            title: "Open in a new window/tab and mark as read",
-            type: "button"
-        };
-        if ($(a).hasClass("u0")) {
-            attributes.class += " condensed-toolbar-icon icon";
-        }
-        var e = $("<button>", attributes);
-        this.onClick(e.get(0), function (event) {
-            window.open(link, '_blank');
-            reader.askMarkEntryAsRead(entryId);
-            event.stopPropagation();
-        });
-        if ($(a).hasClass("u5")) {
-            $(a).find(".mark-as-read").before(e);
-        }
-        else if ($(a).hasClass("u4")) {
-            $(a).find(".ago").after(e);
+    FeedlyPage.prototype.update = function (sub) {
+        if (sub.isOpenAndMarkAsRead()) {
+            this.put(ext.isOpenAndMarkAsReadId, true);
+            $("." + ext.openAndMarkAsReadClass).css("display", "");
         }
         else {
-            $(a).find(".condensed-tools .button-dropdown > :first-child").before(e);
+            $("." + ext.openAndMarkAsReadClass).css("display", "none");
+        }
+        if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
+            this.put(ext.keepNewArticlesUnreadId, true);
         }
     };
-    FeedlyPage.prototype.onClick = function (e, listener) {
-        e.addEventListener('click', listener, true);
+    FeedlyPage.prototype.initWindow = function () {
+        window["ext"] = getFFnS("ext");
     };
-    FeedlyPage.prototype.initStyling = function () {
-        NodeCreationObserver.onCreation("header > h1", function (e) {
-            $(e).removeClass("col-md-4").addClass("col-md-6");
+    FeedlyPage.prototype.onNewArticle = function () {
+        NodeCreationObserver.onCreation(ext.articleSelector + " .content", function (element) {
+            var a = $(element).closest(ext.articleSelector);
+            var style = "display: none";
+            if (getFFnS(ext.isOpenAndMarkAsReadId)) {
+                style = "";
+            }
+            var attributes = {
+                class: ext.openAndMarkAsReadClass + " mark-as-read",
+                title: "Open in a new window/tab and mark as read",
+                type: "button",
+                style: style
+            };
+            if (a.hasClass("u0")) {
+                attributes.class += " condensed-toolbar-icon icon";
+            }
+            var e = $("<button>", attributes);
+            if (a.hasClass("u5")) {
+                a.find(".mark-as-read").before(e);
+            }
+            else if ($(a).hasClass("u4")) {
+                a.find(".ago").after(e);
+            }
+            else {
+                a.find(".condensed-tools .button-dropdown > :first-child").before(e);
+            }
+            var link = $(a).find(".title").attr("href");
+            var entryId = $(a).attr(ext.articleEntryIdAttribute);
+            e.get(0).addEventListener('click', function (event) {
+                window.open(link, '_blank');
+                window["streets"].service('reader').askMarkEntryAsRead(entryId);
+                event.stopPropagation();
+            }, true);
         });
     };
     FeedlyPage.prototype.reset = function () {
         this.clearHiddingInfo();
-        this.eval("window.FFnS = ({});");
+        var i = sessionStorage.length;
+        while (i--) {
+            var key = sessionStorage.key(i);
+            if (/^FFnS_/.test(key)) {
+                sessionStorage.removeItem(key);
+            }
+        }
     };
     FeedlyPage.prototype.showHiddingInfo = function () {
         var hiddenCount = 0;
@@ -813,37 +953,37 @@ var FeedlyPage = (function () {
                 hiddenCount++;
             }
         });
+        this.clearHiddingInfo();
         if (hiddenCount == 0) {
             return;
         }
-        this.clearHiddingInfo();
         $(ext.hidingInfoSibling).after("<div class='detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
     };
     FeedlyPage.prototype.clearHiddingInfo = function () {
         $("." + this.hiddingInfoClass).remove();
     };
     FeedlyPage.prototype.put = function (id, value) {
-        this.eval("window.FFnS['" + id + "'] = " + JSON.stringify(value) + ";");
+        sessionStorage.setItem("FFnS_" + id, JSON.stringify(value));
+    };
+    FeedlyPage.prototype.getFFnS = function (id) {
+        return JSON.parse(sessionStorage.getItem("FFnS_" + id));
     };
     FeedlyPage.prototype.overrideMarkAsRead = function () {
         var pagesPkg = window["devhd"].pkg("pages");
-        function get(id) {
-            return window["FFnS"][id];
-        }
         function markEntryAsRead(id, thisArg) {
             pagesPkg.BasePage.prototype.buryEntry.call(thisArg, id);
         }
         function getLastReadEntry(oldLastEntryObject, thisArg) {
-            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || get(ext.keepNewArticlesUnreadId) == null) {
+            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || getFFnS(ext.keepNewArticlesUnreadId) == null) {
                 return oldLastEntryObject;
             }
-            var idsToMarkAsRead = get(ext.articlesToMarkAsReadId);
+            var idsToMarkAsRead = getFFnS(ext.articlesToMarkAsReadId);
             if (idsToMarkAsRead != null) {
                 idsToMarkAsRead.forEach(function (id) {
                     markEntryAsRead(id, thisArg);
                 });
             }
-            var lastReadEntryId = get(ext.lastReadEntryId);
+            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
             if (lastReadEntryId == null) {
                 return null;
             }
@@ -853,24 +993,26 @@ var FeedlyPage = (function () {
         var oldMarkAllAsRead = feedlyListPagePrototype.markAsRead;
         feedlyListPagePrototype.markAsRead = function (oldLastEntryObject) {
             var lastEntryObject = getLastReadEntry(oldLastEntryObject, this);
-            if (!get(ext.keepNewArticlesUnreadId) || lastEntryObject) {
+            if (!getFFnS(ext.keepNewArticlesUnreadId) || lastEntryObject) {
                 oldMarkAllAsRead.call(this, lastEntryObject);
             }
-            this.feedly.jumpToNext();
+            if (!(oldLastEntryObject && oldLastEntryObject.asOf)) {
+                this.feedly.jumpToNext();
+            }
         };
     };
     FeedlyPage.prototype.overrideNavigation = function () {
-        function get(id) {
+        function getId(id) {
             return document.getElementById(id + "_main");
         }
         function isRead(id) {
-            return $(get(id)).hasClass(ext.readArticleClass);
+            return $(getId(id)).hasClass(ext.readArticleClass);
         }
         function removed(id) {
-            return get(id) == null;
+            return getId(id) == null;
         }
         function getSortedVisibleArticles() {
-            return window["FFnS"][ext.sortedVisibleArticlesId];
+            return getFFnS(ext.sortedVisibleArticlesId);
         }
         function lookupEntry(unreadOnly, isPrevious) {
             var selectedEntryId = this.navigo.selectedEntryId;
@@ -913,15 +1055,6 @@ var FeedlyPage = (function () {
     };
     return FeedlyPage;
 }());
-var FeedlyReader = (function () {
-    function FeedlyReader(page) {
-        this.eval = page.eval;
-    }
-    FeedlyReader.prototype.askMarkEntryAsRead = function (entryId) {
-        this.eval("window.streets.service('reader').askMarkEntryAsRead('" + entryId + "');");
-    };
-    return FeedlyReader;
-}());
 
 var UIManager = (function () {
     function UIManager() {
@@ -948,27 +1081,33 @@ var UIManager = (function () {
         this.closeBtnId = this.getHTMLId("CloseSettingsBtn");
     }
     UIManager.prototype.init = function () {
-        try {
-            this.subscriptionManager = new SubscriptionManager();
-            this.page = new FeedlyPage(this.subscriptionManager);
-            this.articleManager = new ArticleManager(this.subscriptionManager, this.page);
-            this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
-            this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
-            this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
-            this.initUI();
-            this.registerSettings();
-            this.updatePage();
-            this.initSettingsCallbacks();
-        }
-        catch (err) {
-            console.log(err);
-        }
+        var _this = this;
+        return new AsyncResult(function (p) {
+            _this.subscriptionManager = new SubscriptionManager();
+            _this.page = new FeedlyPage();
+            _this.articleManager = new ArticleManager(_this.subscriptionManager, _this.page);
+            _this.htmlSubscriptionManager = new HTMLSubscriptionManager(_this);
+            _this.subscriptionManager.init().then(function () {
+                _this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", _this, false);
+                _this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", _this);
+                _this.autoLoadAllArticlesCB.init().then(function () {
+                    _this.globalSettingsEnabledCB.init().then(function () {
+                        _this.updateSubscription().then(function () {
+                            _this.initUI();
+                            _this.registerSettings();
+                            _this.updateMenu();
+                            _this.initSettingsCallbacks();
+                            p.done();
+                        }, _this);
+                    }, _this);
+                }, _this);
+            }, _this);
+        }, this);
     };
     UIManager.prototype.updatePage = function () {
         try {
             this.resetPage();
-            this.updateSubscription();
-            this.updateMenu();
+            this.updateSubscription().then(this.updateMenu, this);
         }
         catch (err) {
             console.log(err);
@@ -983,18 +1122,27 @@ var UIManager = (function () {
         this.refreshFilteringAndSorting();
     };
     UIManager.prototype.refreshFilteringAndSorting = function () {
+        this.page.reset();
         this.articleManager.refreshArticles();
+        this.page.update(this.subscription);
     };
     UIManager.prototype.updateSubscription = function () {
-        var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
-        this.subscription = this.subscriptionManager.loadSubscription(globalSettingsEnabled);
-        this.updateSubscriptionTitle(globalSettingsEnabled);
+        var _this = this;
+        return new AsyncResult(function (p) {
+            var globalSettingsEnabled = _this.globalSettingsEnabledCB.isEnabled();
+            _this.subscriptionManager.loadSubscription(globalSettingsEnabled).then(function (sub) {
+                _this.subscription = sub;
+                _this.updateSubscriptionTitle(globalSettingsEnabled);
+                p.done();
+            }, _this);
+        }, this);
     };
     UIManager.prototype.updateMenu = function () {
         var _this = this;
         this.htmlSubscriptionManager.update();
+        this.refreshFilteringAndSorting();
         getFilteringTypes().forEach(function (type) {
-            _this.updateFilteringList(type);
+            _this.prepareFilteringList(type);
         });
         this.updateSettingsControls();
         // Additional sorting types
@@ -1201,6 +1349,10 @@ var UIManager = (function () {
         }
     };
     UIManager.prototype.updateFilteringList = function (type) {
+        this.prepareFilteringList(type);
+        this.refreshFilteringAndSorting();
+    };
+    UIManager.prototype.prepareFilteringList = function (type) {
         var ids = this.getIds(type);
         var filteringList = this.subscription.getFilteringList(type);
         var filteringKeywordsHTML = "";
@@ -1214,7 +1366,6 @@ var UIManager = (function () {
             filteringKeywordsHTML += filteringKeywordHTML;
         }
         $id(ids.filetringKeywordsId).html(filteringKeywordsHTML);
-        this.refreshFilteringAndSorting();
         this.setUpKeywordButtonsEvents(type);
     };
     UIManager.prototype.updateAdditionalSortingTypes = function () {
@@ -1229,7 +1380,6 @@ var UIManager = (function () {
                 return;
             }
             this.articleManager.addArticle(article);
-            this.page.onNewArticle(article);
             this.tryAutoLoadAllArticles();
         }
         catch (err) {
@@ -1266,9 +1416,8 @@ var UIManager = (function () {
     };
     UIManager.prototype.importFromOtherSub = function () {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
-        if (selectedURL && confirm("Import keywords from the subscription url /" + selectedURL + " ?")) {
-            this.subscriptionManager.importKeywords(selectedURL);
-            this.refreshPage();
+        if (selectedURL && confirm("Import settings from the subscription url /" + selectedURL + " ?")) {
+            this.subscriptionManager.importSettings(selectedURL).then(this.refreshPage, this);
         }
     };
     UIManager.prototype.linkToSub = function () {
@@ -1425,9 +1574,17 @@ var GlobalSettingsCheckBox = (function () {
         this.id = id;
         this.uiManager = uiManager;
         this.htmlId = uiManager.getHTMLId(id);
-        this.enabled = LocalPersistence.get(this.id, true);
-        setRadioChecked(this.htmlId, this.enabled);
     }
+    GlobalSettingsCheckBox.prototype.init = function () {
+        var _this = this;
+        return new AsyncResult(function (p) {
+            LocalPersistence.getAsync(_this.id, true).then(function (enabled) {
+                _this.enabled = enabled;
+                setRadioChecked(_this.htmlId, _this.enabled);
+                p.done();
+            }, _this);
+        }, this);
+    };
     GlobalSettingsCheckBox.prototype.isEnabled = function () {
         return this.enabled;
     };
@@ -1450,22 +1607,22 @@ var GlobalSettingsCheckBox = (function () {
     return GlobalSettingsCheckBox;
 }());
 
+var DEBUG = false;
 function injectResources() {
     $("head").append("<style>" + templates.styleCSS + "</style>");
-    var head = document.getElementsByTagName("head")[0];
-    var script = document.createElement("script");
-    script.src = "//code.jquery.com/jquery.min.js";
-    head.appendChild(script);
+    LocalPersistence.loadScript("jquery.min.js");
+    LocalPersistence.loadScript("node-creation-observer.js");
 }
 $(document).ready(function () {
+    injectResources();
     var uiManager = new UIManager();
     var uiManagerBind = callbackBindedTo(uiManager);
-    injectResources();
     NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
         console.log("Feedly page fully loaded");
-        uiManager.init();
-        NodeCreationObserver.onCreation(ext.articleSelector, uiManagerBind(uiManager.addArticle));
-        NodeCreationObserver.onCreation(ext.sectionSelector, uiManagerBind(uiManager.addSection));
-        NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, uiManagerBind(uiManager.updatePage));
+        uiManager.init().then(function () {
+            NodeCreationObserver.onCreation(ext.articleSelector, uiManagerBind(uiManager.addArticle));
+            NodeCreationObserver.onCreation(ext.sectionSelector, uiManagerBind(uiManager.addSection));
+            NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, uiManagerBind(uiManager.updatePage));
+        }, this);
     }, true);
 });
