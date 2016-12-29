@@ -94,6 +94,19 @@ export class SubscriptionDAO {
         return clone;
     }
 
+    importSettings(urlToImport: string, actualUrl: string): AsyncResult<any> {
+        return new AsyncResult<any>((p) => {
+            this.load(urlToImport).then((dto) => {
+                dto.url = actualUrl;
+                if (this.isURLGlobal(actualUrl)) {
+                    this.defaultSubscription.dto = dto;
+                }
+                this.save(dto);
+                p.done();
+            }, this);
+        }, this);
+    }
+
     getGlobalSettings(): Subscription {
         return this.defaultSubscription;
     }
@@ -115,6 +128,7 @@ export class SubscriptionDAO {
     linkSubscriptions(url: string, linkedURL: string) {
         var id = this.getSubscriptionId(url);
         var linkedSub = new LinkedSubscriptionDTO(linkedURL);
+        var t = this;
         LocalPersistence.put(id, linkedSub);
         console.log("Subscription linked: " + JSON.stringify(linkedSub));
     }

@@ -12,8 +12,8 @@ export class UserScriptStorage implements LocalStorage {
         }, this);
     }
 
-    public put(id: string, value: any, replace?: (key: string, value: any) => any) {
-        GM_setValue(id, JSON.stringify(value, replace));
+    public put(id: string, value: any) {
+        GM_setValue(id, JSON.stringify(value));
     }
 
     public delete(id: string) {

@@ -35,10 +35,13 @@ export class SubscriptionManager {
     }
 
     linkToSubscription(url: string) {
-        if (url === this.getActualSubscriptionURL()) {
+        var currentURL = this.currentSubscription.getURL();
+        if (url === currentURL) {
             alert("Linking to the same subscription URL is impossible");
+        } else if (this.isGlobalMode()) {
+            alert("Global settings can't be linked to any other subscription");
         } else {
-            this.dao.linkSubscriptions(this.getActualSubscriptionURL(), url);
+            this.dao.linkSubscriptions(currentURL, url);
         }
     }
 
@@ -48,10 +51,8 @@ export class SubscriptionManager {
 
     importSettings(url: string): AsyncResult<any> {
         return new AsyncResult<any>((p) => {
-            this.dao.loadSubscription(url).then((sub) => {
-                this.currentSubscription = sub;
-                p.done();
-            }, this);
+            var currentURL = this.currentSubscription.getURL();
+            this.dao.importSettings(url, currentURL).chain(p);
         }, this);
     }
 

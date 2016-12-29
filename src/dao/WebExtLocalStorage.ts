@@ -7,11 +7,22 @@ import { injectScriptText } from "../Utils";
 export class WebExtLocalStorage implements LocalStorage {
     storage: LocalStorageArea;
     promiseStorage: PromiseLocalStorageArea;
+    browser;
     keys: string[] = [];
     isArray = false;
 
     constructor() {
-        this.promiseStorage = chrome.storage.local;
+        if (typeof (chrome) != "undefined") {
+            this.browser = chrome;
+        } else {
+            this.browser = browser;
+        }
+        try {
+            this.promiseStorage = this.browser.storage.local;
+        } catch (e) {
+            this.browser = browser;
+            this.promiseStorage = this.browser.storage.local;
+        }
     }
 
     onError = function (e) {
@@ -40,7 +51,7 @@ export class WebExtLocalStorage implements LocalStorage {
         }, this);
     }
 
-    public put(id: string, value: any, replace?: (key: string, value: any) => any) {
+    public put(id: string, value: any) {
         if (this.keys.indexOf(id) == -1) {
             this.keys.push(id);
         }
@@ -81,7 +92,7 @@ export class WebExtLocalStorage implements LocalStorage {
                 });
             } catch (e) {
                 this.promiseStorage = null;
-                this.storage = chrome.storage.local;
+                this.storage = this.browser.storage.local;
                 this.storage.get(null, callback);
             }
         }, this);
@@ -89,7 +100,7 @@ export class WebExtLocalStorage implements LocalStorage {
 
     loadScript(name: string) {
         $.ajax({
-            url: chrome.extension.getURL(name),
+            url: this.browser.extension.getURL(name),
             dataType: "text",
             async: false,
             success: (result) => {
