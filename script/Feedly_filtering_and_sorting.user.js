@@ -4,7 +4,7 @@
 // @description Enhance the feedly website with advanced filtering, sorting and more
 // @author      Soufiane Sakhi
 // @license     MIT licensed, Copyright (c) 2016 Soufiane Sakhi (https://opensource.org/licenses/MIT)
-// @homepage    https://github.com/soufianesakhi/feedly-filtering-and-sorting
+// @homepageURL https://github.com/soufianesakhi/feedly-filtering-and-sorting
 // @supportURL  https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues
 // @icon        https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/web-ext/icons/128.png
 // @require     http://code.jquery.com/jquery.min.js
@@ -157,6 +157,9 @@ function executeWindow(sourceName) {
         srcTxt += "(" + functions[i].toString() + ")();\n";
     }
     srcTxt += "//# sourceURL=" + sourceName;
+    if (typeof (InstallTrigger) != "undefined") {
+        srcTxt = "eval(`" + srcTxt + "`)";
+    }
     injectScriptText(srcTxt);
 }
 function injectToWindow(functionNames) {

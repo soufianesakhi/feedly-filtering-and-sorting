@@ -116,6 +116,9 @@ export function executeWindow(sourceName: String, ...functions: Function[]) {
         srcTxt += "(" + functions[i].toString() + ")();\n";
     }
     srcTxt += "//# sourceURL=" + sourceName;
+    if (typeof (InstallTrigger) != "undefined") {
+        srcTxt = "eval(`" + srcTxt + "`)";
+    }
     injectScriptText(srcTxt);
 }
 

@@ -5,4 +5,5 @@
 
 declare var browser;
 declare var chrome;
+declare var InstallTrigger; // Defined only in Firefox
 declare var DEBUG: boolean;
