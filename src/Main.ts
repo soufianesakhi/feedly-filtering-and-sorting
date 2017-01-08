@@ -1,7 +1,7 @@
 /// <reference path="./_references.d.ts" />
 
 import { UIManager } from "./UIManager";
-import { callbackBindedTo } from "./Utils";
+import { callbackBindedTo, injectStyleText } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 import { LocalStorage } from "./dao/LocalStorage";
 
@@ -9,7 +9,7 @@ var DEBUG = false;
 declare var LocalPersistence: LocalStorage;
 
 function injectResources() {
-    $("head").append("<style>" + templates.styleCSS + "</style>");
+    injectStyleText(templates.styleCSS);
     LocalPersistence.loadScript("jquery.min.js");
     LocalPersistence.loadScript("node-creation-observer.js");
 }

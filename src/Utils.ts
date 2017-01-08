@@ -136,3 +136,7 @@ export function injectScriptText(srcTxt: string) {
     script.text = srcTxt;
     document.body.appendChild(script);
 }
+
+export function injectStyleText(styleTxt: string) {
+    $("head").append("<style>" + styleTxt + "</style>");
+}

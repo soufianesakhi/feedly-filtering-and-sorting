@@ -39,6 +39,10 @@ export class Subscription {
         return this.dto.openAndMarkAsRead;
     }
 
+    isMarkAsReadAboveBelow(): boolean {
+        return this.dto.markAsReadAboveBelow;
+    }
+
     getAdvancedControlsReceivedPeriod(): AdvancedControlsReceivedPeriod {
         return this.dto.advancedControlsReceivedPeriod;
     }

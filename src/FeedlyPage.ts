@@ -2,7 +2,7 @@
 
 import { Subscription } from "./Subscription";
 import { SubscriptionManager } from "./SubscriptionManager";
-import { executeWindow, injectToWindow } from "./Utils";
+import { executeWindow, injectToWindow, injectStyleText } from "./Utils";
 
 declare var onOpenEntryAndMarkAsRead: (event: MouseEvent) => any;
 declare var getFFnS: (id: string) => any;
@@ -17,14 +17,19 @@ export class FeedlyPage {
     }
 
     update(sub: Subscription) {
-        if (sub.isOpenAndMarkAsRead()) {
-            this.put(ext.isOpenAndMarkAsReadId, true);
-            $("." + ext.openAndMarkAsReadClass).css("display", "");
-        } else {
-            $("." + ext.openAndMarkAsReadClass).css("display", "none");
-        }
+        this.updateCheck(sub.isOpenAndMarkAsRead(), ext.openAndMarkAsReadId, ext.openAndMarkAsReadClass);
+        this.updateCheck(sub.isMarkAsReadAboveBelow(), ext.markAsReadAboveBelowId, ext.markAsReadAboveBelowClass);
         if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
             this.put(ext.keepNewArticlesUnreadId, true);
+        }
+    }
+
+    updateCheck(enabled: boolean, id: string, className: string) {
+        if (enabled) {
+            this.put(id, true);
+            $("." + className).css("display", "");
+        } else {
+            $("." + className).css("display", "none");
         }
     }
 
@@ -33,37 +38,81 @@ export class FeedlyPage {
     }
 
     onNewArticle() {
+        var reader = window["streets"].service('reader');
+        var onClick = (element: JQuery, callback: (event: MouseEvent) => any) => {
+            element.get(0).addEventListener('click', callback, true);
+        }
+        var getMarkAsReadAboveBelowCallback = (entryId: string, above: boolean) => {
+            return (event: MouseEvent) => {
+                event.stopPropagation();
+                var sortedVisibleArticles: String[] = getFFnS(ext.sortedVisibleArticlesId);
+                var index = sortedVisibleArticles.indexOf(entryId);
+                if (index == -1) {
+                    return;
+                }
+                var start: number, endExcl: number;
+                if (above) {
+                    if (index == 0) {
+                        return;
+                    }
+                    start = 0;
+                    endExcl = index;
+                } else {
+                    if (index == sortedVisibleArticles.length) {
+                        return;
+                    }
+                    start = index + 1;
+                    endExcl = sortedVisibleArticles.length;
+                }
+                for (var i = start; i < endExcl; i++) {
+                    reader.askMarkEntryAsRead(sortedVisibleArticles[i]);
+                }
+            }
+        }
+
         NodeCreationObserver.onCreation(ext.articleSelector + " .content", element => {
             var a = $(element).closest(ext.articleSelector);
-            var style = "display: none"
-            if (getFFnS(ext.isOpenAndMarkAsReadId)) {
-                style = "";
+            var cardsView = a.hasClass("u5");
+            var addButton = (id: string, attributes) => {
+                attributes.type = "button";
+                attributes.style = getFFnS(id) ? "" : "display: none";
+                attributes.class += " mark-as-read";
+                if (a.hasClass("u0")) {
+                    attributes.class += " condensed-toolbar-icon icon";
+                }
+                var e = $("<button>", attributes);
+                if (cardsView) {
+                    a.find(".mark-as-read").last().before(e);
+                } else if (a.hasClass("u4")) {
+                    attributes.style += "margin-right: 10px;"
+                    a.find(".ago").after(e);
+                } else {
+                    a.find(".condensed-tools .button-dropdown > :first-child").before(e);
+                }
+                return e;
             }
-            var attributes = {
-                class: ext.openAndMarkAsReadClass + " mark-as-read",
-                title: "Open in a new window/tab and mark as read",
-                type: "button",
-                style: style
-            };
-            if (a.hasClass("u0")) {
-                attributes.class += " condensed-toolbar-icon icon";
-            }
-            var e = $("<button>", attributes);
-            if (a.hasClass("u5")) {
-                a.find(".mark-as-read").before(e);
-            } else if ($(a).hasClass("u4")) {
-                a.find(".ago").after(e);
-            } else {
-                a.find(".condensed-tools .button-dropdown > :first-child").before(e);
-            }
+            var markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
+                class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
+                title: "Mark articles below" + (cardsView ? " and on the right" : "") + " as read",
+            });
+            var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
+                class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
+                title: "Mark articles above" + (cardsView ? " and on the left" : "") + " as read"
+            });
+            var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
+                class: ext.openAndMarkAsReadClass,
+                title: "Open in a new window/tab and mark as read"
+            });
 
-            var link = $(a).find(".title").attr("href");
-            var entryId = $(a).attr(ext.articleEntryIdAttribute);
-            e.get(0).addEventListener('click', event => {
-                window.open(link, '_blank');
-                window["streets"].service('reader').askMarkEntryAsRead(entryId);
+            var link = a.find(".title").attr("href");
+            var entryId = a.attr(ext.articleEntryIdAttribute);
+            onClick(openAndMarkAsReadElement, event => {
                 event.stopPropagation();
-            }, true);
+                window.open(link, '_blank');
+                reader.askMarkEntryAsRead(entryId);
+            });
+            onClick(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(entryId, false));
+            onClick(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(entryId, true));
         });
     }
 
@@ -150,14 +199,11 @@ export class FeedlyPage {
         function removed(id): boolean {
             return getId(id) == null;
         }
-        function getSortedVisibleArticles(): String[] {
-            return getFFnS(ext.sortedVisibleArticlesId);
-        }
         function lookupEntry(unreadOnly, isPrevious: boolean) {
             var selectedEntryId = this.navigo.selectedEntryId;
             var found = false;
             this.getSelectedEntryId() || (found = true);
-            var sortedVisibleArticles = getSortedVisibleArticles();
+            var sortedVisibleArticles: String[] = getFFnS(ext.sortedVisibleArticlesId);
             var len = sortedVisibleArticles.length;
             for (var c = 0; c < len; c++) {
                 var index = isPrevious ? len - 1 - c : c;

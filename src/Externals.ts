@@ -24,6 +24,8 @@ var ext = {
 	"keepNewArticlesUnreadId": "keepNewArticlesUnread",
 	"articlesToMarkAsReadId": "articlesToMarkAsRead",
 	"sortedVisibleArticlesId": "sortedVisibleArticles",
-	"isOpenAndMarkAsReadId": "isOpenAndMarkAsRead",
-	"openAndMarkAsReadClass": "open-in-new-tab-button"
+	"openAndMarkAsReadId": "isOpenAndMarkAsRead",
+	"openAndMarkAsReadClass": "open-in-new-tab-button",
+	"markAsReadAboveBelowId": "isMarkAsReadAboveBelowId",
+	"markAsReadAboveBelowClass": "mark-as-read-above-below-button"
 }
