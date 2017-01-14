@@ -227,3 +227,10 @@ input {
     color: #636363;
     background-color: rgba(0,0,0,0.05);
 }
+
+#FFnS_Tab_KeywordControls div {
+    margin-top: 2%;
+}
+#FFnS_Tab_KeywordControls span {
+    vertical-align: top;
+}

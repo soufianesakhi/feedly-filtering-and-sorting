@@ -46,6 +46,10 @@
 					<a href="#FFnS_Tab_RestrictedOn">Restricting keywords</a>
 				</li>
 				<li>
+					<a href="#FFnS_Tab_KeywordControls">Keyword controls</a>
+				</li>
+				</li>
+				<li>
 					<a href="#FFnS_Tab_UIControls">UI controls</a>
 				</li>
 				<li>
@@ -57,6 +61,26 @@
 			</ul>
 			<div id="FFnS_tabs_content">
 				{{FilteringList.Type.FilteredOut}} {{FilteringList.Type.RestrictedOn}}
+				<div id="FFnS_Tab_KeywordControls" class="FFnS_Tab_Menu">
+					<p>The following settings are applied to the filtering and restricting</p>
+					<div>
+						<span>Search for keywords in the entry's: </span>
+						<select id="{{KeywordSearchArea}}" class="FFnS_input" multiple required>
+							<option value="{{KeywordSearchArea.Title}}" selected>title</option>
+							<option value="{{KeywordSearchArea.Body}} ">body</option>
+							<option value="{{KeywordSearchArea.Summary}} ">summary</option>
+						</select>
+						<span> (hold CTRL to select multiple values)</span>
+					</div>
+					<div>
+						<span>The keywords are treated as : </span>
+						<select id="{{KeywordMatchingMethod}}" class="FFnS_input" size="3">
+							<option value="{{KeywordMatchingMethod.Simple}}" selected>strings</option>
+							<option value="{{KeywordMatchingMethod.Word}}">words</option>
+							<option value="{{KeywordMatchingMethod.RegExp}} ">regular expressions</option>
+						</select>
+					</div>
+				</div>
 				<div id="FFnS_Tab_UIControls" class="FFnS_Tab_Menu">
 					<div>
 						<span>Add a button to open articles in a new window/tab and mark them as read</span>
