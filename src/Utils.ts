@@ -130,6 +130,19 @@ export function injectToWindow(functionNames: string[], ...functions: Function[]
     injectScriptText(srcTxt);
 }
 
+export function injecClasses(...classes: Function[]) {
+    var srcTxt = "";
+    for (var i = 0; i < classes.length; i++) {
+        var txt = classes[i].toString();
+        var className = (/function ([^\(]+)/i).exec(txt)[1];
+        srcTxt += "var " + className + " = (function () {\n"
+            + classes[i].toString()
+            + "\nreturn " + className + ";"
+            + "\n}());";
+    }
+    injectScriptText(srcTxt);
+}
+
 export function injectScriptText(srcTxt: string) {
     var script = document.createElement("script");
     script.type = 'text/javascript';

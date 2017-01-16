@@ -43,7 +43,7 @@ export class ArticleManager {
 
     addArticle(a: Element) {
         this.articlesCount++;
-        var article = new Article(a);
+        var article = new Article(a, this.page);
         this.filterAndRestrict(article);
         this.advancedControls(article);
         this.checkLastAddedArticle();
@@ -129,7 +129,7 @@ export class ArticleManager {
         var sub = this.getCurrentSub();
         var visibleArticles: Article[] = [], hiddenArticles: Article[] = [];
         (<Element[]>$(ext.articleSelector).toArray()).map<Article>(((a) => {
-            return new Article(a);
+            return new Article(a, this.page);
         })).forEach((a) => {
             if (a.isVisible()) {
                 visibleArticles.push(a);
@@ -200,9 +200,10 @@ export class ArticleManager {
 
     isOldestFirst(): boolean {
         try {
-            var firstPublishAge = new Article($(ext.articleSelector).first().get(0)).getPublishAge();
+            /*var firstPublishAge = new Article($(ext.articleSelector).first().get(0)).getPublishAge();
             var lastPublishAge = new Article($(ext.articleSelector).last().get(0)).getPublishAge();
-            return firstPublishAge < lastPublishAge;
+            return firstPublishAge < lastPublishAge;*/
+            return false;
         } catch (err) {
             console.log(err);
             return false;
@@ -267,15 +268,31 @@ class ArticleSorterFactory {
     }
 }
 
+export class EntryInfos {
+    body: string;
+    author: string;
+    engagement: number;
+    published: number;
+    constructor(jsonInfos) {
+        this.body = jsonInfos.summary;
+        this.author = jsonInfos.author;
+        this.engagement = jsonInfos.engagement;
+        this.published = jsonInfos.published;
+    }
+}
+
 class Article {
     private article: JQuery;
+    private entryId: string;
     private title: string;
     private source: string;
     private popularity: number;
     private publishAge: number;
 
-    constructor(article: Element) {
+    constructor(article: Element, page: FeedlyPage) {
         this.article = $(article);
+        this.entryId = this.article.attr(ext.articleEntryIdAttribute);
+        var infos = page.get(this.entryId);
 
         // Title
         this.title = this.article.attr(ext.articleTitleAttribute).trim().toLowerCase();
@@ -329,7 +346,7 @@ class Article {
     }
 
     getEntryId(): string {
-        return this.article.attr(ext.articleEntryIdAttribute);
+        return this.entryId;
     }
 
     setVisible(visibile?: boolean) {

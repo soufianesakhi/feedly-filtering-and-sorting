@@ -2,17 +2,20 @@
 
 import { Subscription } from "./Subscription";
 import { SubscriptionManager } from "./SubscriptionManager";
-import { executeWindow, injectToWindow, injectStyleText } from "./Utils";
+import { EntryInfos } from "./ArticleManager";
+import { executeWindow, injectToWindow, injectStyleText, injecClasses } from "./Utils";
 
 declare var onOpenEntryAndMarkAsRead: (event: MouseEvent) => any;
 declare var getFFnS: (id: string) => any;
+declare var putFFnS: (id: string, value: any) => void;
 
 export class FeedlyPage {
     hiddingInfoClass = "FFnS_Hiding_Info";
 
     constructor() {
         this.put("ext", ext);
-        injectToWindow(["getFFnS"], this.getFFnS);
+        injectToWindow(["getFFnS", "putFFnS"], this.get, this.put);
+        injecClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
     }
 
@@ -72,6 +75,11 @@ export class FeedlyPage {
 
         NodeCreationObserver.onCreation(ext.articleSelector + " .content", element => {
             var a = $(element).closest(ext.articleSelector);
+            var entryId = a.attr(ext.articleEntryIdAttribute);
+
+            var e = reader.lookupEntry(entryId);
+            putFFnS(entryId, new EntryInfos(e.jsonInfo));
+
             var cardsView = a.hasClass("u5");
             var addButton = (id: string, attributes) => {
                 attributes.type = "button";
@@ -105,7 +113,6 @@ export class FeedlyPage {
             });
 
             var link = a.find(".title").attr("href");
-            var entryId = a.attr(ext.articleEntryIdAttribute);
             onClick(openAndMarkAsReadElement, event => {
                 event.stopPropagation();
                 window.open(link, '_blank');
@@ -150,7 +157,7 @@ export class FeedlyPage {
     }
 
 
-    getFFnS(id: string) {
+    get(id: string) {
         return JSON.parse(sessionStorage.getItem("FFnS_" + id));
     }
 

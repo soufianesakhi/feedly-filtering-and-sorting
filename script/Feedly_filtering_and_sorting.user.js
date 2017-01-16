@@ -175,6 +175,22 @@ function injectToWindow(functionNames) {
     }
     injectScriptText(srcTxt);
 }
+function injecClasses() {
+    var classes = [];
+    for (var _i = 0; _i < arguments.length; _i++) {
+        classes[_i - 0] = arguments[_i];
+    }
+    var srcTxt = "";
+    for (var i = 0; i < classes.length; i++) {
+        var txt = classes[i].toString();
+        var className = (/function ([^\(]+)/i).exec(txt)[1];
+        srcTxt += "var " + className + " = (function () {\n"
+            + classes[i].toString()
+            + "\nreturn " + className + ";"
+            + "\n}());";
+    }
+    injectScriptText(srcTxt);
+}
 function injectScriptText(srcTxt) {
     var script = document.createElement("script");
     script.type = 'text/javascript';
@@ -620,7 +636,7 @@ var ArticleManager = (function () {
     };
     ArticleManager.prototype.addArticle = function (a) {
         this.articlesCount++;
-        var article = new Article(a);
+        var article = new Article(a, this.page);
         this.filterAndRestrict(article);
         this.advancedControls(article);
         this.checkLastAddedArticle();
@@ -704,10 +720,11 @@ var ArticleManager = (function () {
         }
     };
     ArticleManager.prototype.sortArticles = function () {
+        var _this = this;
         var sub = this.getCurrentSub();
         var visibleArticles = [], hiddenArticles = [];
         $(ext.articleSelector).toArray().map((function (a) {
-            return new Article(a);
+            return new Article(a, _this.page);
         })).forEach(function (a) {
             if (a.isVisible()) {
                 visibleArticles.push(a);
@@ -777,9 +794,10 @@ var ArticleManager = (function () {
     };
     ArticleManager.prototype.isOldestFirst = function () {
         try {
-            var firstPublishAge = new Article($(ext.articleSelector).first().get(0)).getPublishAge();
+            /*var firstPublishAge = new Article($(ext.articleSelector).first().get(0)).getPublishAge();
             var lastPublishAge = new Article($(ext.articleSelector).last().get(0)).getPublishAge();
-            return firstPublishAge < lastPublishAge;
+            return firstPublishAge < lastPublishAge;*/
+            return false;
         }
         catch (err) {
             console.log(err);
@@ -842,9 +860,20 @@ var ArticleSorterFactory = (function () {
     };
     return ArticleSorterFactory;
 }());
+var EntryInfos = (function () {
+    function EntryInfos(jsonInfos) {
+        this.body = jsonInfos.summary;
+        this.author = jsonInfos.author;
+        this.engagement = jsonInfos.engagement;
+        this.published = jsonInfos.published;
+    }
+    return EntryInfos;
+}());
 var Article = (function () {
-    function Article(article) {
+    function Article(article, page) {
         this.article = $(article);
+        this.entryId = this.article.attr(ext.articleEntryIdAttribute);
+        var infos = page.get(this.entryId);
         // Title
         this.title = this.article.attr(ext.articleTitleAttribute).trim().toLowerCase();
         // Popularity
@@ -887,7 +916,7 @@ var Article = (function () {
         return span.hasClass("hot") || span.hasClass("onfire");
     };
     Article.prototype.getEntryId = function () {
-        return this.article.attr(ext.articleEntryIdAttribute);
+        return this.entryId;
     };
     Article.prototype.setVisible = function (visibile) {
         this.article.css("display", visibile == null ? "" : (visibile ? "" : "none"));
@@ -911,7 +940,8 @@ var FeedlyPage = (function () {
     function FeedlyPage() {
         this.hiddingInfoClass = "FFnS_Hiding_Info";
         this.put("ext", ext);
-        injectToWindow(["getFFnS"], this.getFFnS);
+        injectToWindow(["getFFnS", "putFFnS"], this.get, this.put);
+        injecClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
     }
     FeedlyPage.prototype.update = function (sub) {
@@ -968,6 +998,9 @@ var FeedlyPage = (function () {
         };
         NodeCreationObserver.onCreation(ext.articleSelector + " .content", function (element) {
             var a = $(element).closest(ext.articleSelector);
+            var entryId = a.attr(ext.articleEntryIdAttribute);
+            var e = reader.lookupEntry(entryId);
+            putFFnS(entryId, new EntryInfos(e.jsonInfo));
             var cardsView = a.hasClass("u5");
             var addButton = function (id, attributes) {
                 attributes.type = "button";
@@ -1002,7 +1035,6 @@ var FeedlyPage = (function () {
                 title: "Open in a new window/tab and mark as read"
             });
             var link = a.find(".title").attr("href");
-            var entryId = a.attr(ext.articleEntryIdAttribute);
             onClick(openAndMarkAsReadElement, function (event) {
                 event.stopPropagation();
                 window.open(link, '_blank');
@@ -1041,7 +1073,7 @@ var FeedlyPage = (function () {
     FeedlyPage.prototype.put = function (id, value) {
         sessionStorage.setItem("FFnS_" + id, JSON.stringify(value));
     };
-    FeedlyPage.prototype.getFFnS = function (id) {
+    FeedlyPage.prototype.get = function (id) {
         return JSON.parse(sessionStorage.getItem("FFnS_" + id));
     };
     FeedlyPage.prototype.overrideMarkAsRead = function () {
