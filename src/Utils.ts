@@ -25,21 +25,19 @@ export function capitalizeFirst(s: string): string {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-export function isRadioChecked(input: JQuery): boolean {
+export function isChecked(input: JQuery): boolean {
     return input.is(':checked');
 }
 
-export function setRadioChecked(htmlId: string, checked: boolean) {
+export function setChecked(htmlId: string, checked: boolean) {
     $id(htmlId).prop('checked', checked);
 }
 
 export function registerAccessors(srcObject, srcFieldName: string, targetPrototype, setterCallback: (t) => void, setterCallbackThisArg: Object, fieldObjectName?: string) {
     for (var field in srcObject) {
         var type = typeof (srcObject[field]);
-        if (type === "object") {
-            if (!$.isArray(srcObject[field])) {
-                registerAccessors(srcObject[field], srcFieldName, targetPrototype, setterCallback, setterCallbackThisArg, field);
-            }
+        if (type === "object" && !$.isArray(srcObject[field])) {
+            registerAccessors(srcObject[field], srcFieldName, targetPrototype, setterCallback, setterCallbackThisArg, field);
         } else if (type !== "function") {
             var accessorName = capitalizeFirst(field);
             if (fieldObjectName != null) {

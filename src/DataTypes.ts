@@ -16,6 +16,18 @@ export enum FilteringType {
     FilteredOut
 }
 
+export enum KeywordMatchingArea {
+    Title,
+    Body,
+    Author
+}
+
+export enum KeywordMatchingMethod {
+    Simple,
+    Word,
+    RegExp
+}
+
 export enum HTMLElementType {
     SelectBox, CheckBox, NumberInput
 }

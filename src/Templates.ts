@@ -3,7 +3,9 @@ var templates = {
     "filteringListHTML": "",
     "filteringKeywordHTML": "",
     "sortingSelectHTML": "",
+    "keywordMatchingSelectHTML": "",
     "optionHTML": "<option value='{{value}}'>{{value}}</option>",
+    "emptyOptionHTML": "<option value=''>{{value}}</option>",
     "styleCSS": ""
 }
 

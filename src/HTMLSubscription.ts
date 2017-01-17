@@ -2,7 +2,7 @@
 
 import { UIManager } from "./UIManager"
 import { HTMLElementType } from "./DataTypes"
-import { $id, setRadioChecked, isRadioChecked } from "./Utils";
+import { $id, setChecked, isChecked } from "./Utils";
 
 export interface HTMLSubscriptionSettingConfig {
     update: (subscriptionSetting: HTMLSubscriptionSetting) => void;
@@ -41,11 +41,11 @@ export class HTMLSubscriptionManager {
                 $id(subscriptionSetting.htmlId).change(this.getChangeCallback(subscriptionSetting));
             },
             getHTMLValue: (subscriptionSetting) => {
-                return isRadioChecked($id(subscriptionSetting.htmlId));
+                return isChecked($id(subscriptionSetting.htmlId));
             },
             update: (subscriptionSetting) => {
                 var value = this.manager.subscription["is" + subscriptionSetting.id]();
-                setRadioChecked(subscriptionSetting.htmlId, value);
+                setChecked(subscriptionSetting.htmlId, value);
             }
         };
         this.configByElementType[HTMLElementType.NumberInput] = {

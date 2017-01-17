@@ -1,4 +1,4 @@
-import { FilteringType, SortingType, getFilteringTypes } from "./DataTypes";
+import { FilteringType, SortingType, getFilteringTypes, KeywordMatchingArea, KeywordMatchingMethod } from "./DataTypes";
 
 export class SubscriptionDTO {
     url: string;
@@ -12,6 +12,9 @@ export class SubscriptionDTO {
     pinHotToTop = false;
     additionalSortingTypes: SortingType[] = [];
     filteringListsByType: { [key: number]: string[]; } = {};
+    keywordMatchingAreas: KeywordMatchingArea[] = [KeywordMatchingArea.Title];
+    alwaysUseDefaultMatchingAreas = true;
+    keywordMatchingMethod: KeywordMatchingMethod = KeywordMatchingMethod.Simple;
 
     constructor(url: string) {
         this.url = url;

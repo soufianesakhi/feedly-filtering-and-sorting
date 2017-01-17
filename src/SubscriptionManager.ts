@@ -20,8 +20,8 @@ export class SubscriptionManager {
         }, this);
     }
 
-    loadSubscription(globalSettingsEnabled: boolean): AsyncResult<any> {
-        return new AsyncResult<any>((p) => {
+    loadSubscription(globalSettingsEnabled: boolean): AsyncResult<Subscription> {
+        return new AsyncResult<Subscription>((p) => {
             var onLoad = (sub: Subscription) => {
                 this.currentSubscription = sub;
                 p.result(sub);

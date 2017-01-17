@@ -1,7 +1,7 @@
 /// <reference path="./_references.d.ts" />
 
 import { UIManager } from "./UIManager"
-import { $id, setRadioChecked, isRadioChecked } from "./Utils";
+import { $id, setChecked, isChecked } from "./Utils";
 import { LocalStorage } from "./dao/LocalStorage";
 import { AsyncResult } from "./AsyncResult";
 
@@ -24,7 +24,7 @@ export class GlobalSettingsCheckBox {
         return new AsyncResult<any>((p) => {
             LocalPersistence.getAsync(this.id, true).then((enabled) => {
                 this.enabled = enabled;
-                setRadioChecked(this.htmlId, this.enabled);
+                setChecked(this.htmlId, this.enabled);
                 p.done();
             }, this);
         }, this);
@@ -43,14 +43,14 @@ export class GlobalSettingsCheckBox {
     initUI() {
         var this_ = this;
         $id(this.htmlId).click(function () {
-            this_.setEnabled(isRadioChecked($(this)));
+            this_.setEnabled(isChecked($(this)));
             this_.uiManager.refreshPage();
         });
         this.refreshUI();
     }
 
     refreshUI() {
-        setRadioChecked(this.htmlId, this.enabled);
+        setChecked(this.htmlId, this.enabled);
     }
 
 }

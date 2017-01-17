@@ -149,6 +149,12 @@ fieldset select {
     margin-left: 2% 
 }
 
+fieldset select.FFnS_keywordMatchingSelect {
+    margin-left: 0%;
+    margin-right: 1%;
+    vertical-align: middle;
+}
+
 input {
     vertical-align: middle;
 }
@@ -228,9 +234,10 @@ input {
     background-color: rgba(0,0,0,0.05);
 }
 
-#FFnS_Tab_KeywordControls div {
-    margin-top: 2%;
-}
 #FFnS_Tab_KeywordControls span {
     vertical-align: top;
+}
+
+#FFnS_Tab_KeywordControls div {
+    margin-top: 2%;
 }

@@ -1,13 +1,16 @@
 /// <reference path="./_references.d.ts" />
 
-import { FilteringType, SortingType, HTMLElementType, getFilteringTypes, getFilteringTypeId } from "./DataTypes";
+import {
+    FilteringType, SortingType, KeywordMatchingArea, KeywordMatchingMethod,
+    HTMLElementType, getFilteringTypes, getFilteringTypeId
+} from "./DataTypes";
 import { Subscription } from "./Subscription";
 import { AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
 import { ArticleManager } from "./ArticleManager";
 import { SubscriptionManager } from "./SubscriptionManager";
 import { GlobalSettingsCheckBox } from "./HTMLGlobalSettings";
 import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
-import { $id, bindMarkup } from "./Utils";
+import { $id, bindMarkup, isChecked } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 import { AsyncResult } from "./AsyncResult";
 
@@ -27,14 +30,15 @@ export class UIManager {
 
     htmlSettingsElements = [
         {
-            type: HTMLElementType.SelectBox, ids: [this.sortingSelectId]
+            type: HTMLElementType.SelectBox, ids: [
+                this.sortingSelectId, "KeywordMatchingMethod", this.getKeywordMatchingSelectId(false)]
         },
         {
             type: HTMLElementType.CheckBox,
             ids: ["FilteringEnabled", "RestrictingEnabled", "SortingEnabled", "PinHotToTop",
                 "KeepUnread_AdvancedControlsReceivedPeriod", "Hide_AdvancedControlsReceivedPeriod",
                 "ShowIfHot_AdvancedControlsReceivedPeriod", "MarkAsReadVisible_AdvancedControlsReceivedPeriod",
-                "OpenAndMarkAsRead", "MarkAsReadAboveBelow"]
+                "OpenAndMarkAsRead", "MarkAsReadAboveBelow", "AlwaysUseDefaultMatchingAreas"]
         },
         {
             type: HTMLElementType.NumberInput, ids: ["MinPopularity_AdvancedControlsReceivedPeriod"]
@@ -164,7 +168,11 @@ export class UIManager {
             { name: "ImportMenu.SubscriptionOptions", value: this.getImportOptionsHTML() },
             { name: "closeIconLink", value: ext.closeIconLink },
             { name: "plusIconLink", value: ext.plusIconLink },
-            { name: "eraseIconLink", value: ext.eraseIconLink }
+            { name: "eraseIconLink", value: ext.eraseIconLink },
+            { name: "KeywordMatchingMethod.Simple", value: KeywordMatchingMethod.Simple },
+            { name: "KeywordMatchingMethod.Word", value: KeywordMatchingMethod.Word },
+            { name: "KeywordMatchingMethod.RegExp", value: KeywordMatchingMethod.RegExp },
+            { name: "DefaultKeywordMatchingArea", value: this.getKeywordMatchingSelectHTML("multiple required", false) }
         ]);
         $("body").prepend(settingsHtml);
 
@@ -201,9 +209,32 @@ export class UIManager {
             { name: "inputId", value: this.getHTMLId(ids.inputId) },
             { name: "plusBtnId", value: this.getHTMLId(ids.plusBtnId) },
             { name: "eraseBtnId", value: this.getHTMLId(ids.eraseBtnId) },
-            { name: "filetringKeywordsId", value: ids.filetringKeywordsId }
+            { name: "filetringKeywordsId", value: ids.filetringKeywordsId },
+            { name: "FilteringKeywordMatchingArea", value: this.getKeywordMatchingSelectHTML("", true, type) }
         ]);
         return filteringListHTML;
+    }
+
+    getKeywordMatchingSelectHTML(attributes: string, includeDefaultOption: boolean, type?: FilteringType): string {
+        var defaultOption = includeDefaultOption ? bindMarkup(templates.emptyOptionHTML, [
+            { name: "value", value: "-- area (optional) --" },
+        ]) : "";
+        var filteringListHTML = bindMarkup(templates.keywordMatchingSelectHTML, [
+            { name: "Id", value: this.getKeywordMatchingSelectId(true, type) },
+            { name: "attributes", value: attributes },
+            { name: "defaultOption", value: defaultOption },
+            { name: "selectFirst", value: includeDefaultOption ? "" : "selected" },
+            { name: "KeywordMatchingArea.Title", value: KeywordMatchingArea.Title },
+            { name: "KeywordMatchingArea.Body", value: KeywordMatchingArea.Body },
+            { name: "KeywordMatchingArea.Author", value: KeywordMatchingArea.Author },
+        ]);
+        return filteringListHTML;
+    }
+
+    getKeywordMatchingSelectId(html: boolean, type?: FilteringType) {
+        var suffix = type == undefined ? "s" : "_" + FilteringType[type];
+        var id = "KeywordMatchingArea" + suffix;
+        return html ? this.getHTMLId(id) : id;
     }
 
     getImportOptionsHTML(): string {
@@ -287,6 +318,15 @@ export class UIManager {
         });
 
         this.setUpFilteringListEvents();
+
+        $id("FFnS_AlwaysUseDefaultMatchingAreas").change(function () {
+            var selects = $(".FFnS_keywordMatchingSelect:not([multiple])");
+            if (isChecked($(this))) {
+                selects.hide();
+            } else {
+                selects.show();
+            }
+        }).trigger("change");
     }
 
     registerAdditionalSortingType(): string {

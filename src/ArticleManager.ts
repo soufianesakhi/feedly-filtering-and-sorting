@@ -3,7 +3,7 @@
 import { FilteringType, SortingType } from "./DataTypes";
 import { Subscription } from "./Subscription";
 import { SubscriptionManager } from "./SubscriptionManager";
-import { $id, isRadioChecked } from "./Utils";
+import { $id, isChecked } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 
 export class ArticleManager {

@@ -2,7 +2,7 @@
 
 import { SubscriptionDTO, AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
 import { SubscriptionDAO } from "./SubscriptionDAO";
-import { FilteringType, SortingType, getFilteringTypes } from "./DataTypes";
+import { FilteringType, SortingType, getFilteringTypes, KeywordMatchingArea, KeywordMatchingMethod } from "./DataTypes";
 
 export class Subscription {
     dto: SubscriptionDTO;
@@ -43,6 +43,10 @@ export class Subscription {
         return this.dto.markAsReadAboveBelow;
     }
 
+    isAlwaysUseDefaultMatchingAreas(): boolean {
+        return this.dto.alwaysUseDefaultMatchingAreas;
+    }
+
     getAdvancedControlsReceivedPeriod(): AdvancedControlsReceivedPeriod {
         return this.dto.advancedControlsReceivedPeriod;
     }
@@ -53,6 +57,14 @@ export class Subscription {
 
     getFilteringList(type: FilteringType): string[] {
         return this.dto.filteringListsByType[type];
+    }
+
+    getKeywordMatchingAreas(): KeywordMatchingArea[] {
+        return this.dto.keywordMatchingAreas;
+    }
+
+    getKeywordMatchingMethod(): KeywordMatchingMethod {
+        return this.dto.keywordMatchingMethod;
     }
 
     setHours_AdvancedControlsReceivedPeriod(hours: number) {
