@@ -7,14 +7,13 @@ import { executeWindow, injectToWindow, injectStyleText, injecClasses } from "./
 
 declare var onOpenEntryAndMarkAsRead: (event: MouseEvent) => any;
 declare var getFFnS: (id: string) => any;
-declare var putFFnS: (id: string, value: any) => void;
 
 export class FeedlyPage {
     hiddingInfoClass = "FFnS_Hiding_Info";
 
     constructor() {
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS"], this.get, this.put);
+        injectToWindow(["getFFnS"], this.get);
         injecClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
     }
@@ -78,7 +77,12 @@ export class FeedlyPage {
             var entryId = a.attr(ext.articleEntryIdAttribute);
 
             var e = reader.lookupEntry(entryId);
-            putFFnS(entryId, new EntryInfos(e.jsonInfo));
+            var entryInfos = $("<span>", {
+                class: ext.entryInfosJsonClass,
+                style: "display: none"
+            });
+            entryInfos.text(JSON.stringify(new EntryInfos(e.jsonInfo)))
+            a.append(entryInfos);
 
             var cardsView = a.hasClass("u5");
             var addButton = (id: string, attributes) => {

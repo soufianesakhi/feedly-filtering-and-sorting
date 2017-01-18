@@ -43,7 +43,7 @@ export class ArticleManager {
 
     addArticle(a: Element) {
         this.articlesCount++;
-        var article = new Article(a, this.page);
+        var article = new Article(a);
         this.filterAndRestrict(article);
         this.advancedControls(article);
         this.checkLastAddedArticle();
@@ -129,7 +129,7 @@ export class ArticleManager {
         var sub = this.getCurrentSub();
         var visibleArticles: Article[] = [], hiddenArticles: Article[] = [];
         (<Element[]>$(ext.articleSelector).toArray()).map<Article>(((a) => {
-            return new Article(a, this.page);
+            return new Article(a);
         })).forEach((a) => {
             if (a.isVisible()) {
                 visibleArticles.push(a);
@@ -200,9 +200,11 @@ export class ArticleManager {
 
     isOldestFirst(): boolean {
         try {
-            /*var firstPublishAge = new Article($(ext.articleSelector).first().get(0)).getPublishAge();
+            /* FIXME
+            var firstPublishAge = new Article($(ext.articleSelector).first().get(0)).getPublishAge();
             var lastPublishAge = new Article($(ext.articleSelector).last().get(0)).getPublishAge();
-            return firstPublishAge < lastPublishAge;*/
+            return firstPublishAge < lastPublishAge;
+            */
             return false;
         } catch (err) {
             console.log(err);
@@ -287,12 +289,15 @@ class Article {
     private title: string;
     private source: string;
     private popularity: number;
-    private publishAge: number;
+    private entryInfos: EntryInfos;
 
-    constructor(article: Element, page: FeedlyPage) {
+    constructor(article: Element) {
         this.article = $(article);
         this.entryId = this.article.attr(ext.articleEntryIdAttribute);
-        var infos = page.get(this.entryId);
+        var infosElement = this.article.find("." + ext.entryInfosJsonClass);
+        if (infosElement.length > 0) {
+            this.entryInfos = JSON.parse(infosElement.text());
+        }
 
         // Title
         this.title = this.article.attr(ext.articleTitleAttribute).trim().toLowerCase();
@@ -305,13 +310,6 @@ class Article {
             popularityStr += "000";
         }
         this.popularity = Number(popularityStr);
-
-        // Publish age
-        var ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
-        if (ageStr != null) {
-            var publishDate = ageStr.split("--")[1].replace(/[^:]*:/, "").trim();
-            this.publishAge = Date.parse(publishDate);
-        }
 
         // Source
         var source = this.article.find(ext.articleSourceSelector);
@@ -337,7 +335,12 @@ class Article {
     }
 
     getPublishAge(): number {
-        return this.publishAge;
+        if (this.entryInfos) {
+            return this.entryInfos.published;
+        }
+        var ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
+        var publishDate = ageStr.split("--")[1].replace(/[^:]*:/, "").trim();
+        return Date.parse(publishDate);
     }
 
     isHot(): boolean {
@@ -356,4 +359,19 @@ class Article {
     isVisible(): boolean {
         return !(this.article.css("display") === "none");
     }
+
+    getAuthor(): string {
+        if (this.entryInfos) {
+            return this.entryInfos.author;
+        }
+        return this.article.find(".authors").text().replace("by", "");
+    }
+
+    getBody(): string {
+        if (this.entryInfos) {
+            return this.entryInfos.body;
+        }
+        return this.article.find(".summary").text();
+    }
+
 }

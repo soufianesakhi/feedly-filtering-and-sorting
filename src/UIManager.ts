@@ -319,14 +319,17 @@ export class UIManager {
 
         this.setUpFilteringListEvents();
 
-        $id("FFnS_AlwaysUseDefaultMatchingAreas").change(function () {
+        var useDefaultMatchingAreas = $id("FFnS_AlwaysUseDefaultMatchingAreas");
+        function toggleFilteringKeywordMatchingSelects() {
             var selects = $(".FFnS_keywordMatchingSelect:not([multiple])");
-            if (isChecked($(this))) {
+            if (isChecked($(useDefaultMatchingAreas))) {
                 selects.hide();
             } else {
                 selects.show();
             }
-        }).trigger("change");
+        }
+        toggleFilteringKeywordMatchingSelects();
+        useDefaultMatchingAreas.change(toggleFilteringKeywordMatchingSelects);
     }
 
     registerAdditionalSortingType(): string {
