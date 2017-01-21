@@ -1,6 +1,6 @@
 /// <reference path="./_references.d.ts" />
 
-import { FilteringType, SortingType, KeywordMatchingArea } from "./DataTypes";
+import { FilteringType, SortingType, KeywordMatchingArea, KeywordMatchingMethod } from "./DataTypes";
 import { Subscription } from "./Subscription";
 import { SubscriptionManager } from "./SubscriptionManager";
 import { $id, isChecked } from "./Utils";
@@ -382,28 +382,41 @@ interface KeywordMatcher {
 }
 
 class KeywordMatcherFactory {
-    matcherByType: { [key: number]: KeywordMatcher } = {};
+    matcherByType: { [key: number]: (a: Article, k: string, method: KeywordMatchingMethod) => boolean } = {};
+    comparerByMethod: { [key: number]: (a: string, b: string) => boolean } = {};
 
     constructor() {
-        this.matcherByType[KeywordMatchingArea.Title] = {
-            match(a: Article, k: string) {
-                return a.title.indexOf(k.toLowerCase()) != -1;
-            }
+        this.comparerByMethod[KeywordMatchingMethod.Simple] = (area: string, keyword: string) => {
+            return area.indexOf(keyword.toLowerCase()) != -1;
         };
-        this.matcherByType[KeywordMatchingArea.Body] = {
-            match(a: Article, k: string) {
-                return a.body.indexOf(k.toLowerCase()) != -1;
-            }
+        this.comparerByMethod[KeywordMatchingMethod.RegExp] = (area: string, pattern: string) => {
+            return new RegExp(pattern, "i").test(area);
         };
-        this.matcherByType[KeywordMatchingArea.Author] = {
-            match(a: Article, k: string) {
-                return a.author.indexOf(k.toLowerCase()) != -1;
-            }
+        this.comparerByMethod[KeywordMatchingMethod.Word] = (area: string, word: string) => {
+            return new RegExp("\\b" + word + "\\b", "i").test(area);
+        };
+
+        this.matcherByType[KeywordMatchingArea.Title] = (a: Article, k: string, method: KeywordMatchingMethod) => {
+            return this.comparerByMethod[method](a.title, k);
+        };
+        this.matcherByType[KeywordMatchingArea.Body] = (a: Article, k: string, method: KeywordMatchingMethod) => {
+            return this.comparerByMethod[method](a.body, k);
+        };
+        this.matcherByType[KeywordMatchingArea.Author] = (a: Article, k: string, method: KeywordMatchingMethod) => {
+            return this.comparerByMethod[method](a.author, k);
         };
     }
 
     getMatchers(sub: Subscription): KeywordMatcher[] {
-        return sub.getKeywordMatchingAreas().map(a => this.matcherByType[a]);
+        var t = this;
+        var method = sub.getKeywordMatchingMethod();
+        return sub.getKeywordMatchingAreas().map(type => {
+            return {
+                match(a: Article, k: string): boolean {
+                    return t.matcherByType[type](a, k, method);
+                }
+            }
+        });
     }
 
 }
