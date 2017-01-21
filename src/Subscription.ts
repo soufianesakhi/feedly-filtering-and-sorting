@@ -101,7 +101,7 @@ export class Subscription {
     }
 
     addKeyword(keyword: string, type: FilteringType) {
-        this.getFilteringList(type).push(keyword);
+        this.getFilteringList(type).push(keyword.trim());
         this.save();
     }
 

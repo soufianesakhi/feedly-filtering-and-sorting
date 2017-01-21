@@ -1,6 +1,6 @@
 /// <reference path="./_references.d.ts" />
 
-import { FilteringType, SortingType } from "./DataTypes";
+import { FilteringType, SortingType, KeywordMatchingArea } from "./DataTypes";
 import { Subscription } from "./Subscription";
 import { SubscriptionManager } from "./SubscriptionManager";
 import { $id, isChecked } from "./Utils";
@@ -9,6 +9,7 @@ import { FeedlyPage } from "./FeedlyPage";
 export class ArticleManager {
     subscriptionManager: SubscriptionManager;
     articleSorterFactory: ArticleSorterFactory;
+    keywordMatcherFactory: KeywordMatcherFactory;
     page: FeedlyPage;
     articlesCount = 0;
     lastReadArticleAge = -1;
@@ -18,6 +19,7 @@ export class ArticleManager {
     constructor(subscriptionManager: SubscriptionManager, page: FeedlyPage) {
         this.subscriptionManager = subscriptionManager;
         this.articleSorterFactory = new ArticleSorterFactory();
+        this.keywordMatcherFactory = new KeywordMatcherFactory();
         this.page = page;
     }
 
@@ -43,7 +45,7 @@ export class ArticleManager {
 
     addArticle(a: Element) {
         this.articlesCount++;
-        var article = new Article(a);
+        var article = new Article(a, this.keywordMatcherFactory);
         this.filterAndRestrict(article);
         this.advancedControls(article);
         this.checkLastAddedArticle();
@@ -115,7 +117,7 @@ export class ArticleManager {
         var sub = this.getCurrentSub();
         var visibleArticles: Article[] = [], hiddenArticles: Article[] = [];
         (<Element[]>$(ext.articleSelector).toArray()).map<Article>(((a) => {
-            return new Article(a);
+            return new Article(a, this.keywordMatcherFactory);
         })).forEach((a) => {
             if (a.isVisible()) {
                 visibleArticles.push(a);
@@ -262,7 +264,7 @@ export class EntryInfos {
     engagement: number;
     published: number;
     constructor(jsonInfos) {
-        this.body = jsonInfos.summary;
+        this.body = jsonInfos.summary.content;
         this.author = jsonInfos.author;
         this.engagement = jsonInfos.engagement;
         this.published = jsonInfos.published;
@@ -271,18 +273,34 @@ export class EntryInfos {
 
 class Article {
     private article: JQuery;
+    private matcherFactory: KeywordMatcherFactory;
     private entryId: string;
-    private title: string;
+    title: string;
+    body: string;
+    author: string;
     private source: string;
+    private publishAge: number;
     private popularity: number;
     private entryInfos: EntryInfos;
 
-    constructor(article: Element) {
+    constructor(article: Element, keywordMatcherFactory: KeywordMatcherFactory) {
         this.article = $(article);
+        this.matcherFactory = keywordMatcherFactory;
         this.entryId = this.article.attr(ext.articleEntryIdAttribute);
         var infosElement = this.article.find("." + ext.entryInfosJsonClass);
         if (infosElement.length > 0) {
             this.entryInfos = JSON.parse(infosElement.text());
+            if (this.entryInfos) {
+                this.body = this.entryInfos.body.toLowerCase();
+                this.author = this.entryInfos.author.toLowerCase();
+                this.publishAge = this.entryInfos.published;
+            } else {
+                this.body = this.article.find(".summary").text().toLowerCase();
+                this.author = this.article.find(".authors").text().replace("by", "").toLowerCase();
+                var ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
+                var publishDate = ageStr.split("--")[1].replace(/[^:]*:/, "").trim();
+                this.publishAge = Date.parse(publishDate);
+            }
         }
 
         // Title
@@ -321,12 +339,7 @@ class Article {
     }
 
     getPublishAge(): number {
-        if (this.entryInfos) {
-            return this.entryInfos.published;
-        }
-        var ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
-        var publishDate = ageStr.split("--")[1].replace(/[^:]*:/, "").trim();
-        return Date.parse(publishDate);
+        return this.publishAge;
     }
 
     isHot(): boolean {
@@ -346,31 +359,51 @@ class Article {
         return !(this.article.css("display") === "none");
     }
 
-    getAuthor(): string {
-        if (this.entryInfos) {
-            return this.entryInfos.author;
-        }
-        return this.article.find(".authors").text().replace("by", "");
-    }
-
-    getBody(): string {
-        if (this.entryInfos) {
-            return this.entryInfos.body;
-        }
-        return this.article.find(".summary").text();
-    }
-
     matchKeywords(sub: Subscription, type: FilteringType, invert?: boolean): boolean {
         var keywords = sub.getFilteringList(type);
         if (keywords.length == 0) {
             return false;
         }
+        var matchers = this.matcherFactory.getMatchers(sub);
         for (var i = 0; i < keywords.length; i++) {
-            if (this.title.indexOf(keywords[i].toLowerCase()) != -1) {
-                return !invert == true;
+            for (var m = 0; m < matchers.length; m++) {
+                if (matchers[m].match(this, keywords[i])) {
+                    return !invert == true;
+                }
             }
         }
         return !invert == false;
+    }
+
+}
+
+interface KeywordMatcher {
+    match(a: Article, k: string): boolean;
+}
+
+class KeywordMatcherFactory {
+    matcherByType: { [key: number]: KeywordMatcher } = {};
+
+    constructor() {
+        this.matcherByType[KeywordMatchingArea.Title] = {
+            match(a: Article, k: string) {
+                return a.title.indexOf(k.toLowerCase()) != -1;
+            }
+        };
+        this.matcherByType[KeywordMatchingArea.Body] = {
+            match(a: Article, k: string) {
+                return a.body.indexOf(k.toLowerCase()) != -1;
+            }
+        };
+        this.matcherByType[KeywordMatchingArea.Author] = {
+            match(a: Article, k: string) {
+                return a.author.indexOf(k.toLowerCase()) != -1;
+            }
+        };
+    }
+
+    getMatchers(sub: Subscription): KeywordMatcher[] {
+        return sub.getKeywordMatchingAreas().map(a => this.matcherByType[a]);
     }
 
 }
