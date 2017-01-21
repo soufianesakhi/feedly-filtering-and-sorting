@@ -666,26 +666,13 @@ var ArticleManager = (function () {
     };
     ArticleManager.prototype.filterAndRestrict = function (article) {
         var sub = this.getCurrentSub();
-        var title = article.getTitle();
         if (sub.isFilteringEnabled() || sub.isRestrictingEnabled()) {
-            var restrictedOnKeywords = sub.getFilteringList(FilteringType.RestrictedOn);
-            var filteredOutKeywords = sub.getFilteringList(FilteringType.FilteredOut);
             var hide = false;
-            var restrictedCount = restrictedOnKeywords.length;
-            if (sub.isRestrictingEnabled() && restrictedCount > 0) {
-                hide = true;
-                for (var i = 0; i < restrictedCount && hide; i++) {
-                    if (title.indexOf(restrictedOnKeywords[i].toLowerCase()) != -1) {
-                        hide = false;
-                    }
-                }
+            if (sub.isRestrictingEnabled()) {
+                hide = article.matchKeywords(sub, FilteringType.RestrictedOn, true);
             }
             if (sub.isFilteringEnabled()) {
-                for (var i = 0; i < filteredOutKeywords.length && !hide; i++) {
-                    if (title.indexOf(filteredOutKeywords[i].toLowerCase()) != -1) {
-                        hide = true;
-                    }
-                }
+                hide = hide || article.matchKeywords(sub, FilteringType.FilteredOut);
             }
             if (hide) {
                 article.setVisible(false);
@@ -961,6 +948,18 @@ var Article = (function () {
             return this.entryInfos.body;
         }
         return this.article.find(".summary").text();
+    };
+    Article.prototype.matchKeywords = function (sub, type, invert) {
+        var keywords = sub.getFilteringList(type);
+        if (keywords.length == 0) {
+            return false;
+        }
+        for (var i = 0; i < keywords.length; i++) {
+            if (this.title.indexOf(keywords[i].toLowerCase()) != -1) {
+                return !invert == true;
+            }
+        }
+        return !invert == false;
     };
     return Article;
 }());
