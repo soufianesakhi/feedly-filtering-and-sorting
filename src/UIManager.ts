@@ -102,7 +102,6 @@ export class UIManager {
             var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
             this.subscriptionManager.loadSubscription(globalSettingsEnabled).then((sub) => {
                 this.subscription = sub;
-                this.updateSubscriptionTitle(globalSettingsEnabled);
                 p.done();
             }, this);
         }, this);
@@ -123,12 +122,14 @@ export class UIManager {
             var id = this.registerAdditionalSortingType();
             $id(id).val(s);
         })
+
+        this.updateSettingsModeTitle();
     }
 
-    updateSubscriptionTitle(globalSettingsEnabled: boolean) {
-        var title = globalSettingsEnabled ? "Global" : "Subscription";
+    updateSettingsModeTitle() {
+        var title = this.globalSettingsEnabledCB.isEnabled() ? "Global" : "Subscription";
         title += " settings";
-        $id("FFnS_subscription_title").text(title);
+        $id("FFnS_settings_mode_title").text(title);
     }
 
     updateSettingsControls() {
