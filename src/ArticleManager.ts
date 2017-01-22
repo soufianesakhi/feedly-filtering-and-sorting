@@ -290,8 +290,10 @@ export class Article {
         if (infosElement.length > 0) {
             this.entryInfos = JSON.parse(infosElement.text());
             if (this.entryInfos) {
-                this.body = this.entryInfos.body.toLowerCase();
-                this.author = this.entryInfos.author.toLowerCase();
+                this.body = this.entryInfos.body;
+                this.body = this.body ? this.body.toLowerCase() : "";
+                this.author = this.entryInfos.author;
+                this.author = this.author ? this.author.toLowerCase() : "";
                 this.publishAge = this.entryInfos.published;
             } else {
                 this.body = this.article.find(".summary").text().toLowerCase();
