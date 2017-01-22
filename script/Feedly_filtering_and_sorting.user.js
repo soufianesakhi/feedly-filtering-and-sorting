@@ -12,7 +12,7 @@
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
 // @include     *://feedly.com/*
-// @version     2.3.0
+// @version     2.4.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1019,7 +1019,7 @@ var KeywordMatcherFactory = (function () {
         var method = sub.getKeywordMatchingMethod();
         return sub.getKeywordMatchingAreas().map(function (a) {
             return _this.getMatcher(a, method);
-        }, this);
+        });
     };
     KeywordMatcherFactory.prototype.getMatcher = function (area, method) {
         var t = this;

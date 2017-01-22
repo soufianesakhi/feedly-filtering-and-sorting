@@ -83,7 +83,7 @@ class KeywordMatcherFactory {
         var method = sub.getKeywordMatchingMethod();
         return sub.getKeywordMatchingAreas().map(a => {
             return this.getMatcher(a, method);
-        }, this);
+        });
     }
 
     getMatcher(area: KeywordMatchingArea, method: KeywordMatchingMethod): KeywordMatcher {

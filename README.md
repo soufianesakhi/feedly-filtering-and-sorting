@@ -6,6 +6,8 @@ When this extension/script is enabled, a filter icon will appear next to the set
 
 ![Menu](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/menu.PNG)
 
+![Keyword settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/keyword_controls.PNG)
+
 ![UI settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/ui_controls.PNG)
 
 ![Advanced settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/menu_advanced.PNG)
@@ -22,6 +24,7 @@ Additionally the `Latest` sort option must be enabled to use sorting functionali
 
 - Filtering: Hide the articles that contain at least one of the filtering keywords.
 - Restricting: Show only articles that contain at least one of the restricting keywords.
+- Advanced keyword matching: Specify areas to search, searching method (simple, pattern (RegExp), ...)
 - Multi level sorting: by popularity, by title, by source or by publish date.
 - Auto load all unread articles.
 - Advanced controls (keep recently published articles unread, ...).
