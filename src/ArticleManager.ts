@@ -1,25 +1,26 @@
 /// <reference path="./_references.d.ts" />
 
-import { FilteringType, SortingType, KeywordMatchingArea, KeywordMatchingMethod } from "./DataTypes";
+import { FilteringType, SortingType } from "./DataTypes";
 import { Subscription } from "./Subscription";
 import { SubscriptionManager } from "./SubscriptionManager";
+import { KeywordManager } from "./KeywordManager";
 import { $id, isChecked } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 
 export class ArticleManager {
     subscriptionManager: SubscriptionManager;
     articleSorterFactory: ArticleSorterFactory;
-    keywordMatcherFactory: KeywordMatcherFactory;
+    keywordManager: KeywordManager;
     page: FeedlyPage;
     articlesCount = 0;
     lastReadArticleAge = -1;
     lastReadArticleGroup: Article[];
     articlesToMarkAsRead: Article[];
 
-    constructor(subscriptionManager: SubscriptionManager, page: FeedlyPage) {
+    constructor(subscriptionManager: SubscriptionManager, keywordManager: KeywordManager, page: FeedlyPage) {
         this.subscriptionManager = subscriptionManager;
+        this.keywordManager = keywordManager;
         this.articleSorterFactory = new ArticleSorterFactory();
-        this.keywordMatcherFactory = new KeywordMatcherFactory();
         this.page = page;
     }
 
@@ -45,7 +46,7 @@ export class ArticleManager {
 
     addArticle(a: Element) {
         this.articlesCount++;
-        var article = new Article(a, this.keywordMatcherFactory);
+        var article = new Article(a);
         this.filterAndRestrict(article);
         this.advancedControls(article);
         this.checkLastAddedArticle();
@@ -56,10 +57,10 @@ export class ArticleManager {
         if (sub.isFilteringEnabled() || sub.isRestrictingEnabled()) {
             var hide = false;
             if (sub.isRestrictingEnabled()) {
-                hide = article.matchKeywords(sub, FilteringType.RestrictedOn, true);
+                hide = this.keywordManager.matchKeywords(article, sub, FilteringType.RestrictedOn, true);
             }
             if (sub.isFilteringEnabled()) {
-                hide = hide || article.matchKeywords(sub, FilteringType.FilteredOut);
+                hide = hide || this.keywordManager.matchKeywords(article, sub, FilteringType.FilteredOut);
             }
             if (hide) {
                 article.setVisible(false);
@@ -117,7 +118,7 @@ export class ArticleManager {
         var sub = this.getCurrentSub();
         var visibleArticles: Article[] = [], hiddenArticles: Article[] = [];
         (<Element[]>$(ext.articleSelector).toArray()).map<Article>(((a) => {
-            return new Article(a, this.keywordMatcherFactory);
+            return new Article(a);
         })).forEach((a) => {
             if (a.isVisible()) {
                 visibleArticles.push(a);
@@ -271,9 +272,8 @@ export class EntryInfos {
     }
 }
 
-class Article {
+export class Article {
     private article: JQuery;
-    private matcherFactory: KeywordMatcherFactory;
     private entryId: string;
     title: string;
     body: string;
@@ -283,9 +283,8 @@ class Article {
     private popularity: number;
     private entryInfos: EntryInfos;
 
-    constructor(article: Element, keywordMatcherFactory: KeywordMatcherFactory) {
+    constructor(article: Element) {
         this.article = $(article);
-        this.matcherFactory = keywordMatcherFactory;
         this.entryId = this.article.attr(ext.articleEntryIdAttribute);
         var infosElement = this.article.find("." + ext.entryInfosJsonClass);
         if (infosElement.length > 0) {
@@ -357,66 +356,6 @@ class Article {
 
     isVisible(): boolean {
         return !(this.article.css("display") === "none");
-    }
-
-    matchKeywords(sub: Subscription, type: FilteringType, invert?: boolean): boolean {
-        var keywords = sub.getFilteringList(type);
-        if (keywords.length == 0) {
-            return false;
-        }
-        var matchers = this.matcherFactory.getMatchers(sub);
-        for (var i = 0; i < keywords.length; i++) {
-            for (var m = 0; m < matchers.length; m++) {
-                if (matchers[m].match(this, keywords[i])) {
-                    return !invert == true;
-                }
-            }
-        }
-        return !invert == false;
-    }
-
-}
-
-interface KeywordMatcher {
-    match(a: Article, k: string): boolean;
-}
-
-class KeywordMatcherFactory {
-    matcherByType: { [key: number]: (a: Article, k: string, method: KeywordMatchingMethod) => boolean } = {};
-    comparerByMethod: { [key: number]: (a: string, b: string) => boolean } = {};
-
-    constructor() {
-        this.comparerByMethod[KeywordMatchingMethod.Simple] = (area: string, keyword: string) => {
-            return area.indexOf(keyword.toLowerCase()) != -1;
-        };
-        this.comparerByMethod[KeywordMatchingMethod.RegExp] = (area: string, pattern: string) => {
-            return new RegExp(pattern, "i").test(area);
-        };
-        this.comparerByMethod[KeywordMatchingMethod.Word] = (area: string, word: string) => {
-            return new RegExp("\\b" + word + "\\b", "i").test(area);
-        };
-
-        this.matcherByType[KeywordMatchingArea.Title] = (a: Article, k: string, method: KeywordMatchingMethod) => {
-            return this.comparerByMethod[method](a.title, k);
-        };
-        this.matcherByType[KeywordMatchingArea.Body] = (a: Article, k: string, method: KeywordMatchingMethod) => {
-            return this.comparerByMethod[method](a.body, k);
-        };
-        this.matcherByType[KeywordMatchingArea.Author] = (a: Article, k: string, method: KeywordMatchingMethod) => {
-            return this.comparerByMethod[method](a.author, k);
-        };
-    }
-
-    getMatchers(sub: Subscription): KeywordMatcher[] {
-        var t = this;
-        var method = sub.getKeywordMatchingMethod();
-        return sub.getKeywordMatchingAreas().map(type => {
-            return {
-                match(a: Article, k: string): boolean {
-                    return t.matcherByType[type](a, k, method);
-                }
-            }
-        });
     }
 
 }

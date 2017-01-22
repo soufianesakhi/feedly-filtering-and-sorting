@@ -634,12 +634,12 @@ var SubscriptionManager = (function () {
 }());
 
 var ArticleManager = (function () {
-    function ArticleManager(subscriptionManager, page) {
+    function ArticleManager(subscriptionManager, keywordManager, page) {
         this.articlesCount = 0;
         this.lastReadArticleAge = -1;
         this.subscriptionManager = subscriptionManager;
+        this.keywordManager = keywordManager;
         this.articleSorterFactory = new ArticleSorterFactory();
-        this.keywordMatcherFactory = new KeywordMatcherFactory();
         this.page = page;
     }
     ArticleManager.prototype.refreshArticles = function () {
@@ -660,7 +660,7 @@ var ArticleManager = (function () {
     };
     ArticleManager.prototype.addArticle = function (a) {
         this.articlesCount++;
-        var article = new Article(a, this.keywordMatcherFactory);
+        var article = new Article(a);
         this.filterAndRestrict(article);
         this.advancedControls(article);
         this.checkLastAddedArticle();
@@ -670,10 +670,10 @@ var ArticleManager = (function () {
         if (sub.isFilteringEnabled() || sub.isRestrictingEnabled()) {
             var hide = false;
             if (sub.isRestrictingEnabled()) {
-                hide = article.matchKeywords(sub, FilteringType.RestrictedOn, true);
+                hide = this.keywordManager.matchKeywords(article, sub, FilteringType.RestrictedOn, true);
             }
             if (sub.isFilteringEnabled()) {
-                hide = hide || article.matchKeywords(sub, FilteringType.FilteredOut);
+                hide = hide || this.keywordManager.matchKeywords(article, sub, FilteringType.FilteredOut);
             }
             if (hide) {
                 article.setVisible(false);
@@ -731,11 +731,10 @@ var ArticleManager = (function () {
         }
     };
     ArticleManager.prototype.sortArticles = function () {
-        var _this = this;
         var sub = this.getCurrentSub();
         var visibleArticles = [], hiddenArticles = [];
         $(ext.articleSelector).toArray().map((function (a) {
-            return new Article(a, _this.keywordMatcherFactory);
+            return new Article(a);
         })).forEach(function (a) {
             if (a.isVisible()) {
                 visibleArticles.push(a);
@@ -883,9 +882,8 @@ var EntryInfos = (function () {
     return EntryInfos;
 }());
 var Article = (function () {
-    function Article(article, keywordMatcherFactory) {
+    function Article(article) {
         this.article = $(article);
-        this.matcherFactory = keywordMatcherFactory;
         this.entryId = this.article.attr(ext.articleEntryIdAttribute);
         var infosElement = this.article.find("." + ext.entryInfosJsonClass);
         if (infosElement.length > 0) {
@@ -947,22 +945,50 @@ var Article = (function () {
     Article.prototype.isVisible = function () {
         return !(this.article.css("display") === "none");
     };
-    Article.prototype.matchKeywords = function (sub, type, invert) {
+    return Article;
+}());
+
+var KeywordManager = (function () {
+    function KeywordManager() {
+        this.separator = "#";
+        this.areaPrefix = "#Area#";
+        this.keywordSplitPattern = new RegExp(this.separator + "(.+)");
+        this.matcherFactory = new KeywordMatcherFactory();
+    }
+    KeywordManager.prototype.insertArea = function (keyword, area) {
+        return this.areaPrefix + KeywordMatchingArea[area] + this.separator + keyword;
+    };
+    KeywordManager.prototype.matchKeywords = function (article, sub, type, invert) {
         var keywords = sub.getFilteringList(type);
         if (keywords.length == 0) {
             return false;
         }
+        var match = !invert == true;
         var matchers = this.matcherFactory.getMatchers(sub);
         for (var i = 0; i < keywords.length; i++) {
+            var keyword = keywords[i];
+            if (keyword.indexOf(this.areaPrefix) == 0) {
+                keyword = keyword.slice(this.areaPrefix.length);
+                var split = keyword.split(this.keywordSplitPattern);
+                keyword = split[1];
+                if (!sub.isAlwaysUseDefaultMatchingAreas()) {
+                    var area = KeywordMatchingArea[split[0]];
+                    var matcher = this.matcherFactory.getMatcher(area, sub.getKeywordMatchingMethod());
+                    if (matcher.match(article, keyword)) {
+                        return match;
+                    }
+                    continue;
+                }
+            }
             for (var m = 0; m < matchers.length; m++) {
-                if (matchers[m].match(this, keywords[i])) {
-                    return !invert == true;
+                if (matchers[m].match(article, keyword)) {
+                    return match;
                 }
             }
         }
-        return !invert == false;
+        return !match;
     };
-    return Article;
+    return KeywordManager;
 }());
 var KeywordMatcherFactory = (function () {
     function KeywordMatcherFactory() {
@@ -989,15 +1015,19 @@ var KeywordMatcherFactory = (function () {
         };
     }
     KeywordMatcherFactory.prototype.getMatchers = function (sub) {
-        var t = this;
+        var _this = this;
         var method = sub.getKeywordMatchingMethod();
-        return sub.getKeywordMatchingAreas().map(function (type) {
-            return {
-                match: function (a, k) {
-                    return t.matcherByType[type](a, k, method);
-                }
-            };
-        });
+        return sub.getKeywordMatchingAreas().map(function (a) {
+            return _this.getMatcher(a, method);
+        }, this);
+    };
+    KeywordMatcherFactory.prototype.getMatcher = function (area, method) {
+        var t = this;
+        return {
+            match: function (a, k) {
+                return t.matcherByType[area](a, k, method);
+            }
+        };
     };
     return KeywordMatcherFactory;
 }());
@@ -1272,8 +1302,9 @@ var UIManager = (function () {
         var _this = this;
         return new AsyncResult(function (p) {
             _this.subscriptionManager = new SubscriptionManager();
+            _this.keywordManager = new KeywordManager();
             _this.page = new FeedlyPage();
-            _this.articleManager = new ArticleManager(_this.subscriptionManager, _this.page);
+            _this.articleManager = new ArticleManager(_this.subscriptionManager, _this.keywordManager, _this.page);
             _this.htmlSubscriptionManager = new HTMLSubscriptionManager(_this);
             _this.subscriptionManager.init().then(function () {
                 _this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", _this, false);
@@ -1543,6 +1574,10 @@ var UIManager = (function () {
             var input = $id(_this.getHTMLId(ids.inputId));
             var keyword = input.val();
             if (keyword != null && keyword !== "") {
+                var area = $id(_this.getKeywordMatchingSelectId(true, type)).val();
+                if (area.length > 0) {
+                    keyword = _this.keywordManager.insertArea(keyword, area);
+                }
                 _this.subscription.addKeyword(keyword, type);
                 _this.updateFilteringList(type);
                 input.val("");
@@ -1740,12 +1775,17 @@ var HTMLSubscriptionManager = (function () {
     }
     HTMLSubscriptionManager.prototype.getChangeCallback = function (setting) {
         return function () {
-            var val = setting.config.getHTMLValue(setting);
-            if (val == null) {
-                return;
+            try {
+                var val = setting.config.getHTMLValue(setting);
+                if (val == null) {
+                    return;
+                }
+                setting.manager.subscription["set" + setting.id](val);
+                setting.manager.refreshFilteringAndSorting();
             }
-            setting.manager.subscription["set" + setting.id](val);
-            setting.manager.refreshFilteringAndSorting();
+            catch (e) {
+                console.log(e);
+            }
         };
     };
     HTMLSubscriptionManager.prototype.registerSettings = function (ids, type, subscriptionSettingConfig) {

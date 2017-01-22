@@ -20,6 +20,7 @@
         "src/FeedlyPage.ts",
         "src/HTMLGlobalSettings.ts",
         "src/HTMLSubscription.ts",
+        "src/KeywordManager.ts",
         "src/Main.ts",
         "src/Subscription.ts",
         "src/SubscriptionDAO.ts",

@@ -8,6 +8,7 @@ import { Subscription } from "./Subscription";
 import { AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
 import { ArticleManager } from "./ArticleManager";
 import { SubscriptionManager } from "./SubscriptionManager";
+import { KeywordManager } from "./KeywordManager";
 import { GlobalSettingsCheckBox } from "./HTMLGlobalSettings";
 import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
 import { $id, bindMarkup, isChecked } from "./Utils";
@@ -17,6 +18,7 @@ import { AsyncResult } from "./AsyncResult";
 export class UIManager {
     page: FeedlyPage;
     subscriptionManager: SubscriptionManager;
+    keywordManager: KeywordManager;
     htmlSubscriptionManager: HTMLSubscriptionManager;
     articleManager: ArticleManager;
     subscription: Subscription;
@@ -51,8 +53,9 @@ export class UIManager {
     init() {
         return new AsyncResult<any>((p) => {
             this.subscriptionManager = new SubscriptionManager();
+            this.keywordManager = new KeywordManager();
             this.page = new FeedlyPage();
-            this.articleManager = new ArticleManager(this.subscriptionManager, this.page);
+            this.articleManager = new ArticleManager(this.subscriptionManager, this.keywordManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
             this.subscriptionManager.init().then(() => {
                 this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
@@ -353,6 +356,10 @@ export class UIManager {
             var input = $id(this.getHTMLId(ids.inputId));
             var keyword = input.val();
             if (keyword != null && keyword !== "") {
+                var area = $id(this.getKeywordMatchingSelectId(true, type)).val();
+                if (area.length > 0) {
+                    keyword = this.keywordManager.insertArea(keyword, area);
+                }
                 this.subscription.addKeyword(keyword, type);
                 this.updateFilteringList(type);
                 input.val("");

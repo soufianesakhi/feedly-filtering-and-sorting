@@ -17,12 +17,16 @@ export class HTMLSubscriptionManager {
 
     getChangeCallback(setting: HTMLSubscriptionSetting): Function {
         return function () {
-            var val = setting.config.getHTMLValue(setting);
-            if (val == null) {
-                return;
+            try {
+                var val = setting.config.getHTMLValue(setting);
+                if (val == null) {
+                    return;
+                }
+                setting.manager.subscription["set" + setting.id](val);
+                setting.manager.refreshFilteringAndSorting();
+            } catch (e) {
+                console.log(e);
             }
-            setting.manager.subscription["set" + setting.id](val);
-            setting.manager.refreshFilteringAndSorting();
         }
     }
 
