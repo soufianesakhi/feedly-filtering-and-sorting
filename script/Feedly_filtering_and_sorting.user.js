@@ -12,7 +12,7 @@
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
 // @include     *://feedly.com/*
-// @version     2.4.1
+// @version     2.4.2
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -874,7 +874,8 @@ var ArticleSorterFactory = (function () {
 }());
 var EntryInfos = (function () {
     function EntryInfos(jsonInfos) {
-        this.body = jsonInfos.summary.content;
+        var bodyInfos = jsonInfos.content ? jsonInfos.content : jsonInfos.summary;
+        this.body = bodyInfos ? bodyInfos.content : "";
         this.author = jsonInfos.author;
         this.engagement = jsonInfos.engagement;
         this.published = jsonInfos.published;

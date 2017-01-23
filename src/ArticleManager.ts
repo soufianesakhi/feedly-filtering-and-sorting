@@ -265,7 +265,8 @@ export class EntryInfos {
     engagement: number;
     published: number;
     constructor(jsonInfos) {
-        this.body = jsonInfos.summary.content;
+        var bodyInfos = jsonInfos.content ? jsonInfos.content : jsonInfos.summary;
+        this.body = bodyInfos ? bodyInfos.content : "";
         this.author = jsonInfos.author;
         this.engagement = jsonInfos.engagement;
         this.published = jsonInfos.published;
