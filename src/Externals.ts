@@ -28,5 +28,6 @@ var ext = {
 	"openAndMarkAsReadClass": "open-in-new-tab-button",
 	"markAsReadAboveBelowId": "isMarkAsReadAboveBelowId",
 	"markAsReadAboveBelowClass": "mark-as-read-above-below-button",
-	"entryInfosJsonClass": "entryInfosJson"
+	"entryInfosJsonClass": "entryInfosJson",
+	"hideWhenMarkAboveBelowId": "isHideWhenMarkAboveBelow"
 }

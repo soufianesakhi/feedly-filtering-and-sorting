@@ -5,15 +5,15 @@ import { SubscriptionManager } from "./SubscriptionManager";
 import { EntryInfos } from "./ArticleManager";
 import { executeWindow, injectToWindow, injectStyleText, injecClasses } from "./Utils";
 
-declare var onOpenEntryAndMarkAsRead: (event: MouseEvent) => any;
 declare var getFFnS: (id: string) => any;
+declare var getById: (id: string) => any;
 
 export class FeedlyPage {
     hiddingInfoClass = "FFnS_Hiding_Info";
 
     constructor() {
         this.put("ext", ext);
-        injectToWindow(["getFFnS"], this.get);
+        injectToWindow(["getFFnS", "getById"], this.get, this.getById);
         injecClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
     }
@@ -23,6 +23,8 @@ export class FeedlyPage {
         this.updateCheck(sub.isMarkAsReadAboveBelow(), ext.markAsReadAboveBelowId, ext.markAsReadAboveBelowClass);
         if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
             this.put(ext.keepNewArticlesUnreadId, true);
+        } if (sub.isHideWhenMarkAboveBelow()) {
+            this.put(ext.hideWhenMarkAboveBelowId, true);
         }
     }
 
@@ -47,7 +49,7 @@ export class FeedlyPage {
         var getMarkAsReadAboveBelowCallback = (entryId: string, above: boolean) => {
             return (event: MouseEvent) => {
                 event.stopPropagation();
-                var sortedVisibleArticles: String[] = getFFnS(ext.sortedVisibleArticlesId);
+                var sortedVisibleArticles: string[] = getFFnS(ext.sortedVisibleArticlesId);
                 var index = sortedVisibleArticles.indexOf(entryId);
                 if (index == -1) {
                     return;
@@ -66,8 +68,13 @@ export class FeedlyPage {
                     start = index + 1;
                     endExcl = sortedVisibleArticles.length;
                 }
+                var hide = getFFnS(ext.hideWhenMarkAboveBelowId);
                 for (var i = start; i < endExcl; i++) {
-                    reader.askMarkEntryAsRead(sortedVisibleArticles[i]);
+                    var id = sortedVisibleArticles[i];
+                    reader.askMarkEntryAsRead(id);
+                    if (hide) {
+                        $(getById(id)).remove();
+                    }
                 }
             }
         }
@@ -165,6 +172,10 @@ export class FeedlyPage {
         return JSON.parse(sessionStorage.getItem("FFnS_" + id));
     }
 
+    getById(id: string) {
+        return document.getElementById(id + "_main");
+    }
+
     overrideMarkAsRead() {
         var pagesPkg = window["devhd"].pkg("pages");
         function markEntryAsRead(id, thisArg) {
@@ -201,14 +212,11 @@ export class FeedlyPage {
     }
 
     overrideNavigation() {
-        function getId(id) {
-            return document.getElementById(id + "_main");
-        }
         function isRead(id) {
-            return $(getId(id)).hasClass(ext.readArticleClass);
+            return $(getById(id)).hasClass(ext.readArticleClass);
         }
         function removed(id): boolean {
-            return getId(id) == null;
+            return getById(id) == null;
         }
         function lookupEntry(unreadOnly, isPrevious: boolean) {
             var selectedEntryId = this.navigo.selectedEntryId;

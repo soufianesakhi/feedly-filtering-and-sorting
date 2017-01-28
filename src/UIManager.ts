@@ -40,7 +40,7 @@ export class UIManager {
             ids: ["FilteringEnabled", "RestrictingEnabled", "SortingEnabled", "PinHotToTop",
                 "KeepUnread_AdvancedControlsReceivedPeriod", "Hide_AdvancedControlsReceivedPeriod",
                 "ShowIfHot_AdvancedControlsReceivedPeriod", "MarkAsReadVisible_AdvancedControlsReceivedPeriod",
-                "OpenAndMarkAsRead", "MarkAsReadAboveBelow", "AlwaysUseDefaultMatchingAreas"]
+                "OpenAndMarkAsRead", "MarkAsReadAboveBelow", "HideWhenMarkAboveBelow", "AlwaysUseDefaultMatchingAreas"]
         },
         {
             type: HTMLElementType.NumberInput, ids: ["MinPopularity_AdvancedControlsReceivedPeriod"]
