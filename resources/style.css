@@ -127,6 +127,7 @@
 }
 
 .setting_group {
+    display: inline-block;
     white-space: nowrap;
     margin-right: 2%;
 }
@@ -146,7 +147,7 @@ fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset {
 }
 
 fieldset select {
-    margin-left: 2% 
+    margin-left: 1% 
 }
 
 fieldset select.FFnS_keywordMatchingSelect {
@@ -240,4 +241,12 @@ input {
 
 #FFnS_Tab_KeywordControls div {
     margin-top: 2%;
+}
+
+.FFnS_sortingSelect {
+    vertical-align: middle;
+}
+
+#FFnS_AddSortingType {
+    margin-left: 1%;
 }

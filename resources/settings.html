@@ -3,41 +3,48 @@
 		<img id="FFnS_CloseSettingsBtn" src="{{closeIconLink}}" class="pageAction requiresLogin">
 		<fieldset>
 			<legend>General settings</legend>
-			<span class="setting_group">
-                <span class="tooltip">
-                    Auto load all unread articles
-                    <span class="tooltiptext">Not applied if there are no unread articles</span>
-			</span>
-			<input id="FFnS_autoLoadAllArticles" type="checkbox">
-			</span>
-			<span class="setting_group">
-                <span class="tooltip">
-                    Always use global settings
-                    <span class="tooltiptext">Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span>
-			</span>
-			<input id="FFnS_globalSettingsEnabled" type="checkbox">
-			</span>
+
+			<div class="setting_group">
+				<span class="tooltip">
+					Auto load all unread articles
+					<span class="tooltiptext">Not applied if there are no unread articles</span>
+				</span>
+				<input id="FFnS_autoLoadAllArticles" type="checkbox">
+			</div>
+
+			<div class="setting_group">
+				<span class="tooltip">
+					Always use global settings
+					<span class="tooltiptext">Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span>
+				</span>
+				<input id="FFnS_globalSettingsEnabled" type="checkbox">
+			</div>
 		</fieldset>
 		<fieldset>
 			<legend><span id="FFnS_settings_mode_title"></span></legend>
-			<span class="setting_group">
-                <span class="tooltip">
-                    Filtering enabled
-                    <span class="tooltiptext">Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span>
-			</span>
-			<input id="FFnS_FilteringEnabled" type="checkbox">
-			</span>
-			<span class="setting_group">
-                <span class="tooltip">
-                    Restricting enabled
-                    <span class="tooltiptext">Show only articles that contain at least one of the restricting keywords (not applied if empty)</span>
-			</span>
-			<input id="FFnS_RestrictingEnabled" type="checkbox">
-			</span>
-			<span class="setting_group">
-                <span>Sorting enabled</span>
-			<input id="FFnS_SortingEnabled" type="checkbox" /> {{SortingSelect}}
-			</span>
+
+			<div class="setting_group">
+				<span class="tooltip">
+					Filtering enabled
+					<span class="tooltiptext">Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span>
+				</span>
+				<input id="FFnS_FilteringEnabled" type="checkbox">
+			</div>
+
+			<div class="setting_group">
+				<span class="tooltip">
+					Restricting enabled
+					<span class="tooltiptext">Show only articles that contain at least one of the restricting keywords (not applied if empty)</span>
+				</span>
+				<input id="FFnS_RestrictingEnabled" type="checkbox">
+			</div>
+
+			<div class="setting_group">
+				<span>Sorting enabled</span>
+				<input id="FFnS_SortingEnabled" type="checkbox" />
+			</div>
+			{{SortingSelect}}
+
 			<ul id="FFnS_tabs_menu">
 				<li class="current">
 					<a href="#FFnS_Tab_FilteredOut">Filtering keywords</a>
@@ -109,30 +116,23 @@
 							<span>days</span>
 							<span>ago should be:</span>
 						</div>
-						<span class="setting_group">
-                            <span>Kept unread</span>
-						<input id="FFnS_KeepUnread_AdvancedControlsReceivedPeriod" type="checkbox">
-						</span>
-						<span class="setting_group">
-                            <span>Hidden</span>
-						<input id="FFnS_Hide_AdvancedControlsReceivedPeriod" type="checkbox">
-						</span>
-						<span class="setting_group">
-                            <span>Visible if hot or popularity superior to:</span>
-						<input id="FFnS_MinPopularity_AdvancedControlsReceivedPeriod" class="FFnS_input" type="number" min="0" step="100">
-						<input id="FFnS_ShowIfHot_AdvancedControlsReceivedPeriod" type="checkbox">
-						</span>
-						<span class="setting_group">
-                            <span>Marked as read if visible:</span>
-						<input id="FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod" type="checkbox">
-						</span>
-					</fieldset>
-					<fieldset>
-						<legend>Hot articles</legend>
-						<span class="setting_group">
-                            <span>Group hot articles & pin to top</span>
-						<input id="FFnS_PinHotToTop" type="checkbox">
-						</span>
+						<div class="setting_group">
+							<span>Kept unread</span>
+							<input id="FFnS_KeepUnread_AdvancedControlsReceivedPeriod" type="checkbox">
+						</div>
+						<div class="setting_group">
+							<span>Hidden</span>
+							<input id="FFnS_Hide_AdvancedControlsReceivedPeriod" type="checkbox">
+						</div>
+						<div class="setting_group">
+							<span>Visible if hot or popularity superior to:</span>
+							<input id="FFnS_MinPopularity_AdvancedControlsReceivedPeriod" class="FFnS_input" type="number" min="0" step="100">
+							<input id="FFnS_ShowIfHot_AdvancedControlsReceivedPeriod" type="checkbox">
+						</div>
+						<div class="setting_group">
+							<span>Marked as read if visible:</span>
+							<input id="FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod" type="checkbox">
+						</div>
 					</fieldset>
 					<fieldset>
 						<legend>Additional sorting levels (applied when two entries have equal sorting)</legend>
@@ -144,12 +144,23 @@
 							<img src="{{eraseIconLink}}" class="FFnS_icon" />
 						</span>
 					</fieldset>
+					<fieldset>
+						<legend>Misc</legend>
+						<div class="setting_group">
+							<span>Group hot articles & pin to top</span>
+							<input id="FFnS_PinHotToTop" type="checkbox">
+						</div>
+						<div class="setting_group">
+							<span>Hide articles after reading them</span>
+							<input id="FFnS_HideAfterRead" type="checkbox">
+						</div>
+					</fieldset>
 				</div>
 				<div id="FFnS_Tab_SettingsControls" class="FFnS_Tab_Menu">
 					<span>Selected subscription:</span>
 					<select id="FFnS_SettingsControls_SelectedSubscription" class="FFnS_input">
-                        {{ImportMenu.SubscriptionOptions}}
-                    </select>
+						{{ImportMenu.SubscriptionOptions}}
+					</select>
 					<button id="FFnS_SettingsControls_ImportFromOtherSub">Import settings from selected subscription</button>
 					<button id="FFnS_SettingsControls_DeleteSub">Delete selected subscription</button>
 					<fieldset>
