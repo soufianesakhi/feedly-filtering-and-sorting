@@ -50,8 +50,6 @@ A page refresh is required when changing the presentation.
 ## Requests
 Please report bugs and feature requests in the following [link](https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues).
 
-Don't forget to give the project a star if you like it :)
-
 ## Installation
 
 Two options are available:
