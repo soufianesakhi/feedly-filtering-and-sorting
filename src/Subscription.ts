@@ -47,6 +47,10 @@ export class Subscription {
         return this.dto.hideWhenMarkAboveBelow;
     }
 
+    isHideAfterRead(): boolean {
+        return this.dto.hideAfterRead;
+    }
+
     isAlwaysUseDefaultMatchingAreas(): boolean {
         return this.dto.alwaysUseDefaultMatchingAreas;
     }

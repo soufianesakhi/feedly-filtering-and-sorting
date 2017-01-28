@@ -40,7 +40,8 @@ export class UIManager {
             ids: ["FilteringEnabled", "RestrictingEnabled", "SortingEnabled", "PinHotToTop",
                 "KeepUnread_AdvancedControlsReceivedPeriod", "Hide_AdvancedControlsReceivedPeriod",
                 "ShowIfHot_AdvancedControlsReceivedPeriod", "MarkAsReadVisible_AdvancedControlsReceivedPeriod",
-                "OpenAndMarkAsRead", "MarkAsReadAboveBelow", "HideWhenMarkAboveBelow", "AlwaysUseDefaultMatchingAreas"]
+                "OpenAndMarkAsRead", "MarkAsReadAboveBelow", "HideWhenMarkAboveBelow", "HideAfterRead",
+                "AlwaysUseDefaultMatchingAreas"]
         },
         {
             type: HTMLElementType.NumberInput, ids: ["MinPopularity_AdvancedControlsReceivedPeriod"]
@@ -432,6 +433,15 @@ export class UIManager {
                 return;
             }
             this.articleManager.addArticle(article);
+            var articleObserver = new MutationObserver((mr, observer) => {
+                if ($(article).hasClass("read") && !$(article).hasClass("inlineFrame")) {
+                    if (this.subscription.isHideAfterRead()) {
+                        $(article).remove();
+                    }
+                    observer.disconnect();
+                }
+            });
+            articleObserver.observe(article, { attributes: true });
             this.tryAutoLoadAllArticles();
         } catch (err) {
             console.log(err);

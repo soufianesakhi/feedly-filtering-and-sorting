@@ -8,6 +8,7 @@ export class SubscriptionDTO {
     openAndMarkAsRead = true;
     markAsReadAboveBelow = false;
     hideWhenMarkAboveBelow = false;
+    hideAfterRead = false;
     sortingType: SortingType = SortingType.PopularityDesc;
     advancedControlsReceivedPeriod = new AdvancedControlsReceivedPeriod();
     pinHotToTop = false;
