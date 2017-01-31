@@ -145,6 +145,7 @@ export class ArticleManager {
 
         if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
             var articlesContainer = $(ext.articleSelector).first().parent();
+            var endOfFeed = $(ext.endOfFeedSelector).detach();
             articlesContainer.empty();
             visibleArticles.forEach((article) => {
                 articlesContainer.append(article.get());
@@ -152,6 +153,11 @@ export class ArticleManager {
             hiddenArticles.forEach((article) => {
                 articlesContainer.append(article.get());
             });
+            if (endOfFeed) {
+                articlesContainer.append(endOfFeed);
+            } else {
+                $(ext.endOfFeedSelector).detach().appendTo(articlesContainer);
+            }
         }
         var sortedVisibleArticles = visibleArticles.map(a => a.getEntryId());
         this.page.put(ext.sortedVisibleArticlesId, sortedVisibleArticles);

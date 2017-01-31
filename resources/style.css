@@ -179,10 +179,6 @@ input {
     background-color: rgba(0,0,0,0.05);
 }
 
-.header + div > div:first-child > div h4 {
-    display: none;
-}
-
 .fx header h1 .detail.FFnS_Hiding_Info::before {
     content: '';
 }

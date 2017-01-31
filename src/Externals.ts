@@ -17,7 +17,7 @@ var ext = {
 	"articleEntryIdAttribute": "data-entryid",
 	"popularitySelector": ".engagement",
 	"hidingInfoSibling": "header > h1 > .button-dropdown",
-	"fullyLoadedArticlesSelector": ".giant-mark-as-read",
+	"endOfFeedSelector": ".list-entries h4:contains(End of feed)",
 	"notFollowedPageSelector": "button.follow",
 
 	"lastReadEntryId": "lastReadEntry",

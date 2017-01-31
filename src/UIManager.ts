@@ -470,7 +470,7 @@ export class UIManager {
         if (!this.autoLoadAllArticlesCB.isEnabled() || $(ext.notFollowedPageSelector).length > 0) {
             return;
         }
-        if (this.isVisible($(ext.fullyLoadedArticlesSelector))) {
+        if ($(ext.endOfFeedSelector).length > 0) {
             window.scrollTo(0, 0);
             return;
         }
@@ -533,11 +533,6 @@ export class UIManager {
             eraseBtnId: "DeleteAll_" + id,
             filetringKeywordsId: "FiletringKeywords_" + id
         };
-    }
-
-    isVisible(e: JQuery) {
-        var displayProp = e.css('display');
-        return displayProp != null && displayProp != 'none';
     }
 
 }
