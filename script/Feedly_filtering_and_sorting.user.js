@@ -12,7 +12,7 @@
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
 // @include     *://feedly.com/*
-// @version     2.5.1
+// @version     2.5.2
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1130,8 +1130,18 @@ var FeedlyPage = (function () {
                 }
             };
         };
-        NodeCreationObserver.onCreation(ext.articleSelector + " .content", function (element) {
+        NodeCreationObserver.onCreation(ext.articleSelector + " .content, .condensed-tools .button-dropdown", function (element) {
             var a = $(element).closest(ext.articleSelector);
+            if (a.hasClass("u0")) {
+                if (!$(element).hasClass("button-dropdown")) {
+                    return;
+                }
+            }
+            else {
+                if ($(element).hasClass("button-dropdown")) {
+                    return;
+                }
+            }
             var entryId = a.attr(ext.articleEntryIdAttribute);
             var e = reader.lookupEntry(entryId);
             var entryInfos = $("<span>", {
@@ -1157,7 +1167,7 @@ var FeedlyPage = (function () {
                     a.find(".ago").after(e);
                 }
                 else {
-                    a.find(".condensed-tools .button-dropdown > :first-child").before(e);
+                    $(element).prepend(e);
                 }
                 return e;
             };

@@ -79,8 +79,17 @@ export class FeedlyPage {
             }
         }
 
-        NodeCreationObserver.onCreation(ext.articleSelector + " .content", element => {
+        NodeCreationObserver.onCreation(ext.articleSelector + " .content, .condensed-tools .button-dropdown", element => {
             var a = $(element).closest(ext.articleSelector);
+            if (a.hasClass("u0")) {
+                if (!$(element).hasClass("button-dropdown")) {
+                    return;
+                }
+            } else {
+                if ($(element).hasClass("button-dropdown")) {
+                    return;
+                }
+            }
             var entryId = a.attr(ext.articleEntryIdAttribute);
 
             var e = reader.lookupEntry(entryId);
@@ -106,7 +115,7 @@ export class FeedlyPage {
                     attributes.style += "margin-right: 10px;"
                     a.find(".ago").after(e);
                 } else {
-                    a.find(".condensed-tools .button-dropdown > :first-child").before(e);
+                    $(element).prepend(e)
                 }
                 return e;
             }
