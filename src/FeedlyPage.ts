@@ -8,6 +8,16 @@ import { executeWindow, injectToWindow, injectStyleText, injecClasses } from "./
 declare var getFFnS: (id: string) => any;
 declare var getById: (id: string) => any;
 
+/* TODO Sorted listHb
+
+devhd.pages.ReactPage.prototype.findScrollFocus
+=> all marked as read when loading more
+=> (fixed with reset) ids don't match 
+
+Load more:
+streets.service("navigo").observers[0].stream.askMoreEntries()
+
+*/
 export class FeedlyPage {
     hiddingInfoClass = "FFnS_Hiding_Info";
 
@@ -15,7 +25,7 @@ export class FeedlyPage {
         this.put("ext", ext);
         injectToWindow(["getFFnS", "getById"], this.get, this.getById);
         injecClasses(EntryInfos);
-        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
+        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideSorting);
     }
 
     update(sub: Subscription) {
@@ -220,49 +230,69 @@ export class FeedlyPage {
         }
     }
 
-    overrideNavigation() {
-        function isRead(id) {
-            return $(getById(id)).hasClass(ext.readArticleClass);
+    overrideSorting() {
+        var navigo = window["streets"].service("navigo");
+        var prototype = Object.getPrototypeOf(navigo);
+        function filterVisible(entry) {
+            return !($(getById(entry.id)).css("display") === "none");
         }
-        function removed(id): boolean {
-            return getById(id) == null;
-        }
-        function lookupEntry(unreadOnly, isPrevious: boolean) {
-            var selectedEntryId = this.navigo.selectedEntryId;
-            var found = false;
-            this.getSelectedEntryId() || (found = true);
-            var sortedVisibleArticles: String[] = getFFnS(ext.sortedVisibleArticlesId);
-            var len = sortedVisibleArticles.length;
-            for (var c = 0; c < len; c++) {
-                var index = isPrevious ? len - 1 - c : c;
-                var entry = sortedVisibleArticles[index];
-                if (found) {
-                    if (removed(entry)) {
-                        continue;
-                    }
-                    if (unreadOnly) {
-                        if (!isRead(entry)) return entry;
-                        continue;
-                    }
-                    return entry;
-                }
-                entry === this.getSelectedEntryId() && (found = true)
+        function ensureSortedEntries() {
+            var entries: any[] = navigo.entries;
+            var originalEntries: any[] = navigo.originalEntries || entries;
+            if ($(ext.articleSelector).length != originalEntries.length) {
+                navigo.originalEntries = null;
+                return;
+            } else {
+                navigo.originalEntries = originalEntries;
             }
-            return null;
+            var sortedVisibleArticles: String[] = getFFnS(ext.sortedVisibleArticlesId);
+            if (!sortedVisibleArticles) {
+                navigo.entries = originalEntries;
+                navigo.originalEntries = null;
+                return;
+            }
+            var len = sortedVisibleArticles.length;
+            var sorted = true;
+            for (var i = 0; i < len && sorted; i++) {
+                if (entries[i].id !== sortedVisibleArticles[i]) {
+                    sorted = false;
+                }
+            }
+            if (!sorted) {
+                entries = [].concat(originalEntries);
+                entries = entries.filter(filterVisible);
+                entries.sort((a, b) => {
+                    return sortedVisibleArticles.indexOf(a.id) - sortedVisibleArticles.indexOf(b.id)
+                });
+                navigo.entries = entries;
+            }
         }
-        var prototype = window["devhd"].pkg("pages").ReactPage.prototype;
-        var onEntry = function (unreadOnly, b, isPrevious: boolean) {
-            var entryId = lookupEntry.call(this, unreadOnly, isPrevious);
-            entryId
-                ? b ? (this.uninlineEntry(), this.selectEntry(entryId, 'toview'), this.shouldMarkAsReadOnNP() && this.reader.askMarkEntryAsRead(entryId))
-                    : this.inlineEntry(entryId, !0)
-                : this.signs.setMessage(isPrevious ? 'At start' : 'At end')
-        }
-        prototype.onPreviousEntry = function (unreadOnly, b) {
-            onEntry.call(this, unreadOnly, b, true);
-        }
-        prototype.onNextEntry = function (unreadOnly, b) {
-            onEntry.call(this, unreadOnly, b, false);
-        }
+
+        var lookupNextEntry = prototype.lookupNextEntry;
+        var lookupPreviousEntry = prototype.lookupPreviousEntry;
+        var getEntries = prototype.getEntries;
+        var setEntries = prototype.setEntries;
+        var reset = prototype.reset;
+
+        prototype.lookupNextEntry = function () {
+            ensureSortedEntries();
+            return lookupNextEntry.apply(this, arguments);
+        };
+        prototype.lookupPreviousEntry = function () {
+            ensureSortedEntries();
+            return lookupPreviousEntry.apply(this, arguments);
+        };
+        prototype.getEntries = function () {
+            ensureSortedEntries();
+            return getEntries.apply(this, arguments);
+        };
+        prototype.setEntries = function () {
+            navigo.originalEntries = null;
+            return setEntries.apply(this, arguments);
+        };
+        prototype.reset = function () {
+            navigo.originalEntries = null;
+            return reset.apply(this, arguments);
+        };
     }
 }

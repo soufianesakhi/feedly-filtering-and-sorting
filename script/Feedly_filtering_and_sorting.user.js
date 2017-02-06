@@ -154,10 +154,11 @@ function executeWindow(sourceName) {
     for (var _i = 1; _i < arguments.length; _i++) {
         functions[_i - 1] = arguments[_i];
     }
-    var srcTxt = "";
+    var srcTxt = "try {\n";
     for (var i = 0; i < functions.length; i++) {
         srcTxt += "(" + functions[i].toString() + ")();\n";
     }
+    srcTxt += "\n} catch(e) { console.log(e) }";
     srcTxt += "//# sourceURL=" + sourceName;
     if (typeof (InstallTrigger) != "undefined") {
         srcTxt = "eval(`" + srcTxt + "`)";
@@ -1062,13 +1063,23 @@ var templates = {
     "styleCSS": "#FFnS_settingsDivContainer { display: none; background: rgba(0,0,0,0.9); width: 100%; height: 100%; z-index: 500; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 500px; margin-top: 1%; margin-left: 15%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #E0F5FF; padding: 2%; opacity: 1; } .FFnS_input { font-size:12px; } #FFnS_tabs_menu { height: 30px; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #B9E0ED; } #FFnS_tabs_menu li a { padding: 10px; color: #2A687D; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; max-height: 300px; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35A5E2; border-radius: 20px; color: #FFF; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn { float:right; width: 24px; height: 24px; } #FFnS_Tab_SettingsControls button { margin-top: 1%; font-size: 12px; display: block; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type=number]{ width: 30px; margin-left: 1%; margin-right: 1%; } #FFnS_MinPopularity_AdvancedControlsReceivedPeriod { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { display: inline-block; white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: bold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 1% } fieldset select.FFnS_keywordMatchingSelect { margin-left: 0%; margin-right: 1%; vertical-align: middle; } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('http://megaicons.net/static/img/icons_sizes/8/178/512/objects-empty-filter-icon.png'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; color: #757575; background-color: transparent; font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0,0,0,0.05); } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .fx .open-in-new-tab-button.mark-as-read, .fx .mark-as-read-above-below-button.mark-as-read { background-repeat: no-repeat; margin-right: 0px; } .fx .open-in-new-tab-button.mark-as-read, .fx .entry.u0 .open-in-new-tab-button.condensed-toolbar-icon { background-size: 32px 32px; } .fx .mark-as-read-above-below-button.mark-as-read, .fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon, .fx .entry.u5 .mark-as-read-above-below-button { width: 24px; height: 24px; } .fx .open-in-new-tab-button.mark-as-read { background: url(http://s3.feedly.com/production/head/images/condensed-visit-black.png); } .fx .mark-above-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBggICA8PDxERERMTExUVFRgYGBkZGRoaGhwcHB4eHh8fHyAgICYmJicnJygoKCoqKiwsLC4uLi8vLzAwMDExMTIyMjMzMzk5OTo6Oj09PT4+PkREREhISEtLS01NTU5OTlFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbHJycnh4eHp6enx8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhUO7wAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAA1klEQVQoU3WQiVICQQwFGxBUPLgVROQQEBDFA/7/02KSyS6sVXQVyZvXNezWImfIxCx28JCJOvUUnNVlduOOKreejHFJh4s2fRnQsqg8cdBpYklHZ5eF1dJnZctvTG3EHDL0HQ/PeeEmhX/ilYtIRfFOfi6IA8wjFgU0Irn42UWuUomk8AnxIlew9+DwpsL/rwkjrxJIWcWvyAj00x1BNioeZRH3cvRU0W6tv+eoEio+tFTK0QR2v+biKxUZJr6tv0/nHH/itQo/nZAK2Po+IYlJz9cRkT+a78AFAEXS0AAAAABJRU5ErkJggg==); } .fx .mark-below-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICA8PDxERERUVFRoaGhwcHB4eHigoKCoqKiwsLC4uLjAwMDExMTIyMjMzMzk5OTo6Oj09PUhISElJSUtLS01NTVFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbG5ubnJycnR0dHV1dXh4eHp6ent7e3x8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACY/twoAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAAxElEQVQoU3WQhxKCMBBEF7D3gg27Inbl/3/uvLtkQNrOJLvZNxcKqEIVYFQO9q3yiaXDWwmYIua9CCbYixWAD189DxbompADAWo2ZcEJyTkDYmBjYxYAfZsUPCKb6/BsYuEC2BdpAx8NKuwY6H0DYK6VEchl8CaaA/zrUoGODMa0tXOJ+ORxd+A1I3qap7iBgpBLliuVI2M1vBRQQ8FVAH9K1EQogddN+p729OV4kCCAOnwSF92xVjcFcFb/kwGroVoqoh+q2r44+TStvAAAAABJRU5ErkJggg==); } .fx .entry.u5 .open-in-new-tab-button, .fx .entry.u5 .mark-as-read-above-below-button { filter: brightness(0) invert(1); } .fx .entry.u5 .open-in-new-tab-button { margin-right: 4px; margin-top: 4px; background-size: 32px 32px; width: 32px; height: 32px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0,0,0,0.05); } #FFnS_Tab_KeywordControls span { vertical-align: top; } #FFnS_Tab_KeywordControls div { margin-top: 2%; } .FFnS_sortingSelect { vertical-align: middle; } #FFnS_AddSortingType { margin-left: 1%; } "
 };
 
+/* TODO Sorted listHb
+
+devhd.pages.ReactPage.prototype.findScrollFocus
+=> all marked as read when loading more
+=> (fixed with reset) ids don't match
+
+Load more:
+streets.service("navigo").observers[0].stream.askMoreEntries()
+
+*/
 var FeedlyPage = (function () {
     function FeedlyPage() {
         this.hiddingInfoClass = "FFnS_Hiding_Info";
         this.put("ext", ext);
         injectToWindow(["getFFnS", "getById"], this.get, this.getById);
         injecClasses(EntryInfos);
-        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideNavigation);
+        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideSorting);
     }
     FeedlyPage.prototype.update = function (sub) {
         this.updateCheck(sub.isOpenAndMarkAsRead(), ext.openAndMarkAsReadId, ext.openAndMarkAsReadClass);
@@ -1261,50 +1272,68 @@ var FeedlyPage = (function () {
             }
         };
     };
-    FeedlyPage.prototype.overrideNavigation = function () {
-        function isRead(id) {
-            return $(getById(id)).hasClass(ext.readArticleClass);
+    FeedlyPage.prototype.overrideSorting = function () {
+        var navigo = window["streets"].service("navigo");
+        var prototype = Object.getPrototypeOf(navigo);
+        function filterVisible(entry) {
+            return !($(getById(entry.id)).css("display") === "none");
         }
-        function removed(id) {
-            return getById(id) == null;
-        }
-        function lookupEntry(unreadOnly, isPrevious) {
-            var selectedEntryId = this.navigo.selectedEntryId;
-            var found = false;
-            this.getSelectedEntryId() || (found = true);
-            var sortedVisibleArticles = getFFnS(ext.sortedVisibleArticlesId);
-            var len = sortedVisibleArticles.length;
-            for (var c = 0; c < len; c++) {
-                var index = isPrevious ? len - 1 - c : c;
-                var entry = sortedVisibleArticles[index];
-                if (found) {
-                    if (removed(entry)) {
-                        continue;
-                    }
-                    if (unreadOnly) {
-                        if (!isRead(entry))
-                            return entry;
-                        continue;
-                    }
-                    return entry;
-                }
-                entry === this.getSelectedEntryId() && (found = true);
+        function ensureSortedEntries() {
+            var entries = navigo.entries;
+            var originalEntries = navigo.originalEntries || entries;
+            if ($(ext.articleSelector).length != originalEntries.length) {
+                navigo.originalEntries = null;
+                return;
             }
-            return null;
+            else {
+                navigo.originalEntries = originalEntries;
+            }
+            var sortedVisibleArticles = getFFnS(ext.sortedVisibleArticlesId);
+            if (!sortedVisibleArticles) {
+                navigo.entries = originalEntries;
+                navigo.originalEntries = null;
+                return;
+            }
+            var len = sortedVisibleArticles.length;
+            var sorted = true;
+            for (var i = 0; i < len && sorted; i++) {
+                if (entries[i].id !== sortedVisibleArticles[i]) {
+                    sorted = false;
+                }
+            }
+            if (!sorted) {
+                entries = [].concat(originalEntries);
+                entries = entries.filter(filterVisible);
+                entries.sort(function (a, b) {
+                    return sortedVisibleArticles.indexOf(a.id) - sortedVisibleArticles.indexOf(b.id);
+                });
+                navigo.entries = entries;
+            }
         }
-        var prototype = window["devhd"].pkg("pages").ReactPage.prototype;
-        var onEntry = function (unreadOnly, b, isPrevious) {
-            var entryId = lookupEntry.call(this, unreadOnly, isPrevious);
-            entryId
-                ? b ? (this.uninlineEntry(), this.selectEntry(entryId, 'toview'), this.shouldMarkAsReadOnNP() && this.reader.askMarkEntryAsRead(entryId))
-                    : this.inlineEntry(entryId, !0)
-                : this.signs.setMessage(isPrevious ? 'At start' : 'At end');
+        var lookupNextEntry = prototype.lookupNextEntry;
+        var lookupPreviousEntry = prototype.lookupPreviousEntry;
+        var getEntries = prototype.getEntries;
+        var setEntries = prototype.setEntries;
+        var reset = prototype.reset;
+        prototype.lookupNextEntry = function () {
+            ensureSortedEntries();
+            return lookupNextEntry.apply(this, arguments);
         };
-        prototype.onPreviousEntry = function (unreadOnly, b) {
-            onEntry.call(this, unreadOnly, b, true);
+        prototype.lookupPreviousEntry = function () {
+            ensureSortedEntries();
+            return lookupPreviousEntry.apply(this, arguments);
         };
-        prototype.onNextEntry = function (unreadOnly, b) {
-            onEntry.call(this, unreadOnly, b, false);
+        prototype.getEntries = function () {
+            ensureSortedEntries();
+            return getEntries.apply(this, arguments);
+        };
+        prototype.setEntries = function () {
+            navigo.originalEntries = null;
+            return setEntries.apply(this, arguments);
+        };
+        prototype.reset = function () {
+            navigo.originalEntries = null;
+            return reset.apply(this, arguments);
         };
     };
     return FeedlyPage;

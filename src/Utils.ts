@@ -109,10 +109,11 @@ export function deepClone<T>(toClone: T, clone: T, alternativeToCloneByField): T
 }
 
 export function executeWindow(sourceName: String, ...functions: Function[]) {
-    var srcTxt = "";
+    var srcTxt = "try {\n";
     for (var i = 0; i < functions.length; i++) {
         srcTxt += "(" + functions[i].toString() + ")();\n";
     }
+    srcTxt += "\n} catch(e) { console.log(e) }";
     srcTxt += "//# sourceURL=" + sourceName;
     if (typeof (InstallTrigger) != "undefined") {
         srcTxt = "eval(`" + srcTxt + "`)";
