@@ -5,27 +5,18 @@ import { SubscriptionManager } from "./SubscriptionManager";
 import { EntryInfos } from "./ArticleManager";
 import { executeWindow, injectToWindow, injectStyleText, injecClasses } from "./Utils";
 
-declare var getFFnS: (id: string) => any;
+declare var getFFnS: (id: string, persistent?: boolean) => any;
+declare var putFFnS: (id: string, value: any, persistent?: boolean) => any;
 declare var getById: (id: string) => any;
 
-/* TODO Sorted listHb
-
-devhd.pages.ReactPage.prototype.findScrollFocus
-=> all marked as read when loading more
-=> (fixed with reset) ids don't match 
-
-Load more:
-streets.service("navigo").observers[0].stream.askMoreEntries()
-
-*/
 export class FeedlyPage {
     hiddingInfoClass = "FFnS_Hiding_Info";
 
     constructor() {
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "getById"], this.get, this.getById);
+        injectToWindow(["getFFnS", "putFFnS", "getById"], this.get, this.put, this.getById);
         injecClasses(EntryInfos);
-        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewArticle, this.overrideMarkAsRead, this.overrideSorting);
+        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewPage, this.onNewArticle, this.overrideMarkAsRead, this.overrideSorting);
     }
 
     update(sub: Subscription) {
@@ -51,8 +42,16 @@ export class FeedlyPage {
         window["ext"] = getFFnS("ext");
     }
 
+    onNewPage() {
+        NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, () => {
+            var stream = window["streets"].service("navigo").observers[0].stream;
+            putFFnS(ext.isNewestFirstId, stream._sort === "newest", true);
+        });
+    }
+
     onNewArticle() {
         var reader = window["streets"].service('reader');
+        var navigo = window["streets"].service("navigo");
         var onClick = (element: JQuery, callback: (event: MouseEvent) => any) => {
             element.get(0).addEventListener('click', callback, true);
         }
@@ -90,6 +89,26 @@ export class FeedlyPage {
         }
 
         NodeCreationObserver.onCreation(ext.articleSelector + " .content, .condensed-tools .button-dropdown", element => {
+            if ($(element).hasClass("content")) {
+                // Auto load more entries
+                var loadedUnreadEntries = navigo.entries.length;
+                if ($(ext.notFollowedPageSelector).length == 0 &&
+                    loadedUnreadEntries == $(ext.articleSelector).length &&
+                    getFFnS(ext.autoLoadAllArticlesId, true)) {
+
+                    var stream = navigo.observers[0].stream;
+                    var unreadCount = reader.getStreamUnreadCount(stream.streamId);
+                    if (unreadCount > loadedUnreadEntries) {
+                        stream.askUpdateQuery({
+                            unreadOnly: true,
+                            featured: stream._featured,
+                            sort: "newest",
+                            batchSize: unreadCount
+                        });
+                    }
+                }
+            }
+
             var a = $(element).closest(ext.articleSelector);
             if (a.hasClass("u0")) {
                 if (!$(element).hasClass("button-dropdown")) {
@@ -100,6 +119,7 @@ export class FeedlyPage {
                     return;
                 }
             }
+
             var entryId = a.attr(ext.articleEntryIdAttribute);
 
             var e = reader.lookupEntry(entryId);
@@ -182,13 +202,12 @@ export class FeedlyPage {
         $("." + this.hiddingInfoClass).remove();
     }
 
-    put(id: string, value: any) {
-        sessionStorage.setItem("FFnS_" + id, JSON.stringify(value));
+    put(id: string, value: any, persistent?: boolean) {
+        sessionStorage.setItem("FFnS" + (persistent ? "#" : "_") + id, JSON.stringify(value));
     }
 
-
-    get(id: string) {
-        return JSON.parse(sessionStorage.getItem("FFnS_" + id));
+    get(id: string, persistent?: boolean) {
+        return JSON.parse(sessionStorage.getItem("FFnS" + (persistent ? "#" : "_") + id));
     }
 
     getById(id: string) {

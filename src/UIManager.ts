@@ -59,7 +59,7 @@ export class UIManager {
             this.articleManager = new ArticleManager(this.subscriptionManager, this.keywordManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
             this.subscriptionManager.init().then(() => {
-                this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox("autoLoadAllArticles", this, false);
+                this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox(ext.autoLoadAllArticlesId, this, false, true);
                 this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
                 this.autoLoadAllArticlesCB.init().then(() => {
                     this.globalSettingsEnabledCB.init().then(() => {
@@ -442,7 +442,6 @@ export class UIManager {
                 }
             });
             articleObserver.observe(article, { attributes: true });
-            this.tryAutoLoadAllArticles();
         } catch (err) {
             console.log(err);
         }
@@ -464,18 +463,6 @@ export class UIManager {
                 window.scrollTo(0, 0);
             }
         }
-    }
-
-    tryAutoLoadAllArticles() {
-        if (!this.autoLoadAllArticlesCB.isEnabled() || $(ext.notFollowedPageSelector).length > 0) {
-            return;
-        }
-        if ($(ext.endOfFeedSelector).length > 0) {
-            window.scrollTo(0, 0);
-            return;
-        }
-        var currentScrollHeight = document.body.scrollHeight;
-        window.scrollTo(0, currentScrollHeight);
     }
 
     importFromOtherSub() {

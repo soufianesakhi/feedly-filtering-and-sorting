@@ -12,12 +12,15 @@ export class GlobalSettingsCheckBox {
     htmlId: string;
     uiManager: UIManager;
     enabled: boolean;
-    fullRefreshOnChange = true;
+    fullRefreshOnChange: boolean;
+    sessionStoreEnabled: boolean;
 
-    constructor(id: string, uiManager: UIManager, fullRefreshOnChange?: boolean) {
+    constructor(id: string, uiManager: UIManager, fullRefreshOnChange?: boolean, sessionStore?: boolean) {
         this.id = id;
         this.uiManager = uiManager;
         this.htmlId = uiManager.getHTMLId(id);
+        this.fullRefreshOnChange = fullRefreshOnChange != null ? fullRefreshOnChange : true;
+        this.sessionStoreEnabled = sessionStore != null ? sessionStore : false;
     }
 
     init(): AsyncResult<any> {
@@ -25,6 +28,7 @@ export class GlobalSettingsCheckBox {
             LocalPersistence.getAsync(this.id, true).then((enabled) => {
                 this.enabled = enabled;
                 setChecked(this.htmlId, this.enabled);
+                this.sessionStore();
                 p.done();
             }, this);
         }, this);
@@ -38,13 +42,22 @@ export class GlobalSettingsCheckBox {
         LocalPersistence.put(this.id, enabled);
         this.enabled = enabled;
         this.refreshUI();
+        this.sessionStore();
+    }
+
+    sessionStore() {
+        if (this.sessionStoreEnabled) {
+            this.uiManager.page.put(this.id, this.enabled, true);
+        }
     }
 
     initUI() {
         var this_ = this;
         $id(this.htmlId).click(function () {
             this_.setEnabled(isChecked($(this)));
-            this_.uiManager.refreshPage();
+            if (this_.fullRefreshOnChange) {
+                this_.uiManager.refreshPage();
+            }
         });
         this.refreshUI();
     }

@@ -194,17 +194,7 @@ export class ArticleManager {
     }
 
     isOldestFirst(): boolean {
-        try {
-            /* FIXME
-            var firstPublishAge = new Article($(ext.articleSelector).first().get(0)).getPublishAge();
-            var lastPublishAge = new Article($(ext.articleSelector).last().get(0)).getPublishAge();
-            return firstPublishAge < lastPublishAge;
-            */
-            return false;
-        } catch (err) {
-            console.log(err);
-            return false;
-        }
+        return !this.page.get(ext.isNewestFirstId, true);
     }
 
 }
