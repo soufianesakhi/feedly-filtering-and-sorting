@@ -40,6 +40,7 @@ export class FeedlyPage {
 
     initWindow() {
         window["ext"] = getFFnS("ext");
+        NodeCreationObserver.init("observed-page");
     }
 
     onNewPage() {
@@ -88,8 +89,9 @@ export class FeedlyPage {
             }
         }
 
-        NodeCreationObserver.onCreation(ext.articleSelector + " .content, .condensed-tools .button-dropdown", element => {
-            if ($(element).hasClass("content")) {
+        NodeCreationObserver.onCreation(ext.articleSelector + ", .condensed-tools .button-dropdown", element => {
+            var notDropdown = !$(element).hasClass("button-dropdown");
+            if (notDropdown) {
                 // Auto load more entries
                 var loadedUnreadEntries = navigo.entries.length;
                 if ($(ext.notFollowedPageSelector).length == 0 &&
@@ -110,14 +112,8 @@ export class FeedlyPage {
             }
 
             var a = $(element).closest(ext.articleSelector);
-            if (a.hasClass("u0")) {
-                if (!$(element).hasClass("button-dropdown")) {
-                    return;
-                }
-            } else {
-                if ($(element).hasClass("button-dropdown")) {
-                    return;
-                }
+            if (notDropdown == a.hasClass("u0")) {
+                return;
             }
 
             var entryId = a.attr(ext.articleEntryIdAttribute);

@@ -1083,6 +1083,7 @@ var FeedlyPage = (function () {
     };
     FeedlyPage.prototype.initWindow = function () {
         window["ext"] = getFFnS("ext");
+        NodeCreationObserver.init("observed-page");
     };
     FeedlyPage.prototype.onNewPage = function () {
         NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
@@ -1129,8 +1130,9 @@ var FeedlyPage = (function () {
                 }
             };
         };
-        NodeCreationObserver.onCreation(ext.articleSelector + " .content, .condensed-tools .button-dropdown", function (element) {
-            if ($(element).hasClass("content")) {
+        NodeCreationObserver.onCreation(ext.articleSelector + ", .condensed-tools .button-dropdown", function (element) {
+            var notDropdown = !$(element).hasClass("button-dropdown");
+            if (notDropdown) {
                 // Auto load more entries
                 var loadedUnreadEntries = navigo.entries.length;
                 if ($(ext.notFollowedPageSelector).length == 0 &&
@@ -1149,15 +1151,8 @@ var FeedlyPage = (function () {
                 }
             }
             var a = $(element).closest(ext.articleSelector);
-            if (a.hasClass("u0")) {
-                if (!$(element).hasClass("button-dropdown")) {
-                    return;
-                }
-            }
-            else {
-                if ($(element).hasClass("button-dropdown")) {
-                    return;
-                }
+            if (notDropdown == a.hasClass("u0")) {
+                return;
             }
             var entryId = a.attr(ext.articleEntryIdAttribute);
             var e = reader.lookupEntry(entryId);
