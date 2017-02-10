@@ -421,7 +421,8 @@ export class UIManager {
     }
 
     updateAdditionalSortingTypes() {
-        var additionalSortingTypes = $("#FFnS_AdditionalSortingTypes > select").map((i, e) => $(e).val()).toArray();
+        var additionalSortingTypes = [];
+        $("#FFnS_AdditionalSortingTypes > select").each((i, e) => additionalSortingTypes.push($(e).val()));
         this.subscription.setAdditionalSortingTypes(additionalSortingTypes);
         this.refreshFilteringAndSorting();
     }

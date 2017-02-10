@@ -181,7 +181,7 @@ function injectToWindow(functionNames) {
 function injecClasses() {
     var classes = [];
     for (var _i = 0; _i < arguments.length; _i++) {
-        classes[_i - 0] = arguments[_i];
+        classes[_i] = arguments[_i];
     }
     var srcTxt = "";
     for (var i = 0; i < classes.length; i++) {
@@ -204,6 +204,7 @@ function injectStyleText(styleTxt) {
     $("head").append("<style>" + styleTxt + "</style>");
 }
 
+var SortingType;
 (function (SortingType) {
     SortingType[SortingType["PopularityDesc"] = 0] = "PopularityDesc";
     SortingType[SortingType["PopularityAsc"] = 1] = "PopularityAsc";
@@ -213,31 +214,30 @@ function injectStyleText(styleTxt) {
     SortingType[SortingType["PublishDateOldFirst"] = 5] = "PublishDateOldFirst";
     SortingType[SortingType["SourceAsc"] = 6] = "SourceAsc";
     SortingType[SortingType["SourceDesc"] = 7] = "SourceDesc";
-})(exported.SortingType || (exported.SortingType = {}));
-var SortingType = exported.SortingType;
+})(SortingType = exported.SortingType || (exported.SortingType = {}));
+var FilteringType;
 (function (FilteringType) {
     FilteringType[FilteringType["RestrictedOn"] = 0] = "RestrictedOn";
     FilteringType[FilteringType["FilteredOut"] = 1] = "FilteredOut";
-})(exported.FilteringType || (exported.FilteringType = {}));
-var FilteringType = exported.FilteringType;
+})(FilteringType = exported.FilteringType || (exported.FilteringType = {}));
+var KeywordMatchingArea;
 (function (KeywordMatchingArea) {
     KeywordMatchingArea[KeywordMatchingArea["Title"] = 0] = "Title";
     KeywordMatchingArea[KeywordMatchingArea["Body"] = 1] = "Body";
     KeywordMatchingArea[KeywordMatchingArea["Author"] = 2] = "Author";
-})(exported.KeywordMatchingArea || (exported.KeywordMatchingArea = {}));
-var KeywordMatchingArea = exported.KeywordMatchingArea;
+})(KeywordMatchingArea = exported.KeywordMatchingArea || (exported.KeywordMatchingArea = {}));
+var KeywordMatchingMethod;
 (function (KeywordMatchingMethod) {
     KeywordMatchingMethod[KeywordMatchingMethod["Simple"] = 0] = "Simple";
     KeywordMatchingMethod[KeywordMatchingMethod["Word"] = 1] = "Word";
     KeywordMatchingMethod[KeywordMatchingMethod["RegExp"] = 2] = "RegExp";
-})(exported.KeywordMatchingMethod || (exported.KeywordMatchingMethod = {}));
-var KeywordMatchingMethod = exported.KeywordMatchingMethod;
+})(KeywordMatchingMethod = exported.KeywordMatchingMethod || (exported.KeywordMatchingMethod = {}));
+var HTMLElementType;
 (function (HTMLElementType) {
     HTMLElementType[HTMLElementType["SelectBox"] = 0] = "SelectBox";
     HTMLElementType[HTMLElementType["CheckBox"] = 1] = "CheckBox";
     HTMLElementType[HTMLElementType["NumberInput"] = 2] = "NumberInput";
-})(exported.HTMLElementType || (exported.HTMLElementType = {}));
-var HTMLElementType = exported.HTMLElementType;
+})(HTMLElementType = exported.HTMLElementType || (exported.HTMLElementType = {}));
 function getFilteringTypes() {
     return [FilteringType.FilteredOut, FilteringType.RestrictedOn];
 }
@@ -1349,7 +1349,8 @@ var UIManager = (function () {
         this.htmlSettingsElements = [
             {
                 type: HTMLElementType.SelectBox, ids: [
-                    this.sortingSelectId, "KeywordMatchingMethod", this.getKeywordMatchingSelectId(false)]
+                    this.sortingSelectId, "KeywordMatchingMethod", this.getKeywordMatchingSelectId(false)
+                ]
             },
             {
                 type: HTMLElementType.CheckBox,
@@ -1697,7 +1698,8 @@ var UIManager = (function () {
         this.setUpKeywordButtonsEvents(type);
     };
     UIManager.prototype.updateAdditionalSortingTypes = function () {
-        var additionalSortingTypes = $("#FFnS_AdditionalSortingTypes > select").map(function (i, e) { return $(e).val(); }).toArray();
+        var additionalSortingTypes = [];
+        $("#FFnS_AdditionalSortingTypes > select").each(function (i, e) { return additionalSortingTypes.push($(e).val()); });
         this.subscription.setAdditionalSortingTypes(additionalSortingTypes);
         this.refreshFilteringAndSorting();
     };
