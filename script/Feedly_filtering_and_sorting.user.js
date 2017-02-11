@@ -161,11 +161,7 @@ function executeWindow(sourceName) {
         srcTxt += "(" + functions[i].toString() + ")();\n";
     }
     srcTxt += "\n} catch(e) { console.log(e) }";
-    srcTxt += "//# sourceURL=" + sourceName;
-    if (typeof (InstallTrigger) != "undefined") {
-        srcTxt = "eval(`" + srcTxt + "`)";
-    }
-    injectScriptText(srcTxt);
+    injectScriptText(srcTxt, sourceName);
 }
 function injectToWindow(functionNames) {
     var functions = [];
@@ -176,9 +172,9 @@ function injectToWindow(functionNames) {
     for (var i = 0; i < functions.length; i++) {
         srcTxt += functions[i].toString().replace(/^function/, "function " + functionNames[i]) + "\n";
     }
-    injectScriptText(srcTxt);
+    injectScriptText(srcTxt, "window-" + Date.now());
 }
-function injecClasses() {
+function injectClasses() {
     var classes = [];
     for (var _i = 0; _i < arguments.length; _i++) {
         classes[_i] = arguments[_i];
@@ -192,9 +188,15 @@ function injecClasses() {
             + "\nreturn " + className + ";"
             + "\n}());";
     }
-    injectScriptText(srcTxt);
+    injectScriptText(srcTxt, "classes-" + Date.now());
 }
-function injectScriptText(srcTxt) {
+function injectScriptText(srcTxt, sourceURL) {
+    if (sourceURL) {
+        srcTxt += "//# sourceURL=" + sourceURL;
+        if (typeof (InstallTrigger) != "undefined") {
+            srcTxt = "eval(`" + srcTxt + "`)";
+        }
+    }
     var script = document.createElement("script");
     script.type = 'text/javascript';
     script.text = srcTxt;
@@ -1058,8 +1060,8 @@ var FeedlyPage = (function () {
     function FeedlyPage() {
         this.hiddingInfoClass = "FFnS_Hiding_Info";
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById"], this.get, this.put, this.getById);
-        injecClasses(EntryInfos);
+        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage"], this.get, this.put, this.getById, this.getStreamPage);
+        injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewPage, this.onNewArticle, this.overrideMarkAsRead, this.overrideSorting);
     }
     FeedlyPage.prototype.update = function (sub) {
@@ -1085,10 +1087,18 @@ var FeedlyPage = (function () {
         window["ext"] = getFFnS("ext");
         NodeCreationObserver.init("observed-page");
     };
+    FeedlyPage.prototype.getStreamPage = function () {
+        var observers = window["streets"].service("navigo").observers;
+        for (var i = 0, len = observers.length; i < len; i++) {
+            var stream = observers[i].stream;
+            if (stream && stream.streamId) {
+                return observers[i];
+            }
+        }
+    };
     FeedlyPage.prototype.onNewPage = function () {
         NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
-            var stream = window["streets"].service("navigo").observers[0].stream;
-            putFFnS(ext.isNewestFirstId, stream._sort === "newest", true);
+            putFFnS(ext.isNewestFirstId, getStreamPage().stream._sort === "newest", true);
         });
     };
     FeedlyPage.prototype.onNewArticle = function () {
@@ -1138,15 +1148,33 @@ var FeedlyPage = (function () {
                 if ($(ext.notFollowedPageSelector).length == 0 &&
                     loadedUnreadEntries == $(ext.articleSelector).length &&
                     getFFnS(ext.autoLoadAllArticlesId, true)) {
-                    var stream = navigo.observers[0].stream;
-                    var unreadCount = reader.getStreamUnreadCount(stream.streamId);
-                    if (unreadCount > loadedUnreadEntries) {
-                        stream.askUpdateQuery({
-                            unreadOnly: true,
-                            featured: stream._featured,
-                            sort: "newest",
-                            batchSize: unreadCount
-                        });
+                    $("#FFnS_LoadingMessage").remove();
+                    var streamPage = getStreamPage();
+                    var stream = streamPage.stream;
+                    if (!stream.state.isLoadingEntries) {
+                        var unreadCount = reader.getStreamUnreadCount(stream.streamId);
+                        if (unreadCount > loadedUnreadEntries) {
+                            console.log("askUpdateQuery: " + unreadCount);
+                            stream.askUpdateQuery({
+                                unreadOnly: true,
+                                featured: stream._featured,
+                                sort: stream._sort,
+                                batchSize: unreadCount
+                            });
+                        }
+                        else {
+                            if ($(ext.articleSelector).index(element) + 1 == unreadCount) {
+                                if (!stream.state.hasAllEntries) {
+                                    setTimeout(function () {
+                                        $(ext.articleSelector).first().parent()
+                                            .prepend("<div id='FFnS_LoadingMessage' class='message loading'>Loading stories (> 1000)...</div>");
+                                        console.log("do askMoreEntries");
+                                        streamPage._doCheckIfMoreEntriesNeeded = true;
+                                        stream.askMoreEntries();
+                                    }, 100);
+                                }
+                            }
+                        }
                     }
                 }
             }

@@ -108,17 +108,13 @@ export function deepClone<T>(toClone: T, clone: T, alternativeToCloneByField): T
     return clone;
 }
 
-export function executeWindow(sourceName: String, ...functions: Function[]) {
+export function executeWindow(sourceName: string, ...functions: Function[]) {
     var srcTxt = "try {\n";
     for (var i = 0; i < functions.length; i++) {
         srcTxt += "(" + functions[i].toString() + ")();\n";
     }
     srcTxt += "\n} catch(e) { console.log(e) }";
-    srcTxt += "//# sourceURL=" + sourceName;
-    if (typeof (InstallTrigger) != "undefined") {
-        srcTxt = "eval(`" + srcTxt + "`)";
-    }
-    injectScriptText(srcTxt);
+    injectScriptText(srcTxt, sourceName);
 }
 
 export function injectToWindow(functionNames: string[], ...functions: Function[]) {
@@ -126,10 +122,10 @@ export function injectToWindow(functionNames: string[], ...functions: Function[]
     for (var i = 0; i < functions.length; i++) {
         srcTxt += functions[i].toString().replace(/^function/, "function " + functionNames[i]) + "\n";
     }
-    injectScriptText(srcTxt);
+    injectScriptText(srcTxt, "window-" + Date.now());
 }
 
-export function injecClasses(...classes: Function[]) {
+export function injectClasses(...classes: Function[]) {
     var srcTxt = "";
     for (var i = 0; i < classes.length; i++) {
         var txt = classes[i].toString();
@@ -139,10 +135,16 @@ export function injecClasses(...classes: Function[]) {
             + "\nreturn " + className + ";"
             + "\n}());";
     }
-    injectScriptText(srcTxt);
+    injectScriptText(srcTxt, "classes-" + Date.now());
 }
 
-export function injectScriptText(srcTxt: string) {
+export function injectScriptText(srcTxt: string, sourceURL?: string) {
+    if (sourceURL) {
+        srcTxt += "//# sourceURL=" + sourceURL;
+        if (typeof (InstallTrigger) != "undefined") {
+            srcTxt = "eval(`" + srcTxt + "`)";
+        }
+    }
     var script = document.createElement("script");
     script.type = 'text/javascript';
     script.text = srcTxt;

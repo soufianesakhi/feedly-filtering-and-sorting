@@ -3,19 +3,21 @@
 import { Subscription } from "./Subscription";
 import { SubscriptionManager } from "./SubscriptionManager";
 import { EntryInfos } from "./ArticleManager";
-import { executeWindow, injectToWindow, injectStyleText, injecClasses } from "./Utils";
+import { executeWindow, injectToWindow, injectStyleText, injectClasses } from "./Utils";
 
 declare var getFFnS: (id: string, persistent?: boolean) => any;
 declare var putFFnS: (id: string, value: any, persistent?: boolean) => any;
 declare var getById: (id: string) => any;
+declare var getStreamPage: () => any;
 
 export class FeedlyPage {
     hiddingInfoClass = "FFnS_Hiding_Info";
 
     constructor() {
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById"], this.get, this.put, this.getById);
-        injecClasses(EntryInfos);
+        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage"],
+            this.get, this.put, this.getById, this.getStreamPage);
+        injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewPage, this.onNewArticle, this.overrideMarkAsRead, this.overrideSorting);
     }
 
@@ -43,10 +45,20 @@ export class FeedlyPage {
         NodeCreationObserver.init("observed-page");
     }
 
+
+    getStreamPage(): any {
+        var observers = window["streets"].service("navigo").observers;
+        for (let i = 0, len = observers.length; i < len; i++) {
+            let stream = observers[i].stream;
+            if (stream && stream.streamId) {
+                return observers[i];
+            }
+        }
+    }
+
     onNewPage() {
         NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, () => {
-            var stream = window["streets"].service("navigo").observers[0].stream;
-            putFFnS(ext.isNewestFirstId, stream._sort === "newest", true);
+            putFFnS(ext.isNewestFirstId, getStreamPage().stream._sort === "newest", true);
         });
     }
 
@@ -98,15 +110,30 @@ export class FeedlyPage {
                     loadedUnreadEntries == $(ext.articleSelector).length &&
                     getFFnS(ext.autoLoadAllArticlesId, true)) {
 
-                    var stream = navigo.observers[0].stream;
-                    var unreadCount = reader.getStreamUnreadCount(stream.streamId);
-                    if (unreadCount > loadedUnreadEntries) {
-                        stream.askUpdateQuery({
-                            unreadOnly: true,
-                            featured: stream._featured,
-                            sort: "newest",
-                            batchSize: unreadCount
-                        });
+                    $("#FFnS_LoadingMessage").remove();
+                    var streamPage = getStreamPage();
+                    var stream = streamPage.stream;
+                    if (!stream.state.isLoadingEntries) {
+                        var unreadCount = reader.getStreamUnreadCount(stream.streamId);
+                        if (unreadCount > loadedUnreadEntries) {
+                            stream.askUpdateQuery({
+                                unreadOnly: true,
+                                featured: stream._featured,
+                                sort: stream._sort,
+                                batchSize: unreadCount
+                            });
+                        } else {
+                            if ($(ext.articleSelector).index(element) + 1 == unreadCount) {
+                                if (!stream.state.hasAllEntries) {
+                                    setTimeout(() => {
+                                        $(ext.articleSelector).first().parent()
+                                            .prepend("<div id='FFnS_LoadingMessage' class='message loading'>Loading stories (> 1000)...</div>");
+                                        streamPage._doCheckIfMoreEntriesNeeded = true;
+                                        stream.askMoreEntries();
+                                    }, 100);
+                                }
+                            }
+                        }
                     }
                 }
             }
