@@ -31,5 +31,6 @@ var ext = {
 	"entryInfosJsonClass": "entryInfosJson",
 	"hideWhenMarkAboveBelowId": "isHideWhenMarkAboveBelow",
 	"autoLoadAllArticlesId": "autoLoadAllArticles",
+	"autoLoadBatchSizeId": "autoLoadBatchSize",
 	"isNewestFirstId": "isNewestFirst",
 }

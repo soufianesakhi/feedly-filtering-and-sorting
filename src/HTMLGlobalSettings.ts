@@ -7,11 +7,12 @@ import { AsyncResult } from "./AsyncResult";
 
 declare var LocalPersistence: LocalStorage;
 
-export class GlobalSettingsCheckBox {
+export class GlobalSettingsCheckBox<T extends boolean | number> {
     id: string;
     htmlId: string;
     uiManager: UIManager;
-    enabled: boolean;
+    value: T;
+    isBoolean: boolean;
     fullRefreshOnChange: boolean;
     sessionStoreEnabled: boolean;
 
@@ -23,47 +24,69 @@ export class GlobalSettingsCheckBox {
         this.sessionStoreEnabled = sessionStore != null ? sessionStore : false;
     }
 
-    init(): AsyncResult<any> {
+    init(defaultValue: T): AsyncResult<any> {
+        this.isBoolean = typeof (defaultValue) === "boolean";
         return new AsyncResult<any>((p) => {
-            LocalPersistence.getAsync(this.id, true).then((enabled) => {
-                this.enabled = enabled;
-                setChecked(this.htmlId, this.enabled);
-                this.sessionStore();
+            LocalPersistence.getAsync(this.id, defaultValue).then((value) => {
+                this.setValue(value);
                 p.done();
             }, this);
         }, this);
     }
 
-    isEnabled(): boolean {
-        return this.enabled;
+    getValue(): T {
+        return this.value;
     }
 
-    setEnabled(enabled: boolean) {
-        LocalPersistence.put(this.id, enabled);
-        this.enabled = enabled;
-        this.refreshUI();
+    setValue(value: T) {
+        this.value = value;
         this.sessionStore();
+    }
+
+    save() {
+        LocalPersistence.put(this.id, this.value);
     }
 
     sessionStore() {
         if (this.sessionStoreEnabled) {
-            this.uiManager.page.put(this.id, this.enabled, true);
+            this.uiManager.page.put(this.id, this.value, true);
         }
     }
 
-    initUI() {
+    getHTMLValue(e: JQuery): any {
+        if (this.isBoolean) {
+            return isChecked(e);
+        } else {
+            return Number(e.val());
+        }
+    }
+
+    refreshHTMLValue() {
+        if (this.isBoolean) {
+            setChecked(this.htmlId, <boolean>this.value);
+        } else {
+            return $id(this.htmlId).val(<number>this.value);
+        }
+    }
+
+    initUI(callback?: (newValue: boolean) => void, thisArg?: any) {
         var this_ = this;
+        let applyCallback = () => {
+            if (callback) {
+                callback.call(thisArg, this_.value);
+            }
+        }
         $id(this.htmlId).click(function () {
-            this_.setEnabled(isChecked($(this)));
+            let val = this_.getHTMLValue($(this));
+            this_.setValue(val);
+            this_.save();
             if (this_.fullRefreshOnChange) {
                 this_.uiManager.refreshPage();
             }
+            applyCallback();
         });
-        this.refreshUI();
-    }
-
-    refreshUI() {
-        setChecked(this.htmlId, this.enabled);
+        this.refreshHTMLValue();
+        applyCallback();
     }
 
 }

@@ -118,7 +118,7 @@
     margin-right: 1%;
 }
 
-#FFnS_MinPopularity_AdvancedControlsReceivedPeriod {
+#FFnS_MinPopularity_AdvancedControlsReceivedPeriod, #FFnS_autoLoadBatchSize {
     width: 45px;
 }
 

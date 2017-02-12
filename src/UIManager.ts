@@ -22,8 +22,9 @@ export class UIManager {
     htmlSubscriptionManager: HTMLSubscriptionManager;
     articleManager: ArticleManager;
     subscription: Subscription;
-    autoLoadAllArticlesCB: GlobalSettingsCheckBox;
-    globalSettingsEnabledCB: GlobalSettingsCheckBox;
+    autoLoadAllArticlesCB: GlobalSettingsCheckBox<boolean>;
+    autoLoadBatchSizeCB: GlobalSettingsCheckBox<number>;
+    globalSettingsEnabledCB: GlobalSettingsCheckBox<boolean>;
     containsReadArticles = false;
 
     keywordToId = {};
@@ -59,16 +60,19 @@ export class UIManager {
             this.articleManager = new ArticleManager(this.subscriptionManager, this.keywordManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
             this.subscriptionManager.init().then(() => {
-                this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox(ext.autoLoadAllArticlesId, this, false, true);
-                this.globalSettingsEnabledCB = new GlobalSettingsCheckBox("globalSettingsEnabled", this);
-                this.autoLoadAllArticlesCB.init().then(() => {
-                    this.globalSettingsEnabledCB.init().then(() => {
-                        this.updateSubscription().then(() => {
-                            this.initUI();
-                            this.registerSettings();
-                            this.updateMenu();
-                            this.initSettingsCallbacks();
-                            p.done();
+                this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox<boolean>(ext.autoLoadAllArticlesId, this, false, true);
+                this.autoLoadBatchSizeCB = new GlobalSettingsCheckBox<number>(ext.autoLoadBatchSizeId, this, false, true);
+                this.globalSettingsEnabledCB = new GlobalSettingsCheckBox<boolean>("globalSettingsEnabled", this);
+                this.autoLoadAllArticlesCB.init(true).then(() => {
+                    this.autoLoadBatchSizeCB.init(600).then(() => {
+                        this.globalSettingsEnabledCB.init(true).then(() => {
+                            this.updateSubscription().then(() => {
+                                this.initUI();
+                                this.registerSettings();
+                                this.updateMenu();
+                                this.initSettingsCallbacks();
+                                p.done();
+                            }, this);
                         }, this);
                     }, this);
                 }, this);
@@ -103,7 +107,7 @@ export class UIManager {
 
     updateSubscription(): AsyncResult<any> {
         return new AsyncResult<any>((p) => {
-            var globalSettingsEnabled = this.globalSettingsEnabledCB.isEnabled();
+            var globalSettingsEnabled = this.globalSettingsEnabledCB.getValue();
             this.subscriptionManager.loadSubscription(globalSettingsEnabled).then((sub) => {
                 this.subscription = sub;
                 p.done();
@@ -131,7 +135,7 @@ export class UIManager {
     }
 
     updateSettingsModeTitle() {
-        var title = this.globalSettingsEnabledCB.isEnabled() ? "Global" : "Subscription";
+        var title = this.globalSettingsEnabledCB.getValue() ? "Global" : "Subscription";
         title += " settings";
         $id("FFnS_settings_mode_title").text(title);
     }
@@ -140,8 +144,8 @@ export class UIManager {
         $id("FFnS_SettingsControls_SelectedSubscription").html(this.getImportOptionsHTML());
         var linkedSubContainer = $id("FFnS_SettingsControls_LinkedSubContainer");
         var linkedSub = $id("FFnS_SettingsControls_LinkedSub");
-        if (((!this.globalSettingsEnabledCB.isEnabled()) && this.subscription.getURL() !== this.subscriptionManager.getActualSubscriptionURL()) ||
-            (this.globalSettingsEnabledCB.isEnabled() && !this.subscriptionManager.isGlobalMode())) {
+        if (((!this.globalSettingsEnabledCB.getValue()) && this.subscription.getURL() !== this.subscriptionManager.getActualSubscriptionURL()) ||
+            (this.globalSettingsEnabledCB.getValue() && !this.subscriptionManager.isGlobalMode())) {
             linkedSubContainer.css("display", "");
             linkedSub.text("Subscription currently linked to: " + this.subscription.getURL());
         } else {
@@ -157,7 +161,15 @@ export class UIManager {
     initUI() {
         this.initSettingsMenu();
         this.initShowSettingsBtns();
-        this.autoLoadAllArticlesCB.initUI();
+        this.autoLoadAllArticlesCB.initUI((enabled) => {
+            let batchSizeSettings = $id("FFnS_autoLoadBatchSizeSettings");
+            if (enabled) {
+                batchSizeSettings.show();
+            } else {
+                batchSizeSettings.hide();
+            }
+        });
+        this.autoLoadBatchSizeCB.initUI();
         this.globalSettingsEnabledCB.initUI();
     }
 

@@ -110,30 +110,42 @@ export class FeedlyPage {
                     loadedUnreadEntries == $(ext.articleSelector).length &&
                     getFFnS(ext.autoLoadAllArticlesId, true)) {
 
-                    $("#FFnS_LoadingMessage").remove();
                     var streamPage = getStreamPage();
                     var stream = streamPage.stream;
                     if (!stream.state.isLoadingEntries) {
                         var unreadCount = reader.getStreamUnreadCount(stream.streamId);
-                        if (unreadCount > loadedUnreadEntries) {
+                        var batchSize = getFFnS(ext.autoLoadBatchSizeId, true);
+                        if (unreadCount > loadedUnreadEntries && batchSize > loadedUnreadEntries) {
+                            if (batchSize > unreadCount) {
+                                batchSize = unreadCount;
+                            }
+                            console.log("Begin auto load all articles at: " + new Date().toTimeString());
+                            console.log("Batch size: " + batchSize);
                             stream.askUpdateQuery({
                                 unreadOnly: true,
                                 featured: stream._featured,
                                 sort: stream._sort,
-                                batchSize: unreadCount
+                                batchSize: batchSize
                             });
                         } else {
-                            if ($(ext.articleSelector).index(element) + 1 == unreadCount) {
-                                if (!stream.state.hasAllEntries) {
-                                    setTimeout(() => {
+                            if (!stream.state.hasAllEntries && !stream.askingMoreEntries) {
+                                stream.askingMoreEntries = true;
+                                setTimeout(() => {
+                                    if ($("#FFnS_LoadingMessage").length == 0) {
                                         $(ext.articleSelector).first().parent()
-                                            .prepend("<div id='FFnS_LoadingMessage' class='message loading'>Loading stories (> 1000)...</div>");
-                                        streamPage._doCheckIfMoreEntriesNeeded = true;
-                                        stream.askMoreEntries();
-                                    }, 100);
-                                }
+                                            .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
+                                    }
+                                    streamPage._doCheckIfMoreEntriesNeeded = true;
+                                    console.log("Fetching more articles");
+                                    stream.askMoreEntries();
+                                    stream.askingMoreEntries = false;
+                                }, 100);
                             }
                         }
+                    }
+                    if (stream.state.hasAllEntries && $("#FFnS_LoadingMessage").length > 0) {
+                        $("#FFnS_LoadingMessage").remove();
+                        console.log("End auto load all articles at: " + new Date().toTimeString());
                     }
                 }
             }
