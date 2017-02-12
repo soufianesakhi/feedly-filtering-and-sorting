@@ -9,10 +9,10 @@
 // @icon        https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/web-ext/icons/128.png
 // @require     http://code.jquery.com/jquery.min.js
 // @resource    jquery.min.js http://code.jquery.com/jquery.min.js
-// @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
-// @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=126895
+// @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
+// @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @include     *://feedly.com/*
-// @version     2.6.0
+// @version     2.6.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
