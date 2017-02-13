@@ -12,7 +12,7 @@
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @include     *://feedly.com/*
-// @version     2.6.1
+// @version     2.6.2
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1321,13 +1321,7 @@ var FeedlyPage = (function () {
         function ensureSortedEntries() {
             var entries = navigo.entries;
             var originalEntries = navigo.originalEntries || entries;
-            if ($(ext.articleSelector).length != originalEntries.length) {
-                navigo.originalEntries = null;
-                return;
-            }
-            else {
-                navigo.originalEntries = originalEntries;
-            }
+            navigo.originalEntries = originalEntries;
             var sortedVisibleArticles = getFFnS(ext.sortedVisibleArticlesId);
             if (!sortedVisibleArticles) {
                 navigo.entries = originalEntries;

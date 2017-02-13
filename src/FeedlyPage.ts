@@ -293,12 +293,7 @@ export class FeedlyPage {
         function ensureSortedEntries() {
             var entries: any[] = navigo.entries;
             var originalEntries: any[] = navigo.originalEntries || entries;
-            if ($(ext.articleSelector).length != originalEntries.length) {
-                navigo.originalEntries = null;
-                return;
-            } else {
-                navigo.originalEntries = originalEntries;
-            }
+            navigo.originalEntries = originalEntries;
             var sortedVisibleArticles: String[] = getFFnS(ext.sortedVisibleArticlesId);
             if (!sortedVisibleArticles) {
                 navigo.entries = originalEntries;
