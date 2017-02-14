@@ -78,16 +78,16 @@ export class ArticleManager {
         if (advControls.keepUnread || advControls.hide) {
             try {
                 var threshold = Date.now() - advControls.maxHours * 3600 * 1000;
-                var publishAge = article.getPublishAge();
-                if (publishAge <= threshold) {
+                var receivedAge = article.getReceivedAge();
+                if (receivedAge <= threshold) {
                     if (advControls.keepUnread && (this.lastReadArticleAge == -1 ||
-                        publishAge >= this.lastReadArticleAge)) {
-                        if (publishAge != this.lastReadArticleAge) {
+                        receivedAge >= this.lastReadArticleAge)) {
+                        if (receivedAge != this.lastReadArticleAge) {
                             this.lastReadArticleGroup = [article]
                         } else {
                             this.lastReadArticleGroup.push(article);
                         }
-                        this.lastReadArticleAge = publishAge;
+                        this.lastReadArticleAge = receivedAge;
                     }
                 } else {
                     if (advControls.showIfHot && (article.isHot() ||
@@ -215,6 +215,12 @@ class ArticleSorterFactory {
                 return (a.getPopularity() - b.getPopularity()) * multiplier;
             }
         }
+        function receivedDateSorter(isNewFirst: boolean) {
+            var multiplier = isNewFirst ? -1 : 1;
+            return (a: Article, b: Article) => {
+                return (a.getReceivedAge() - b.getReceivedAge()) * multiplier;
+            }
+        }
         function publishDateSorter(isNewFirst: boolean) {
             var multiplier = isNewFirst ? -1 : 1;
             return (a: Article, b: Article) => {
@@ -232,6 +238,8 @@ class ArticleSorterFactory {
         this.sorterByType[SortingType.TitleAsc] = titleSorter(true);
         this.sorterByType[SortingType.PopularityDesc] = popularitySorter(false);
         this.sorterByType[SortingType.PopularityAsc] = popularitySorter(true);
+        this.sorterByType[SortingType.ReceivedDateNewFirst] = receivedDateSorter(true);
+        this.sorterByType[SortingType.ReceivedDateOldFirst] = receivedDateSorter(false);
         this.sorterByType[SortingType.PublishDateNewFirst] = publishDateSorter(true);
         this.sorterByType[SortingType.PublishDateOldFirst] = publishDateSorter(false);
         this.sorterByType[SortingType.SourceAsc] = sourceSorter(true);
@@ -260,12 +268,14 @@ export class EntryInfos {
     author: string;
     engagement: number;
     published: number;
+    received: number;
     constructor(jsonInfos) {
         var bodyInfos = jsonInfos.content ? jsonInfos.content : jsonInfos.summary;
         this.body = bodyInfos ? bodyInfos.content : "";
         this.author = jsonInfos.author;
         this.engagement = jsonInfos.engagement;
         this.published = jsonInfos.published;
+        this.received = jsonInfos.crawled;
     }
 }
 
@@ -276,6 +286,7 @@ export class Article {
     body: string;
     author: string;
     private source: string;
+    private receivedAge: number;
     private publishAge: number;
     private popularity: number;
     private entryInfos: EntryInfos;
@@ -291,13 +302,17 @@ export class Article {
                 this.body = this.body ? this.body.toLowerCase() : "";
                 this.author = this.entryInfos.author;
                 this.author = this.author ? this.author.toLowerCase() : "";
+                this.receivedAge = this.entryInfos.received;
                 this.publishAge = this.entryInfos.published;
             } else {
                 this.body = this.article.find(".summary").text().toLowerCase();
                 this.author = this.article.find(".authors").text().replace("by", "").toLowerCase();
                 var ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
-                var publishDate = ageStr.split("--")[1].replace(/[^:]*:/, "").trim();
+                var ageSplit = ageStr.split("--");
+                var publishDate = ageSplit[0].replace(/[^:]*:/, "").trim();
+                var receivedDate = ageSplit[1].replace(/[^:]*:/, "").trim();
                 this.publishAge = Date.parse(publishDate);
+                this.receivedAge = Date.parse(receivedDate);
             }
         }
 
@@ -334,6 +349,10 @@ export class Article {
 
     getPopularity(): number {
         return this.popularity;
+    }
+
+    getReceivedAge(): number {
+        return this.receivedAge;
     }
 
     getPublishAge(): number {

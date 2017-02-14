@@ -214,6 +214,8 @@ export class UIManager {
             { name: "TitleDesc", value: SortingType.TitleDesc },
             { name: "PublishDateNewFirst", value: SortingType.PublishDateNewFirst },
             { name: "PublishDateOldFirst", value: SortingType.PublishDateOldFirst },
+            { name: "ReceivedDateNewFirst", value: SortingType.ReceivedDateNewFirst },
+            { name: "ReceivedDateOldFirst", value: SortingType.ReceivedDateOldFirst },
             { name: "SourceAsc", value: SortingType.SourceAsc },
             { name: "SourceDesc", value: SortingType.SourceDesc }
         ]);
