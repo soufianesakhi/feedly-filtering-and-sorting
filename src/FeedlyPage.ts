@@ -250,33 +250,38 @@ export class FeedlyPage {
     }
 
     overrideMarkAsRead() {
+        var reader = window["streets"].service('reader');
+        var navigo = window["streets"].service("navigo");
         var pagesPkg = window["devhd"].pkg("pages");
-        function markEntryAsRead(id, thisArg) {
-            pagesPkg.BasePage.prototype.buryEntry.call(thisArg, id);
-        }
         function getLastReadEntry(oldLastEntryObject, thisArg) {
-            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || getFFnS(ext.keepNewArticlesUnreadId) == null) {
+            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || !getFFnS(ext.keepNewArticlesUnreadId)) {
                 return oldLastEntryObject;
             }
             var idsToMarkAsRead: string[] = getFFnS(ext.articlesToMarkAsReadId);
             if (idsToMarkAsRead != null) {
                 idsToMarkAsRead.forEach(id => {
-                    markEntryAsRead(id, thisArg)
+                    reader.askMarkEntryAsRead(id);
                 });
             }
             var lastReadEntryId = getFFnS(ext.lastReadEntryId);
             if (lastReadEntryId == null) {
                 return null;
             }
-            return { lastReadEntryId: lastReadEntryId };
+            return { lastReadEntryId: lastReadEntryId, partial: true };
         }
 
         var feedlyListPagePrototype = pagesPkg.ReactPage.prototype;
         var oldMarkAllAsRead: Function = feedlyListPagePrototype.markAsRead;
         feedlyListPagePrototype.markAsRead = function (oldLastEntryObject) {
             var lastEntryObject = getLastReadEntry(oldLastEntryObject, this);
-            if (!getFFnS(ext.keepNewArticlesUnreadId) || lastEntryObject) {
+            if (oldLastEntryObject == lastEntryObject) {
                 oldMarkAllAsRead.call(this, lastEntryObject);
+            } else if (lastEntryObject) {
+                reader.askMarkStreamAsRead(navigo.getMarkAsReadScope(), lastEntryObject, function () {
+                    console.log("Marked page partially as read: " + JSON.stringify(lastEntryObject));
+                }, function (a, c) {
+                    console.log(c);
+                })
             }
             if (!(oldLastEntryObject && oldLastEntryObject.asOf)) {
                 this.feedly.jumpToNext();
