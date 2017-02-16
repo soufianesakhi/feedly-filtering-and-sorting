@@ -31,6 +31,7 @@ var ext = {
 	"markAsReadAboveBelowClass": "mark-as-read-above-below-button",
 	"entryInfosJsonClass": "entryInfosJson",
 	"hideWhenMarkAboveBelowId": "isHideWhenMarkAboveBelow",
+	"hideAfterReadId": "isHideAfterRead",
 	"autoLoadAllArticlesId": "autoLoadAllArticles",
 	"autoLoadBatchSizeId": "autoLoadBatchSize",
 	"isNewestFirstId": "isNewestFirst",

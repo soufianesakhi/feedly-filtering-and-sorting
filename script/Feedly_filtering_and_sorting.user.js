@@ -12,7 +12,7 @@
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @include     *://feedly.com/*
-// @version     2.6.2
+// @version     2.6.3
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -50,6 +50,7 @@ var ext = {
     "markAsReadAboveBelowClass": "mark-as-read-above-below-button",
     "entryInfosJsonClass": "entryInfosJson",
     "hideWhenMarkAboveBelowId": "isHideWhenMarkAboveBelow",
+    "hideAfterReadId": "isHideAfterRead",
     "autoLoadAllArticlesId": "autoLoadAllArticles",
     "autoLoadBatchSizeId": "autoLoadBatchSize",
     "isNewestFirstId": "isNewestFirst",
@@ -1093,6 +1094,9 @@ var FeedlyPage = (function () {
         if (sub.isHideWhenMarkAboveBelow()) {
             this.put(ext.hideWhenMarkAboveBelowId, true);
         }
+        if (sub.isHideAfterRead()) {
+            this.put(ext.hideAfterReadId, true);
+        }
     };
     FeedlyPage.prototype.updateCheck = function (enabled, id, className) {
         if (enabled) {
@@ -1370,9 +1374,9 @@ var FeedlyPage = (function () {
                 return;
             }
             var len = sortedVisibleArticles.length;
-            var sorted = true;
+            var sorted = len == entries.length;
             for (var i = 0; i < len && sorted; i++) {
-                if (entries[i].id !== sortedVisibleArticles[i]) {
+                if (entries[i].id !== sortedVisibleArticles[i] || !filterVisible(entries[i])) {
                     sorted = false;
                 }
             }
@@ -1390,13 +1394,13 @@ var FeedlyPage = (function () {
         var getEntries = prototype.getEntries;
         var setEntries = prototype.setEntries;
         var reset = prototype.reset;
-        prototype.lookupNextEntry = function () {
+        prototype.lookupNextEntry = function (a) {
             ensureSortedEntries();
-            return lookupNextEntry.apply(this, arguments);
+            return lookupNextEntry.call(this, this, getFFnS(ext.hideAfterReadId) ? true : a);
         };
-        prototype.lookupPreviousEntry = function () {
+        prototype.lookupPreviousEntry = function (a) {
             ensureSortedEntries();
-            return lookupPreviousEntry.apply(this, arguments);
+            return lookupPreviousEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
         };
         prototype.getEntries = function () {
             ensureSortedEntries();

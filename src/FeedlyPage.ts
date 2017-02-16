@@ -26,8 +26,12 @@ export class FeedlyPage {
         this.updateCheck(sub.isMarkAsReadAboveBelow(), ext.markAsReadAboveBelowId, ext.markAsReadAboveBelowClass);
         if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
             this.put(ext.keepNewArticlesUnreadId, true);
-        } if (sub.isHideWhenMarkAboveBelow()) {
+        }
+        if (sub.isHideWhenMarkAboveBelow()) {
             this.put(ext.hideWhenMarkAboveBelowId, true);
+        }
+        if (sub.isHideAfterRead()) {
+            this.put(ext.hideAfterReadId, true);
         }
     }
 
@@ -325,9 +329,9 @@ export class FeedlyPage {
                 return;
             }
             var len = sortedVisibleArticles.length;
-            var sorted = true;
+            var sorted = len == entries.length;
             for (var i = 0; i < len && sorted; i++) {
-                if (entries[i].id !== sortedVisibleArticles[i]) {
+                if (entries[i].id !== sortedVisibleArticles[i] || !filterVisible(entries[i])) {
                     sorted = false;
                 }
             }
@@ -347,13 +351,13 @@ export class FeedlyPage {
         var setEntries = prototype.setEntries;
         var reset = prototype.reset;
 
-        prototype.lookupNextEntry = function () {
+        prototype.lookupNextEntry = function (a) {
             ensureSortedEntries();
-            return lookupNextEntry.apply(this, arguments);
+            return lookupNextEntry.call(this, this, getFFnS(ext.hideAfterReadId) ? true : a);
         };
-        prototype.lookupPreviousEntry = function () {
+        prototype.lookupPreviousEntry = function (a) {
             ensureSortedEntries();
-            return lookupPreviousEntry.apply(this, arguments);
+            return lookupPreviousEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
         };
         prototype.getEntries = function () {
             ensureSortedEntries();
