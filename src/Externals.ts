@@ -7,6 +7,7 @@ var ext = {
 
 	"settingsBtnPredecessorSelector": ".button-refresh",
 	"articleSelector": ".list-entries > .entry",
+	"loadingMessageSelector": ".list-entries .message.loading",
 	"sectionSelector": "#timeline > .section",
 	"publishAgeSpanSelector": ".ago",
 	"publishAgeTimestampAttr": "title",

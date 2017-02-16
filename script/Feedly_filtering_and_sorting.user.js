@@ -27,6 +27,7 @@ var ext = {
     "urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
     "settingsBtnPredecessorSelector": ".button-refresh",
     "articleSelector": ".list-entries > .entry",
+    "loadingMessageSelector": ".list-entries .message.loading",
     "sectionSelector": "#timeline > .section",
     "publishAgeSpanSelector": ".ago",
     "publishAgeTimestampAttr": "title",
@@ -1081,7 +1082,7 @@ var FeedlyPage = (function () {
         this.put("ext", ext);
         injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage"], this.get, this.put, this.getById, this.getStreamPage);
         injectClasses(EntryInfos);
-        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewPage, this.onNewArticle, this.overrideMarkAsRead, this.overrideSorting);
+        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
     FeedlyPage.prototype.update = function (sub) {
         this.updateCheck(sub.isOpenAndMarkAsRead(), ext.openAndMarkAsReadId, ext.openAndMarkAsReadClass);
@@ -1122,7 +1123,6 @@ var FeedlyPage = (function () {
     };
     FeedlyPage.prototype.onNewArticle = function () {
         var reader = window["streets"].service('reader');
-        var navigo = window["streets"].service("navigo");
         var onClick = function (element, callback) {
             element.get(0).addEventListener('click', callback, true);
         };
@@ -1161,52 +1161,6 @@ var FeedlyPage = (function () {
         };
         NodeCreationObserver.onCreation(ext.articleSelector + ", .condensed-tools .button-dropdown", function (element) {
             var notDropdown = !$(element).hasClass("button-dropdown");
-            if (notDropdown) {
-                // Auto load more entries
-                var loadedUnreadEntries = navigo.entries.length;
-                if ($(ext.notFollowedPageSelector).length == 0 &&
-                    loadedUnreadEntries == $(ext.articleSelector).length &&
-                    getFFnS(ext.autoLoadAllArticlesId, true)) {
-                    var streamPage = getStreamPage();
-                    var stream = streamPage.stream;
-                    if (!stream.state.isLoadingEntries) {
-                        var unreadCount = reader.getStreamUnreadCount(stream.streamId);
-                        var batchSize = getFFnS(ext.autoLoadBatchSizeId, true);
-                        if (unreadCount > loadedUnreadEntries && batchSize > loadedUnreadEntries) {
-                            if (batchSize > unreadCount) {
-                                batchSize = unreadCount;
-                            }
-                            console.log("Begin auto load all articles at: " + new Date().toTimeString());
-                            console.log("Batch size: " + batchSize);
-                            stream.askUpdateQuery({
-                                unreadOnly: true,
-                                featured: stream._featured,
-                                sort: stream._sort,
-                                batchSize: batchSize
-                            });
-                        }
-                        else {
-                            if (!stream.state.hasAllEntries && !stream.askingMoreEntries) {
-                                stream.askingMoreEntries = true;
-                                setTimeout(function () {
-                                    if ($("#FFnS_LoadingMessage").length == 0) {
-                                        $(ext.articleSelector).first().parent()
-                                            .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
-                                    }
-                                    streamPage._doCheckIfMoreEntriesNeeded = true;
-                                    console.log("Fetching more articles");
-                                    stream.askMoreEntries();
-                                    stream.askingMoreEntries = false;
-                                }, 100);
-                            }
-                        }
-                    }
-                    if (stream.state.hasAllEntries && $("#FFnS_LoadingMessage").length > 0) {
-                        $("#FFnS_LoadingMessage").remove();
-                        console.log("End auto load all articles at: " + new Date().toTimeString());
-                    }
-                }
-            }
             var a = $(element).closest(ext.articleSelector);
             if (notDropdown == a.hasClass("u0")) {
                 return;
@@ -1296,6 +1250,69 @@ var FeedlyPage = (function () {
     };
     FeedlyPage.prototype.getById = function (id) {
         return document.getElementById(id + "_main");
+    };
+    FeedlyPage.prototype.overrideLoadingEntries = function () {
+        var autoLoadingMessageId = "#FFnS_LoadingMessage";
+        var reader = window["streets"].service('reader');
+        var navigo = window["streets"].service("navigo");
+        var prototype = Object.getPrototypeOf(getStreamPage().stream);
+        var askMoreEntries = prototype.askMoreEntries;
+        prototype.askMoreEntries = function () {
+            if (!this.state.hasAllEntries) {
+                var entries = navigo.originalEntries;
+                if (!entries) {
+                    entries = navigo.entries;
+                }
+                var loadedUnreadEntries = entries.length;
+                if ($(ext.notFollowedPageSelector).length == 0 &&
+                    loadedUnreadEntries == $(ext.articleSelector).length &&
+                    getFFnS(ext.autoLoadAllArticlesId, true)) {
+                    var unreadCount = reader.getStreamUnreadCount(this.streamId);
+                    var batchSize = getFFnS(ext.autoLoadBatchSizeId, true);
+                    if (unreadCount > loadedUnreadEntries && batchSize > loadedUnreadEntries) {
+                        if (batchSize > unreadCount) {
+                            batchSize = unreadCount;
+                        }
+                        if (this._batchSize != batchSize) {
+                            console.log("Setting the batch size to: " + batchSize);
+                            this.setBatchSize(batchSize);
+                            console.log("Begin auto load all articles at: " + new Date().toTimeString());
+                        }
+                    }
+                }
+            }
+            askMoreEntries.call(this);
+        };
+        var navigoPrototype = Object.getPrototypeOf(navigo);
+        var setEntries = navigoPrototype.setEntries;
+        navigoPrototype.setEntries = function () {
+            if (getFFnS(ext.autoLoadAllArticlesId, true)) {
+                var stream = getStreamPage().stream;
+                var hasAllEntries = stream.state.hasAllEntries;
+                if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries) {
+                    stream.askingMoreEntries = true;
+                    setTimeout(function () {
+                        if ($(".message.loading").length == 0) {
+                            $(ext.articleSelector).first().parent()
+                                .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
+                        }
+                        console.log("Fetching more articles");
+                        stream.askMoreEntries();
+                        stream.askingMoreEntries = false;
+                    }, 100);
+                }
+                else if (hasAllEntries && $(autoLoadingMessageId).length == 1) {
+                    $(autoLoadingMessageId).remove();
+                    console.log("End auto load all articles at: " + new Date().toTimeString());
+                }
+            }
+            return setEntries.apply(this, arguments);
+        };
+        NodeCreationObserver.onCreation(ext.loadingMessageSelector, function (e) {
+            if ($(autoLoadingMessageId).length == 1) {
+                $(e).hide();
+            }
+        });
     };
     FeedlyPage.prototype.overrideMarkAsRead = function () {
         var reader = window["streets"].service('reader');

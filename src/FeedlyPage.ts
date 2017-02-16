@@ -18,7 +18,7 @@ export class FeedlyPage {
         injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage"],
             this.get, this.put, this.getById, this.getStreamPage);
         injectClasses(EntryInfos);
-        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.onNewPage, this.onNewArticle, this.overrideMarkAsRead, this.overrideSorting);
+        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
 
     update(sub: Subscription) {
@@ -64,7 +64,6 @@ export class FeedlyPage {
 
     onNewArticle() {
         var reader = window["streets"].service('reader');
-        var navigo = window["streets"].service("navigo");
         var onClick = (element: JQuery, callback: (event: MouseEvent) => any) => {
             element.get(0).addEventListener('click', callback, true);
         }
@@ -103,53 +102,6 @@ export class FeedlyPage {
 
         NodeCreationObserver.onCreation(ext.articleSelector + ", .condensed-tools .button-dropdown", element => {
             var notDropdown = !$(element).hasClass("button-dropdown");
-            if (notDropdown) {
-                // Auto load more entries
-                var loadedUnreadEntries = navigo.entries.length;
-                if ($(ext.notFollowedPageSelector).length == 0 &&
-                    loadedUnreadEntries == $(ext.articleSelector).length &&
-                    getFFnS(ext.autoLoadAllArticlesId, true)) {
-
-                    var streamPage = getStreamPage();
-                    var stream = streamPage.stream;
-                    if (!stream.state.isLoadingEntries) {
-                        var unreadCount = reader.getStreamUnreadCount(stream.streamId);
-                        var batchSize = getFFnS(ext.autoLoadBatchSizeId, true);
-                        if (unreadCount > loadedUnreadEntries && batchSize > loadedUnreadEntries) {
-                            if (batchSize > unreadCount) {
-                                batchSize = unreadCount;
-                            }
-                            console.log("Begin auto load all articles at: " + new Date().toTimeString());
-                            console.log("Batch size: " + batchSize);
-                            stream.askUpdateQuery({
-                                unreadOnly: true,
-                                featured: stream._featured,
-                                sort: stream._sort,
-                                batchSize: batchSize
-                            });
-                        } else {
-                            if (!stream.state.hasAllEntries && !stream.askingMoreEntries) {
-                                stream.askingMoreEntries = true;
-                                setTimeout(() => {
-                                    if ($("#FFnS_LoadingMessage").length == 0) {
-                                        $(ext.articleSelector).first().parent()
-                                            .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
-                                    }
-                                    streamPage._doCheckIfMoreEntriesNeeded = true;
-                                    console.log("Fetching more articles");
-                                    stream.askMoreEntries();
-                                    stream.askingMoreEntries = false;
-                                }, 100);
-                            }
-                        }
-                    }
-                    if (stream.state.hasAllEntries && $("#FFnS_LoadingMessage").length > 0) {
-                        $("#FFnS_LoadingMessage").remove();
-                        console.log("End auto load all articles at: " + new Date().toTimeString());
-                    }
-                }
-            }
-
             var a = $(element).closest(ext.articleSelector);
             if (notDropdown == a.hasClass("u0")) {
                 return;
@@ -247,6 +199,73 @@ export class FeedlyPage {
 
     getById(id: string) {
         return document.getElementById(id + "_main");
+    }
+
+    overrideLoadingEntries() {
+        var autoLoadingMessageId = "#FFnS_LoadingMessage";
+        var reader = window["streets"].service('reader');
+        var navigo = window["streets"].service("navigo");
+
+        var prototype = Object.getPrototypeOf(getStreamPage().stream);
+
+        var askMoreEntries: Function = prototype.askMoreEntries;
+        prototype.askMoreEntries = function () {
+            if (!this.state.hasAllEntries) {
+                var entries = navigo.originalEntries;
+                if (!entries) {
+                    entries = navigo.entries;
+                }
+                var loadedUnreadEntries = entries.length;
+                if ($(ext.notFollowedPageSelector).length == 0 &&
+                    loadedUnreadEntries == $(ext.articleSelector).length &&
+                    getFFnS(ext.autoLoadAllArticlesId, true)) {
+                    var unreadCount = reader.getStreamUnreadCount(this.streamId);
+                    var batchSize = getFFnS(ext.autoLoadBatchSizeId, true);
+                    if (unreadCount > loadedUnreadEntries && batchSize > loadedUnreadEntries) {
+                        if (batchSize > unreadCount) {
+                            batchSize = unreadCount;
+                        }
+                        if (this._batchSize != batchSize) {
+                            console.log("Setting the batch size to: " + batchSize);
+                            this.setBatchSize(batchSize);
+                            console.log("Begin auto load all articles at: " + new Date().toTimeString());
+                        }
+                    }
+                }
+            }
+            askMoreEntries.call(this);
+        }
+
+        var navigoPrototype = Object.getPrototypeOf(navigo);
+        var setEntries = navigoPrototype.setEntries;
+        navigoPrototype.setEntries = function () {
+            if (getFFnS(ext.autoLoadAllArticlesId, true)) {
+                var stream = getStreamPage().stream;
+                var hasAllEntries = stream.state.hasAllEntries;
+                if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries) {
+                    stream.askingMoreEntries = true;
+                    setTimeout(() => {
+                        if ($(".message.loading").length == 0) {
+                            $(ext.articleSelector).first().parent()
+                                .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
+                        }
+                        console.log("Fetching more articles");
+                        stream.askMoreEntries();
+                        stream.askingMoreEntries = false;
+                    }, 100);
+                } else if (hasAllEntries && $(autoLoadingMessageId).length == 1) {
+                    $(autoLoadingMessageId).remove();
+                    console.log("End auto load all articles at: " + new Date().toTimeString());
+                }
+            }
+            return setEntries.apply(this, arguments);
+        };
+
+        NodeCreationObserver.onCreation(ext.loadingMessageSelector, (e) => {
+            if ($(autoLoadingMessageId).length == 1) {
+                $(e).hide();
+            }
+        })
     }
 
     overrideMarkAsRead() {
