@@ -1262,14 +1262,13 @@ var FeedlyPage = (function () {
         var prototype = Object.getPrototypeOf(getStreamPage().stream);
         var askMoreEntries = prototype.askMoreEntries;
         prototype.askMoreEntries = function () {
-            if (!this.state.hasAllEntries) {
+            if (!this.state.hasAllEntries && $(ext.notFollowedPageSelector).length == 0) {
                 var entries = navigo.originalEntries;
                 if (!entries) {
                     entries = navigo.entries;
                 }
                 var loadedUnreadEntries = entries.length;
-                if ($(ext.notFollowedPageSelector).length == 0 &&
-                    loadedUnreadEntries == $(ext.articleSelector).length &&
+                if (loadedUnreadEntries == $(ext.articleSelector).length &&
                     getFFnS(ext.autoLoadAllArticlesId, true)) {
                     var unreadCount = reader.getStreamUnreadCount(this.streamId);
                     var batchSize = getFFnS(ext.autoLoadBatchSizeId, true);
@@ -1290,7 +1289,7 @@ var FeedlyPage = (function () {
         var navigoPrototype = Object.getPrototypeOf(navigo);
         var setEntries = navigoPrototype.setEntries;
         navigoPrototype.setEntries = function () {
-            if (getFFnS(ext.autoLoadAllArticlesId, true)) {
+            if (getFFnS(ext.autoLoadAllArticlesId, true) && $(ext.notFollowedPageSelector).length == 0) {
                 var stream = getStreamPage().stream;
                 var hasAllEntries = stream.state.hasAllEntries;
                 if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries) {
@@ -1322,38 +1321,29 @@ var FeedlyPage = (function () {
         var reader = window["streets"].service('reader');
         var navigo = window["streets"].service("navigo");
         var pagesPkg = window["devhd"].pkg("pages");
-        function getLastReadEntry(oldLastEntryObject, thisArg) {
-            if ((oldLastEntryObject != null && oldLastEntryObject.asOf != null) || !getFFnS(ext.keepNewArticlesUnreadId)) {
-                return oldLastEntryObject;
-            }
-            var idsToMarkAsRead = getFFnS(ext.articlesToMarkAsReadId);
-            if (idsToMarkAsRead != null) {
-                idsToMarkAsRead.forEach(function (id) {
-                    reader.askMarkEntryAsRead(id);
-                });
-            }
-            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
-            if (lastReadEntryId == null) {
-                return null;
-            }
-            return { lastReadEntryId: lastReadEntryId, partial: true };
-        }
-        var feedlyListPagePrototype = pagesPkg.ReactPage.prototype;
-        var oldMarkAllAsRead = feedlyListPagePrototype.markAsRead;
-        feedlyListPagePrototype.markAsRead = function (oldLastEntryObject) {
-            var lastEntryObject = getLastReadEntry(oldLastEntryObject, this);
-            if (oldLastEntryObject == lastEntryObject) {
-                oldMarkAllAsRead.call(this, lastEntryObject);
-            }
-            else if (lastEntryObject) {
-                reader.askMarkStreamAsRead(navigo.getMarkAsReadScope(), lastEntryObject, function () {
-                    console.log("Marked page partially as read: " + JSON.stringify(lastEntryObject));
-                }, function (a, c) {
-                    console.log(c);
-                });
-            }
-            if (!(oldLastEntryObject && oldLastEntryObject.asOf)) {
+        var prototype = pagesPkg.ReactPage.prototype;
+        var markAsRead = prototype.markAsRead;
+        prototype.markAsRead = function (lastEntryObject) {
+            if (getFFnS(ext.keepNewArticlesUnreadId) && !(lastEntryObject && lastEntryObject.asOf)) {
+                var idsToMarkAsRead = getFFnS(ext.articlesToMarkAsReadId);
+                if (idsToMarkAsRead) {
+                    idsToMarkAsRead.forEach(function (id) {
+                        reader.askMarkEntryAsRead(id);
+                    });
+                }
+                var lastReadEntryId = getFFnS(ext.lastReadEntryId);
+                if (lastReadEntryId) {
+                    lastEntryObject = { lastReadEntryId: lastReadEntryId, partial: true };
+                    reader.askMarkStreamAsRead(navigo.getMarkAsReadScope(), lastEntryObject, function () {
+                        console.log("Marked page partially as read: " + JSON.stringify(lastEntryObject));
+                    }, function (a, c) {
+                        console.log(c);
+                    });
+                }
                 this.feedly.jumpToNext();
+            }
+            else {
+                markAsRead.call(this, lastEntryObject);
             }
         };
     };
@@ -1413,6 +1403,13 @@ var FeedlyPage = (function () {
         prototype.reset = function () {
             navigo.originalEntries = null;
             return reset.apply(this, arguments);
+        };
+        prototype.listEntryIds = function () {
+            var a = [];
+            var entries = navigo.originalEntries || navigo.entries;
+            return entries.forEach(function (b) {
+                a.push(b.getId());
+            }), a;
         };
     };
     return FeedlyPage;
