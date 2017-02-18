@@ -260,13 +260,17 @@ export class FeedlyPage {
         var markAsRead: Function = prototype.markAsRead;
         prototype.markAsRead = function (lastEntryObject) {
             if (getFFnS(ext.keepNewArticlesUnreadId) && !(lastEntryObject && lastEntryObject.asOf)) {
+                console.log("Marking as read with keeping new articles unread");
+
                 var idsToMarkAsRead: string[] = getFFnS(ext.articlesToMarkAsReadId);
                 if (idsToMarkAsRead) {
+                    console.log(idsToMarkAsRead.length + " new articles will be marked as read");
                     idsToMarkAsRead.forEach(id => {
                         reader.askMarkEntryAsRead(id);
                     });
                 }
                 var lastReadEntryId = getFFnS(ext.lastReadEntryId);
+                console.log("The last read entry id: " + lastReadEntryId);
                 if (lastReadEntryId) {
                     lastEntryObject = { lastReadEntryId: lastReadEntryId, partial: true };
                     reader.askMarkStreamAsRead(navigo.getMarkAsReadScope(), lastEntryObject, function () {
