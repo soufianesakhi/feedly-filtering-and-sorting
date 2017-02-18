@@ -12,7 +12,7 @@
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @include     *://feedly.com/*
-// @version     2.6.3
+// @version     2.6.4
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
