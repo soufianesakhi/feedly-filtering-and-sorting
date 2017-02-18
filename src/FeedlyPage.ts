@@ -295,7 +295,10 @@ export class FeedlyPage {
                         console.log(c);
                     });
                 }
-                this.feedly.jumpToNext();
+
+                navigo.getNextURI() ?
+                    this.feedly.jumpToNext() :
+                    this.feedly.loadDefaultPage();
             } else {
                 markAsRead.call(this, lastEntryObject);
             }
