@@ -207,36 +207,17 @@ export class FeedlyPage {
 
     overrideLoadingEntries() {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
-        var reader = window["streets"].service('reader');
         var navigo = window["streets"].service("navigo");
 
         var prototype = Object.getPrototypeOf(getStreamPage().stream);
-
-        var askMoreEntries: Function = prototype.askMoreEntries;
-        prototype.askMoreEntries = function () {
-            if (!this.state.hasAllEntries && $(ext.notFollowedPageSelector).length == 0) {
-                var entries = navigo.originalEntries;
-                if (!entries) {
-                    entries = navigo.entries;
-                }
-                var loadedUnreadEntries = entries.length;
-                if (loadedUnreadEntries == $(ext.articleSelector).length &&
-                    getFFnS(ext.autoLoadAllArticlesId, true)) {
-                    var unreadCount = reader.getStreamUnreadCount(this.streamId);
-                    var batchSize = getFFnS(ext.autoLoadBatchSizeId, true);
-                    if (unreadCount > loadedUnreadEntries && batchSize > loadedUnreadEntries) {
-                        if (batchSize > unreadCount) {
-                            batchSize = unreadCount;
-                        }
-                        if (this._batchSize != batchSize) {
-                            console.log("Setting the batch size to: " + batchSize);
-                            this.setBatchSize(batchSize);
-                            console.log("Begin auto load all articles at: " + new Date().toTimeString());
-                        }
-                    }
-                }
+        var setBatchSize: Function = prototype.setBatchSize;
+        prototype.setBatchSize = function () {
+            var batchSize = getFFnS(ext.autoLoadBatchSizeId, true);
+            if (getFFnS(ext.autoLoadAllArticlesId, true) && batchSize) {
+                this._batchSize = batchSize;
+            } else {
+                setBatchSize.apply(this, arguments);
             }
-            askMoreEntries.call(this);
         }
 
         var navigoPrototype = Object.getPrototypeOf(navigo);
@@ -252,7 +233,7 @@ export class FeedlyPage {
                             $(ext.articleSelector).first().parent()
                                 .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
                         }
-                        console.log("Fetching more articles");
+                        console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
                         stream.askMoreEntries();
                         stream.askingMoreEntries = false;
                     }, 100);
