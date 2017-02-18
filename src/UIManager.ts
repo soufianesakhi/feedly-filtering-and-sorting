@@ -41,7 +41,7 @@ export class UIManager {
                 "KeepUnread_AdvancedControlsReceivedPeriod", "Hide_AdvancedControlsReceivedPeriod",
                 "ShowIfHot_AdvancedControlsReceivedPeriod", "MarkAsReadVisible_AdvancedControlsReceivedPeriod",
                 "OpenAndMarkAsRead", "MarkAsReadAboveBelow", "HideWhenMarkAboveBelow", "HideAfterRead",
-                "AlwaysUseDefaultMatchingAreas"]
+                "ReplaceHiddenWithGap", "AlwaysUseDefaultMatchingAreas"]
         },
         {
             type: HTMLElementType.NumberInput, ids: ["MinPopularity_AdvancedControlsReceivedPeriod"]
@@ -439,7 +439,11 @@ export class UIManager {
             var articleObserver = new MutationObserver((mr, observer) => {
                 if ($(article).hasClass("read") && !$(article).hasClass("inlineFrame")) {
                     if (this.subscription.isHideAfterRead()) {
-                        $(article).remove();
+                        if (this.subscription.isReplaceHiddenWithGap()) {
+                            $(article).attr('gap-article', "true");
+                        } else {
+                            $(article).remove();
+                        }
                     }
                     observer.disconnect();
                 }

@@ -92,6 +92,12 @@
     white-space: normal;
 }
 
+.tooltip-top {
+    bottom: 100%;
+    left: 50%;
+    margin-left: -60px;
+}
+
 .tooltip:hover .tooltiptext {
     visibility: visible;
 }
@@ -245,4 +251,8 @@ input {
 
 #FFnS_AddSortingType {
     margin-left: 1%;
+}
+
+.entry[gap-article] {
+    visibility: hidden;
 }

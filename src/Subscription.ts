@@ -51,6 +51,10 @@ export class Subscription {
         return this.dto.hideAfterRead;
     }
 
+    isReplaceHiddenWithGap(): boolean {
+        return this.dto.replaceHiddenWithGap;
+    }
+
     isAlwaysUseDefaultMatchingAreas(): boolean {
         return this.dto.alwaysUseDefaultMatchingAreas;
     }

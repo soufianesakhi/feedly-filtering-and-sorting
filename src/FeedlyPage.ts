@@ -208,8 +208,9 @@ export class FeedlyPage {
     overrideLoadingEntries() {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
         var navigo = window["streets"].service("navigo");
+        var stream = getStreamPage().stream;
 
-        var prototype = Object.getPrototypeOf(getStreamPage().stream);
+        var prototype = Object.getPrototypeOf(stream);
         var setBatchSize: Function = prototype.setBatchSize;
         prototype.setBatchSize = function () {
             if (getFFnS(ext.autoLoadAllArticlesId, true)) {
@@ -217,6 +218,9 @@ export class FeedlyPage {
             } else {
                 setBatchSize.apply(this, arguments);
             }
+        }
+        if (getFFnS(ext.autoLoadAllArticlesId, true)) {
+            stream.setBatchSize();
         }
 
         var navigoPrototype = Object.getPrototypeOf(navigo);

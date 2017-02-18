@@ -6,7 +6,7 @@ var ext = {
 	"urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
 
 	"settingsBtnPredecessorSelector": ".button-refresh",
-	"articleSelector": ".list-entries > .entry",
+	"articleSelector": ".list-entries > .entry:not([gap-article])",
 	"loadingMessageSelector": ".list-entries .message.loading",
 	"sectionSelector": "#timeline > .section",
 	"publishAgeSpanSelector": ".ago",

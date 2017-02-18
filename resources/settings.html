@@ -10,8 +10,7 @@
 			</div>
 
 			<div class="setting_group">
-				<span class="tooltip">
-					Always use global settings
+				<span class="tooltip">Always use global settings
 					<span class="tooltiptext">Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span>
 				</span>
 				<input id="FFnS_globalSettingsEnabled" type="checkbox">
@@ -21,8 +20,7 @@
 			<legend><span id="FFnS_settings_mode_title"></span></legend>
 
 			<div class="setting_group">
-				<span class="tooltip">
-					Filtering enabled
+				<span class="tooltip">Filtering enabled
 					<span class="tooltiptext">Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span>
 				</span>
 				<input id="FFnS_FilteringEnabled" type="checkbox">
@@ -150,6 +148,11 @@
 						<div class="setting_group">
 							<span>Hide articles after reading them</span>
 							<input id="FFnS_HideAfterRead" type="checkbox">
+							<span class="tooltip">Replace with gap
+								<span class="tooltiptext tooltip-top">Replace the hidden article with a gap with same dimensions.
+									Useful when "Auto-Mark As Read On Scroll" is enabled.</span>
+							</span>
+							<input id="FFnS_ReplaceHiddenWithGap" type="checkbox">
 						</div>
 					</fieldset>
 				</div>
