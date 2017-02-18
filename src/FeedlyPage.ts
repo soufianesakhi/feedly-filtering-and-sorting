@@ -212,9 +212,8 @@ export class FeedlyPage {
         var prototype = Object.getPrototypeOf(getStreamPage().stream);
         var setBatchSize: Function = prototype.setBatchSize;
         prototype.setBatchSize = function () {
-            var batchSize = getFFnS(ext.autoLoadBatchSizeId, true);
-            if (getFFnS(ext.autoLoadAllArticlesId, true) && batchSize) {
-                this._batchSize = batchSize;
+            if (getFFnS(ext.autoLoadAllArticlesId, true)) {
+                this._batchSize = 1000;
             } else {
                 setBatchSize.apply(this, arguments);
             }

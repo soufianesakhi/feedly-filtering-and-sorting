@@ -23,7 +23,6 @@ export class UIManager {
     articleManager: ArticleManager;
     subscription: Subscription;
     autoLoadAllArticlesCB: GlobalSettingsCheckBox<boolean>;
-    autoLoadBatchSizeCB: GlobalSettingsCheckBox<number>;
     globalSettingsEnabledCB: GlobalSettingsCheckBox<boolean>;
     containsReadArticles = false;
 
@@ -61,18 +60,15 @@ export class UIManager {
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
             this.subscriptionManager.init().then(() => {
                 this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox<boolean>(ext.autoLoadAllArticlesId, this, false, true);
-                this.autoLoadBatchSizeCB = new GlobalSettingsCheckBox<number>(ext.autoLoadBatchSizeId, this, false, true);
                 this.globalSettingsEnabledCB = new GlobalSettingsCheckBox<boolean>("globalSettingsEnabled", this);
                 this.autoLoadAllArticlesCB.init(true).then(() => {
-                    this.autoLoadBatchSizeCB.init(600).then(() => {
-                        this.globalSettingsEnabledCB.init(true).then(() => {
-                            this.updateSubscription().then(() => {
-                                this.initUI();
-                                this.registerSettings();
-                                this.updateMenu();
-                                this.initSettingsCallbacks();
-                                p.done();
-                            }, this);
+                    this.globalSettingsEnabledCB.init(true).then(() => {
+                        this.updateSubscription().then(() => {
+                            this.initUI();
+                            this.registerSettings();
+                            this.updateMenu();
+                            this.initSettingsCallbacks();
+                            p.done();
                         }, this);
                     }, this);
                 }, this);
@@ -161,15 +157,7 @@ export class UIManager {
     initUI() {
         this.initSettingsMenu();
         this.initShowSettingsBtns();
-        this.autoLoadAllArticlesCB.initUI((enabled) => {
-            let batchSizeSettings = $id("FFnS_autoLoadBatchSizeSettings");
-            if (enabled) {
-                batchSizeSettings.show();
-            } else {
-                batchSizeSettings.hide();
-            }
-        });
-        this.autoLoadBatchSizeCB.initUI();
+        this.autoLoadAllArticlesCB.initUI();
         this.globalSettingsEnabledCB.initUI();
     }
 
