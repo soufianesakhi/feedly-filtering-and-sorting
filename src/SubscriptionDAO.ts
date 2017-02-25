@@ -55,11 +55,20 @@ export class SubscriptionDAO {
         console.log("Subscription saved: " + JSON.stringify(dto));
     }
 
-    loadAll(): AsyncResult<SubscriptionDTO[]> {
-        return new AsyncResult<SubscriptionDTO[]>((p) => {
+    loadAll(): AsyncResult<{ [key: string]: SubscriptionDTO }> {
+        return new AsyncResult<{ [key: string]: SubscriptionDTO }>((p) => {
             let ids = this.getAllSubscriptionIds();
-            LocalPersistence.getItemsAsync<SubscriptionDTO>(ids).then((dtos) => {
-                p.result(dtos);
+            LocalPersistence.getItemsAsync<SubscriptionDTO>(ids).then((results) => {
+                for (var key in results) {
+                    var url = results[key].url;
+                    if (!url) {
+                        url = key.substring(this.SUBSCRIPTION_ID_PREFIX.length);
+                    }
+                    results[url] = results[key];
+                    delete results[url].url;
+                    delete results[key];
+                }
+                p.result(results);
             }, this);
         }, this);
     }

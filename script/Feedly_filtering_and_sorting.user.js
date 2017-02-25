@@ -318,11 +318,11 @@ var UserScriptStorage = (function () {
     };
     UserScriptStorage.prototype.getItemsAsync = function (ids) {
         return new AsyncResult(function (p) {
-            var results = [];
+            var results = {};
             ids.forEach(function (id) {
                 var value = GM_getValue(id, null);
                 if (value != null) {
-                    results.push(JSON.parse(value));
+                    results[id] = JSON.parse(value);
                 }
             });
             p.result(results);
@@ -541,8 +541,17 @@ var SubscriptionDAO = (function () {
         var _this = this;
         return new AsyncResult(function (p) {
             var ids = _this.getAllSubscriptionIds();
-            LocalPersistence.getItemsAsync(ids).then(function (dtos) {
-                p.result(dtos);
+            LocalPersistence.getItemsAsync(ids).then(function (results) {
+                for (var key in results) {
+                    var url = results[key].url;
+                    if (!url) {
+                        url = key.substring(_this.SUBSCRIPTION_ID_PREFIX.length);
+                    }
+                    results[url] = results[key];
+                    delete results[url].url;
+                    delete results[key];
+                }
+                p.result(results);
             }, _this);
         }, this);
     };
@@ -689,11 +698,7 @@ var SettingsManager = (function () {
     };
     SettingsManager.prototype.exportAllSettings = function () {
         var _this = this;
-        this.dao.loadAll().then(function (dtos) {
-            var subscriptions = {};
-            dtos.forEach(function (dto) {
-                subscriptions[dto.url] = dto;
-            });
+        this.dao.loadAll().then(function (subscriptions) {
             var settingsExport = {
                 autoLoadAllArticles: _this.uiManager.autoLoadAllArticlesCB.getValue(),
                 globalSettingsEnabled: _this.uiManager.globalSettingsEnabledCB.getValue(),

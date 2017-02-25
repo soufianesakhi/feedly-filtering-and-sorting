@@ -12,13 +12,13 @@ export class UserScriptStorage implements LocalStorage {
         }, this);
     }
 
-    public getItemsAsync<t>(ids: string[]): AsyncResult<t[]> {
-        return new AsyncResult<t[]>((p) => {
-            let results: t[] = [];
+    public getItemsAsync<t>(ids: string[]): AsyncResult<{ [key: string]: t }> {
+        return new AsyncResult<{ [key: string]: t }>((p) => {
+            let results = {};
             ids.forEach((id) => {
                 let value = GM_getValue(id, null);
                 if (value != null) {
-                    results.push(JSON.parse(value));
+                    results[id] = JSON.parse(value);
                 }
             });
             p.result(results);

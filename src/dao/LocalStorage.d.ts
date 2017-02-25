@@ -4,7 +4,7 @@ import { AsyncResult } from "../AsyncResult";
 
 export interface LocalStorage {
     getAsync<t>(id: string, defaultValue: t): AsyncResult<t>;
-    getItemsAsync<t>(ids: string[]): AsyncResult<t[]>;
+    getItemsAsync<t>(ids: string[]): AsyncResult<{ [key: string]: t }>;
     put(id: string, value: any);
     delete(id: string);
     listKeys(): string[];
