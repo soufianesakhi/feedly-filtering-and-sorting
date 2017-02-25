@@ -2,13 +2,13 @@
 
 import { FilteringType, SortingType } from "./DataTypes";
 import { Subscription } from "./Subscription";
-import { SubscriptionManager } from "./SubscriptionManager";
+import { SettingsManager } from "./SettingsManager";
 import { KeywordManager } from "./KeywordManager";
 import { $id, isChecked } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 
 export class ArticleManager {
-    subscriptionManager: SubscriptionManager;
+    subscriptionManager: SettingsManager;
     articleSorterFactory: ArticleSorterFactory;
     keywordManager: KeywordManager;
     page: FeedlyPage;
@@ -17,7 +17,7 @@ export class ArticleManager {
     lastReadArticleGroup: Article[];
     articlesToMarkAsRead: Article[];
 
-    constructor(subscriptionManager: SubscriptionManager, keywordManager: KeywordManager, page: FeedlyPage) {
+    constructor(subscriptionManager: SettingsManager, keywordManager: KeywordManager, page: FeedlyPage) {
         this.subscriptionManager = subscriptionManager;
         this.keywordManager = keywordManager;
         this.articleSorterFactory = new ArticleSorterFactory();

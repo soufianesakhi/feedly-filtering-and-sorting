@@ -1,7 +1,7 @@
 /// <reference path="./_references.d.ts" />
 
 import { Subscription } from "./Subscription";
-import { SubscriptionManager } from "./SubscriptionManager";
+import { SettingsManager } from "./SettingsManager";
 import { EntryInfos } from "./ArticleManager";
 import { executeWindow, injectToWindow, injectStyleText, injectClasses } from "./Utils";
 

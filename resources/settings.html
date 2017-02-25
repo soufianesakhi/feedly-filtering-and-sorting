@@ -161,14 +161,21 @@
 					</fieldset>
 				</div>
 				<div id="FFnS_Tab_SettingsControls" class="FFnS_Tab_Menu">
-					<span>Selected subscription:</span>
-					<select id="FFnS_SettingsControls_SelectedSubscription" class="FFnS_input">
-						{{ImportMenu.SubscriptionOptions}}
-					</select>
-					<button id="FFnS_SettingsControls_ImportFromOtherSub">Import settings from selected subscription</button>
-					<button id="FFnS_SettingsControls_DeleteSub">Delete selected subscription</button>
 					<fieldset>
-						<legend>Linking</legend>
+						<legend>Import/export all settings from/to file</legend>
+						<div class="setting_group">
+							<span>Import settings </span>
+							<input id="FFnS_ImportSettings" type="file" />
+						</div>
+						<button id="FFnS_ExportSettings">Export settings</button>
+					</fieldset>
+					<fieldset>
+						<legend>Subscription management</legend>
+						<select id="FFnS_SettingsControls_SelectedSubscription" class="FFnS_input">
+							{{ImportMenu.SubscriptionOptions}}
+						</select>
+						<button id="FFnS_SettingsControls_ImportFromOtherSub">Import settings from selected subscription</button>
+						<button id="FFnS_SettingsControls_DeleteSub">Delete selected subscription</button>
 						<div id="FFnS_SettingsControls_LinkedSubContainer">
 							<span id="FFnS_SettingsControls_LinkedSub"></span>
 							<button id="FFnS_SettingsControls_UnlinkFromSub">Unlink</button>

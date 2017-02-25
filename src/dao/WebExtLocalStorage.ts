@@ -51,6 +51,23 @@ export class WebExtLocalStorage implements LocalStorage {
         }, this);
     }
 
+    public getItemsAsync<t>(ids: string[]): AsyncResult<t[]> {
+        return new AsyncResult<t[]>((p) => {
+            var isArr = this.isArray;
+            var callback = (result) => {
+                let data = isArr ? result[0] : result;
+                let values = [];
+                for (var key in data) {
+                    values.push(data[key]);
+                }
+                p.result(values);
+            };
+            this.promiseStorage ?
+                this.promiseStorage.get(ids).then(callback, this.onError) :
+                this.storage.get(ids, callback);
+        }, this);
+    }
+
     public put(id: string, value: any) {
         if (this.keys.indexOf(id) == -1) {
             this.keys.push(id);

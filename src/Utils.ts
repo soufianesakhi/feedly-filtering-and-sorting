@@ -154,3 +154,18 @@ export function injectScriptText(srcTxt: string, sourceURL?: string) {
 export function injectStyleText(styleTxt: string) {
     $("head").append("<style>" + styleTxt + "</style>");
 }
+
+export function exportFile(content: string, filename?: string) {
+    var textToSaveAsBlob = new Blob([content], { type: "application/json" });
+    var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
+    var downloadLink = document.createElement("a");
+    downloadLink.download = filename ? filename : "export.json";
+    downloadLink.innerHTML = "Download File";
+    downloadLink.href = textToSaveAsURL;
+    downloadLink.onclick = function () {
+        $(downloadLink).remove();
+    }
+    downloadLink.style.display = "none";
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+}

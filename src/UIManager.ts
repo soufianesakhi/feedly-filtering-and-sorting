@@ -7,7 +7,7 @@ import {
 import { Subscription } from "./Subscription";
 import { AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
 import { ArticleManager } from "./ArticleManager";
-import { SubscriptionManager } from "./SubscriptionManager";
+import { SettingsManager } from "./SettingsManager";
 import { KeywordManager } from "./KeywordManager";
 import { GlobalSettingsCheckBox } from "./HTMLGlobalSettings";
 import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
@@ -17,7 +17,7 @@ import { AsyncResult } from "./AsyncResult";
 
 export class UIManager {
     page: FeedlyPage;
-    subscriptionManager: SubscriptionManager;
+    settingsManager: SettingsManager;
     keywordManager: KeywordManager;
     htmlSubscriptionManager: HTMLSubscriptionManager;
     articleManager: ArticleManager;
@@ -53,12 +53,12 @@ export class UIManager {
 
     init() {
         return new AsyncResult<any>((p) => {
-            this.subscriptionManager = new SubscriptionManager();
+            this.settingsManager = new SettingsManager(this);
             this.keywordManager = new KeywordManager();
             this.page = new FeedlyPage();
-            this.articleManager = new ArticleManager(this.subscriptionManager, this.keywordManager, this.page);
+            this.articleManager = new ArticleManager(this.settingsManager, this.keywordManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
-            this.subscriptionManager.init().then(() => {
+            this.settingsManager.init().then(() => {
                 this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox<boolean>(ext.autoLoadAllArticlesId, this, false, true);
                 this.globalSettingsEnabledCB = new GlobalSettingsCheckBox<boolean>("globalSettingsEnabled", this);
                 this.autoLoadAllArticlesCB.init(true).then(() => {
@@ -104,7 +104,7 @@ export class UIManager {
     updateSubscription(): AsyncResult<any> {
         return new AsyncResult<any>((p) => {
             var globalSettingsEnabled = this.globalSettingsEnabledCB.getValue();
-            this.subscriptionManager.loadSubscription(globalSettingsEnabled).then((sub) => {
+            this.settingsManager.loadSubscription(globalSettingsEnabled).then((sub) => {
                 this.subscription = sub;
                 p.done();
             }, this);
@@ -140,8 +140,8 @@ export class UIManager {
         $id("FFnS_SettingsControls_SelectedSubscription").html(this.getImportOptionsHTML());
         var linkedSubContainer = $id("FFnS_SettingsControls_LinkedSubContainer");
         var linkedSub = $id("FFnS_SettingsControls_LinkedSub");
-        if (((!this.globalSettingsEnabledCB.getValue()) && this.subscription.getURL() !== this.subscriptionManager.getActualSubscriptionURL()) ||
-            (this.globalSettingsEnabledCB.getValue() && !this.subscriptionManager.isGlobalMode())) {
+        if (((!this.globalSettingsEnabledCB.getValue()) && this.subscription.getURL() !== this.settingsManager.getActualSubscriptionURL()) ||
+            (this.globalSettingsEnabledCB.getValue() && !this.settingsManager.isGlobalMode())) {
             linkedSubContainer.css("display", "");
             linkedSub.text("Subscription currently linked to: " + this.subscription.getURL());
         } else {
@@ -246,7 +246,7 @@ export class UIManager {
 
     getImportOptionsHTML(): string {
         var optionsHTML = "";
-        var urls = this.subscriptionManager.getAllSubscriptionURLs();
+        var urls = this.settingsManager.getAllSubscriptionURLs();
         urls.forEach((url) => {
             optionsHTML += bindMarkup(templates.optionHTML, [{ name: "value", value: url }]);
         })
@@ -296,13 +296,20 @@ export class UIManager {
     }
 
     initSettingsCallbacks() {
-        var this_ = this;
-
         this.htmlSubscriptionManager.setUpCallbacks();
 
-        $id(this.closeBtnId).click(function () {
-            $id(this_.settingsDivContainerId).toggle();
+        $id(this.closeBtnId).click(() => {
+            $id(this.settingsDivContainerId).toggle();
         })
+
+        let importSettings = $id("FFnS_ImportSettings");
+        importSettings.change(() => {
+            this.settingsManager.importAllSettings(importSettings.prop('files')[0]);
+        });
+
+        $id("FFnS_ExportSettings").click(() => {
+            this.settingsManager.exportAllSettings();
+        });
 
         $id("FFnS_SettingsControls_ImportFromOtherSub").click(() => {
             this.importFromOtherSub();
@@ -482,21 +489,21 @@ export class UIManager {
     importFromOtherSub() {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
         if (selectedURL && confirm("Import settings from the subscription url /" + selectedURL + " ?")) {
-            this.subscriptionManager.importSettings(selectedURL).then(this.refreshPage, this);
+            this.settingsManager.importSubscription(selectedURL).then(this.refreshPage, this);
         }
     }
 
     linkToSub() {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
         if (selectedURL && confirm("Link current subscription to: /" + selectedURL + " ?")) {
-            this.subscriptionManager.linkToSubscription(selectedURL);
+            this.settingsManager.linkToSubscription(selectedURL);
             this.refreshPage();
         }
     }
 
     unlinkFromSub() {
         if (confirm("Unlink current subscription ?")) {
-            this.subscriptionManager.deleteSubscription(this.subscriptionManager.getActualSubscriptionURL());
+            this.settingsManager.deleteSubscription(this.settingsManager.getActualSubscriptionURL());
             this.refreshPage();
         }
     }
@@ -504,7 +511,7 @@ export class UIManager {
     deleteSub() {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
         if (selectedURL && confirm("Delete : /" + selectedURL + " ?")) {
-            this.subscriptionManager.deleteSubscription(selectedURL);
+            this.settingsManager.deleteSubscription(selectedURL);
             this.refreshPage();
         }
     }

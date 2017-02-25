@@ -3,7 +3,7 @@
 import { FilteringType, SortingType, getFilteringTypes, getFilteringTypeId } from "./DataTypes";
 import { Subscription } from "./Subscription";
 import { SubscriptionDTO, AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
-import { SubscriptionManager } from "./SubscriptionManager";
+import { SettingsManager } from "./SettingsManager";
 import { registerAccessors, deepClone } from "./Utils";
 import { LocalStorage } from "./dao/LocalStorage";
 import { AsyncResult } from "./AsyncResult";
@@ -53,6 +53,15 @@ export class SubscriptionDAO {
         var id = this.getSubscriptionId(url);
         LocalPersistence.put(id, dto);
         console.log("Subscription saved: " + JSON.stringify(dto));
+    }
+
+    loadAll(): AsyncResult<SubscriptionDTO[]> {
+        return new AsyncResult<SubscriptionDTO[]>((p) => {
+            let ids = this.getAllSubscriptionIds();
+            LocalPersistence.getItemsAsync<SubscriptionDTO>(ids).then((dtos) => {
+                p.result(dtos);
+            }, this);
+        }, this);
     }
 
     load(url: string): AsyncResult<SubscriptionDTO> {
@@ -111,14 +120,16 @@ export class SubscriptionDAO {
         return this.defaultSubscription;
     }
 
-    getAllSubscriptionURLs(): string[] {
-        var urls = LocalPersistence.listKeys().filter((value: string) => {
+    getAllSubscriptionIds(): string[] {
+        return LocalPersistence.listKeys().filter((value: string) => {
             return value.indexOf(this.SUBSCRIPTION_ID_PREFIX) == 0;
         });
-        urls = urls.map<string>((value: string) => {
+    }
+
+    getAllSubscriptionURLs(): string[] {
+        return this.getAllSubscriptionIds().map<string>((value: string) => {
             return value.substring(this.SUBSCRIPTION_ID_PREFIX.length);
         });
-        return urls;
     }
 
     getSubscriptionId(url: string): string {

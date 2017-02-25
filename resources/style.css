@@ -108,10 +108,10 @@
     height: 24px;
 }
 
-#FFnS_Tab_SettingsControls button {
+#FFnS_Tab_SettingsControls button, #FFnS_Tab_SettingsControls input {
     margin-top: 1%;
     font-size: 12px;
-    display: block;
+    vertical-align: inherit;
 }
 
 #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub {
