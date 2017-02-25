@@ -35,4 +35,5 @@ var ext = {
 	"hideAfterReadId": "isHideAfterRead",
 	"autoLoadAllArticlesId": "autoLoadAllArticles",
 	"isNewestFirstId": "isNewestFirst",
+	"markAsReadAboveBelowReadId": "MarkAsReadAboveBelowRead",
 }

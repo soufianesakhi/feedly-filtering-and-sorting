@@ -43,6 +43,10 @@ export class Subscription {
         return this.dto.markAsReadAboveBelow;
     }
 
+    isMarkAsReadAboveBelowRead(): boolean {
+        return this.dto.markAsReadAboveBelowRead;
+    }
+
     isHideWhenMarkAboveBelow(): boolean {
         return this.dto.hideWhenMarkAboveBelow;
     }

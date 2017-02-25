@@ -54,6 +54,7 @@ var ext = {
     "hideAfterReadId": "isHideAfterRead",
     "autoLoadAllArticlesId": "autoLoadAllArticles",
     "isNewestFirstId": "isNewestFirst",
+    "markAsReadAboveBelowReadId": "MarkAsReadAboveBelowRead",
 };
 
 var exported = {};
@@ -330,6 +331,7 @@ var SubscriptionDTO = (function () {
         this.sortingEnabled = true;
         this.openAndMarkAsRead = true;
         this.markAsReadAboveBelow = false;
+        this.markAsReadAboveBelowRead = true;
         this.hideWhenMarkAboveBelow = false;
         this.hideAfterRead = false;
         this.replaceHiddenWithGap = false;
@@ -387,6 +389,9 @@ var Subscription = (function () {
     };
     Subscription.prototype.isMarkAsReadAboveBelow = function () {
         return this.dto.markAsReadAboveBelow;
+    };
+    Subscription.prototype.isMarkAsReadAboveBelowRead = function () {
+        return this.dto.markAsReadAboveBelowRead;
     };
     Subscription.prototype.isHideWhenMarkAboveBelow = function () {
         return this.dto.hideWhenMarkAboveBelow;
@@ -1071,7 +1076,7 @@ var KeywordMatcherFactory = (function () {
 }());
 
 var templates = {
-    "settingsHTML": "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' class='pageAction requiresLogin'> <fieldset> <legend>General settings</legend> <div class='setting_group'> <span>Auto load all unread articles</span> <input id='FFnS_autoLoadAllArticles' type='checkbox'> </div> <div class='setting_group'> <span class='tooltip'>Always use global settings <span class='tooltiptext'>Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span> </span> <input id='FFnS_globalSettingsEnabled' type='checkbox'> </div> </fieldset> <fieldset> <legend><span id='FFnS_settings_mode_title'></span></legend> <div class='setting_group'> <span class='tooltip'>Filtering enabled <span class='tooltiptext'>Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span> </span> <input id='FFnS_FilteringEnabled' type='checkbox'> </div> <div class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext'>Show only articles that contain at least one of the restricting keywords (not applied if empty)</span> </span> <input id='FFnS_RestrictingEnabled' type='checkbox'> </div> <div class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> </div> {{SortingSelect}} <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li> <a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a> </li> <li> <a href='#FFnS_Tab_KeywordControls'>Keyword controls</a> </li> </li> <li> <a href='#FFnS_Tab_UIControls'>UI controls</a> </li> <li> <a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a> </li> <li> <a href='#FFnS_Tab_SettingsControls'>Settings controls</a> </li> </ul> <div id='FFnS_tabs_content'> {{FilteringList.Type.FilteredOut}} {{FilteringList.Type.RestrictedOn}} <div id='FFnS_Tab_KeywordControls' class='FFnS_Tab_Menu'> <p>The following settings are applied to the filtering and restricting</p> <fieldset> <legend>Matching area (domain)</legend> <div> <span>Search for keywords in the entry's: </span> {{DefaultKeywordMatchingArea}} <span> (Multiple values can be selected)</span> </div> <div> <span>Always use these matching areas</span> <input id='FFnS_AlwaysUseDefaultMatchingAreas' type='checkbox'> <span> (the area select boxes in the filtering and restring will be invisible when this option is checked)</span> </div> </fieldset> <fieldset> <legend>Matching method</legend> <span>The keywords are treated as : </span> <select id='FFnS_KeywordMatchingMethod' class='FFnS_input' size='3'> <option value='{{KeywordMatchingMethod.Simple}}' selected>Strings (simple match)</option> <option value='{{KeywordMatchingMethod.Word}}'>Words (whole word match)</option> <option value='{{KeywordMatchingMethod.RegExp}}'>Regular expressions (pattern match)</option> </select> </fieldset> </div> <div id='FFnS_Tab_UIControls' class='FFnS_Tab_Menu'> <div> <span>Add a button to open articles in a new window/tab and mark them as read</span> <input id='FFnS_OpenAndMarkAsRead' type='checkbox'> </div> <div> <span>Add buttons to mark articles above/below as read</span> <input id='FFnS_MarkAsReadAboveBelow' type='checkbox'> <span> (Also hide using the same buttons </span> <input id='FFnS_HideWhenMarkAboveBelow' type='checkbox'> <span>)</span> </div> </div> <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently received articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles received (crawled) less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23'> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0'> <span>days</span> <span>ago should be:</span> </div> <div class='setting_group'> <span>Kept unread</span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox'> </div> <div class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox'> </div> <div class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' step='100'> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox'> <span class='tooltip'>Marked as read if hot or popular <span class='tooltiptext'>Mark as read the articles made visible if hot or with popularity superior to the defined value</span> </span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox'> </div> </fieldset> <fieldset> <legend>Additional sorting levels (applied when two entries have equal sorting)</legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> <fieldset> <legend>Misc</legend> <div class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox'> </div> <div class='setting_group'> <span>Hide articles after reading them</span> <input id='FFnS_HideAfterRead' type='checkbox'> <span class='tooltip'>Replace with gap <span class='tooltiptext tooltip-top'>Replace the hidden article with a gap with same dimensions. Useful when 'Auto-Mark As Read On Scroll' is enabled.</span> </span> <input id='FFnS_ReplaceHiddenWithGap' type='checkbox'> </div> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <span>Selected subscription:</span> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input'> {{ImportMenu.SubscriptionOptions}} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'>Import settings from selected subscription</button> <button id='FFnS_SettingsControls_DeleteSub'>Delete selected subscription</button> <fieldset> <legend>Linking</legend> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'>Link current subscription to selected subscription</button> </fieldset> </div> </div> </fieldset> </div> </div>",
+    "settingsHTML": "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' class='pageAction requiresLogin'> <fieldset> <legend>General settings</legend> <div class='setting_group'> <span>Auto load all unread articles</span> <input id='FFnS_autoLoadAllArticles' type='checkbox'> </div> <div class='setting_group'> <span class='tooltip'>Always use global settings <span class='tooltiptext'>Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span> </span> <input id='FFnS_globalSettingsEnabled' type='checkbox'> </div> </fieldset> <fieldset> <legend><span id='FFnS_settings_mode_title'></span></legend> <div class='setting_group'> <span class='tooltip'>Filtering enabled <span class='tooltiptext'>Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span> </span> <input id='FFnS_FilteringEnabled' type='checkbox'> </div> <div class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext'>Show only articles that contain at least one of the restricting keywords (not applied if empty)</span> </span> <input id='FFnS_RestrictingEnabled' type='checkbox'> </div> <div class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> </div> {{SortingSelect}} <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li> <a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a> </li> <li> <a href='#FFnS_Tab_KeywordControls'>Keyword controls</a> </li> </li> <li> <a href='#FFnS_Tab_UIControls'>UI controls</a> </li> <li> <a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a> </li> <li> <a href='#FFnS_Tab_SettingsControls'>Settings controls</a> </li> </ul> <div id='FFnS_tabs_content'> {{FilteringList.Type.FilteredOut}} {{FilteringList.Type.RestrictedOn}} <div id='FFnS_Tab_KeywordControls' class='FFnS_Tab_Menu'> <p>The following settings are applied to the filtering and restricting</p> <fieldset> <legend>Matching area (domain)</legend> <div> <span>Search for keywords in the entry's: </span> {{DefaultKeywordMatchingArea}} <span> (Multiple values can be selected)</span> </div> <div> <span>Always use these matching areas</span> <input id='FFnS_AlwaysUseDefaultMatchingAreas' type='checkbox'> <span> (the area select boxes in the filtering and restring will be invisible when this option is checked)</span> </div> </fieldset> <fieldset> <legend>Matching method</legend> <span>The keywords are treated as : </span> <select id='FFnS_KeywordMatchingMethod' class='FFnS_input' size='3'> <option value='{{KeywordMatchingMethod.Simple}}' selected>Strings (simple match)</option> <option value='{{KeywordMatchingMethod.Word}}'>Words (whole word match)</option> <option value='{{KeywordMatchingMethod.RegExp}}'>Regular expressions (pattern match)</option> </select> </fieldset> </div> <div id='FFnS_Tab_UIControls' class='FFnS_Tab_Menu'> <div> <span>Add a button to open articles in a new window/tab and mark them as read</span> <input id='FFnS_OpenAndMarkAsRead' type='checkbox'> </div> <div> <span>Add buttons to mark articles above/below as</span> <select id='FFnS_MarkAsReadAboveBelowRead' class='FFnS_input'> <option value='true' selected>read</option> <option value='false'>unread</option> </select> <input id='FFnS_MarkAsReadAboveBelow' type='checkbox'> <span> (Also hide using the same buttons when marking as read</span> <input id='FFnS_HideWhenMarkAboveBelow' type='checkbox'> <span>)</span> </div> </div> <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently received articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles received (crawled) less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23'> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0'> <span>days</span> <span>ago should be:</span> </div> <div class='setting_group'> <span>Kept unread</span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox'> </div> <div class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox'> </div> <div class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' step='100'> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox'> <span class='tooltip'>Marked as read if hot or popular <span class='tooltiptext'>Mark as read the articles made visible if hot or with popularity superior to the defined value</span> </span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox'> </div> </fieldset> <fieldset> <legend>Additional sorting levels (applied when two entries have equal sorting)</legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> <fieldset> <legend>Misc</legend> <div class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox'> </div> <div class='setting_group'> <span>Hide articles after reading them</span> <input id='FFnS_HideAfterRead' type='checkbox'> <span class='tooltip'>Replace with gap <span class='tooltiptext tooltip-top'>Replace the hidden article with a gap with same dimensions. Useful when 'Auto-Mark As Read On Scroll' is enabled.</span> </span> <input id='FFnS_ReplaceHiddenWithGap' type='checkbox'> </div> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <span>Selected subscription:</span> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input'> {{ImportMenu.SubscriptionOptions}} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'>Import settings from selected subscription</button> <button id='FFnS_SettingsControls_DeleteSub'>Delete selected subscription</button> <fieldset> <legend>Linking</legend> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'>Link current subscription to selected subscription</button> </fieldset> </div> </div> </fieldset> </div> </div>",
     "filteringListHTML": "<div id='{{FilteringTypeTabId}}' class='FFnS_Tab_Menu'> {{FilteringKeywordMatchingArea}} <input id='{{inputId}}' class='FFnS_input' size='10' type='text'> <span id='{{plusBtnId}}'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='{{filetringKeywordsId}}'></span> <span id='{{eraseBtnId}}'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div>",
     "filteringKeywordHTML": "<button id='{{keywordId}}' type='button' class='FFnS_keyword'>{{keyword}}</button>",
     "sortingSelectHTML": "<select id='{{Id}}' class='FFnS_input FFnS_sortingSelect'> <option value='{{PopularityDesc}}'>Sort by popularity (highest to lowest)</option> <option value='{{PopularityAsc}}'>Sort by popularity (lowest to highest)</option> <option value='{{TitleAsc}}'>Sort by title (a -&gt; z)</option> <option value='{{TitleDesc}}'>Sort by title (z -&gt; a)</option> <option value='{{ReceivedDateNewFirst}}'>Sort by received date (new first)</option> <option value='{{ReceivedDateOldFirst}}'>Sort by received date (old first)</option> <option value='{{PublishDateNewFirst}}'>Sort by publish date (new first)</option> <option value='{{PublishDateOldFirst}}'>Sort by publish date (old first)</option> <option value='{{SourceAsc}}'>Sort by source title (a -&gt; z)</option> <option value='{{SourceDesc}}'>Sort by source title (z -&gt; a)</option> </select>",
@@ -1101,6 +1106,7 @@ var FeedlyPage = (function () {
         if (sub.isHideAfterRead()) {
             this.put(ext.hideAfterReadId, true);
         }
+        this.put(ext.markAsReadAboveBelowReadId, sub.isMarkAsReadAboveBelowRead());
     };
     FeedlyPage.prototype.updateCheck = function (enabled, id, className) {
         if (enabled) {
@@ -1138,6 +1144,13 @@ var FeedlyPage = (function () {
             return function (event) {
                 event.stopPropagation();
                 var sortedVisibleArticles = getFFnS(ext.sortedVisibleArticlesId);
+                if (!sortedVisibleArticles) {
+                    sortedVisibleArticles = [];
+                    $(ext.articleSelector).each(function (i, a) {
+                        sortedVisibleArticles.push($(a).attr(ext.articleEntryIdAttribute));
+                    });
+                }
+                var markAsRead = getFFnS(ext.markAsReadAboveBelowReadId);
                 var index = sortedVisibleArticles.indexOf(entryId);
                 if (index == -1) {
                     return;
@@ -1160,9 +1173,14 @@ var FeedlyPage = (function () {
                 var hide = getFFnS(ext.hideWhenMarkAboveBelowId);
                 for (var i = start; i < endExcl; i++) {
                     var id = sortedVisibleArticles[i];
-                    reader.askMarkEntryAsRead(id);
-                    if (hide) {
-                        $(getById(id)).remove();
+                    if (markAsRead) {
+                        reader.askMarkEntryAsRead(id);
+                        if (hide) {
+                            $(getById(id)).remove();
+                        }
+                    }
+                    else {
+                        reader.askKeepEntryAsUnread(id);
                     }
                 }
             };
@@ -1204,11 +1222,11 @@ var FeedlyPage = (function () {
             };
             var markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
                 class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
-                title: "Mark articles below" + (cardsView ? " and on the right" : "") + " as read",
+                title: "Mark articles below" + (cardsView ? " and on the right" : "") + " as read/unread",
             });
             var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
                 class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
-                title: "Mark articles above" + (cardsView ? " and on the left" : "") + " as read"
+                title: "Mark articles above" + (cardsView ? " and on the left" : "") + " as read/unread"
             });
             var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
                 class: ext.openAndMarkAsReadClass,
@@ -1658,6 +1676,14 @@ var UIManager = (function () {
                     $id(subscriptionSetting.htmlId).val(advancedPeriodDays);
                 }
             }
+        });
+        this.htmlSubscriptionManager.registerSettings([ext.markAsReadAboveBelowReadId], HTMLElementType.SelectBox, {
+            update: function (subscriptionSetting) {
+                $id(subscriptionSetting.htmlId).val(subscriptionSetting.manager.subscription.isMarkAsReadAboveBelowRead() + "");
+            },
+            getHTMLValue: function (subscriptionSetting) {
+                return $id(subscriptionSetting.htmlId).val() === "true";
+            },
         });
     };
     UIManager.prototype.initSettingsCallbacks = function () {

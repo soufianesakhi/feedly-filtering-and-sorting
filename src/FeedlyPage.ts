@@ -33,6 +33,7 @@ export class FeedlyPage {
         if (sub.isHideAfterRead()) {
             this.put(ext.hideAfterReadId, true);
         }
+        this.put(ext.markAsReadAboveBelowReadId, sub.isMarkAsReadAboveBelowRead());
     }
 
     updateCheck(enabled: boolean, id: string, className: string) {
@@ -75,6 +76,13 @@ export class FeedlyPage {
             return (event: MouseEvent) => {
                 event.stopPropagation();
                 var sortedVisibleArticles: string[] = getFFnS(ext.sortedVisibleArticlesId);
+                if (!sortedVisibleArticles) {
+                    sortedVisibleArticles = [];
+                    $(ext.articleSelector).each((i, a) => {
+                        sortedVisibleArticles.push($(a).attr(ext.articleEntryIdAttribute));
+                    });
+                }
+                var markAsRead = getFFnS(ext.markAsReadAboveBelowReadId);
                 var index = sortedVisibleArticles.indexOf(entryId);
                 if (index == -1) {
                     return;
@@ -96,9 +104,13 @@ export class FeedlyPage {
                 var hide = getFFnS(ext.hideWhenMarkAboveBelowId);
                 for (var i = start; i < endExcl; i++) {
                     var id = sortedVisibleArticles[i];
-                    reader.askMarkEntryAsRead(id);
-                    if (hide) {
-                        $(getById(id)).remove();
+                    if (markAsRead) {
+                        reader.askMarkEntryAsRead(id);
+                        if (hide) {
+                            $(getById(id)).remove();
+                        }
+                    } else {
+                        reader.askKeepEntryAsUnread(id);
                     }
                 }
             }
@@ -142,11 +154,11 @@ export class FeedlyPage {
             }
             var markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
                 class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
-                title: "Mark articles below" + (cardsView ? " and on the right" : "") + " as read",
+                title: "Mark articles below" + (cardsView ? " and on the right" : "") + " as read/unread",
             });
             var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
                 class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
-                title: "Mark articles above" + (cardsView ? " and on the left" : "") + " as read"
+                title: "Mark articles above" + (cardsView ? " and on the left" : "") + " as read/unread"
             });
             var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
                 class: ext.openAndMarkAsReadClass,

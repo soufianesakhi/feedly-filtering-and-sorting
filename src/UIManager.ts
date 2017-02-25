@@ -285,6 +285,14 @@ export class UIManager {
                 }
             }
         );
+        this.htmlSubscriptionManager.registerSettings([ext.markAsReadAboveBelowReadId], HTMLElementType.SelectBox, {
+            update: (subscriptionSetting: HTMLSubscriptionSetting) => {
+                $id(subscriptionSetting.htmlId).val(subscriptionSetting.manager.subscription.isMarkAsReadAboveBelowRead() + "");
+            },
+            getHTMLValue: (subscriptionSetting) => {
+                return $id(subscriptionSetting.htmlId).val() === "true";
+            },
+        });
     }
 
     initSettingsCallbacks() {
