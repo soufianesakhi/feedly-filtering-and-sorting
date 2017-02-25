@@ -27,11 +27,12 @@ var ext = {
     "urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
     "settingsBtnPredecessorSelector": ".button-refresh",
     "articleSelector": ".list-entries > .entry:not([gap-article])",
+    "unreadArticlesSelector": ".list-entries > .entry.unread:not([gap-article])",
+    "readArticleClass": "read",
     "loadingMessageSelector": ".list-entries .message.loading",
     "sectionSelector": "#timeline > .section",
     "publishAgeSpanSelector": ".ago",
     "publishAgeTimestampAttr": "title",
-    "readArticleClass": "read",
     "articleSourceSelector": ".source",
     "subscriptionChangeSelector": "header .heading",
     "articleTitleAttribute": "data-title",
@@ -1262,23 +1263,27 @@ var FeedlyPage = (function () {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
         var navigo = window["streets"].service("navigo");
         var stream = getStreamPage().stream;
+        var autoLoadAllArticleBatchSize = 1000;
+        var isAutoLoad = function () {
+            return getStreamPage() != null &&
+                ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesSelector).length > 0)
+                && $(ext.notFollowedPageSelector).length == 0
+                && getFFnS(ext.autoLoadAllArticlesId, true);
+        };
         var prototype = Object.getPrototypeOf(stream);
         var setBatchSize = prototype.setBatchSize;
         prototype.setBatchSize = function () {
-            if (getFFnS(ext.autoLoadAllArticlesId, true)) {
-                this._batchSize = 1000;
+            if (isAutoLoad()) {
+                this._batchSize = autoLoadAllArticleBatchSize;
             }
             else {
                 setBatchSize.apply(this, arguments);
             }
         };
-        if (getFFnS(ext.autoLoadAllArticlesId, true)) {
-            stream.setBatchSize();
-        }
         var navigoPrototype = Object.getPrototypeOf(navigo);
         var setEntries = navigoPrototype.setEntries;
-        navigoPrototype.setEntries = function () {
-            if (getFFnS(ext.autoLoadAllArticlesId, true) && $(ext.notFollowedPageSelector).length == 0) {
+        navigoPrototype.setEntries = function (entries) {
+            if (entries.length > 0 && entries[0].jsonInfo.unread && isAutoLoad()) {
                 var stream = getStreamPage().stream;
                 var hasAllEntries = stream.state.hasAllEntries;
                 if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries) {
@@ -1287,6 +1292,9 @@ var FeedlyPage = (function () {
                         if ($(".message.loading").length == 0) {
                             $(ext.articleSelector).first().parent()
                                 .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
+                        }
+                        if (stream._batchSize != autoLoadAllArticleBatchSize) {
+                            stream.setBatchSize();
                         }
                         console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
                         stream.askMoreEntries();
@@ -1783,7 +1791,7 @@ var UIManager = (function () {
             }
             this.articleManager.addArticle(article);
             var articleObserver = new MutationObserver(function (mr, observer) {
-                if ($(article).hasClass("read") && !$(article).hasClass("inlineFrame")) {
+                if ($(article).hasClass(ext.readArticleClass) && !$(article).hasClass("inlineFrame")) {
                     if (_this.subscription.isHideAfterRead()) {
                         if (_this.subscription.isReplaceHiddenWithGap()) {
                             $(article).attr('gap-article', "true");
@@ -1814,7 +1822,6 @@ var UIManager = (function () {
             this.containsReadArticles = $(article).hasClass(ext.readArticleClass);
             if (this.containsReadArticles) {
                 this.articleManager.resetArticles();
-                window.scrollTo(0, 0);
             }
         }
     };

@@ -7,11 +7,12 @@ var ext = {
 
 	"settingsBtnPredecessorSelector": ".button-refresh",
 	"articleSelector": ".list-entries > .entry:not([gap-article])",
+	"unreadArticlesSelector": ".list-entries > .entry.unread:not([gap-article])",
+	"readArticleClass": "read",
 	"loadingMessageSelector": ".list-entries .message.loading",
 	"sectionSelector": "#timeline > .section",
 	"publishAgeSpanSelector": ".ago",
 	"publishAgeTimestampAttr": "title",
-	"readArticleClass": "read",
 	"articleSourceSelector": ".source",
 	"subscriptionChangeSelector": "header .heading",
 	"articleTitleAttribute": "data-title",

@@ -209,24 +209,29 @@ export class FeedlyPage {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
         var navigo = window["streets"].service("navigo");
         var stream = getStreamPage().stream;
+        var autoLoadAllArticleBatchSize = 1000;
+
+        var isAutoLoad: () => boolean = () => {
+            return getStreamPage() != null &&
+                ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesSelector).length > 0)
+                && $(ext.notFollowedPageSelector).length == 0
+                && getFFnS(ext.autoLoadAllArticlesId, true);
+        };
 
         var prototype = Object.getPrototypeOf(stream);
         var setBatchSize: Function = prototype.setBatchSize;
         prototype.setBatchSize = function () {
-            if (getFFnS(ext.autoLoadAllArticlesId, true)) {
-                this._batchSize = 1000;
+            if (isAutoLoad()) {
+                this._batchSize = autoLoadAllArticleBatchSize;
             } else {
                 setBatchSize.apply(this, arguments);
             }
         }
-        if (getFFnS(ext.autoLoadAllArticlesId, true)) {
-            stream.setBatchSize();
-        }
 
         var navigoPrototype = Object.getPrototypeOf(navigo);
         var setEntries = navigoPrototype.setEntries;
-        navigoPrototype.setEntries = function () {
-            if (getFFnS(ext.autoLoadAllArticlesId, true) && $(ext.notFollowedPageSelector).length == 0) {
+        navigoPrototype.setEntries = function (entries: any[]) {
+            if (entries.length > 0 && entries[0].jsonInfo.unread && isAutoLoad()) {
                 var stream = getStreamPage().stream;
                 var hasAllEntries = stream.state.hasAllEntries;
                 if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries) {
@@ -235,6 +240,9 @@ export class FeedlyPage {
                         if ($(".message.loading").length == 0) {
                             $(ext.articleSelector).first().parent()
                                 .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
+                        }
+                        if (stream._batchSize != autoLoadAllArticleBatchSize) {
+                            stream.setBatchSize();
                         }
                         console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
                         stream.askMoreEntries();

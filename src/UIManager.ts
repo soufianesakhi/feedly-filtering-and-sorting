@@ -437,7 +437,7 @@ export class UIManager {
             }
             this.articleManager.addArticle(article);
             var articleObserver = new MutationObserver((mr, observer) => {
-                if ($(article).hasClass("read") && !$(article).hasClass("inlineFrame")) {
+                if ($(article).hasClass(ext.readArticleClass) && !$(article).hasClass("inlineFrame")) {
                     if (this.subscription.isHideAfterRead()) {
                         if (this.subscription.isReplaceHiddenWithGap()) {
                             $(article).attr('gap-article', "true");
@@ -467,7 +467,6 @@ export class UIManager {
             this.containsReadArticles = $(article).hasClass(ext.readArticleClass);
             if (this.containsReadArticles) {
                 this.articleManager.resetArticles();
-                window.scrollTo(0, 0);
             }
         }
     }
