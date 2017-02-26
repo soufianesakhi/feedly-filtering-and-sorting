@@ -55,6 +55,17 @@ export class SubscriptionDAO {
         console.log("Subscription saved: " + JSON.stringify(dto));
     }
 
+    saveAll(subscriptions: { [key: string]: SubscriptionDTO; }) {
+        for (var url in subscriptions) {
+            subscriptions[url].url = url;
+            this.save(subscriptions[url]);
+        }
+        let globalSettings = subscriptions[this.GLOBAL_SETTINGS_SUBSCRIPTION_URL];
+        if (globalSettings) {
+            this.defaultSubscription = new Subscription(this, globalSettings);
+        }
+    }
+
     loadAll(): AsyncResult<{ [key: string]: SubscriptionDTO }> {
         return new AsyncResult<{ [key: string]: SubscriptionDTO }>((p) => {
             let ids = this.getAllSubscriptionIds();

@@ -256,3 +256,7 @@ input {
 .entry[gap-article] {
     visibility: hidden;
 }
+
+#FFnS_ImportSettings {
+    width: 400px;
+}

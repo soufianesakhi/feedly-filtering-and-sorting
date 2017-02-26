@@ -38,9 +38,15 @@ export class GlobalSettingsCheckBox<T extends boolean | number> {
         return this.value;
     }
 
-    setValue(value: T) {
+    private setValue(value: T) {
         this.value = value;
         this.sessionStore();
+    }
+
+    public refreshValue(value: T) {
+        this.setValue(value);
+        this.save();
+        this.refreshHTMLValue();
     }
 
     save() {
