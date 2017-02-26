@@ -29,8 +29,9 @@ Additionally the `Latest` sort option must be enabled to use sorting functionali
 - Auto load all unread articles.
 - Advanced controls (keep recently published articles unread, ...).
 - Pin hot articles to top.
+- Import/export all settings from/to file.
 - Advanced settings management (Import from / link to an other subscription).
-- Tweak the page (Add a button to open an entry in a new tab and mark it as read, ...).
+- Tweak the page (Add buttons to open articles in a new tab, mark as read/unread, ...).
 
 Two settings modes are available: 
 - Global settings: same settings used for all subscriptions and categories.
@@ -42,8 +43,6 @@ Two settings modes are available:
 Presentation support:
 - The `Title Only`, `Magazine` and `Cards` views are fully supported.
 - The `Full Articles` view is not currently supported (does not use the same rendering engine as the other views).
-
-A page refresh is required when changing the presentation.
 
 ## [Changelog](https://github.com/soufianesakhi/feedly-filtering-and-sorting/releases)
 
