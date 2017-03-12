@@ -63,7 +63,10 @@ export class FeedlyPage {
 
     onNewPage() {
         NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, () => {
-            putFFnS(ext.isNewestFirstId, getStreamPage().stream._sort === "newest", true);
+            var streamPage = getStreamPage();
+            if (streamPage) {
+                putFFnS(ext.isNewestFirstId, streamPage.stream._sort === "newest", true);
+            }
         });
     }
 
@@ -220,7 +223,7 @@ export class FeedlyPage {
     overrideLoadingEntries() {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
         var navigo = window["streets"].service("navigo");
-        var stream = getStreamPage().stream;
+        var reader = window["streets"].service('reader');
         var autoLoadAllArticleBatchSize = 1000;
 
         var isAutoLoad: () => boolean = () => {
@@ -230,6 +233,8 @@ export class FeedlyPage {
                 && getFFnS(ext.autoLoadAllArticlesId, true);
         };
 
+        var streamId = reader.listSubscriptions()[0].id;
+        var stream = reader.lookupStream(streamId, { unreadOnly: true, featured: 0, sort: "newest", batchSize: 40 });
         var prototype = Object.getPrototypeOf(stream);
         var setBatchSize: Function = prototype.setBatchSize;
         prototype.setBatchSize = function () {
