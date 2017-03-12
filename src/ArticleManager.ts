@@ -13,6 +13,7 @@ export class ArticleManager {
     keywordManager: KeywordManager;
     page: FeedlyPage;
     articlesCount = 0;
+    sortedArticlesCount = 0;
     lastReadArticleAge = -1;
     lastReadArticleGroup: Article[];
     articlesToMarkAsRead: Article[];
@@ -31,6 +32,7 @@ export class ArticleManager {
 
     resetArticles() {
         this.articlesCount = 0;
+        this.sortedArticlesCount = 0;
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
@@ -50,6 +52,7 @@ export class ArticleManager {
         this.filterAndRestrict(article);
         this.advancedControls(article);
         this.checkLastAddedArticle();
+        this.checkSortArticles();
     }
 
     filterAndRestrict(article: Article) {
@@ -105,17 +108,29 @@ export class ArticleManager {
         }
     }
 
+    checkSortArticles() {
+        if (this.sortedArticlesCount != this.getCurrentUnreadCount()) {
+            if (this.getCurrentSub().isSortingEnabled()) {
+                let msg = "Sorting articles at " + new Date().toTimeString();
+                if (this.sortedArticlesCount > 0) {
+                    msg += " (Previous sorted count: " + this.sortedArticlesCount + ")";
+                }
+                console.log(msg);
+            }
+            this.sortArticles();
+            this.sortedArticlesCount = this.getCurrentUnreadCount();
+        }
+    }
+
     checkLastAddedArticle() {
-        var sub = this.getCurrentSub();
         if (this.articlesCount == this.getCurrentUnreadCount()) {
             this.prepareMarkAsRead();
-            this.sortArticles();
             this.page.showHiddingInfo();
         }
     }
 
     sortArticles() {
-        var sub = this.getCurrentSub();
+        let sub = this.getCurrentSub();
         var visibleArticles: Article[] = [], hiddenArticles: Article[] = [];
         (<Element[]>$(ext.articleSelector).toArray()).map<Article>(((a) => {
             return new Article(a);

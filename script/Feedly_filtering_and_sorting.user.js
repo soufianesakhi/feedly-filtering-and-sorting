@@ -751,6 +751,7 @@ var SettingsManager = (function () {
 var ArticleManager = (function () {
     function ArticleManager(subscriptionManager, keywordManager, page) {
         this.articlesCount = 0;
+        this.sortedArticlesCount = 0;
         this.lastReadArticleAge = -1;
         this.subscriptionManager = subscriptionManager;
         this.keywordManager = keywordManager;
@@ -763,6 +764,7 @@ var ArticleManager = (function () {
     };
     ArticleManager.prototype.resetArticles = function () {
         this.articlesCount = 0;
+        this.sortedArticlesCount = 0;
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
@@ -779,6 +781,7 @@ var ArticleManager = (function () {
         this.filterAndRestrict(article);
         this.advancedControls(article);
         this.checkLastAddedArticle();
+        this.checkSortArticles();
     };
     ArticleManager.prototype.filterAndRestrict = function (article) {
         var sub = this.getCurrentSub();
@@ -837,11 +840,22 @@ var ArticleManager = (function () {
             }
         }
     };
+    ArticleManager.prototype.checkSortArticles = function () {
+        if (this.sortedArticlesCount != this.getCurrentUnreadCount()) {
+            if (this.getCurrentSub().isSortingEnabled()) {
+                var msg = "Sorting articles at " + new Date().toTimeString();
+                if (this.sortedArticlesCount > 0) {
+                    msg += " (Previous sorted count: " + this.sortedArticlesCount + ")";
+                }
+                console.log(msg);
+            }
+            this.sortArticles();
+            this.sortedArticlesCount = this.getCurrentUnreadCount();
+        }
+    };
     ArticleManager.prototype.checkLastAddedArticle = function () {
-        var sub = this.getCurrentSub();
         if (this.articlesCount == this.getCurrentUnreadCount()) {
             this.prepareMarkAsRead();
-            this.sortArticles();
             this.page.showHiddingInfo();
         }
     };
@@ -1219,7 +1233,10 @@ var FeedlyPage = (function () {
     };
     FeedlyPage.prototype.onNewPage = function () {
         NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
-            putFFnS(ext.isNewestFirstId, getStreamPage().stream._sort === "newest", true);
+            var streamPage = getStreamPage();
+            if (streamPage) {
+                putFFnS(ext.isNewestFirstId, streamPage.stream._sort === "newest", true);
+            }
         });
     };
     FeedlyPage.prototype.onNewArticle = function () {
@@ -1367,7 +1384,7 @@ var FeedlyPage = (function () {
     FeedlyPage.prototype.overrideLoadingEntries = function () {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
         var navigo = window["streets"].service("navigo");
-        var stream = getStreamPage().stream;
+        var reader = window["streets"].service('reader');
         var autoLoadAllArticleBatchSize = 1000;
         var isAutoLoad = function () {
             return getStreamPage() != null &&
@@ -1375,6 +1392,8 @@ var FeedlyPage = (function () {
                 && $(ext.notFollowedPageSelector).length == 0
                 && getFFnS(ext.autoLoadAllArticlesId, true);
         };
+        var streamId = reader.listSubscriptions()[0].id;
+        var stream = reader.lookupStream(streamId, { unreadOnly: true, featured: 0, sort: "newest", batchSize: 40 });
         var prototype = Object.getPrototypeOf(stream);
         var setBatchSize = prototype.setBatchSize;
         prototype.setBatchSize = function () {
