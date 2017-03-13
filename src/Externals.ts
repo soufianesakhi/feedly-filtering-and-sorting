@@ -8,6 +8,7 @@ var ext = {
 	"settingsBtnPredecessorSelector": ".button-refresh",
 	"articleSelector": ".list-entries > .entry:not([gap-article])",
 	"unreadArticlesSelector": ".list-entries > .entry.unread:not([gap-article])",
+	"uncheckedArticlesSelector": ".list-entries > .entry:not([checked-FFnS])",
 	"readArticleClass": "read",
 	"loadingMessageSelector": ".list-entries .message.loading",
 	"sectionSelector": "#timeline > .section",

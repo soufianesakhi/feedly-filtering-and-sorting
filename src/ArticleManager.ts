@@ -12,7 +12,6 @@ export class ArticleManager {
     articleSorterFactory: ArticleSorterFactory;
     keywordManager: KeywordManager;
     page: FeedlyPage;
-    articlesCount = 0;
     sortedArticlesCount = 0;
     lastReadArticleAge = -1;
     lastReadArticleGroup: Article[];
@@ -27,11 +26,16 @@ export class ArticleManager {
 
     refreshArticles() {
         this.resetArticles();
-        $(ext.articleSelector).toArray().forEach(this.addArticle, this);
+        if ($(ext.articleSelector).length == 0) {
+            return;
+        }
+        $(ext.articleSelector).each((i, e) => {
+            this.addArticle(e, true);
+        });
+        this.checkLastAddedArticle();
     }
 
     resetArticles() {
-        this.articlesCount = 0;
         this.sortedArticlesCount = 0;
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
@@ -46,12 +50,14 @@ export class ArticleManager {
         return $(ext.articleSelector).length;
     }
 
-    addArticle(a: Element) {
-        this.articlesCount++;
+    addArticle(a: Element, skipCheck?: boolean) {
         var article = new Article(a);
         this.filterAndRestrict(article);
         this.advancedControls(article);
-        this.checkLastAddedArticle();
+        if (!skipCheck) {
+            article.checked();
+            this.checkLastAddedArticle();
+        }
         this.checkSortArticles();
     }
 
@@ -123,7 +129,7 @@ export class ArticleManager {
     }
 
     checkLastAddedArticle() {
-        if (this.articlesCount == this.getCurrentUnreadCount()) {
+        if ($(ext.uncheckedArticlesSelector).length == 0) {
             this.prepareMarkAsRead();
             this.page.showHiddingInfo();
         }
@@ -295,6 +301,7 @@ export class EntryInfos {
 }
 
 export class Article {
+    private checkedAttr = "checked-FFnS";
     private article: JQuery;
     private entryId: string;
     title: string;
@@ -389,6 +396,10 @@ export class Article {
 
     isVisible(): boolean {
         return !(this.article.css("display") === "none");
+    }
+
+    checked() {
+        this.article.attr(this.checkedAttr, "");
     }
 
 }

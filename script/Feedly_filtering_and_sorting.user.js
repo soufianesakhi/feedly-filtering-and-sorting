@@ -12,7 +12,7 @@
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @include     *://feedly.com/*
-// @version     2.7.0
+// @version     2.7.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -28,6 +28,7 @@ var ext = {
     "settingsBtnPredecessorSelector": ".button-refresh",
     "articleSelector": ".list-entries > .entry:not([gap-article])",
     "unreadArticlesSelector": ".list-entries > .entry.unread:not([gap-article])",
+    "uncheckedArticlesSelector": ".list-entries > .entry:not([checked-FFnS])",
     "readArticleClass": "read",
     "loadingMessageSelector": ".list-entries .message.loading",
     "sectionSelector": "#timeline > .section",
@@ -750,7 +751,6 @@ var SettingsManager = (function () {
 
 var ArticleManager = (function () {
     function ArticleManager(subscriptionManager, keywordManager, page) {
-        this.articlesCount = 0;
         this.sortedArticlesCount = 0;
         this.lastReadArticleAge = -1;
         this.subscriptionManager = subscriptionManager;
@@ -759,11 +759,17 @@ var ArticleManager = (function () {
         this.page = page;
     }
     ArticleManager.prototype.refreshArticles = function () {
+        var _this = this;
         this.resetArticles();
-        $(ext.articleSelector).toArray().forEach(this.addArticle, this);
+        if ($(ext.articleSelector).length == 0) {
+            return;
+        }
+        $(ext.articleSelector).each(function (i, e) {
+            _this.addArticle(e, true);
+        });
+        this.checkLastAddedArticle();
     };
     ArticleManager.prototype.resetArticles = function () {
-        this.articlesCount = 0;
         this.sortedArticlesCount = 0;
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
@@ -775,12 +781,14 @@ var ArticleManager = (function () {
     ArticleManager.prototype.getCurrentUnreadCount = function () {
         return $(ext.articleSelector).length;
     };
-    ArticleManager.prototype.addArticle = function (a) {
-        this.articlesCount++;
+    ArticleManager.prototype.addArticle = function (a, skipCheck) {
         var article = new Article(a);
         this.filterAndRestrict(article);
         this.advancedControls(article);
-        this.checkLastAddedArticle();
+        if (!skipCheck) {
+            article.checked();
+            this.checkLastAddedArticle();
+        }
         this.checkSortArticles();
     };
     ArticleManager.prototype.filterAndRestrict = function (article) {
@@ -854,7 +862,7 @@ var ArticleManager = (function () {
         }
     };
     ArticleManager.prototype.checkLastAddedArticle = function () {
-        if (this.articlesCount == this.getCurrentUnreadCount()) {
+        if ($(ext.uncheckedArticlesSelector).length == 0) {
             this.prepareMarkAsRead();
             this.page.showHiddingInfo();
         }
@@ -1018,6 +1026,7 @@ var EntryInfos = (function () {
 }());
 var Article = (function () {
     function Article(article) {
+        this.checkedAttr = "checked-FFnS";
         this.article = $(article);
         this.entryId = this.article.attr(ext.articleEntryIdAttribute);
         var infosElement = this.article.find("." + ext.entryInfosJsonClass);
@@ -1088,6 +1097,9 @@ var Article = (function () {
     };
     Article.prototype.isVisible = function () {
         return !(this.article.css("display") === "none");
+    };
+    Article.prototype.checked = function () {
+        this.article.attr(this.checkedAttr, "");
     };
     return Article;
 }());
