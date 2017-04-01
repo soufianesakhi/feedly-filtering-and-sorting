@@ -768,6 +768,7 @@ var ArticleManager = (function () {
             _this.addArticle(e, true);
         });
         this.checkLastAddedArticle();
+        this.checkSortArticles();
     };
     ArticleManager.prototype.resetArticles = function () {
         this.sortedArticlesCount = 0;
@@ -788,8 +789,8 @@ var ArticleManager = (function () {
         if (!skipCheck) {
             article.checked();
             this.checkLastAddedArticle();
+            this.checkSortArticles();
         }
-        this.checkSortArticles();
     };
     ArticleManager.prototype.filterAndRestrict = function (article) {
         var sub = this.getCurrentSub();

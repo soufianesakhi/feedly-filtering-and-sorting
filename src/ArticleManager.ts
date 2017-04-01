@@ -33,6 +33,7 @@ export class ArticleManager {
             this.addArticle(e, true);
         });
         this.checkLastAddedArticle();
+        this.checkSortArticles();
     }
 
     resetArticles() {
@@ -57,8 +58,8 @@ export class ArticleManager {
         if (!skipCheck) {
             article.checked();
             this.checkLastAddedArticle();
+            this.checkSortArticles();
         }
-        this.checkSortArticles();
     }
 
     filterAndRestrict(article: Article) {
