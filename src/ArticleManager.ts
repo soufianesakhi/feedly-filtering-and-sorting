@@ -390,8 +390,14 @@ export class Article {
         return this.entryId;
     }
 
-    setVisible(visibile?: boolean) {
-        this.article.css("display", visibile == null ? "" : (visibile ? "" : "none"));
+    setVisible(visible?: boolean) {
+        if (visible != null && !visible) {
+            this.article.css("display", "none");
+            let articlesContainer = this.article.parent();
+            this.article.detach().appendTo(articlesContainer);
+        } else {
+            this.article.css("display", "");
+        }
     }
 
     isVisible(): boolean {

@@ -1092,8 +1092,15 @@ var Article = (function () {
     Article.prototype.getEntryId = function () {
         return this.entryId;
     };
-    Article.prototype.setVisible = function (visibile) {
-        this.article.css("display", visibile == null ? "" : (visibile ? "" : "none"));
+    Article.prototype.setVisible = function (visible) {
+        if (visible != null && !visible) {
+            this.article.css("display", "none");
+            var articlesContainer = this.article.parent();
+            this.article.detach().appendTo(articlesContainer);
+        }
+        else {
+            this.article.css("display", "");
+        }
     };
     Article.prototype.isVisible = function () {
         return !(this.article.css("display") === "none");
