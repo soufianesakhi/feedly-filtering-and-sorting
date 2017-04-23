@@ -1,4 +1,4 @@
-import { FilteringType, SortingType, getFilteringTypes, KeywordMatchingArea, KeywordMatchingMethod } from "./DataTypes";
+import { FilteringType, SortingType, getFilteringTypes, KeywordMatchingArea, KeywordMatchingMethod, ColoringRuleSource } from "./DataTypes";
 
 export class SubscriptionDTO {
     url: string;
@@ -19,6 +19,7 @@ export class SubscriptionDTO {
     keywordMatchingAreas: KeywordMatchingArea[] = [KeywordMatchingArea.Title];
     alwaysUseDefaultMatchingAreas = true;
     keywordMatchingMethod: KeywordMatchingMethod = KeywordMatchingMethod.Simple;
+    coloringRules: ColoringRule[] = [];
 
     constructor(url: string) {
         this.url = url;
@@ -35,4 +36,10 @@ export class AdvancedControlsReceivedPeriod {
     showIfHot = false;
     minPopularity = 200;
     markAsReadVisible = false;
+}
+
+export class ColoringRule {
+    source = ColoringRuleSource.SpecificKeywords;
+    color = "#FFFF00";
+    highlightAllTitle = true;
 }

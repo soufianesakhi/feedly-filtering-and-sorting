@@ -245,7 +245,7 @@ input {
     margin-top: 2%;
 }
 
-.FFnS_sortingSelect {
+.FFnS_select {
     vertical-align: middle;
 }
 
@@ -259,4 +259,8 @@ input {
 
 #FFnS_ImportSettings {
     width: 400px;
+}
+
+.FFnS_ColoringRule {
+    margin-top: 1%;
 }

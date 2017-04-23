@@ -2,16 +2,16 @@
 
 import {
     FilteringType, SortingType, KeywordMatchingArea, KeywordMatchingMethod,
-    HTMLElementType, getFilteringTypes, getFilteringTypeId
+    HTMLElementType, getFilteringTypes, getFilteringTypeId, ColoringRuleSource
 } from "./DataTypes";
 import { Subscription } from "./Subscription";
-import { AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
+import { AdvancedControlsReceivedPeriod, ColoringRule } from "./SubscriptionDTO";
 import { ArticleManager } from "./ArticleManager";
 import { SettingsManager } from "./SettingsManager";
 import { KeywordManager } from "./KeywordManager";
 import { GlobalSettingsCheckBox } from "./HTMLGlobalSettings";
 import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
-import { $id, bindMarkup, isChecked } from "./Utils";
+import { $id, bindMarkup, isChecked, setChecked } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 import { AsyncResult } from "./AsyncResult";
 
@@ -126,6 +126,10 @@ export class UIManager {
             var id = this.registerAdditionalSortingType();
             $id(id).val(s);
         })
+
+        // coloring rules
+        $("#FFnS_ColoringRules").empty();
+        this.subscription.getColoringRules().forEach(this.registerColoringRule, this)
 
         this.updateSettingsModeTitle();
     }
@@ -339,6 +343,14 @@ export class UIManager {
             this.refreshFilteringAndSorting();
         });
 
+        $id("FFnS_AddColoringRule").click(() => {
+            this.registerColoringRule(new ColoringRule());
+        });
+
+        $id("FFnS_EraseColoringRulees").click(() => {
+            // TODO
+        });
+
         this.setUpFilteringListEvents();
 
         var useDefaultMatchingAreas = $id("FFnS_AlwaysUseDefaultMatchingAreas");
@@ -359,6 +371,26 @@ export class UIManager {
         $("#FFnS_AdditionalSortingTypes").append(this.getSortingSelectHTML(id));
         $id(id).change(() => this.updateAdditionalSortingTypes());
         return id;
+    }
+
+    registerColoringRule(cr: ColoringRule) {
+        var id = this.getHTMLId("ColoringRule_" + (this.idCount++));
+        let html = bindMarkup(templates.coloringRuleHTML, [
+            { name: "Id", value: id },
+            { name: "Color", value: cr.color },
+            { name: "SpecificKeywords", value: ColoringRuleSource.SourceTitle },
+            { name: "SourceTitle", value: ColoringRuleSource.SourceTitle },
+            { name: "RestrictingKeywords", value: ColoringRuleSource.RestrictingKeywords },
+            { name: "FilteringKeywords", value: ColoringRuleSource.FilteringKeywords },
+        ]);
+        $("#FFnS_ColoringRules").append(html);
+        setChecked("#FFnS_ColoringRules .FFnS_HighlightAllTitle", cr.highlightAllTitle);
+        $("#FFnS_ColoringRules .FFnS_coloringRuleSourceSelect").val(cr.source);
+        $id(id).change(() => this.updateColoringRules());
+    }
+
+    updateColoringRules() {
+
     }
 
     private setUpFilteringListEvents() {

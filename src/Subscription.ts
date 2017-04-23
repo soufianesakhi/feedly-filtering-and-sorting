@@ -1,6 +1,6 @@
 /// <reference path="./_references.d.ts" />
 
-import { SubscriptionDTO, AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
+import { SubscriptionDTO, AdvancedControlsReceivedPeriod, ColoringRule } from "./SubscriptionDTO";
 import { SubscriptionDAO } from "./SubscriptionDAO";
 import { FilteringType, SortingType, getFilteringTypes, KeywordMatchingArea, KeywordMatchingMethod } from "./DataTypes";
 
@@ -113,6 +113,20 @@ export class Subscription {
 
     addAdditionalSortingType(additionalSortingType: SortingType) {
         this.dto.additionalSortingTypes.push(additionalSortingType);
+        this.save();
+    }
+
+    getColoringRules(): ColoringRule[] {
+        return this.dto.coloringRules;
+    }
+
+    setColoringRules(coloringRules: ColoringRule[]) {
+        this.dto.coloringRules = coloringRules;
+        this.save();
+    }
+
+    addColoringRule(coloringRule: ColoringRule) {
+        this.dto.coloringRules.push(coloringRule);
         this.save();
     }
 

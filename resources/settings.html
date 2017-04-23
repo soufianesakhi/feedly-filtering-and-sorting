@@ -88,21 +88,35 @@
 					</fieldset>
 				</div>
 				<div id="FFnS_Tab_UIControls" class="FFnS_Tab_Menu">
-					<div>
-						<span>Add a button to open articles in a new window/tab and mark them as read</span>
-						<input id="FFnS_OpenAndMarkAsRead" type="checkbox">
-					</div>
-					<div>
-						<span>Add buttons to mark articles above/below as</span>
-						<select id="FFnS_MarkAsReadAboveBelowRead" class="FFnS_input">
-							<option value="true" selected>read</option>
-							<option value="false">unread</option>
-						</select>
-						<input id="FFnS_MarkAsReadAboveBelow" type="checkbox">
-						<span> (Also hide using the same buttons when marking as read</span>
-						<input id="FFnS_HideWhenMarkAboveBelow" type="checkbox">
-						<span>)</span>
-					</div>
+					<fieldset>
+						<legend>Custom buttons</legend>
+						<div>
+							<span>Add a button to open articles in a new window/tab and mark them as read</span>
+							<input id="FFnS_OpenAndMarkAsRead" type="checkbox">
+						</div>
+						<div>
+							<span>Add buttons to mark articles above/below as</span>
+							<select id="FFnS_MarkAsReadAboveBelowRead" class="FFnS_input">
+								<option value="true" selected>read</option>
+								<option value="false">unread</option>
+							</select>
+							<input id="FFnS_MarkAsReadAboveBelow" type="checkbox">
+							<span> (Also hide using the same buttons when marking as read</span>
+							<input id="FFnS_HideWhenMarkAboveBelow" type="checkbox">
+							<span>)</span>
+						</div>
+					</fieldset>
+
+					<fieldset>
+						<legend>Coloring rules to highlight keywords or titles</legend>
+						<span id="FFnS_ColoringRules"></span>
+						<span id="FFnS_AddColoringRule">
+							<img src="{{plusIconLink}}" class="FFnS_icon" />
+						</span>
+						<span id="FFnS_EraseColoringRulees">
+							<img src="{{eraseIconLink}}" class="FFnS_icon" />
+						</span>
+					</fieldset>
 				</div>
 				<div id="FFnS_Tab_AdvancedControls" class="FFnS_Tab_Menu">
 					<fieldset>

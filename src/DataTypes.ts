@@ -30,6 +30,13 @@ export enum KeywordMatchingMethod {
     RegExp
 }
 
+export enum ColoringRuleSource {
+    SpecificKeywords,
+    SourceTitle,
+    RestrictingKeywords,
+    FilteringKeywords
+}
+
 export enum HTMLElementType {
     SelectBox, CheckBox, NumberInput
 }
