@@ -11,7 +11,7 @@ import { SettingsManager } from "./SettingsManager";
 import { KeywordManager } from "./KeywordManager";
 import { GlobalSettingsCheckBox } from "./HTMLGlobalSettings";
 import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
-import { $id, bindMarkup, isChecked, setChecked } from "./Utils";
+import { $id, bindMarkup, isChecked, setChecked, onClick } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 import { AsyncResult } from "./AsyncResult";
 
@@ -178,10 +178,8 @@ export class UIManager {
             { name: "closeIconLink", value: ext.closeIconLink },
             { name: "plusIconLink", value: ext.plusIconLink },
             { name: "eraseIconLink", value: ext.eraseIconLink },
-            { name: "KeywordMatchingMethod.Simple", value: KeywordMatchingMethod.Simple },
-            { name: "KeywordMatchingMethod.Word", value: KeywordMatchingMethod.Word },
-            { name: "KeywordMatchingMethod.RegExp", value: KeywordMatchingMethod.RegExp },
-            { name: "DefaultKeywordMatchingArea", value: this.getKeywordMatchingSelectHTML("multiple required", false) }
+            { name: "DefaultKeywordMatchingArea", value: this.getKeywordMatchingSelectHTML("multiple required", false) },
+            { name: "KeywordMatchingMethod", value: this.getKeywordMatchingMethod(true) },
         ]);
         $("body").prepend(settingsHtml);
 
@@ -246,6 +244,17 @@ export class UIManager {
         var suffix = type == undefined ? "s" : "_" + FilteringType[type];
         var id = "KeywordMatchingArea" + suffix;
         return html ? this.getHTMLId(id) : id;
+    }
+
+    getKeywordMatchingMethod(fullSize: boolean, id?: string) {
+        id = id || "FFnS_KeywordMatchingMethod";
+        return bindMarkup(templates.keywordMatchingMethodHTML, [
+            { name: "id", value: id },
+            { name: "KeywordMatchingMethod.Simple", value: KeywordMatchingMethod.Simple },
+            { name: "KeywordMatchingMethod.Word", value: KeywordMatchingMethod.Word },
+            { name: "KeywordMatchingMethod.RegExp", value: KeywordMatchingMethod.RegExp },
+            { name: "size", value: fullSize ? 'size="3"' : '' },
+        ]);
     }
 
     getImportOptionsHTML(): string {
@@ -343,12 +352,17 @@ export class UIManager {
             this.refreshFilteringAndSorting();
         });
 
-        $id("FFnS_AddColoringRule").click(() => {
-            this.registerColoringRule(new ColoringRule());
+        onClick($id("FFnS_AddColoringRule"), () => {
+            let cr = new ColoringRule();
+            this.registerColoringRule(cr);
+            this.subscription.addColoringRule(cr);
+            this.articleManager.refreshColoring();
         });
 
-        $id("FFnS_EraseColoringRulees").click(() => {
-            // TODO
+        onClick($id("FFnS_EraseColoringRules"), () => {
+            this.subscription.setColoringRules([]);
+            $id("FFnS_ColoringRules").empty();
+            this.articleManager.refreshColoring();
         });
 
         this.setUpFilteringListEvents();
@@ -374,23 +388,90 @@ export class UIManager {
     }
 
     registerColoringRule(cr: ColoringRule) {
-        var id = this.getHTMLId("ColoringRule_" + (this.idCount++));
+        var ids = new ColoringRuleHTMLIds(this.getHTMLId("ColoringRule_" + (this.idCount++)));
+        let self = this;
+        // append template
         let html = bindMarkup(templates.coloringRuleHTML, [
-            { name: "Id", value: id },
+            { name: "Id", value: ids.id },
             { name: "Color", value: cr.color },
-            { name: "SpecificKeywords", value: ColoringRuleSource.SourceTitle },
+            { name: "SpecificKeywords", value: ColoringRuleSource.SpecificKeywords },
             { name: "SourceTitle", value: ColoringRuleSource.SourceTitle },
             { name: "RestrictingKeywords", value: ColoringRuleSource.RestrictingKeywords },
             { name: "FilteringKeywords", value: ColoringRuleSource.FilteringKeywords },
+            { name: "KeywordMatchingMethod", value: this.getKeywordMatchingMethod(false, ids.id + "_KeywordMatchingMethod") },
+            { name: "plusIconLink", value: ext.plusIconLink },
+            { name: "eraseIconLink", value: ext.eraseIconLink },
         ]);
         $("#FFnS_ColoringRules").append(html);
-        setChecked("#FFnS_ColoringRules .FFnS_HighlightAllTitle", cr.highlightAllTitle);
-        $("#FFnS_ColoringRules .FFnS_coloringRuleSourceSelect").val(cr.source);
-        $id(id).change(() => this.updateColoringRules());
+
+        // set current values
+        setChecked(ids.highlightId, cr.highlightAllTitle);
+        setChecked(ids.keywordGeneratedColorId, cr.keywordGeneratedColor);
+        $id(ids.sourceId).val(cr.source);
+        $id(ids.matchingMethodId).val(cr.matchingMethod);
+        this.refreshColoringRuleSpecificKeywords(cr, ids);
+        let refreshVisibility = () => {
+            $id(ids.keywordGroupId).css("display", cr.source == ColoringRuleSource.SpecificKeywords ? "" : "none");
+            $id(ids.matchingMethodContainerId).css("display", cr.source == ColoringRuleSource.SourceTitle ? "none" : "");
+            $id(ids.specificColorGroupId).css("display", cr.keywordGeneratedColor ? "none" : "");
+        }
+        refreshVisibility();
+
+        // change callbacks
+        function onChange(id: string, cb: () => void, input?: boolean, click?: boolean) {
+            function callback() {
+                cb.call(this);
+                self.subscription.save();
+                self.articleManager.refreshColoring();
+                refreshVisibility();
+            }
+            click ? onClick($id(id), callback)
+                : (input ? $id(id)[0].oninput = callback : $id(id).change(callback));
+        }
+        onChange(ids.highlightId, function () {
+            cr.highlightAllTitle = isChecked($(this));
+        });
+        onChange(ids.keywordGeneratedColorId, function () {
+            cr.keywordGeneratedColor = isChecked($(this));
+        });
+        onChange(ids.sourceId, function () {
+            cr.source = $(this).val();
+        });
+        onChange(ids.matchingMethodId, function () {
+            cr.matchingMethod = $(this).val();
+        });
+        onChange(ids.colorId, function () {
+            cr.color = $(this).val();
+        }, true);
+        onChange(ids.addBtnId, () => {
+            let keyword = $id(ids.keywordInputId).val();
+            if (keyword != null && keyword !== "") {
+                cr.specificKeywords.push(keyword);
+            }
+            $id(ids.keywordInputId).val("");
+            this.refreshColoringRuleSpecificKeywords(cr, ids);
+        }, false, true);
+        onChange(ids.eraseBtnId, () => {
+            cr.specificKeywords = [];
+            $id(ids.keywordContainerId).empty();
+        }, false, true);
     }
 
-    updateColoringRules() {
+    refreshColoringRuleSpecificKeywords(cr: ColoringRule, ids: ColoringRuleHTMLIds) {
+        var keywords = cr.specificKeywords;
+        var html = "";
 
+        for (var i = 0; i < keywords.length; i++) {
+            var keyword = keywords[i];
+            var keywordId = this.getKeywordId(ids.id, keyword);
+            var keywordHTML = bindMarkup(templates.keywordHTML, [
+                { name: "keywordId", value: keywordId },
+                { name: "keyword", value: keyword }
+            ]);
+            html += keywordHTML;
+        }
+
+        $id(ids.keywordContainerId).html(html);
     }
 
     private setUpFilteringListEvents() {
@@ -458,7 +539,7 @@ export class UIManager {
         for (var i = 0; i < filteringList.length; i++) {
             var keyword = filteringList[i];
             var keywordId = this.getKeywordId(ids.typeId, keyword);
-            var filteringKeywordHTML = bindMarkup(templates.filteringKeywordHTML, [
+            var filteringKeywordHTML = bindMarkup(templates.keywordHTML, [
                 { name: "keywordId", value: keywordId },
                 { name: "keyword", value: keyword }
             ]);
@@ -575,4 +656,35 @@ export class UIManager {
         };
     }
 
+}
+
+class ColoringRuleHTMLIds {
+    id: string;
+    highlightId: string;
+    colorId: string;
+    sourceId: string;
+    matchingMethodId: string;
+    matchingMethodContainerId: string;
+    keywordInputId: string;
+    addBtnId: string;
+    eraseBtnId: string;
+    keywordContainerId: string;
+    keywordGroupId: string;
+    keywordGeneratedColorId: string;
+    specificColorGroupId: string;
+    constructor(id: string) {
+        this.id = id;
+        this.highlightId = id + " .FFnS_HighlightAllTitle";
+        this.colorId = id + " .FFnS_SpecificColor";
+        this.sourceId = id + " .FFnS_ColoringRule_Source";
+        this.matchingMethodId = id + " .FFnS_KeywordMatchingMethod";
+        this.matchingMethodContainerId = id + " .FFnS_ColoringRule_MatchingMethodGroup";
+        this.keywordInputId = id + " .FFnS_ColoringRule_KeywordInput";
+        this.addBtnId = id + " .FFnS_ColoringRule_AddKeyword";
+        this.eraseBtnId = id + " .FFnS_ColoringRule_EraseKeywords";
+        this.keywordContainerId = id + " .FFnS_ColoringRuleKeywords";
+        this.keywordGroupId = id + " .FFnS_ColoringRule_KeywordsGroup";
+        this.keywordGeneratedColorId = id + " .FFnS_ColoringRule_KeywordsGeneratedColor";
+        this.specificColorGroupId = id + " .FFnS_SpecificColorGroup";
+    }
 }

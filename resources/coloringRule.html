@@ -1,13 +1,30 @@
 <div id="{{Id}}" class="FFnS_ColoringRule">
-    <span>Highlight: </span>
-    <select class="FFnS_coloringRuleSourceSelect FFnS_input FFnS_select">
-        <option value="{{SpecificKeywords}}">SpecificKeywords</option>
-        <option value="{{SourceTitle}}">SourceTitle</option>
-        <option value="{{RestrictingKeywords}}">RestrictingKeywords</option>
-        <option value="{{FilteringKeywords}}">FilteringKeywords</option>
+    <span>Keyword source: </span>
+    <select class="FFnS_ColoringRule_Source FFnS_input FFnS_select">
+        <option value="{{SpecificKeywords}}">Specific keywords</option>
+        <option value="{{SourceTitle}}">Source title (subscription)</option>
+        <option value="{{RestrictingKeywords}}">Restricting keywords</option>
+        <option value="{{FilteringKeywords}}">Filtering keywords</option>
     </select>
-    <span>All the title</span>
+    <span>Highlight all the title</span>
     <input class="FFnS_HighlightAllTitle" type="checkbox">
-    <span>Color</span>
-    <input class="FFnS_SpecificColor FFnS_input" value="{{Color}}" size="10" type="text">
+    <span>Generate color from keyword</span>
+    <input class="FFnS_ColoringRule_KeywordsGeneratedColor" type="checkbox">
+    <span class="FFnS_SpecificColorGroup">Color
+        <input class="FFnS_SpecificColor FFnS_input" value="{{Color}}" size="10" type="text">
+    </span>
+
+    <div class="FFnS_ColoringRule_MatchingMethodGroup"> Keyword matching method: {{KeywordMatchingMethod}}</div>
+
+    <div class="FFnS_ColoringRule_KeywordsGroup">
+        <span>Specific keywords: </span>
+        <input class="FFnS_input FFnS_ColoringRule_KeywordInput" size="10" type="text">
+        <span class="FFnS_ColoringRule_AddKeyword">
+            <img src="{{plusIconLink}}" class="FFnS_icon" />
+        </span>
+        <span class="FFnS_ColoringRuleKeywords"></span>
+        <span class="FFnS_ColoringRule_EraseKeywords">
+            <img src="{{eraseIconLink}}" class="FFnS_icon" />
+        </span>
+    </div>
 </div>

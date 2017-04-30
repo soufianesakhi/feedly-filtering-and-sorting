@@ -79,12 +79,7 @@
 					</fieldset>
 					<fieldset>
 						<legend>Matching method</legend>
-						<span>The keywords are treated as : </span>
-						<select id="FFnS_KeywordMatchingMethod" class="FFnS_input" size="3">
-							<option value="{{KeywordMatchingMethod.Simple}}" selected>Strings (simple match)</option>
-							<option value="{{KeywordMatchingMethod.Word}}">Words (whole word match)</option>
-							<option value="{{KeywordMatchingMethod.RegExp}}">Regular expressions (pattern match)</option>
-						</select>
+						<span>The keywords are treated as : </span> {{KeywordMatchingMethod}}
 					</fieldset>
 				</div>
 				<div id="FFnS_Tab_UIControls" class="FFnS_Tab_Menu">
@@ -109,13 +104,13 @@
 
 					<fieldset>
 						<legend>Coloring rules to highlight keywords or titles</legend>
-						<span id="FFnS_ColoringRules"></span>
 						<span id="FFnS_AddColoringRule">
 							<img src="{{plusIconLink}}" class="FFnS_icon" />
 						</span>
-						<span id="FFnS_EraseColoringRulees">
+						<span id="FFnS_EraseColoringRules">
 							<img src="{{eraseIconLink}}" class="FFnS_icon" />
 						</span>
+						<span id="FFnS_ColoringRules"></span>
 					</fieldset>
 				</div>
 				<div id="FFnS_Tab_AdvancedControls" class="FFnS_Tab_Menu">

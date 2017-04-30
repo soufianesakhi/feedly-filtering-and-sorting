@@ -8,16 +8,16 @@
         "file": "resources/filteringList.html"
     },
     {
-        "name": "filteringKeywordHTML",
-        "file": "resources/filteringKeyword.html"
-    },
-    {
         "name": "sortingSelectHTML",
         "file": "resources/sortingSelect.html"
     },
     {
         "name": "keywordMatchingSelectHTML",
         "file": "resources/keywordMatchingSelect.html"
+    },
+    {
+        "name": "keywordMatchingMethodHTML",
+        "file": "resources/keywordMatchingMethod.html"
     },
     {
         "name": "coloringRuleHTML",

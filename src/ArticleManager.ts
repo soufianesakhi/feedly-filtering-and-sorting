@@ -43,6 +43,10 @@ export class ArticleManager {
         this.articlesToMarkAsRead = [];
     }
 
+    refreshColoring() {
+        console.log("refreshColoring");
+    }
+
     getCurrentSub(): Subscription {
         return this.subscriptionManager.getCurrentSubscription();
     }

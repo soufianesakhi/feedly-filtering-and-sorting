@@ -4,6 +4,16 @@ export function $id(id) {
     return $('#' + id);
 }
 
+export function onClick(jq: JQuery, handler: (eventObject: JQueryEventObject) => any, thisArg?) {
+    jq.click((eventObject) => {
+        try {
+            handler.apply(thisArg, eventObject);
+        } catch (e) {
+            console.log(e);
+        }
+    });
+}
+
 interface MarkupBinding {
     name: string, value: any
 }

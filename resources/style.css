@@ -263,4 +263,10 @@ input {
 
 .FFnS_ColoringRule {
     margin-top: 1%;
+    padding: 1%;
+    border: 1px solid #636363;
+}
+
+.FFnS_ColoringRule div {
+    margin-top: 1%;
 }
