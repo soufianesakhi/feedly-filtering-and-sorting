@@ -12,6 +12,7 @@ function injectResources() {
     injectStyleText(templates.styleCSS);
     LocalPersistence.loadScript("jquery.min.js");
     LocalPersistence.loadScript("node-creation-observer.js");
+    LocalPersistence.loadScript("jscolor.js");
 }
 
 $(document).ready(function () {

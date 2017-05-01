@@ -20,12 +20,14 @@
             "js": [
                 "node-creation-observer.js",
                 "jquery.min.js",
+                "jscolor.js",
                 "feedly-filtering-and-sorting.js"
             ]
         }
     ],
     "web_accessible_resources": [
         "node-creation-observer.js",
-        "jquery.min.js"
+        "jquery.min.js",
+        "jscolor.js"
     ]
 }

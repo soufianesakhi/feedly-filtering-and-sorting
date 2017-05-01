@@ -415,13 +415,17 @@ export class UIManager {
             $id(ids.matchingMethodContainerId).css("display", cr.source == ColoringRuleSource.SourceTitle ? "none" : "");
             $id(ids.specificColorGroupId).css("display", cr.keywordGeneratedColor ? "none" : "");
         }
+        new jscolor($id(ids.colorId)[0]);
         refreshVisibility();
 
         // change callbacks
-        function onChange(id: string, cb: () => void, input?: boolean, click?: boolean) {
+        function onChange(id: string, cb: () => void, input?: boolean, click?: boolean, onchange?: boolean) {
             function callback() {
                 try {
-                    cb.call(this);
+                    let noChange = cb.call(this);
+                    if (noChange) {
+                        return;
+                    }
                     self.subscription.save();
                     self.articleManager.refreshColoring();
                     refreshVisibility();
@@ -431,6 +435,9 @@ export class UIManager {
             }
             click ? onClick($id(id), callback)
                 : (input ? $id(id)[0].oninput = callback : $id(id).change(callback));
+            if (onchange) {
+                $id(id)[0].onchange = callback
+            }
         }
         onChange(ids.highlightId, function () {
             cr.highlightAllTitle = isChecked($(this));
@@ -445,8 +452,14 @@ export class UIManager {
             cr.matchingMethod = Number($(this).val());
         });
         onChange(ids.colorId, function () {
-            cr.color = $(this).val();
-        }, true);
+            let str: string = $(this).val();
+            if (str.match(/^\W*([0-9A-F]{3}([0-9A-F]{3})?)\W*$/i)) {
+                cr.color = str.toUpperCase();
+            } else {
+                $(this).val(str);
+                return true;
+            }
+        }, true, false, true);
         onChange(ids.addBtnId, () => {
             let keyword = $id(ids.keywordInputId).val();
             if (keyword != null && keyword !== "") {

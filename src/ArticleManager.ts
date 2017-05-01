@@ -140,7 +140,7 @@ export class ArticleManager {
                     break;
             }
             let match = this.keywordManager.matchSpecficKeywords(article, keywords, rule.matchingMethod);
-            article.setColor(match ? rule.color : "");
+            article.setColor(match ? "#" + rule.color : "");
             if (match) {
                 return;
             }

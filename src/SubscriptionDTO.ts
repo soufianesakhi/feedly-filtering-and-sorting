@@ -41,7 +41,7 @@ export class AdvancedControlsReceivedPeriod {
 export class ColoringRule {
     source = ColoringRuleSource.SpecificKeywords;
     keywordGeneratedColor = false;
-    color = "#FFFF00";
+    color = "FFFF00";
     highlightAllTitle = true;
     matchingMethod = KeywordMatchingMethod.Simple;
     specificKeywords: string[] = [];
