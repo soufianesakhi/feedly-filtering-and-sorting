@@ -140,10 +140,10 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
         clone = {};
         typedClone = toClone;
     }
-    for (var field in typedClone) {
-        var type = typeof (typedClone[field]);
+    var _loop_1 = function () {
+        type = typeof (typedClone[field]);
         if (toClone[field] == null) {
-            continue;
+            return "continue";
         }
         switch (type) {
             case "object":
@@ -151,8 +151,23 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
                     clone[field] = deepClone(toClone[field], alternativeToCloneByField[field], alternativeToCloneByField);
                 }
                 else {
-                    var array = toClone[field];
-                    clone[field] = array.slice(0);
+                    array = toClone[field];
+                    if (array.length > 0) {
+                        arrayType = typeof (array[0]);
+                        if (arrayType === "object") {
+                            var cloneArray_1 = [];
+                            array.forEach(function (element) {
+                                cloneArray_1.push(deepClone(element, new alternativeToCloneByField[field](), alternativeToCloneByField));
+                            });
+                            clone[field] = cloneArray_1;
+                        }
+                        else {
+                            clone[field] = array.slice(0);
+                        }
+                    }
+                    else {
+                        clone[field] = array.slice(0);
+                    }
                 }
                 break;
             case "number":
@@ -163,6 +178,10 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
                 clone[field] = getOrDefault(toClone[field], clone[field]);
                 break;
         }
+    };
+    var type, array, arrayType;
+    for (var field in typedClone) {
+        _loop_1();
     }
     return clone;
 }
@@ -217,8 +236,8 @@ function injectScriptText(srcTxt, sourceURL) {
     script.text = srcTxt;
     document.body.appendChild(script);
 }
-function injectStyleText(styleTxt) {
-    $("head").append("<style>" + styleTxt + "</style>");
+function injectStyleText(styleTxt, id) {
+    $("head").append("<style" + (id ? 'id="' + id + '" ' : "") + ">" + styleTxt + "</style>");
 }
 function exportFile(content, filename) {
     var textToSaveAsBlob = new Blob([content], { type: "application/json" });
@@ -640,7 +659,8 @@ var SubscriptionDAO = (function () {
     };
     SubscriptionDAO.prototype.clone = function (dtoToClone, cloneUrl) {
         var clone = deepClone(dtoToClone, new SubscriptionDTO(cloneUrl), {
-            "advancedControlsReceivedPeriod": new AdvancedControlsReceivedPeriod()
+            "advancedControlsReceivedPeriod": new AdvancedControlsReceivedPeriod(),
+            "coloringRules": ColoringRule,
         });
         clone.url = cloneUrl;
         return clone;
@@ -817,7 +837,10 @@ var ArticleManager = (function () {
         this.articlesToMarkAsRead = [];
     };
     ArticleManager.prototype.refreshColoring = function () {
-        console.log("refreshColoring");
+        var _this = this;
+        $(ext.articleSelector).each(function (i, e) {
+            _this.applyColoringRules(new Article(e));
+        });
     };
     ArticleManager.prototype.getCurrentSub = function () {
         return this.subscriptionManager.getCurrentSubscription();
@@ -829,6 +852,7 @@ var ArticleManager = (function () {
         var article = new Article(a);
         this.filterAndRestrict(article);
         this.advancedControls(article);
+        this.applyColoringRules(article);
         if (!skipCheck) {
             article.checked();
             this.checkLastAddedArticle();
@@ -889,6 +913,30 @@ var ArticleManager = (function () {
             }
             catch (err) {
                 console.log(err);
+            }
+        }
+    };
+    ArticleManager.prototype.applyColoringRules = function (article) {
+        var sub = this.getCurrentSub();
+        var rules = sub.getColoringRules();
+        for (var i = 0; i < rules.length; i++) {
+            var rule = rules[i];
+            var keywords = void 0;
+            switch (rule.source) {
+                case ColoringRuleSource.SpecificKeywords:
+                    keywords = rule.specificKeywords;
+                    break;
+                case ColoringRuleSource.RestrictingKeywords:
+                    keywords = sub.getFilteringList(FilteringType.RestrictedOn);
+                    break;
+                case ColoringRuleSource.FilteringKeywords:
+                    keywords = sub.getFilteringList(FilteringType.FilteredOut);
+                    break;
+            }
+            var match = this.keywordManager.matchSpecficKeywords(article, keywords, rule.matchingMethod);
+            article.setColor(match ? rule.color : "");
+            if (match) {
+                return;
             }
         }
     };
@@ -1152,6 +1200,9 @@ var Article = (function () {
     Article.prototype.checked = function () {
         this.article.attr(this.checkedAttr, "");
     };
+    Article.prototype.setColor = function (color) {
+        this.article.css("background-color", color);
+    };
     return Article;
 }());
 
@@ -1165,6 +1216,19 @@ var KeywordManager = (function () {
     KeywordManager.prototype.insertArea = function (keyword, area) {
         return this.areaPrefix + KeywordMatchingArea[area] + this.separator + keyword;
     };
+    KeywordManager.prototype.matchSpecficKeywords = function (article, keywords, method) {
+        var matcher = this.matcherFactory.getMatcherByMethod(method);
+        for (var i = 0; i < keywords.length; i++) {
+            var keyword = keywords[i];
+            if (keyword.indexOf(this.areaPrefix) == 0) {
+                keyword = this.splitKeywordArea(keyword)[1];
+            }
+            if (matcher(article.title, keyword)) {
+                return true;
+            }
+        }
+        return false;
+    };
     KeywordManager.prototype.matchKeywords = function (article, sub, type, invert) {
         var keywords = sub.getFilteringList(type);
         if (keywords.length == 0) {
@@ -1175,8 +1239,7 @@ var KeywordManager = (function () {
         for (var i = 0; i < keywords.length; i++) {
             var keyword = keywords[i];
             if (keyword.indexOf(this.areaPrefix) == 0) {
-                keyword = keyword.slice(this.areaPrefix.length);
-                var split = keyword.split(this.keywordSplitPattern);
+                var split = this.splitKeywordArea(keyword);
                 keyword = split[1];
                 if (!sub.isAlwaysUseDefaultMatchingAreas()) {
                     var area = KeywordMatchingArea[split[0]];
@@ -1194,6 +1257,10 @@ var KeywordManager = (function () {
             }
         }
         return !match;
+    };
+    KeywordManager.prototype.splitKeywordArea = function (keyword) {
+        keyword = keyword.slice(this.areaPrefix.length);
+        return keyword.split(this.keywordSplitPattern);
     };
     return KeywordManager;
 }());
@@ -1221,6 +1288,9 @@ var KeywordMatcherFactory = (function () {
             return _this.comparerByMethod[method](a.author, k);
         };
     }
+    KeywordMatcherFactory.prototype.getMatcherByMethod = function (method) {
+        return this.comparerByMethod[method];
+    };
     KeywordMatcherFactory.prototype.getMatchers = function (sub) {
         var _this = this;
         var method = sub.getKeywordMatchingMethod();
@@ -1967,10 +2037,15 @@ var UIManager = (function () {
         // change callbacks
         function onChange(id, cb, input, click) {
             function callback() {
-                cb.call(this);
-                self.subscription.save();
-                self.articleManager.refreshColoring();
-                refreshVisibility();
+                try {
+                    cb.call(this);
+                    self.subscription.save();
+                    self.articleManager.refreshColoring();
+                    refreshVisibility();
+                }
+                catch (e) {
+                    console.log(e);
+                }
             }
             click ? onClick($id(id), callback)
                 : (input ? $id(id)[0].oninput = callback : $id(id).change(callback));
@@ -1982,10 +2057,10 @@ var UIManager = (function () {
             cr.keywordGeneratedColor = isChecked($(this));
         });
         onChange(ids.sourceId, function () {
-            cr.source = $(this).val();
+            cr.source = Number($(this).val());
         });
         onChange(ids.matchingMethodId, function () {
-            cr.matchingMethod = $(this).val();
+            cr.matchingMethod = Number($(this).val());
         });
         onChange(ids.colorId, function () {
             cr.color = $(this).val();

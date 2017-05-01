@@ -420,10 +420,14 @@ export class UIManager {
         // change callbacks
         function onChange(id: string, cb: () => void, input?: boolean, click?: boolean) {
             function callback() {
-                cb.call(this);
-                self.subscription.save();
-                self.articleManager.refreshColoring();
-                refreshVisibility();
+                try {
+                    cb.call(this);
+                    self.subscription.save();
+                    self.articleManager.refreshColoring();
+                    refreshVisibility();
+                } catch (e) {
+                    console.log(e);
+                }
             }
             click ? onClick($id(id), callback)
                 : (input ? $id(id)[0].oninput = callback : $id(id).change(callback));
@@ -435,10 +439,10 @@ export class UIManager {
             cr.keywordGeneratedColor = isChecked($(this));
         });
         onChange(ids.sourceId, function () {
-            cr.source = $(this).val();
+            cr.source = Number($(this).val());
         });
         onChange(ids.matchingMethodId, function () {
-            cr.matchingMethod = $(this).val();
+            cr.matchingMethod = Number($(this).val());
         });
         onChange(ids.colorId, function () {
             cr.color = $(this).val();

@@ -1,10 +1,10 @@
 /// <reference path="./_references.d.ts" />
 
-import { FilteringType, SortingType } from "./DataTypes";
+import { FilteringType, SortingType, ColoringRuleSource } from "./DataTypes";
 import { Subscription } from "./Subscription";
 import { SettingsManager } from "./SettingsManager";
 import { KeywordManager } from "./KeywordManager";
-import { $id, isChecked } from "./Utils";
+import { $id, isChecked, injectStyleText } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 
 export class ArticleManager {
@@ -44,7 +44,9 @@ export class ArticleManager {
     }
 
     refreshColoring() {
-        console.log("refreshColoring");
+        $(ext.articleSelector).each((i, e) => {
+            this.applyColoringRules(new Article(e));
+        });
     }
 
     getCurrentSub(): Subscription {
@@ -59,6 +61,7 @@ export class ArticleManager {
         var article = new Article(a);
         this.filterAndRestrict(article);
         this.advancedControls(article);
+        this.applyColoringRules(article);
         if (!skipCheck) {
             article.checked();
             this.checkLastAddedArticle();
@@ -115,6 +118,31 @@ export class ArticleManager {
                 }
             } catch (err) {
                 console.log(err);
+            }
+        }
+    }
+
+    applyColoringRules(article: Article) {
+        let sub = this.getCurrentSub();
+        let rules = sub.getColoringRules();
+        for (let i = 0; i < rules.length; i++) {
+            let rule = rules[i];
+            let keywords: string[];
+            switch (rule.source) {
+                case ColoringRuleSource.SpecificKeywords:
+                    keywords = rule.specificKeywords;
+                    break;
+                case ColoringRuleSource.RestrictingKeywords:
+                    keywords = sub.getFilteringList(FilteringType.RestrictedOn);
+                    break;
+                case ColoringRuleSource.FilteringKeywords:
+                    keywords = sub.getFilteringList(FilteringType.FilteredOut);
+                    break;
+            }
+            let match = this.keywordManager.matchSpecficKeywords(article, keywords, rule.matchingMethod);
+            article.setColor(match ? rule.color : "");
+            if (match) {
+                return;
             }
         }
     }
@@ -411,6 +439,10 @@ export class Article {
 
     checked() {
         this.article.attr(this.checkedAttr, "");
+    }
+
+    setColor(color: string) {
+        this.article.css("background-color", color);
     }
 
 }

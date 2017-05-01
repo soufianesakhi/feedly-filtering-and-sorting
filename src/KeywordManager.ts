@@ -17,6 +17,20 @@ export class KeywordManager {
         return this.areaPrefix + KeywordMatchingArea[area] + this.separator + keyword
     }
 
+    matchSpecficKeywords(article: Article, keywords: string[], method: KeywordMatchingMethod): boolean {
+        var matcher = this.matcherFactory.getMatcherByMethod(method);
+        for (var i = 0; i < keywords.length; i++) {
+            let keyword = keywords[i];
+            if (keyword.indexOf(this.areaPrefix) == 0) {
+                keyword = this.splitKeywordArea(keyword)[1];
+            }
+            if (matcher(article.title, keyword)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     matchKeywords(article: Article, sub: Subscription, type: FilteringType, invert?: boolean): boolean {
         var keywords = sub.getFilteringList(type);
         if (keywords.length == 0) {
@@ -27,8 +41,7 @@ export class KeywordManager {
         for (var i = 0; i < keywords.length; i++) {
             var keyword = keywords[i];
             if (keyword.indexOf(this.areaPrefix) == 0) {
-                keyword = keyword.slice(this.areaPrefix.length);
-                var split = keyword.split(this.keywordSplitPattern);
+                let split = this.splitKeywordArea(keyword);
                 keyword = split[1];
                 if (!sub.isAlwaysUseDefaultMatchingAreas()) {
                     var area = KeywordMatchingArea[split[0]];
@@ -47,6 +60,12 @@ export class KeywordManager {
         }
         return !match;
     }
+
+    private splitKeywordArea(keyword: string) {
+        keyword = keyword.slice(this.areaPrefix.length);
+        return keyword.split(this.keywordSplitPattern);
+    }
+
 }
 
 interface KeywordMatcher {
@@ -77,6 +96,10 @@ class KeywordMatcherFactory {
         this.matcherByType[KeywordMatchingArea.Author] = (a: Article, k: string, method: KeywordMatchingMethod) => {
             return this.comparerByMethod[method](a.author, k);
         };
+    }
+
+    getMatcherByMethod(method: KeywordMatchingMethod) {
+        return this.comparerByMethod[method];
     }
 
     getMatchers(sub: Subscription): KeywordMatcher[] {

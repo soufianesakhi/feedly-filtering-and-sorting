@@ -2,7 +2,7 @@
 
 import { FilteringType, SortingType, getFilteringTypes, getFilteringTypeId } from "./DataTypes";
 import { Subscription } from "./Subscription";
-import { SubscriptionDTO, AdvancedControlsReceivedPeriod } from "./SubscriptionDTO";
+import { SubscriptionDTO, AdvancedControlsReceivedPeriod, ColoringRule } from "./SubscriptionDTO";
 import { SettingsManager } from "./SettingsManager";
 import { registerAccessors, deepClone } from "./Utils";
 import { LocalStorage } from "./dao/LocalStorage";
@@ -117,7 +117,8 @@ export class SubscriptionDAO {
 
     clone(dtoToClone: SubscriptionDTO, cloneUrl: string): SubscriptionDTO {
         var clone = deepClone(dtoToClone, new SubscriptionDTO(cloneUrl), {
-            "advancedControlsReceivedPeriod": new AdvancedControlsReceivedPeriod()
+            "advancedControlsReceivedPeriod": new AdvancedControlsReceivedPeriod(),
+            "coloringRules": ColoringRule,
         });
         clone.url = cloneUrl;
         return clone;

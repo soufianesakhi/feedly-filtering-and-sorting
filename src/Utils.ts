@@ -103,7 +103,20 @@ export function deepClone<T>(toClone: T, clone: T, alternativeToCloneByField): T
                     clone[field] = deepClone(toClone[field], alternativeToCloneByField[field], alternativeToCloneByField);
                 } else {
                     var array: any = toClone[field];
-                    clone[field] = array.slice(0);
+                    if (array.length > 0) {
+                        var arrayType = typeof (array[0]);
+                        if (arrayType === "object") {
+                            let cloneArray = [] as any;
+                            array.forEach(element => {
+                                cloneArray.push(deepClone(element, new alternativeToCloneByField[field](), alternativeToCloneByField));
+                            });
+                            clone[field] = cloneArray;
+                        } else {
+                            clone[field] = array.slice(0);
+                        }
+                    } else {
+                        clone[field] = array.slice(0);
+                    }
                 }
                 break;
             case "number":
@@ -161,8 +174,8 @@ export function injectScriptText(srcTxt: string, sourceURL?: string) {
     document.body.appendChild(script);
 }
 
-export function injectStyleText(styleTxt: string) {
-    $("head").append("<style>" + styleTxt + "</style>");
+export function injectStyleText(styleTxt: string, id?: string) {
+    $("head").append("<style" + (id ? 'id="' + id + '" ' : "") + ">" + styleTxt + "</style>");
 }
 
 export function exportFile(content: string, filename?: string) {
