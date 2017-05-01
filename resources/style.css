@@ -195,9 +195,11 @@ input {
     margin-right: 0px;
 }
 
+
 .fx .open-in-new-tab-button.mark-as-read,
 .fx .entry.u0 .open-in-new-tab-button.condensed-toolbar-icon {
-    background-size: 32px 32px;
+    background-image: url('http://findicons.com/files/icons/2315/default_icon/256/open_in_new_window.png');
+    background-size: 18px 18px;
 }
 
 .fx           .mark-as-read-above-below-button.mark-as-read,
@@ -205,10 +207,6 @@ input {
 .fx .entry.u5 .mark-as-read-above-below-button {
     width: 24px;
     height: 24px;
-}
-
-.fx .open-in-new-tab-button.mark-as-read {
-    background: url(http://s3.feedly.com/production/head/images/condensed-visit-black.png); 
 }
 
 .fx .mark-above-as-read {
