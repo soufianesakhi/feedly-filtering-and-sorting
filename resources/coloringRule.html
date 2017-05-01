@@ -2,17 +2,19 @@
     <span>Keyword source: </span>
     <select class="FFnS_ColoringRule_Source FFnS_input FFnS_select">
         <option value="{{SpecificKeywords}}">Specific keywords</option>
-        <option value="{{SourceTitle}}">Source title (subscription)</option>
         <option value="{{RestrictingKeywords}}">Restricting keywords</option>
         <option value="{{FilteringKeywords}}">Filtering keywords</option>
+        <option value="{{SourceTitle}}">Source title (subscription)</option>
     </select>
-    <span>Highlight all the title</span>
+    <span class="FFnS_ColoringRule_Options">
+        <span>Highlight all the title</span>
     <input class="FFnS_HighlightAllTitle" type="checkbox">
     <span>Generate color from keyword</span>
-    <input class="FFnS_ColoringRule_KeywordsGeneratedColor" type="checkbox">
     <span class="FFnS_SpecificColorGroup">Color
-        <input class="FFnS_SpecificColor FFnS_input jscolor" value="{{Color}}" size="10" type="text">
+            <input class="FFnS_SpecificColor FFnS_input jscolor" value="{{Color}}" size="10" type="text">
+        </span>
     </span>
+    <span class="FFnS_ColoringRule_SourceTitleInfos">All the titles from the same source (subscription) will have the same generated color (only applied when viewing categories)</span>
 
     <div class="FFnS_ColoringRule_MatchingMethodGroup"> Keyword matching method: {{KeywordMatchingMethod}}</div>
 

@@ -406,14 +406,15 @@ export class UIManager {
 
         // set current values
         setChecked(ids.highlightId, cr.highlightAllTitle);
-        setChecked(ids.keywordGeneratedColorId, cr.keywordGeneratedColor);
         $id(ids.sourceId).val(cr.source);
         $id(ids.matchingMethodId).val(cr.matchingMethod);
         this.refreshColoringRuleSpecificKeywords(cr, ids);
         let refreshVisibility = () => {
             $id(ids.keywordGroupId).css("display", cr.source == ColoringRuleSource.SpecificKeywords ? "" : "none");
-            $id(ids.matchingMethodContainerId).css("display", cr.source == ColoringRuleSource.SourceTitle ? "none" : "");
-            $id(ids.specificColorGroupId).css("display", cr.keywordGeneratedColor ? "none" : "");
+            let sourceTitle = cr.source == ColoringRuleSource.SourceTitle;
+            $id(ids.matchingMethodContainerId).css("display", sourceTitle ? "none" : "");
+            $id(ids.optionsSpanId).css("display", sourceTitle ? "none" : "");
+            $id(ids.sourceTitleInfosId).css("display", sourceTitle ? "" : "none");
         }
         new jscolor($id(ids.colorId)[0]);
         refreshVisibility();
@@ -441,9 +442,6 @@ export class UIManager {
         }
         onChange(ids.highlightId, function () {
             cr.highlightAllTitle = isChecked($(this));
-        });
-        onChange(ids.keywordGeneratedColorId, function () {
-            cr.keywordGeneratedColor = isChecked($(this));
         });
         onChange(ids.sourceId, function () {
             cr.source = Number($(this).val());
@@ -687,8 +685,9 @@ class ColoringRuleHTMLIds {
     eraseBtnId: string;
     keywordContainerId: string;
     keywordGroupId: string;
-    keywordGeneratedColorId: string;
     specificColorGroupId: string;
+    optionsSpanId: string;
+    sourceTitleInfosId: string;
     constructor(id: string) {
         this.id = id;
         this.highlightId = id + " .FFnS_HighlightAllTitle";
@@ -701,7 +700,8 @@ class ColoringRuleHTMLIds {
         this.eraseBtnId = id + " .FFnS_ColoringRule_EraseKeywords";
         this.keywordContainerId = id + " .FFnS_ColoringRuleKeywords";
         this.keywordGroupId = id + " .FFnS_ColoringRule_KeywordsGroup";
-        this.keywordGeneratedColorId = id + " .FFnS_ColoringRule_KeywordsGeneratedColor";
         this.specificColorGroupId = id + " .FFnS_SpecificColorGroup";
+        this.optionsSpanId = id + " .FFnS_ColoringRule_Options";
+        this.sourceTitleInfosId = id + " .FFnS_ColoringRule_SourceTitleInfos";
     }
 }

@@ -139,12 +139,30 @@ export class ArticleManager {
                     keywords = sub.getFilteringList(FilteringType.FilteredOut);
                     break;
             }
-            let match = this.keywordManager.matchSpecficKeywords(article, keywords, rule.matchingMethod);
-            article.setColor(match ? "#" + rule.color : "");
-            if (match) {
-                return;
+            if (rule.source == ColoringRuleSource.SourceTitle) {
+                article.setColor(this.generateColor(article.getSource()));
+            } else {
+                let match = this.keywordManager.matchSpecficKeywords(article, keywords, rule.matchingMethod);
+                let color =
+                    article.setColor(match ? "#" + rule.color : "");
+                if (match) {
+                    return;
+                }
             }
         }
+    }
+
+    generateColor(id: string): string {
+        if (!id || id.length == 0) {
+            return "";
+        }
+        var x = 0;
+        for (var i = 0; i < id.length; i++) {
+            x += id.charCodeAt(i);
+        }
+        let h = (x % 36 + 1) * 1;
+        let s = 30 + (x % 5 + 1) * 10;
+        return "hsl(" + h + ", " + s + "%, 80%)";
     }
 
     checkSortArticles() {
