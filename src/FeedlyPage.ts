@@ -34,6 +34,7 @@ export class FeedlyPage {
             this.put(ext.hideAfterReadId, true);
         }
         this.put(ext.markAsReadAboveBelowReadId, sub.isMarkAsReadAboveBelowRead());
+        this.put(ext.visualOpenAndMarkAsReadId, sub.isVisualOpenAndMarkAsRead());
     }
 
     updateCheck(enabled: boolean, id: string, className: string) {
@@ -75,6 +76,9 @@ export class FeedlyPage {
         var onClick = (element: JQuery, callback: (event: MouseEvent) => any) => {
             element.get(0).addEventListener('click', callback, true);
         }
+        var getLink = (a: JQuery) => {
+            return a.find(".title").attr("href");
+        };
         var getMarkAsReadAboveBelowCallback = (entryId: string, above: boolean) => {
             return (event: MouseEvent) => {
                 event.stopPropagation();
@@ -137,17 +141,19 @@ export class FeedlyPage {
             a.append(entryInfos);
 
             var cardsView = a.hasClass("u5");
+            var magazineView = a.hasClass("u4");
+            var titleView = a.hasClass("u0");
             var addButton = (id: string, attributes) => {
                 attributes.type = "button";
                 attributes.style = getFFnS(id) ? "" : "display: none";
                 attributes.class += " mark-as-read";
-                if (a.hasClass("u0")) {
+                if (titleView) {
                     attributes.class += " condensed-toolbar-icon icon";
                 }
                 var e = $("<button>", attributes);
                 if (cardsView) {
                     a.find(".mark-as-read").last().before(e);
-                } else if (a.hasClass("u4")) {
+                } else if (magazineView) {
                     attributes.style += "margin-right: 10px;"
                     a.find(".ago").after(e);
                 } else {
@@ -168,12 +174,26 @@ export class FeedlyPage {
                 title: "Open in a new window/tab and mark as read"
             });
 
-            var link = a.find(".title").attr("href");
-            onClick(openAndMarkAsReadElement, event => {
+            var link = getLink(a);
+            let openAndMarkAsRead = (event: MouseEvent) => {
                 event.stopPropagation();
-                window.open(link, '_blank');
+                window.open(link, link);
                 reader.askMarkEntryAsRead(entryId);
+            }
+            onClick(openAndMarkAsReadElement, openAndMarkAsRead);
+
+            let visualElement;
+            if (cardsView) {
+                visualElement = a.find(".visual-container");
+            } else if (magazineView) {
+                visualElement = a.find(".visual");
+            }
+            onClick(visualElement, e => {
+                if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
+                    openAndMarkAsRead(e);
+                }
             });
+
             onClick(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(entryId, false));
             onClick(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(entryId, true));
         });

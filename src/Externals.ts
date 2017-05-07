@@ -29,6 +29,7 @@ var ext = {
 	"sortedVisibleArticlesId": "sortedVisibleArticles",
 	"openAndMarkAsReadId": "isOpenAndMarkAsRead",
 	"openAndMarkAsReadClass": "open-in-new-tab-button",
+	"visualOpenAndMarkAsReadId": "isVisualOpenAndMarkAsRead",
 	"markAsReadAboveBelowId": "isMarkAsReadAboveBelowId",
 	"markAsReadAboveBelowClass": "mark-as-read-above-below-button",
 	"entryInfosJsonClass": "entryInfosJson",
