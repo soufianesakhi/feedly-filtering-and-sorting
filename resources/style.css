@@ -102,10 +102,12 @@
     visibility: visible;
 }
 
-#FFnS_CloseSettingsBtn {
+#FFnS_CloseSettingsBtn, .FFnS_ColoringRuleManagement {
     float:right;
+    cursor: pointer;
     width: 24px;
     height: 24px;
+    padding: 4px;
 }
 
 #FFnS_Tab_SettingsControls button, #FFnS_Tab_SettingsControls input {

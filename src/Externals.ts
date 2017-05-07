@@ -2,6 +2,8 @@ var ext = {
 	"plusIconLink": "https://cdn0.iconfinder.com/data/icons/social-messaging-ui-color-shapes/128/add-circle-blue-128.png",
 	"eraseIconLink": "https://cdn2.iconfinder.com/data/icons/large-glossy-svg-icons/512/erase_delete_remove_wipe_out-128.png",
 	"closeIconLink": "https://cdn2.iconfinder.com/data/icons/social-productivity-line-art-1/128/close-cancel-128.png",
+	"moveUpIconLink": "https://cdn2.iconfinder.com/data/icons/designers-and-developers-icon-set/32/move_up-32.png",
+	"moveDownIconLink": "https://cdn2.iconfinder.com/data/icons/designers-and-developers-icon-set/32/move_down-32.png",
 
 	"urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
 

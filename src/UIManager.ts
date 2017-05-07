@@ -130,6 +130,7 @@ export class UIManager {
         // coloring rules
         $("#FFnS_ColoringRules").empty();
         this.subscription.getColoringRules().forEach(this.registerColoringRule, this)
+        this.refreshColoringRuleArrows();
 
         this.updateSettingsModeTitle();
     }
@@ -357,6 +358,7 @@ export class UIManager {
             this.registerColoringRule(cr);
             this.subscription.addColoringRule(cr);
             this.articleManager.refreshColoring();
+            this.refreshColoringRuleArrows();
         });
 
         onClick($id("FFnS_EraseColoringRules"), () => {
@@ -401,6 +403,8 @@ export class UIManager {
             { name: "KeywordMatchingMethod", value: this.getKeywordMatchingMethod(false, ids.id + "_KeywordMatchingMethod") },
             { name: "plusIconLink", value: ext.plusIconLink },
             { name: "eraseIconLink", value: ext.eraseIconLink },
+            { name: "moveUpIconLink", value: ext.moveUpIconLink },
+            { name: "moveDownIconLink", value: ext.moveDownIconLink },
         ]);
         $("#FFnS_ColoringRules").append(html);
 
@@ -470,6 +474,51 @@ export class UIManager {
             cr.specificKeywords = [];
             $id(ids.keywordContainerId).empty();
         }, false, true);
+
+        // Coloring rule management
+        onClick($id(ids.removeColoringRuleId), () => {
+            let rules = self.subscription.getColoringRules();
+            let i = rules.indexOf(cr);
+            if (i > -1) {
+                rules.splice(i, 1);
+                self.subscription.save();
+                self.articleManager.refreshColoring();
+            }
+            $id(ids.id).remove();
+            self.refreshColoringRuleArrows();
+        });
+        let getMoveColoringRuleCallback = (up: boolean) => {
+            return () => {
+                let rules = self.subscription.getColoringRules();
+                let i = rules.indexOf(cr);
+                if (up ? i > 0 : i < rules.length) {
+                    let swapIdx = up ? i - 1 : i + 1;
+                    let swap = rules[swapIdx];
+                    rules[swapIdx] = rules[i];
+                    rules[i] = swap;
+                    self.subscription.save();
+                    self.articleManager.refreshColoring();
+                    let element = $id(ids.id);
+                    if (up) {
+                        let prev = element.prev()
+                        element.detach().insertBefore(prev);
+                    } else {
+                        let next = element.next()
+                        element.detach().insertAfter(next);
+                    }
+                    self.refreshColoringRuleArrows();
+                }
+            };
+        }
+        onClick($id(ids.moveUpColoringRuleId), getMoveColoringRuleCallback(true));
+        onClick($id(ids.moveDownColoringRuleId), getMoveColoringRuleCallback(false));
+    }
+
+    refreshColoringRuleArrows() {
+        $(".FFnS_MoveUpColoringRule:not(:first)").show();
+        $(".FFnS_MoveUpColoringRule:first").hide();
+        $(".FFnS_MoveDownColoringRule:not(:last)").show();
+        $(".FFnS_MoveDownColoringRule:last").hide();
     }
 
     refreshColoringRuleSpecificKeywords(cr: ColoringRule, ids: ColoringRuleHTMLIds) {
@@ -688,6 +737,9 @@ class ColoringRuleHTMLIds {
     specificColorGroupId: string;
     optionsSpanId: string;
     sourceTitleInfosId: string;
+    removeColoringRuleId: string;
+    moveUpColoringRuleId: string;
+    moveDownColoringRuleId: string;
     constructor(id: string) {
         this.id = id;
         this.highlightId = id + " .FFnS_HighlightAllTitle";
@@ -703,5 +755,8 @@ class ColoringRuleHTMLIds {
         this.specificColorGroupId = id + " .FFnS_SpecificColorGroup";
         this.optionsSpanId = id + " .FFnS_ColoringRule_Options";
         this.sourceTitleInfosId = id + " .FFnS_ColoringRule_SourceTitleInfos";
+        this.removeColoringRuleId = id + " .FFnS_RemoveColoringRule";
+        this.moveUpColoringRuleId = id + " .FFnS_MoveUpColoringRule";
+        this.moveDownColoringRuleId = id + " .FFnS_MoveDownColoringRule";
     }
 }
