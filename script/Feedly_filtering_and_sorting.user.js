@@ -14,7 +14,7 @@
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @resource    jscolor.js https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     2.8.1
+// @version     2.8.2
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1516,11 +1516,13 @@ var FeedlyPage = (function () {
             else if (magazineView) {
                 visualElement = a.find(".visual");
             }
-            onClick(visualElement, function (e) {
-                if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
-                    openAndMarkAsRead(e);
-                }
-            });
+            if (visualElement) {
+                onClick(visualElement, function (e) {
+                    if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
+                        openAndMarkAsRead(e);
+                    }
+                });
+            }
             onClick(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(entryId, false));
             onClick(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(entryId, true));
         });

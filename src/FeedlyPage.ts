@@ -188,11 +188,13 @@ export class FeedlyPage {
             } else if (magazineView) {
                 visualElement = a.find(".visual");
             }
-            onClick(visualElement, e => {
-                if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
-                    openAndMarkAsRead(e);
-                }
-            });
+            if (visualElement) {
+                onClick(visualElement, e => {
+                    if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
+                        openAndMarkAsRead(e);
+                    }
+                });
+            }
 
             onClick(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(entryId, false));
             onClick(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(entryId, true));
