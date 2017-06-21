@@ -7,27 +7,29 @@ import { AsyncResult } from "./AsyncResult";
 
 declare var LocalPersistence: LocalStorage;
 
-export class GlobalSettingsCheckBox<T extends boolean | number> {
+export class HTMLGlobalSettings<T extends boolean | number> {
     id: string;
     htmlId: string;
     uiManager: UIManager;
+    defaultValue: T;
     value: T;
     isBoolean: boolean;
     fullRefreshOnChange: boolean;
     sessionStoreEnabled: boolean;
 
-    constructor(id: string, uiManager: UIManager, fullRefreshOnChange?: boolean, sessionStore?: boolean) {
+    constructor(id: string, defaultValue: T, uiManager: UIManager, fullRefreshOnChange = true, sessionStore = true) {
         this.id = id;
+        this.defaultValue = defaultValue;
+        this.isBoolean = typeof (defaultValue) === "boolean";
         this.uiManager = uiManager;
         this.htmlId = uiManager.getHTMLId(id);
-        this.fullRefreshOnChange = fullRefreshOnChange != null ? fullRefreshOnChange : true;
-        this.sessionStoreEnabled = sessionStore != null ? sessionStore : false;
+        this.fullRefreshOnChange = fullRefreshOnChange;
+        this.sessionStoreEnabled = sessionStore;
     }
 
-    init(defaultValue: T): AsyncResult<any> {
-        this.isBoolean = typeof (defaultValue) === "boolean";
+    init(): AsyncResult<any> {
         return new AsyncResult<any>((p) => {
-            LocalPersistence.getAsync(this.id, defaultValue).then((value) => {
+            LocalPersistence.getAsync(this.id, this.defaultValue).then((value) => {
                 this.setValue(value);
                 p.done();
             }, this);
@@ -77,22 +79,27 @@ export class GlobalSettingsCheckBox<T extends boolean | number> {
 
     initUI(callback?: (newValue: boolean) => void, thisArg?: any) {
         var this_ = this;
-        let applyCallback = () => {
+        let additionalCallback = () => {
             if (callback) {
                 callback.call(thisArg, this_.value);
             }
         }
-        $id(this.htmlId).click(function () {
+        function mainCallback() {
             let val = this_.getHTMLValue($(this));
             this_.setValue(val);
             this_.save();
             if (this_.fullRefreshOnChange) {
                 this_.uiManager.refreshPage();
             }
-            applyCallback();
-        });
+            additionalCallback();
+        };
+        if (this.isBoolean) {
+            $id(this.htmlId).click(mainCallback);
+        } else {
+            $id(this.htmlId)[0].oninput = mainCallback;
+        }
         this.refreshHTMLValue();
-        applyCallback();
+        additionalCallback();
     }
 
 }

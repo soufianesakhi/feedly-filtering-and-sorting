@@ -9,7 +9,7 @@ import { AdvancedControlsReceivedPeriod, ColoringRule } from "./SubscriptionDTO"
 import { ArticleManager } from "./ArticleManager";
 import { SettingsManager } from "./SettingsManager";
 import { KeywordManager } from "./KeywordManager";
-import { GlobalSettingsCheckBox } from "./HTMLGlobalSettings";
+import { HTMLGlobalSettings } from "./HTMLGlobalSettings";
 import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
 import { $id, bindMarkup, isChecked, setChecked, onClick } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
@@ -22,8 +22,11 @@ export class UIManager {
     htmlSubscriptionManager: HTMLSubscriptionManager;
     articleManager: ArticleManager;
     subscription: Subscription;
-    autoLoadAllArticlesCB: GlobalSettingsCheckBox<boolean>;
-    globalSettingsEnabledCB: GlobalSettingsCheckBox<boolean>;
+    autoLoadAllArticlesCB: HTMLGlobalSettings<boolean>;
+    loadByBatchCB: HTMLGlobalSettings<boolean>;
+    batchSizeInput: HTMLGlobalSettings<number>;
+    globalSettingsEnabledCB: HTMLGlobalSettings<boolean>;
+    globalSettings: HTMLGlobalSettings<any>[];
     containsReadArticles = false;
 
     keywordToId = {};
@@ -59,21 +62,34 @@ export class UIManager {
             this.articleManager = new ArticleManager(this.settingsManager, this.keywordManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
             this.settingsManager.init().then(() => {
-                this.autoLoadAllArticlesCB = new GlobalSettingsCheckBox<boolean>(ext.autoLoadAllArticlesId, this, false, true);
-                this.globalSettingsEnabledCB = new GlobalSettingsCheckBox<boolean>("globalSettingsEnabled", this);
-                this.autoLoadAllArticlesCB.init(true).then(() => {
-                    this.globalSettingsEnabledCB.init(true).then(() => {
-                        this.updateSubscription().then(() => {
-                            this.initUI();
-                            this.registerSettings();
-                            this.updateMenu();
-                            this.initSettingsCallbacks();
-                            p.done();
-                        }, this);
+                this.autoLoadAllArticlesCB = new HTMLGlobalSettings<boolean>(ext.autoLoadAllArticlesId, false, this, false);
+                this.globalSettingsEnabledCB = new HTMLGlobalSettings<boolean>("globalSettingsEnabled", true, this, true, false);
+                this.loadByBatchCB = new HTMLGlobalSettings<boolean>("loadByBatchEnabled", false, this);
+                this.batchSizeInput = new HTMLGlobalSettings<number>("batchSize", 300, this);
+                this.globalSettings = [this.autoLoadAllArticlesCB, this.loadByBatchCB, this.batchSizeInput, this.globalSettingsEnabledCB];
+                this.initGlobalSettings(this.globalSettings.slice(0)).then(() => {
+                    this.updateSubscription().then(() => {
+                        this.initUI();
+                        this.registerSettings();
+                        this.updateMenu();
+                        this.initSettingsCallbacks();
+                        p.done();
                     }, this);
                 }, this);
             }, this);
         }, this);
+    }
+
+    initGlobalSettings(settings: HTMLGlobalSettings<any>[]): AsyncResult<any> {
+        if (settings.length == 1) {
+            return settings[0].init();
+        } else {
+            return new AsyncResult<any>((p) => {
+                settings.pop().init().then(() => {
+                    this.initGlobalSettings(settings).chain(p);
+                }, this);
+            }, this);
+        }
     }
 
     updatePage() {
@@ -162,8 +178,9 @@ export class UIManager {
     initUI() {
         this.initSettingsMenu();
         this.initShowSettingsBtns();
-        this.autoLoadAllArticlesCB.initUI();
-        this.globalSettingsEnabledCB.initUI();
+        this.globalSettings.forEach(globalSetting => {
+            globalSetting.initUI();
+        });
     }
 
     initSettingsMenu() {
