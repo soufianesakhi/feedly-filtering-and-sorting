@@ -612,7 +612,9 @@ var SubscriptionDAO = (function () {
         }
         var globalSettings = subscriptions[this.GLOBAL_SETTINGS_SUBSCRIPTION_URL];
         if (globalSettings) {
-            this.defaultSubscription = new Subscription(this, globalSettings);
+            // ensure initialization of new properties
+            var defaultDTO = this.clone(globalSettings, globalSettings.url);
+            this.defaultSubscription = new Subscription(this, defaultDTO);
         }
     };
     SubscriptionDAO.prototype.loadAll = function () {
@@ -772,6 +774,8 @@ var SettingsManager = (function () {
             try {
                 var settingsExport = JSON.parse(fr.result);
                 _this.uiManager.autoLoadAllArticlesCB.refreshValue(settingsExport.autoLoadAllArticles);
+                _this.uiManager.loadByBatchEnabledCB.refreshValue(settingsExport.loadByBatchEnabled);
+                _this.uiManager.batchSizeInput.refreshValue(settingsExport.batchSize);
                 _this.uiManager.globalSettingsEnabledCB.refreshValue(settingsExport.globalSettingsEnabled);
                 _this.dao.saveAll(settingsExport.subscriptions);
                 _this.uiManager.refreshPage();
@@ -789,6 +793,8 @@ var SettingsManager = (function () {
         this.dao.loadAll().then(function (subscriptions) {
             var settingsExport = {
                 autoLoadAllArticles: _this.uiManager.autoLoadAllArticlesCB.getValue(),
+                loadByBatchEnabled: _this.uiManager.loadByBatchEnabledCB.getValue(),
+                batchSize: _this.uiManager.batchSizeInput.getValue(),
                 globalSettingsEnabled: _this.uiManager.globalSettingsEnabledCB.getValue(),
                 subscriptions: subscriptions
             };
@@ -1760,9 +1766,9 @@ var UIManager = (function () {
             _this.settingsManager.init().then(function () {
                 _this.autoLoadAllArticlesCB = new HTMLGlobalSettings(ext.autoLoadAllArticlesId, false, _this, false);
                 _this.globalSettingsEnabledCB = new HTMLGlobalSettings("globalSettingsEnabled", true, _this, true, false);
-                _this.loadByBatchCB = new HTMLGlobalSettings("loadByBatchEnabled", false, _this);
+                _this.loadByBatchEnabledCB = new HTMLGlobalSettings("loadByBatchEnabled", false, _this);
                 _this.batchSizeInput = new HTMLGlobalSettings("batchSize", 300, _this);
-                _this.globalSettings = [_this.autoLoadAllArticlesCB, _this.loadByBatchCB, _this.batchSizeInput, _this.globalSettingsEnabledCB];
+                _this.globalSettings = [_this.autoLoadAllArticlesCB, _this.loadByBatchEnabledCB, _this.batchSizeInput, _this.globalSettingsEnabledCB];
                 _this.initGlobalSettings(_this.globalSettings.slice(0)).then(function () {
                     _this.updateSubscription().then(function () {
                         _this.initUI();

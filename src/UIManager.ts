@@ -23,7 +23,7 @@ export class UIManager {
     articleManager: ArticleManager;
     subscription: Subscription;
     autoLoadAllArticlesCB: HTMLGlobalSettings<boolean>;
-    loadByBatchCB: HTMLGlobalSettings<boolean>;
+    loadByBatchEnabledCB: HTMLGlobalSettings<boolean>;
     batchSizeInput: HTMLGlobalSettings<number>;
     globalSettingsEnabledCB: HTMLGlobalSettings<boolean>;
     globalSettings: HTMLGlobalSettings<any>[];
@@ -64,9 +64,9 @@ export class UIManager {
             this.settingsManager.init().then(() => {
                 this.autoLoadAllArticlesCB = new HTMLGlobalSettings<boolean>(ext.autoLoadAllArticlesId, false, this, false);
                 this.globalSettingsEnabledCB = new HTMLGlobalSettings<boolean>("globalSettingsEnabled", true, this, true, false);
-                this.loadByBatchCB = new HTMLGlobalSettings<boolean>("loadByBatchEnabled", false, this);
+                this.loadByBatchEnabledCB = new HTMLGlobalSettings<boolean>("loadByBatchEnabled", false, this);
                 this.batchSizeInput = new HTMLGlobalSettings<number>("batchSize", 300, this);
-                this.globalSettings = [this.autoLoadAllArticlesCB, this.loadByBatchCB, this.batchSizeInput, this.globalSettingsEnabledCB];
+                this.globalSettings = [this.autoLoadAllArticlesCB, this.loadByBatchEnabledCB, this.batchSizeInput, this.globalSettingsEnabledCB];
                 this.initGlobalSettings(this.globalSettings.slice(0)).then(() => {
                     this.updateSubscription().then(() => {
                         this.initUI();

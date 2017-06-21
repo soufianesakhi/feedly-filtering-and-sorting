@@ -60,6 +60,8 @@ export class SettingsManager {
             try {
                 let settingsExport: SettingsExport = JSON.parse(fr.result);
                 this.uiManager.autoLoadAllArticlesCB.refreshValue(settingsExport.autoLoadAllArticles);
+                this.uiManager.loadByBatchEnabledCB.refreshValue(settingsExport.loadByBatchEnabled);
+                this.uiManager.batchSizeInput.refreshValue(settingsExport.batchSize);
                 this.uiManager.globalSettingsEnabledCB.refreshValue(settingsExport.globalSettingsEnabled);
                 this.dao.saveAll(settingsExport.subscriptions);
                 this.uiManager.refreshPage();
@@ -76,6 +78,8 @@ export class SettingsManager {
         this.dao.loadAll().then((subscriptions) => {
             let settingsExport: SettingsExport = {
                 autoLoadAllArticles: this.uiManager.autoLoadAllArticlesCB.getValue(),
+                loadByBatchEnabled: this.uiManager.loadByBatchEnabledCB.getValue(),
+                batchSize: this.uiManager.batchSizeInput.getValue(),
                 globalSettingsEnabled: this.uiManager.globalSettingsEnabledCB.getValue(),
                 subscriptions: subscriptions
             }
@@ -109,6 +113,8 @@ export class SettingsManager {
 
 interface SettingsExport {
     autoLoadAllArticles: boolean;
+    loadByBatchEnabled: boolean;
+    batchSize: number;
     globalSettingsEnabled: boolean;
     subscriptions: { [key: string]: SubscriptionDTO; };
 }

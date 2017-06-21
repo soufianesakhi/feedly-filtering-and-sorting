@@ -62,7 +62,9 @@ export class SubscriptionDAO {
         }
         let globalSettings = subscriptions[this.GLOBAL_SETTINGS_SUBSCRIPTION_URL];
         if (globalSettings) {
-            this.defaultSubscription = new Subscription(this, globalSettings);
+            // ensure initialization of new properties
+            let defaultDTO = this.clone(globalSettings, globalSettings.url);
+            this.defaultSubscription = new Subscription(this, defaultDTO);
         }
     }
 
