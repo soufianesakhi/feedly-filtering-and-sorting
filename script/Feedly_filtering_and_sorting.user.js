@@ -59,6 +59,8 @@ var ext = {
     "hideWhenMarkAboveBelowId": "isHideWhenMarkAboveBelow",
     "hideAfterReadId": "isHideAfterRead",
     "autoLoadAllArticlesId": "autoLoadAllArticles",
+    "batchSizeId": "batchSize",
+    "loadByBatchEnabledId": "loadByBatchEnabled",
     "isNewestFirstId": "isNewestFirst",
     "markAsReadAboveBelowReadId": "MarkAsReadAboveBelowRead",
 };
@@ -1357,7 +1359,7 @@ var FeedlyPage = (function () {
     function FeedlyPage() {
         this.hiddingInfoClass = "FFnS_Hiding_Info";
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage"], this.get, this.put, this.getById, this.getStreamPage);
+        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "loadByBatchChangeCallback"], this.get, this.put, this.getById, this.getStreamPage, this.loadByBatchChangeCallback);
         injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
@@ -1388,6 +1390,21 @@ var FeedlyPage = (function () {
     FeedlyPage.prototype.initWindow = function () {
         window["ext"] = getFFnS("ext");
         NodeCreationObserver.init("observed-page");
+    };
+    FeedlyPage.prototype.initLoadByBatch = function (loadByBatchEnabledCB) {
+        loadByBatchEnabledCB.setAdditionalChangeCallback(this.loadByBatchChangeCallback);
+    };
+    FeedlyPage.prototype.loadByBatchChangeCallback = function (enabled) {
+        console.log("loadByBatchChangeCallback: " + enabled);
+        if (!window["getStreamPage"] || !getStreamPage()) {
+            return;
+        }
+        if (enabled) {
+            window.removeEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded);
+        }
+        else {
+            window.addEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded);
+        }
     };
     FeedlyPage.prototype.getStreamPage = function () {
         var observers = window["streets"].service("navigo").observers;
@@ -1572,7 +1589,8 @@ var FeedlyPage = (function () {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
-        var autoLoadAllArticleBatchSize = 1000;
+        var autoLoadAllArticleDefaultBatchSize = 1000;
+        var autoLoadAllArticleBatchSize;
         var isAutoLoad = function () {
             return getStreamPage() != null &&
                 ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesSelector).length > 0)
@@ -1583,9 +1601,12 @@ var FeedlyPage = (function () {
         var stream = reader.lookupStream(streamId, { unreadOnly: true, featured: 0, sort: "newest", batchSize: 40 });
         var prototype = Object.getPrototypeOf(stream);
         var setBatchSize = prototype.setBatchSize;
-        prototype.setBatchSize = function () {
+        prototype.setBatchSize = function (customSize) {
+            if (this._batchSize == customSize) {
+                return;
+            }
             if (isAutoLoad()) {
-                this._batchSize = autoLoadAllArticleBatchSize;
+                this._batchSize = customSize;
             }
             else {
                 setBatchSize.apply(this, arguments);
@@ -1595,26 +1616,45 @@ var FeedlyPage = (function () {
         var setEntries = navigoPrototype.setEntries;
         navigoPrototype.setEntries = function (entries) {
             if (entries.length > 0 && entries[0].jsonInfo.unread && isAutoLoad()) {
+                var isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
+                var firstLoadByBatch_1 = false;
+                if (this.entries.length == 0) {
+                    loadByBatchChangeCallback(isLoadByBatch);
+                    firstLoadByBatch_1 = isLoadByBatch;
+                }
+                var isBatchLoading = true;
+                autoLoadAllArticleBatchSize = autoLoadAllArticleDefaultBatchSize;
+                if (isLoadByBatch) {
+                    var batchSize = getFFnS(ext.batchSizeId, true);
+                    autoLoadAllArticleBatchSize = batchSize;
+                    if (entries.length >= batchSize) {
+                        isBatchLoading = false;
+                    }
+                }
                 var stream = getStreamPage().stream;
                 var hasAllEntries = stream.state.hasAllEntries;
-                if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries) {
+                if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries && isBatchLoading) {
                     stream.askingMoreEntries = true;
                     setTimeout(function () {
                         if ($(".message.loading").length == 0) {
                             $(ext.articleSelector).first().parent()
                                 .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
                         }
-                        if (stream._batchSize != autoLoadAllArticleBatchSize) {
-                            stream.setBatchSize();
+                        var batchSize = autoLoadAllArticleBatchSize;
+                        if (firstLoadByBatch_1) {
+                            batchSize = batchSize - entries.length;
                         }
+                        stream.setBatchSize(batchSize);
                         console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
                         stream.askMoreEntries();
                         stream.askingMoreEntries = false;
                     }, 100);
                 }
-                else if (hasAllEntries && $(autoLoadingMessageId).length == 1) {
+                else if ((hasAllEntries || !isBatchLoading) && $(autoLoadingMessageId).length == 1) {
                     $(autoLoadingMessageId).remove();
-                    console.log("End auto load all articles at: " + new Date().toTimeString());
+                    if (hasAllEntries) {
+                        console.log("End auto load all articles at: " + new Date().toTimeString());
+                    }
                 }
             }
             return setEntries.apply(this, arguments);
@@ -1764,10 +1804,11 @@ var UIManager = (function () {
             _this.articleManager = new ArticleManager(_this.settingsManager, _this.keywordManager, _this.page);
             _this.htmlSubscriptionManager = new HTMLSubscriptionManager(_this);
             _this.settingsManager.init().then(function () {
-                _this.autoLoadAllArticlesCB = new HTMLGlobalSettings(ext.autoLoadAllArticlesId, false, _this, false);
+                _this.autoLoadAllArticlesCB = new HTMLGlobalSettings(ext.autoLoadAllArticlesId, false, _this);
                 _this.globalSettingsEnabledCB = new HTMLGlobalSettings("globalSettingsEnabled", true, _this, true, false);
-                _this.loadByBatchEnabledCB = new HTMLGlobalSettings("loadByBatchEnabled", false, _this);
-                _this.batchSizeInput = new HTMLGlobalSettings("batchSize", 300, _this);
+                _this.loadByBatchEnabledCB = new HTMLGlobalSettings(ext.loadByBatchEnabledId, false, _this);
+                _this.page.initLoadByBatch(_this.loadByBatchEnabledCB);
+                _this.batchSizeInput = new HTMLGlobalSettings(ext.batchSizeId, 300, _this);
                 _this.globalSettings = [_this.autoLoadAllArticlesCB, _this.loadByBatchEnabledCB, _this.batchSizeInput, _this.globalSettingsEnabledCB];
                 _this.initGlobalSettings(_this.globalSettings.slice(0)).then(function () {
                     _this.updateSubscription().then(function () {
@@ -2517,7 +2558,7 @@ var HTMLSubscriptionSetting = (function () {
 
 var HTMLGlobalSettings = (function () {
     function HTMLGlobalSettings(id, defaultValue, uiManager, fullRefreshOnChange, sessionStore) {
-        if (fullRefreshOnChange === void 0) { fullRefreshOnChange = true; }
+        if (fullRefreshOnChange === void 0) { fullRefreshOnChange = false; }
         if (sessionStore === void 0) { sessionStore = true; }
         this.id = id;
         this.defaultValue = defaultValue;
@@ -2548,6 +2589,9 @@ var HTMLGlobalSettings = (function () {
         this.save();
         this.refreshHTMLValue();
     };
+    HTMLGlobalSettings.prototype.setAdditionalChangeCallback = function (additionalChangeCallback) {
+        this.additionalChangeCallback = additionalChangeCallback;
+    };
     HTMLGlobalSettings.prototype.save = function () {
         LocalPersistence.put(this.id, this.value);
     };
@@ -2572,14 +2616,15 @@ var HTMLGlobalSettings = (function () {
             return $id(this.htmlId).val(this.value);
         }
     };
-    HTMLGlobalSettings.prototype.initUI = function (callback, thisArg) {
+    HTMLGlobalSettings.prototype.initUI = function () {
+        var _this = this;
         var this_ = this;
         var additionalCallback = function () {
-            if (callback) {
-                callback.call(thisArg, this_.value);
+            if (_this.additionalChangeCallback) {
+                _this.additionalChangeCallback.call(_this, this_.value);
             }
         };
-        function mainCallback() {
+        function changeCallback() {
             var val = this_.getHTMLValue($(this));
             this_.setValue(val);
             this_.save();
@@ -2590,10 +2635,10 @@ var HTMLGlobalSettings = (function () {
         }
         ;
         if (this.isBoolean) {
-            $id(this.htmlId).click(mainCallback);
+            $id(this.htmlId).click(changeCallback);
         }
         else {
-            $id(this.htmlId)[0].oninput = mainCallback;
+            $id(this.htmlId)[0].oninput = changeCallback;
         }
         this.refreshHTMLValue();
         additionalCallback();

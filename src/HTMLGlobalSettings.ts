@@ -16,8 +16,9 @@ export class HTMLGlobalSettings<T extends boolean | number> {
     isBoolean: boolean;
     fullRefreshOnChange: boolean;
     sessionStoreEnabled: boolean;
+    additionalChangeCallback: (newValue: T) => void;
 
-    constructor(id: string, defaultValue: T, uiManager: UIManager, fullRefreshOnChange = true, sessionStore = true) {
+    constructor(id: string, defaultValue: T, uiManager: UIManager, fullRefreshOnChange = false, sessionStore = true) {
         this.id = id;
         this.defaultValue = defaultValue;
         this.isBoolean = typeof (defaultValue) === "boolean";
@@ -51,6 +52,10 @@ export class HTMLGlobalSettings<T extends boolean | number> {
         this.refreshHTMLValue();
     }
 
+    public setAdditionalChangeCallback(additionalChangeCallback: (newValue: T) => void) {
+        this.additionalChangeCallback = additionalChangeCallback;
+    }
+
     save() {
         LocalPersistence.put(this.id, this.value);
     }
@@ -77,14 +82,14 @@ export class HTMLGlobalSettings<T extends boolean | number> {
         }
     }
 
-    initUI(callback?: (newValue: boolean) => void, thisArg?: any) {
+    initUI() {
         var this_ = this;
         let additionalCallback = () => {
-            if (callback) {
-                callback.call(thisArg, this_.value);
+            if (this.additionalChangeCallback) {
+                this.additionalChangeCallback.call(this, this_.value);
             }
         }
-        function mainCallback() {
+        function changeCallback() {
             let val = this_.getHTMLValue($(this));
             this_.setValue(val);
             this_.save();
@@ -94,9 +99,9 @@ export class HTMLGlobalSettings<T extends boolean | number> {
             additionalCallback();
         };
         if (this.isBoolean) {
-            $id(this.htmlId).click(mainCallback);
+            $id(this.htmlId).click(changeCallback);
         } else {
-            $id(this.htmlId)[0].oninput = mainCallback;
+            $id(this.htmlId)[0].oninput = changeCallback;
         }
         this.refreshHTMLValue();
         additionalCallback();

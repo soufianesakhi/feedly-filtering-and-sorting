@@ -38,6 +38,8 @@ var ext = {
 	"hideWhenMarkAboveBelowId": "isHideWhenMarkAboveBelow",
 	"hideAfterReadId": "isHideAfterRead",
 	"autoLoadAllArticlesId": "autoLoadAllArticles",
+	"batchSizeId": "batchSize",
+	"loadByBatchEnabledId": "loadByBatchEnabled",
 	"isNewestFirstId": "isNewestFirst",
 	"markAsReadAboveBelowReadId": "MarkAsReadAboveBelowRead",
 }

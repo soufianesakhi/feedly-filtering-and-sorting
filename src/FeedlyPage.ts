@@ -3,20 +3,22 @@
 import { Subscription } from "./Subscription";
 import { SettingsManager } from "./SettingsManager";
 import { EntryInfos } from "./ArticleManager";
+import { HTMLGlobalSettings } from "./HTMLGlobalSettings";
 import { executeWindow, injectToWindow, injectStyleText, injectClasses } from "./Utils";
 
 declare var getFFnS: (id: string, persistent?: boolean) => any;
 declare var putFFnS: (id: string, value: any, persistent?: boolean) => any;
 declare var getById: (id: string) => any;
 declare var getStreamPage: () => any;
+declare var loadByBatchChangeCallback: (enabled: boolean) => void;
 
 export class FeedlyPage {
     hiddingInfoClass = "FFnS_Hiding_Info";
 
     constructor() {
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage"],
-            this.get, this.put, this.getById, this.getStreamPage);
+        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "loadByBatchChangeCallback"],
+            this.get, this.put, this.getById, this.getStreamPage, this.loadByBatchChangeCallback);
         injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
@@ -51,6 +53,21 @@ export class FeedlyPage {
         NodeCreationObserver.init("observed-page");
     }
 
+    initLoadByBatch(loadByBatchEnabledCB: HTMLGlobalSettings<boolean>) {
+        loadByBatchEnabledCB.setAdditionalChangeCallback(this.loadByBatchChangeCallback);
+    }
+
+    loadByBatchChangeCallback(enabled: boolean) {
+        console.log("loadByBatchChangeCallback: " + enabled);
+        if (!window["getStreamPage"] || !getStreamPage()) {
+            return;
+        }
+        if (enabled) {
+            window.removeEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded)
+        } else {
+            window.addEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded)
+        }
+    }
 
     getStreamPage(): any {
         var observers = window["streets"].service("navigo").observers;
@@ -246,7 +263,8 @@ export class FeedlyPage {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
-        var autoLoadAllArticleBatchSize = 1000;
+        var autoLoadAllArticleDefaultBatchSize = 1000;
+        var autoLoadAllArticleBatchSize;
 
         var isAutoLoad: () => boolean = () => {
             return getStreamPage() != null &&
@@ -259,9 +277,12 @@ export class FeedlyPage {
         var stream = reader.lookupStream(streamId, { unreadOnly: true, featured: 0, sort: "newest", batchSize: 40 });
         var prototype = Object.getPrototypeOf(stream);
         var setBatchSize: Function = prototype.setBatchSize;
-        prototype.setBatchSize = function () {
+        prototype.setBatchSize = function (customSize?: number) {
+            if (this._batchSize == customSize) {
+                return;
+            }
             if (isAutoLoad()) {
-                this._batchSize = autoLoadAllArticleBatchSize;
+                this._batchSize = customSize;
             } else {
                 setBatchSize.apply(this, arguments);
             }
@@ -271,25 +292,45 @@ export class FeedlyPage {
         var setEntries = navigoPrototype.setEntries;
         navigoPrototype.setEntries = function (entries: any[]) {
             if (entries.length > 0 && entries[0].jsonInfo.unread && isAutoLoad()) {
+                let isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
+                let firstLoadByBatch = false;
+                if (this.entries.length == 0) {
+                    loadByBatchChangeCallback(isLoadByBatch);
+                    firstLoadByBatch = isLoadByBatch;
+                }
+                let isBatchLoading = true;
+                autoLoadAllArticleBatchSize = autoLoadAllArticleDefaultBatchSize;
+                if (isLoadByBatch) {
+                    let batchSize = getFFnS(ext.batchSizeId, true);
+                    autoLoadAllArticleBatchSize = batchSize;
+                    if (entries.length >= batchSize) {
+                        isBatchLoading = false;
+                    }
+                }
+
                 var stream = getStreamPage().stream;
                 var hasAllEntries = stream.state.hasAllEntries;
-                if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries) {
+                if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries && isBatchLoading) {
                     stream.askingMoreEntries = true;
                     setTimeout(() => {
                         if ($(".message.loading").length == 0) {
                             $(ext.articleSelector).first().parent()
                                 .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
                         }
-                        if (stream._batchSize != autoLoadAllArticleBatchSize) {
-                            stream.setBatchSize();
+                        let batchSize = autoLoadAllArticleBatchSize;
+                        if (firstLoadByBatch) {
+                            batchSize = batchSize - entries.length;
                         }
+                        stream.setBatchSize(batchSize);
                         console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
                         stream.askMoreEntries();
                         stream.askingMoreEntries = false;
                     }, 100);
-                } else if (hasAllEntries && $(autoLoadingMessageId).length == 1) {
+                } else if ((hasAllEntries || !isBatchLoading) && $(autoLoadingMessageId).length == 1) {
                     $(autoLoadingMessageId).remove();
-                    console.log("End auto load all articles at: " + new Date().toTimeString());
+                    if (hasAllEntries) {
+                        console.log("End auto load all articles at: " + new Date().toTimeString());
+                    }
                 }
             }
             return setEntries.apply(this, arguments);
