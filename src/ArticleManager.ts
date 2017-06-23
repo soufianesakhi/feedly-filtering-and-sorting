@@ -218,6 +218,9 @@ export class ArticleManager {
         if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
             var articlesContainer = $(ext.articleSelector).first().parent();
             var endOfFeed = $(ext.endOfFeedSelector).detach();
+            if (articlesContainer.find("h4").length > 0) {
+                articlesContainer.before($("<h4>"));
+            }
             articlesContainer.empty();
             visibleArticles.forEach((article) => {
                 articlesContainer.append(article.get());
