@@ -308,7 +308,7 @@ export class FeedlyPage {
             try {
                 return getStreamPage() != null &&
                     ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesSelector).length > 0)
-                    && getStreamPage().stream.state.info.subscribed
+                    && !(getStreamPage().stream.state.info.subscribed === false)
                     && getFFnS(ext.autoLoadAllArticlesId, true);
             } catch (e) {
                 console.log(e);
