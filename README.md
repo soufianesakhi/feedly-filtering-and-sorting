@@ -26,7 +26,7 @@ Additionally the `Latest` sort option must be enabled to use sorting functionali
 - Restricting: Show only articles that contain at least one of the restricting keywords.
 - Advanced keyword matching: Specify areas to search, searching method (simple, pattern (RegExp), ...)
 - Multi level sorting: by popularity, by title, by source or by publish date.
-- Auto load all unread articles.
+- Auto load all unread articles at once or by batches (mark as read by batch when there are a lot of unread articles).
 - Advanced controls (keep recently published articles unread, ...).
 - Pin hot articles to top.
 - Import/export all settings from/to file.

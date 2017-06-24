@@ -14,7 +14,7 @@
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @resource    jscolor.js https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     2.8.2
+// @version     2.9.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1657,7 +1657,7 @@ var FeedlyPage = (function () {
         var navigoPrototype = Object.getPrototypeOf(navigo);
         var setEntries = navigoPrototype.setEntries;
         navigoPrototype.setEntries = function (entries) {
-            if (entries.length > 0 && entries[0].jsonInfo.unread && isAutoLoad()) {
+            if (entries.length > 0 && entries[entries.length - 1].jsonInfo.unread && isAutoLoad()) {
                 var isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
                 var firstLoadByBatch_1 = false;
                 if (this.entries.length == 0) {
@@ -1862,7 +1862,7 @@ var UIManager = (function () {
                 _this.autoLoadAllArticlesCB = new HTMLGlobalSettings(ext.autoLoadAllArticlesId, false, _this);
                 _this.globalSettingsEnabledCB = new HTMLGlobalSettings("globalSettingsEnabled", true, _this, true, false);
                 _this.loadByBatchEnabledCB = new HTMLGlobalSettings(ext.loadByBatchEnabledId, false, _this);
-                _this.batchSizeInput = new HTMLGlobalSettings(ext.batchSizeId, 300, _this);
+                _this.batchSizeInput = new HTMLGlobalSettings(ext.batchSizeId, 200, _this);
                 _this.globalSettings = [_this.autoLoadAllArticlesCB, _this.loadByBatchEnabledCB, _this.batchSizeInput, _this.globalSettingsEnabledCB];
                 _this.initGlobalSettings(_this.globalSettings.slice(0)).then(function () {
                     _this.updateSubscription().then(function () {

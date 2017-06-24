@@ -333,7 +333,7 @@ export class FeedlyPage {
         var navigoPrototype = Object.getPrototypeOf(navigo);
         var setEntries = navigoPrototype.setEntries;
         navigoPrototype.setEntries = function (entries: any[]) {
-            if (entries.length > 0 && entries[0].jsonInfo.unread && isAutoLoad()) {
+            if (entries.length > 0 && entries[entries.length - 1].jsonInfo.unread && isAutoLoad()) {
                 let isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
                 let firstLoadByBatch = false;
                 if (this.entries.length == 0) {
