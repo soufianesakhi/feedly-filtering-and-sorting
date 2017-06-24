@@ -23,7 +23,6 @@ var ext = {
 	"popularitySelector": ".engagement",
 	"hidingInfoSibling": "header > h1 .button-dropdown",
 	"endOfFeedSelector": ".list-entries h4:contains(End of feed)",
-	"notFollowedPageSelector": "button.follow",
 
 	"lastReadEntryId": "lastReadEntry",
 	"keepNewArticlesUnreadId": "keepNewArticlesUnread",

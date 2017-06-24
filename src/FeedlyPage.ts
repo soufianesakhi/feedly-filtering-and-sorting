@@ -10,15 +10,15 @@ declare var getFFnS: (id: string, persistent?: boolean) => any;
 declare var putFFnS: (id: string, value: any, persistent?: boolean) => any;
 declare var getById: (id: string) => any;
 declare var getStreamPage: () => any;
-declare var loadByBatchChangeCallback: (enabled: boolean) => void;
+declare var onClickCapture: (element: JQuery, callback: (event: MouseEvent) => any) => void;
 
 export class FeedlyPage {
     hiddingInfoClass = "FFnS_Hiding_Info";
 
     constructor() {
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "loadByBatchChangeCallback"],
-            this.get, this.put, this.getById, this.getStreamPage, this.loadByBatchChangeCallback);
+        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture"],
+            this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture);
         injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
@@ -53,22 +53,6 @@ export class FeedlyPage {
         NodeCreationObserver.init("observed-page");
     }
 
-    initLoadByBatch(loadByBatchEnabledCB: HTMLGlobalSettings<boolean>) {
-        loadByBatchEnabledCB.setAdditionalChangeCallback(this.loadByBatchChangeCallback);
-    }
-
-    loadByBatchChangeCallback(enabled: boolean) {
-        console.log("loadByBatchChangeCallback: " + enabled);
-        if (!window["getStreamPage"] || !getStreamPage()) {
-            return;
-        }
-        if (enabled) {
-            window.removeEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded)
-        } else {
-            window.addEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded)
-        }
-    }
-
     getStreamPage(): any {
         var observers = window["streets"].service("navigo").observers;
         for (let i = 0, len = observers.length; i < len; i++) {
@@ -88,11 +72,12 @@ export class FeedlyPage {
         });
     }
 
+    onClickCapture(element: JQuery, callback: (event: MouseEvent) => any): void {
+        element.get(0).addEventListener('click', callback, true);
+    }
+
     onNewArticle() {
         var reader = window["streets"].service('reader');
-        var onClick = (element: JQuery, callback: (event: MouseEvent) => any) => {
-            element.get(0).addEventListener('click', callback, true);
-        }
         var getLink = (a: JQuery) => {
             return a.find(".title").attr("href");
         };
@@ -197,7 +182,7 @@ export class FeedlyPage {
                 window.open(link, link);
                 reader.askMarkEntryAsRead(entryId);
             }
-            onClick(openAndMarkAsReadElement, openAndMarkAsRead);
+            onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
 
             let visualElement;
             if (cardsView) {
@@ -206,15 +191,15 @@ export class FeedlyPage {
                 visualElement = a.find(".visual");
             }
             if (visualElement) {
-                onClick(visualElement, e => {
+                onClickCapture(visualElement, e => {
                     if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
                         openAndMarkAsRead(e);
                     }
                 });
             }
 
-            onClick(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(entryId, false));
-            onClick(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(entryId, true));
+            onClickCapture(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(entryId, false));
+            onClickCapture(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(entryId, true));
         });
     }
 
@@ -261,21 +246,78 @@ export class FeedlyPage {
 
     overrideLoadingEntries() {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
+        var loadNextBatchBtnId = "#FFnS_LoadNextBatchBtn";
+        var secondaryMarkAsReadBtnsSelector = ".mark-as-read-button.secondary";
+        var loadByBatchText = "Mark batch as read and load next batch";
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
+        var streamId = reader.listSubscriptions()[0].id;
         var autoLoadAllArticleDefaultBatchSize = 1000;
-        var autoLoadAllArticleBatchSize;
 
-        var isAutoLoad: () => boolean = () => {
-            return getStreamPage() != null &&
-                ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesSelector).length > 0)
-                && $(ext.notFollowedPageSelector).length == 0
-                && getFFnS(ext.autoLoadAllArticlesId, true);
+        let fetchMoreEntries = (batchSize: number) => {
+            let stream = getStreamPage().stream;
+            if ($(".message.loading").length == 0) {
+                $(ext.articleSelector).first().parent().before($("<div>", {
+                    id: autoLoadingMessageId.substring(1),
+                    class: "message loading",
+                    text: "Auto loading all articles"
+                }));
+            }
+            stream.setBatchSize(batchSize);
+            console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
+            stream.askMoreEntries();
+            stream.askingMoreEntries = false;
+        }
+
+        let secondaryMarkAsReadBtnsCb = () => {
+            let len = $(ext.articleSelector).length;
+            if (len == 0) {
+                len = getFFnS(ext.batchSizeId, true);
+            }
+            $(secondaryMarkAsReadBtnsSelector).find("span").text(len);
+        }
+        let loadNextBatch = (ev: MouseEvent) => {
+            ev.stopPropagation();
+            let entries: any[] = navigo.originalEntries || navigo.getEntries();
+            let markAsReadEntryIds = entries.sort((a, b) => {
+                return a.jsonInfo.crawled - b.jsonInfo.crawled;
+            }).map<string>(e => {
+                return e.id;
+            });
+
+            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
+            if (lastReadEntryId) {
+                let idx = markAsReadEntryIds.indexOf(lastReadEntryId);
+                if (idx < markAsReadEntryIds.length - 1) {
+                    markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
+                }
+            }
+            var ids: string[] = getFFnS(ext.articlesToMarkAsReadId);
+            if (ids) {
+                markAsReadEntryIds = markAsReadEntryIds.concat(ids);
+            }
+            reader.askMarkEntriesAsRead(markAsReadEntryIds);
+            $(ext.articleSelector).first().parent().empty();
+            navigo.originalEntries = null;
+            navigo.entries = [];
+            fetchMoreEntries(getFFnS(ext.batchSizeId, true));
+            secondaryMarkAsReadBtnsCb();
         };
 
-        var streamId = reader.listSubscriptions()[0].id;
-        var stream = reader.lookupStream(streamId, { unreadOnly: true, featured: 0, sort: "newest", batchSize: 40 });
-        var prototype = Object.getPrototypeOf(stream);
+        var isAutoLoad: () => boolean = () => {
+            try {
+                return getStreamPage() != null &&
+                    ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesSelector).length > 0)
+                    && getStreamPage().stream.state.info.subscribed
+                    && getFFnS(ext.autoLoadAllArticlesId, true);
+            } catch (e) {
+                console.log(e);
+                return false;
+            }
+        };
+
+        let streamObj = reader.lookupStream(streamId, { unreadOnly: true, featured: 0, sort: "newest", batchSize: 40 });
+        var prototype = Object.getPrototypeOf(streamObj);
         var setBatchSize: Function = prototype.setBatchSize;
         prototype.setBatchSize = function (customSize?: number) {
             if (this._batchSize == customSize) {
@@ -295,11 +337,11 @@ export class FeedlyPage {
                 let isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
                 let firstLoadByBatch = false;
                 if (this.entries.length == 0) {
-                    loadByBatchChangeCallback(isLoadByBatch);
+                    window.removeEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded)
                     firstLoadByBatch = isLoadByBatch;
                 }
                 let isBatchLoading = true;
-                autoLoadAllArticleBatchSize = autoLoadAllArticleDefaultBatchSize;
+                let autoLoadAllArticleBatchSize = autoLoadAllArticleDefaultBatchSize;
                 if (isLoadByBatch) {
                     let batchSize = getFFnS(ext.batchSizeId, true);
                     autoLoadAllArticleBatchSize = batchSize;
@@ -313,23 +355,28 @@ export class FeedlyPage {
                 if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries && isBatchLoading) {
                     stream.askingMoreEntries = true;
                     setTimeout(() => {
-                        if ($(".message.loading").length == 0) {
-                            $(ext.articleSelector).first().parent()
-                                .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
-                        }
                         let batchSize = autoLoadAllArticleBatchSize;
                         if (firstLoadByBatch) {
                             batchSize = batchSize - entries.length;
                         }
-                        stream.setBatchSize(batchSize);
-                        console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
-                        stream.askMoreEntries();
-                        stream.askingMoreEntries = false;
+                        fetchMoreEntries(batchSize);
                     }, 100);
-                } else if ((hasAllEntries || !isBatchLoading) && $(autoLoadingMessageId).length == 1) {
+                } else if (hasAllEntries || !isBatchLoading) {
                     $(autoLoadingMessageId).remove();
                     if (hasAllEntries) {
                         console.log("End auto load all articles at: " + new Date().toTimeString());
+                        if (isLoadByBatch) {
+                            $(loadNextBatchBtnId).remove();
+                        }
+                    } else if (isLoadByBatch && $(loadNextBatchBtnId).length == 0) {
+                        $(ext.articleSelector).first().parent().after($('<button>', {
+                            id: loadNextBatchBtnId.substring(1),
+                            class: "full-width secondary",
+                            type: "button",
+                            style: "margin-top: 1%;",
+                            text: loadByBatchText
+                        }));
+                        onClickCapture($(loadNextBatchBtnId), loadNextBatch);
                     }
                 }
             }
@@ -340,7 +387,15 @@ export class FeedlyPage {
             if ($(autoLoadingMessageId).length == 1) {
                 $(e).hide();
             }
-        })
+        });
+
+        NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, e => {
+            if (getFFnS(ext.loadByBatchEnabledId, true)) {
+                onClickCapture($(e), loadNextBatch);
+                $(secondaryMarkAsReadBtnsSelector).attr("title", loadByBatchText);
+                secondaryMarkAsReadBtnsCb();
+            }
+        });
     }
 
     overrideMarkAsRead() {

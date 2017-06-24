@@ -45,7 +45,6 @@ var ext = {
     "popularitySelector": ".engagement",
     "hidingInfoSibling": "header > h1 .button-dropdown",
     "endOfFeedSelector": ".list-entries h4:contains(End of feed)",
-    "notFollowedPageSelector": "button.follow",
     "lastReadEntryId": "lastReadEntry",
     "keepNewArticlesUnreadId": "keepNewArticlesUnread",
     "articlesToMarkAsReadId": "articlesToMarkAsRead",
@@ -1362,7 +1361,7 @@ var FeedlyPage = (function () {
     function FeedlyPage() {
         this.hiddingInfoClass = "FFnS_Hiding_Info";
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "loadByBatchChangeCallback"], this.get, this.put, this.getById, this.getStreamPage, this.loadByBatchChangeCallback);
+        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture"], this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture);
         injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
@@ -1394,21 +1393,6 @@ var FeedlyPage = (function () {
         window["ext"] = getFFnS("ext");
         NodeCreationObserver.init("observed-page");
     };
-    FeedlyPage.prototype.initLoadByBatch = function (loadByBatchEnabledCB) {
-        loadByBatchEnabledCB.setAdditionalChangeCallback(this.loadByBatchChangeCallback);
-    };
-    FeedlyPage.prototype.loadByBatchChangeCallback = function (enabled) {
-        console.log("loadByBatchChangeCallback: " + enabled);
-        if (!window["getStreamPage"] || !getStreamPage()) {
-            return;
-        }
-        if (enabled) {
-            window.removeEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded);
-        }
-        else {
-            window.addEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded);
-        }
-    };
     FeedlyPage.prototype.getStreamPage = function () {
         var observers = window["streets"].service("navigo").observers;
         for (var i = 0, len = observers.length; i < len; i++) {
@@ -1426,11 +1410,11 @@ var FeedlyPage = (function () {
             }
         });
     };
+    FeedlyPage.prototype.onClickCapture = function (element, callback) {
+        element.get(0).addEventListener('click', callback, true);
+    };
     FeedlyPage.prototype.onNewArticle = function () {
         var reader = window["streets"].service('reader');
-        var onClick = function (element, callback) {
-            element.get(0).addEventListener('click', callback, true);
-        };
         var getLink = function (a) {
             return a.find(".title").attr("href");
         };
@@ -1534,7 +1518,7 @@ var FeedlyPage = (function () {
                 window.open(link, link);
                 reader.askMarkEntryAsRead(entryId);
             };
-            onClick(openAndMarkAsReadElement, openAndMarkAsRead);
+            onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
             var visualElement;
             if (cardsView) {
                 visualElement = a.find(".visual-container");
@@ -1543,14 +1527,14 @@ var FeedlyPage = (function () {
                 visualElement = a.find(".visual");
             }
             if (visualElement) {
-                onClick(visualElement, function (e) {
+                onClickCapture(visualElement, function (e) {
                     if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
                         openAndMarkAsRead(e);
                     }
                 });
             }
-            onClick(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(entryId, false));
-            onClick(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(entryId, true));
+            onClickCapture(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(entryId, false));
+            onClickCapture(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(entryId, true));
         });
     };
     FeedlyPage.prototype.reset = function () {
@@ -1590,19 +1574,74 @@ var FeedlyPage = (function () {
     };
     FeedlyPage.prototype.overrideLoadingEntries = function () {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
+        var loadNextBatchBtnId = "#FFnS_LoadNextBatchBtn";
+        var secondaryMarkAsReadBtnsSelector = ".mark-as-read-button.secondary";
+        var loadByBatchText = "Mark batch as read and load next batch";
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
-        var autoLoadAllArticleDefaultBatchSize = 1000;
-        var autoLoadAllArticleBatchSize;
-        var isAutoLoad = function () {
-            return getStreamPage() != null &&
-                ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesSelector).length > 0)
-                && $(ext.notFollowedPageSelector).length == 0
-                && getFFnS(ext.autoLoadAllArticlesId, true);
-        };
         var streamId = reader.listSubscriptions()[0].id;
-        var stream = reader.lookupStream(streamId, { unreadOnly: true, featured: 0, sort: "newest", batchSize: 40 });
-        var prototype = Object.getPrototypeOf(stream);
+        var autoLoadAllArticleDefaultBatchSize = 1000;
+        var fetchMoreEntries = function (batchSize) {
+            var stream = getStreamPage().stream;
+            if ($(".message.loading").length == 0) {
+                $(ext.articleSelector).first().parent().before($("<div>", {
+                    id: autoLoadingMessageId.substring(1),
+                    class: "message loading",
+                    text: "Auto loading all articles"
+                }));
+            }
+            stream.setBatchSize(batchSize);
+            console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
+            stream.askMoreEntries();
+            stream.askingMoreEntries = false;
+        };
+        var secondaryMarkAsReadBtnsCb = function () {
+            var len = $(ext.articleSelector).length;
+            if (len == 0) {
+                len = getFFnS(ext.batchSizeId, true);
+            }
+            $(secondaryMarkAsReadBtnsSelector).find("span").text(len);
+        };
+        var loadNextBatch = function (ev) {
+            ev.stopPropagation();
+            var entries = navigo.originalEntries || navigo.getEntries();
+            var markAsReadEntryIds = entries.sort(function (a, b) {
+                return a.jsonInfo.crawled - b.jsonInfo.crawled;
+            }).map(function (e) {
+                return e.id;
+            });
+            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
+            if (lastReadEntryId) {
+                var idx = markAsReadEntryIds.indexOf(lastReadEntryId);
+                if (idx < markAsReadEntryIds.length - 1) {
+                    markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
+                }
+            }
+            var ids = getFFnS(ext.articlesToMarkAsReadId);
+            if (ids) {
+                markAsReadEntryIds = markAsReadEntryIds.concat(ids);
+            }
+            reader.askMarkEntriesAsRead(markAsReadEntryIds);
+            $(ext.articleSelector).first().parent().empty();
+            navigo.originalEntries = null;
+            navigo.entries = [];
+            fetchMoreEntries(getFFnS(ext.batchSizeId, true));
+            secondaryMarkAsReadBtnsCb();
+        };
+        var isAutoLoad = function () {
+            try {
+                return getStreamPage() != null &&
+                    ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesSelector).length > 0)
+                    && getStreamPage().stream.state.info.subscribed
+                    && getFFnS(ext.autoLoadAllArticlesId, true);
+            }
+            catch (e) {
+                console.log(e);
+                return false;
+            }
+        };
+        var streamObj = reader.lookupStream(streamId, { unreadOnly: true, featured: 0, sort: "newest", batchSize: 40 });
+        var prototype = Object.getPrototypeOf(streamObj);
         var setBatchSize = prototype.setBatchSize;
         prototype.setBatchSize = function (customSize) {
             if (this._batchSize == customSize) {
@@ -1622,14 +1661,14 @@ var FeedlyPage = (function () {
                 var isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
                 var firstLoadByBatch_1 = false;
                 if (this.entries.length == 0) {
-                    loadByBatchChangeCallback(isLoadByBatch);
+                    window.removeEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded);
                     firstLoadByBatch_1 = isLoadByBatch;
                 }
                 var isBatchLoading = true;
-                autoLoadAllArticleBatchSize = autoLoadAllArticleDefaultBatchSize;
+                var autoLoadAllArticleBatchSize_1 = autoLoadAllArticleDefaultBatchSize;
                 if (isLoadByBatch) {
                     var batchSize = getFFnS(ext.batchSizeId, true);
-                    autoLoadAllArticleBatchSize = batchSize;
+                    autoLoadAllArticleBatchSize_1 = batchSize;
                     if (entries.length >= batchSize) {
                         isBatchLoading = false;
                     }
@@ -1639,24 +1678,30 @@ var FeedlyPage = (function () {
                 if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries && isBatchLoading) {
                     stream.askingMoreEntries = true;
                     setTimeout(function () {
-                        if ($(".message.loading").length == 0) {
-                            $(ext.articleSelector).first().parent()
-                                .before("<div id='FFnS_LoadingMessage' class='message loading'>Auto loading all articles</div>");
-                        }
-                        var batchSize = autoLoadAllArticleBatchSize;
+                        var batchSize = autoLoadAllArticleBatchSize_1;
                         if (firstLoadByBatch_1) {
                             batchSize = batchSize - entries.length;
                         }
-                        stream.setBatchSize(batchSize);
-                        console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
-                        stream.askMoreEntries();
-                        stream.askingMoreEntries = false;
+                        fetchMoreEntries(batchSize);
                     }, 100);
                 }
-                else if ((hasAllEntries || !isBatchLoading) && $(autoLoadingMessageId).length == 1) {
+                else if (hasAllEntries || !isBatchLoading) {
                     $(autoLoadingMessageId).remove();
                     if (hasAllEntries) {
                         console.log("End auto load all articles at: " + new Date().toTimeString());
+                        if (isLoadByBatch) {
+                            $(loadNextBatchBtnId).remove();
+                        }
+                    }
+                    else if (isLoadByBatch && $(loadNextBatchBtnId).length == 0) {
+                        $(ext.articleSelector).first().parent().after($('<button>', {
+                            id: loadNextBatchBtnId.substring(1),
+                            class: "full-width secondary",
+                            type: "button",
+                            style: "margin-top: 1%;",
+                            text: loadByBatchText
+                        }));
+                        onClickCapture($(loadNextBatchBtnId), loadNextBatch);
                     }
                 }
             }
@@ -1665,6 +1710,13 @@ var FeedlyPage = (function () {
         NodeCreationObserver.onCreation(ext.loadingMessageSelector, function (e) {
             if ($(autoLoadingMessageId).length == 1) {
                 $(e).hide();
+            }
+        });
+        NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, function (e) {
+            if (getFFnS(ext.loadByBatchEnabledId, true)) {
+                onClickCapture($(e), loadNextBatch);
+                $(secondaryMarkAsReadBtnsSelector).attr("title", loadByBatchText);
+                secondaryMarkAsReadBtnsCb();
             }
         });
     };
@@ -1810,7 +1862,6 @@ var UIManager = (function () {
                 _this.autoLoadAllArticlesCB = new HTMLGlobalSettings(ext.autoLoadAllArticlesId, false, _this);
                 _this.globalSettingsEnabledCB = new HTMLGlobalSettings("globalSettingsEnabled", true, _this, true, false);
                 _this.loadByBatchEnabledCB = new HTMLGlobalSettings(ext.loadByBatchEnabledId, false, _this);
-                _this.page.initLoadByBatch(_this.loadByBatchEnabledCB);
                 _this.batchSizeInput = new HTMLGlobalSettings(ext.batchSizeId, 300, _this);
                 _this.globalSettings = [_this.autoLoadAllArticlesCB, _this.loadByBatchEnabledCB, _this.batchSizeInput, _this.globalSettingsEnabledCB];
                 _this.initGlobalSettings(_this.globalSettings.slice(0)).then(function () {
