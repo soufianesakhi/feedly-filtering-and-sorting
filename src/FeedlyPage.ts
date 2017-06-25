@@ -391,7 +391,11 @@ export class FeedlyPage {
 
         NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, e => {
             if (getFFnS(ext.loadByBatchEnabledId, true)) {
-                onClickCapture($(e), loadNextBatch);
+                onClickCapture($(e), ev => {
+                    if (!getStreamPage().stream.state.hasAllEntries) {
+                        loadNextBatch(ev)
+                    }
+                });
                 $(secondaryMarkAsReadBtnsSelector).attr("title", loadByBatchText);
                 secondaryMarkAsReadBtnsCb();
             }
