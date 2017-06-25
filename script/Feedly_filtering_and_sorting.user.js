@@ -14,7 +14,7 @@
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @resource    jscolor.js https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     2.9.2
+// @version     2.9.3
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1675,7 +1675,7 @@ var FeedlyPage = (function () {
                 }
                 var stream = getStreamPage().stream;
                 var hasAllEntries = stream.state.hasAllEntries;
-                if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries && isBatchLoading) {
+                if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries && isBatchLoading && $(loadNextBatchBtnId).length == 0) {
                     stream.askingMoreEntries = true;
                     setTimeout(function () {
                         var batchSize = autoLoadAllArticleBatchSize_1;

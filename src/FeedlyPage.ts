@@ -352,7 +352,7 @@ export class FeedlyPage {
 
                 var stream = getStreamPage().stream;
                 var hasAllEntries = stream.state.hasAllEntries;
-                if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries && isBatchLoading) {
+                if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries && isBatchLoading && $(loadNextBatchBtnId).length == 0) {
                     stream.askingMoreEntries = true;
                     setTimeout(() => {
                         let batchSize = autoLoadAllArticleBatchSize;
