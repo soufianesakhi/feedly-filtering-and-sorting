@@ -297,6 +297,7 @@ export class FeedlyPage {
                 markAsReadEntryIds = markAsReadEntryIds.concat(ids);
             }
             reader.askMarkEntriesAsRead(markAsReadEntryIds);
+            window.scrollTo(0, 0);
             $(ext.articleSelector).first().parent().empty();
             navigo.originalEntries = null;
             navigo.entries = [];
