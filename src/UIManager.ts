@@ -71,6 +71,7 @@ export class UIManager {
                     this.updateSubscription().then(() => {
                         this.initUI();
                         this.registerSettings();
+                        this.articleManager.setLoadByBatch(this.loadByBatchEnabledCB.getValue());
                         this.updateMenu();
                         this.initSettingsCallbacks();
                         p.done();
@@ -328,6 +329,10 @@ export class UIManager {
 
     initSettingsCallbacks() {
         this.htmlSubscriptionManager.setUpCallbacks();
+
+        this.loadByBatchEnabledCB.setAdditionalChangeCallback(enabled => {
+            this.articleManager.setLoadByBatch(enabled);
+        });
 
         $id(this.closeBtnId).click(() => {
             $id(this.settingsDivContainerId).toggle();

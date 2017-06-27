@@ -301,6 +301,8 @@ export class FeedlyPage {
             $(ext.articleSelector).first().parent().empty();
             navigo.originalEntries = null;
             navigo.entries = [];
+            let batchIdx = getFFnS(ext.pageBatchIndex) || 0;
+            putFFnS(ext.pageBatchIndex, batchIdx++);
             fetchMoreEntries(getFFnS(ext.batchSizeId, true));
             secondaryMarkAsReadBtnsCb();
         };

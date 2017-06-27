@@ -13,15 +13,21 @@ export class ArticleManager {
     keywordManager: KeywordManager;
     page: FeedlyPage;
     sortedArticlesCount = 0;
+    currentBatchIndex = 0;
     lastReadArticleAge = -1;
     lastReadArticleGroup: Article[];
     articlesToMarkAsRead: Article[];
+    loadByBatch = false;
 
     constructor(subscriptionManager: SettingsManager, keywordManager: KeywordManager, page: FeedlyPage) {
         this.subscriptionManager = subscriptionManager;
         this.keywordManager = keywordManager;
         this.articleSorterFactory = new ArticleSorterFactory();
         this.page = page;
+    }
+
+    setLoadByBatch(loadByBatch: boolean): void {
+        this.loadByBatch = loadByBatch;
     }
 
     refreshArticles() {
@@ -38,6 +44,7 @@ export class ArticleManager {
 
     resetArticles() {
         this.sortedArticlesCount = 0;
+        this.currentBatchIndex = 0;
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
@@ -166,16 +173,29 @@ export class ArticleManager {
     }
 
     checkSortArticles() {
-        if (this.sortedArticlesCount != this.getCurrentUnreadCount()) {
+        if (this.loadByBatch && this.sortedArticlesCount == this.getCurrentUnreadCount()) {
+            let pageBatchIndex = this.page.get(ext.pageBatchIndex);
+            let batchSize = this.page.get(ext.batchSizeId, true);
+            if (batchSize == this.sortedArticlesCount && (!pageBatchIndex || pageBatchIndex != this.currentBatchIndex)) {
+                this.currentBatchIndex = pageBatchIndex;
+                this.sortedArticlesCount = 0;
+            }
+        }
+        if (this.loadByBatch) {
+            this.sortedArticlesCount++;
+        }
+        if ((this.sortedArticlesCount == this.getCurrentUnreadCount()) == this.loadByBatch) {
             if (this.getCurrentSub().isSortingEnabled()) {
                 let msg = "Sorting articles at " + new Date().toTimeString();
-                if (this.sortedArticlesCount > 0) {
+                if (this.sortedArticlesCount > 0 && !this.loadByBatch) {
                     msg += " (Previous sorted count: " + this.sortedArticlesCount + ")";
                 }
                 console.log(msg);
             }
             this.sortArticles();
-            this.sortedArticlesCount = this.getCurrentUnreadCount();
+            if (!this.loadByBatch) {
+                this.sortedArticlesCount = this.getCurrentUnreadCount();
+            }
         }
     }
 

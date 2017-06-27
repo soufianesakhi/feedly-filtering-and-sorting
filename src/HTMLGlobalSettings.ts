@@ -16,7 +16,7 @@ export class HTMLGlobalSettings<T extends boolean | number> {
     isBoolean: boolean;
     fullRefreshOnChange: boolean;
     sessionStoreEnabled: boolean;
-    additionalChangeCallback: (newValue: T) => void;
+    private additionalChangeCallback: (newValue: T) => void;
 
     constructor(id: string, defaultValue: T, uiManager: UIManager, fullRefreshOnChange = false, sessionStore = true) {
         this.id = id;

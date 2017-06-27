@@ -62,6 +62,7 @@ var ext = {
     "loadByBatchEnabledId": "loadByBatchEnabled",
     "isNewestFirstId": "isNewestFirst",
     "markAsReadAboveBelowReadId": "MarkAsReadAboveBelowRead",
+    "pageBatchIndex": "currentBatchIndex",
 };
 
 var exported = {};
@@ -827,12 +828,17 @@ var SettingsManager = (function () {
 var ArticleManager = (function () {
     function ArticleManager(subscriptionManager, keywordManager, page) {
         this.sortedArticlesCount = 0;
+        this.currentBatchIndex = 0;
         this.lastReadArticleAge = -1;
+        this.loadByBatch = false;
         this.subscriptionManager = subscriptionManager;
         this.keywordManager = keywordManager;
         this.articleSorterFactory = new ArticleSorterFactory();
         this.page = page;
     }
+    ArticleManager.prototype.setLoadByBatch = function (loadByBatch) {
+        this.loadByBatch = loadByBatch;
+    };
     ArticleManager.prototype.refreshArticles = function () {
         var _this = this;
         this.resetArticles();
@@ -847,6 +853,7 @@ var ArticleManager = (function () {
     };
     ArticleManager.prototype.resetArticles = function () {
         this.sortedArticlesCount = 0;
+        this.currentBatchIndex = 0;
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
@@ -973,16 +980,29 @@ var ArticleManager = (function () {
         return "hsl(" + h + ", " + s + "%, 80%)";
     };
     ArticleManager.prototype.checkSortArticles = function () {
-        if (this.sortedArticlesCount != this.getCurrentUnreadCount()) {
+        if (this.loadByBatch && this.sortedArticlesCount == this.getCurrentUnreadCount()) {
+            var pageBatchIndex = this.page.get(ext.pageBatchIndex);
+            var batchSize = this.page.get(ext.batchSizeId, true);
+            if (batchSize == this.sortedArticlesCount && (!pageBatchIndex || pageBatchIndex != this.currentBatchIndex)) {
+                this.currentBatchIndex = pageBatchIndex;
+                this.sortedArticlesCount = 0;
+            }
+        }
+        if (this.loadByBatch) {
+            this.sortedArticlesCount++;
+        }
+        if ((this.sortedArticlesCount == this.getCurrentUnreadCount()) == this.loadByBatch) {
             if (this.getCurrentSub().isSortingEnabled()) {
                 var msg = "Sorting articles at " + new Date().toTimeString();
-                if (this.sortedArticlesCount > 0) {
+                if (this.sortedArticlesCount > 0 && !this.loadByBatch) {
                     msg += " (Previous sorted count: " + this.sortedArticlesCount + ")";
                 }
                 console.log(msg);
             }
             this.sortArticles();
-            this.sortedArticlesCount = this.getCurrentUnreadCount();
+            if (!this.loadByBatch) {
+                this.sortedArticlesCount = this.getCurrentUnreadCount();
+            }
         }
     };
     ArticleManager.prototype.checkLastAddedArticle = function () {
@@ -1626,6 +1646,8 @@ var FeedlyPage = (function () {
             $(ext.articleSelector).first().parent().empty();
             navigo.originalEntries = null;
             navigo.entries = [];
+            var batchIdx = getFFnS(ext.pageBatchIndex) || 0;
+            putFFnS(ext.pageBatchIndex, batchIdx++);
             fetchMoreEntries(getFFnS(ext.batchSizeId, true));
             secondaryMarkAsReadBtnsCb();
         };
@@ -1873,6 +1895,7 @@ var UIManager = (function () {
                     _this.updateSubscription().then(function () {
                         _this.initUI();
                         _this.registerSettings();
+                        _this.articleManager.setLoadByBatch(_this.loadByBatchEnabledCB.getValue());
                         _this.updateMenu();
                         _this.initSettingsCallbacks();
                         p.done();
@@ -2109,6 +2132,9 @@ var UIManager = (function () {
     UIManager.prototype.initSettingsCallbacks = function () {
         var _this = this;
         this.htmlSubscriptionManager.setUpCallbacks();
+        this.loadByBatchEnabledCB.setAdditionalChangeCallback(function (enabled) {
+            _this.articleManager.setLoadByBatch(enabled);
+        });
         $id(this.closeBtnId).click(function () {
             $id(_this.settingsDivContainerId).toggle();
         });
