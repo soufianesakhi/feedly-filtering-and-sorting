@@ -14,7 +14,7 @@
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @resource    jscolor.js https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     2.9.4
+// @version     2.9.5
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1647,7 +1647,7 @@ var FeedlyPage = (function () {
             navigo.originalEntries = null;
             navigo.entries = [];
             var batchIdx = getFFnS(ext.pageBatchIndex) || 0;
-            putFFnS(ext.pageBatchIndex, batchIdx++);
+            putFFnS(ext.pageBatchIndex, ++batchIdx);
             fetchMoreEntries(getFFnS(ext.batchSizeId, true));
             secondaryMarkAsReadBtnsCb();
         };

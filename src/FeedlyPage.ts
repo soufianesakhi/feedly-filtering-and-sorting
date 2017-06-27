@@ -302,7 +302,7 @@ export class FeedlyPage {
             navigo.originalEntries = null;
             navigo.entries = [];
             let batchIdx = getFFnS(ext.pageBatchIndex) || 0;
-            putFFnS(ext.pageBatchIndex, batchIdx++);
+            putFFnS(ext.pageBatchIndex, ++batchIdx);
             fetchMoreEntries(getFFnS(ext.batchSizeId, true));
             secondaryMarkAsReadBtnsCb();
         };
