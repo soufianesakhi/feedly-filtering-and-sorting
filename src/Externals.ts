@@ -41,5 +41,5 @@ var ext = {
 	"loadByBatchEnabledId": "loadByBatchEnabled",
 	"isNewestFirstId": "isNewestFirst",
 	"markAsReadAboveBelowReadId": "MarkAsReadAboveBelowRead",
-	"pageBatchIndex": "currentBatchIndex",
+	"sortArticlesId": "isSortArticles",
 }

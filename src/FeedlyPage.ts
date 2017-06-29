@@ -11,14 +11,16 @@ declare var putFFnS: (id: string, value: any, persistent?: boolean) => any;
 declare var getById: (id: string) => any;
 declare var getStreamPage: () => any;
 declare var onClickCapture: (element: JQuery, callback: (event: MouseEvent) => any) => void;
+declare var fetchMoreEntries: (batchSize: number) => void;
+declare var loadNextBatch: (ev?: MouseEvent) => void;
 
 export class FeedlyPage {
     hiddingInfoClass = "FFnS_Hiding_Info";
 
     constructor() {
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture"],
-            this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture);
+        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture", "fetchMoreEntries", "loadNextBatch"],
+            this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch);
         injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
@@ -244,6 +246,52 @@ export class FeedlyPage {
         return document.getElementById(id + "_main");
     }
 
+    fetchMoreEntries(batchSize: number) {
+        var autoLoadingMessageId = "FFnS_LoadingMessage";
+        let stream = getStreamPage().stream;
+        if ($(".message.loading").length == 0) {
+            $(ext.articleSelector).first().parent().before($("<div>", {
+                id: autoLoadingMessageId,
+                class: "message loading",
+                text: "Auto loading all articles"
+            }));
+        }
+        stream.setBatchSize(batchSize);
+        console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
+        stream.askMoreEntries();
+        stream.askingMoreEntries = false;
+    }
+
+    loadNextBatch(ev?: MouseEvent) {
+        ev && ev.stopPropagation();
+        var navigo = window["streets"].service("navigo");
+        var reader = window["streets"].service('reader');
+        let entries: any[] = navigo.originalEntries || navigo.getEntries();
+        let markAsReadEntryIds = entries.sort((a, b) => {
+            return a.jsonInfo.crawled - b.jsonInfo.crawled;
+        }).map<string>(e => {
+            return e.id;
+        });
+
+        var lastReadEntryId = getFFnS(ext.lastReadEntryId);
+        if (lastReadEntryId) {
+            let idx = markAsReadEntryIds.indexOf(lastReadEntryId);
+            if (idx < markAsReadEntryIds.length - 1) {
+                markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
+            }
+        }
+        var ids: string[] = getFFnS(ext.articlesToMarkAsReadId);
+        if (ids) {
+            markAsReadEntryIds = markAsReadEntryIds.concat(ids);
+        }
+        reader.askMarkEntriesAsRead(markAsReadEntryIds);
+        window.scrollTo(0, 0);
+        $(ext.articleSelector).first().parent().empty();
+        navigo.originalEntries = null;
+        navigo.entries = [];
+        fetchMoreEntries(getFFnS(ext.batchSizeId, true));
+    }
+
     overrideLoadingEntries() {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
         var loadNextBatchBtnId = "#FFnS_LoadNextBatchBtn";
@@ -253,59 +301,6 @@ export class FeedlyPage {
         var reader = window["streets"].service('reader');
         var streamId = reader.listSubscriptions()[0].id;
         var autoLoadAllArticleDefaultBatchSize = 1000;
-
-        let fetchMoreEntries = (batchSize: number) => {
-            let stream = getStreamPage().stream;
-            if ($(".message.loading").length == 0) {
-                $(ext.articleSelector).first().parent().before($("<div>", {
-                    id: autoLoadingMessageId.substring(1),
-                    class: "message loading",
-                    text: "Auto loading all articles"
-                }));
-            }
-            stream.setBatchSize(batchSize);
-            console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
-            stream.askMoreEntries();
-            stream.askingMoreEntries = false;
-        }
-
-        let secondaryMarkAsReadBtnsCb = () => {
-            let len = $(ext.articleSelector).length;
-            if (len == 0) {
-                len = getFFnS(ext.batchSizeId, true);
-            }
-            $(secondaryMarkAsReadBtnsSelector).find("span").text(len);
-        }
-        let loadNextBatch = (ev: MouseEvent) => {
-            ev.stopPropagation();
-            let entries: any[] = navigo.originalEntries || navigo.getEntries();
-            let markAsReadEntryIds = entries.sort((a, b) => {
-                return a.jsonInfo.crawled - b.jsonInfo.crawled;
-            }).map<string>(e => {
-                return e.id;
-            });
-
-            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
-            if (lastReadEntryId) {
-                let idx = markAsReadEntryIds.indexOf(lastReadEntryId);
-                if (idx < markAsReadEntryIds.length - 1) {
-                    markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
-                }
-            }
-            var ids: string[] = getFFnS(ext.articlesToMarkAsReadId);
-            if (ids) {
-                markAsReadEntryIds = markAsReadEntryIds.concat(ids);
-            }
-            reader.askMarkEntriesAsRead(markAsReadEntryIds);
-            window.scrollTo(0, 0);
-            $(ext.articleSelector).first().parent().empty();
-            navigo.originalEntries = null;
-            navigo.entries = [];
-            let batchIdx = getFFnS(ext.pageBatchIndex) || 0;
-            putFFnS(ext.pageBatchIndex, ++batchIdx);
-            fetchMoreEntries(getFFnS(ext.batchSizeId, true));
-            secondaryMarkAsReadBtnsCb();
-        };
 
         var isAutoLoad: () => boolean = () => {
             try {
@@ -336,6 +331,9 @@ export class FeedlyPage {
         var navigoPrototype = Object.getPrototypeOf(navigo);
         var setEntries = navigoPrototype.setEntries;
         navigoPrototype.setEntries = function (entries: any[]) {
+            if (entries.length > 0) {
+                putFFnS(ext.sortArticlesId, true);
+            }
             if (entries.length > 0 && entries[entries.length - 1].jsonInfo.unread && isAutoLoad()) {
                 let isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
                 let firstLoadByBatch = false;
@@ -394,13 +392,7 @@ export class FeedlyPage {
 
         NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, e => {
             if (getFFnS(ext.loadByBatchEnabledId, true)) {
-                onClickCapture($(e), ev => {
-                    if (!getStreamPage().stream.state.hasAllEntries) {
-                        loadNextBatch(ev)
-                    }
-                });
                 $(secondaryMarkAsReadBtnsSelector).attr("title", loadByBatchText);
-                secondaryMarkAsReadBtnsCb();
             }
         });
     }
@@ -413,7 +405,9 @@ export class FeedlyPage {
         var prototype = pagesPkg.ReactPage.prototype;
         var markAsRead: Function = prototype.markAsRead;
         prototype.markAsRead = function (lastEntryObject) {
-            if (getFFnS(ext.keepNewArticlesUnreadId) && !(lastEntryObject && lastEntryObject.asOf)) {
+            if (getFFnS(ext.loadByBatchEnabledId, true) && !getStreamPage().stream.state.hasAllEntries) {
+                loadNextBatch();
+            } else if (getFFnS(ext.keepNewArticlesUnreadId) && !(lastEntryObject && lastEntryObject.asOf)) {
                 console.log("Marking as read with keeping new articles unread");
 
                 var idsToMarkAsRead: string[] = getFFnS(ext.articlesToMarkAsReadId);

@@ -12,22 +12,15 @@ export class ArticleManager {
     articleSorterFactory: ArticleSorterFactory;
     keywordManager: KeywordManager;
     page: FeedlyPage;
-    sortedArticlesCount = 0;
-    currentBatchIndex = 0;
     lastReadArticleAge = -1;
     lastReadArticleGroup: Article[];
     articlesToMarkAsRead: Article[];
-    loadByBatch = false;
 
     constructor(subscriptionManager: SettingsManager, keywordManager: KeywordManager, page: FeedlyPage) {
         this.subscriptionManager = subscriptionManager;
         this.keywordManager = keywordManager;
         this.articleSorterFactory = new ArticleSorterFactory();
         this.page = page;
-    }
-
-    setLoadByBatch(loadByBatch: boolean): void {
-        this.loadByBatch = loadByBatch;
     }
 
     refreshArticles() {
@@ -39,12 +32,10 @@ export class ArticleManager {
             this.addArticle(e, true);
         });
         this.checkLastAddedArticle();
-        this.checkSortArticles();
+        this.sortArticles();
     }
 
     resetArticles() {
-        this.sortedArticlesCount = 0;
-        this.currentBatchIndex = 0;
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
@@ -72,7 +63,7 @@ export class ArticleManager {
         if (!skipCheck) {
             article.checked();
             this.checkLastAddedArticle();
-            this.checkSortArticles();
+            this.sortArticles();
         }
     }
 
@@ -172,33 +163,6 @@ export class ArticleManager {
         return "hsl(" + h + ", " + s + "%, 80%)";
     }
 
-    checkSortArticles() {
-        if (this.loadByBatch && this.sortedArticlesCount == this.getCurrentUnreadCount()) {
-            let pageBatchIndex = this.page.get(ext.pageBatchIndex);
-            let batchSize = this.page.get(ext.batchSizeId, true);
-            if (batchSize == this.sortedArticlesCount && (!pageBatchIndex || pageBatchIndex != this.currentBatchIndex)) {
-                this.currentBatchIndex = pageBatchIndex;
-                this.sortedArticlesCount = 0;
-            }
-        }
-        if (this.loadByBatch) {
-            this.sortedArticlesCount++;
-        }
-        if ((this.sortedArticlesCount == this.getCurrentUnreadCount()) == this.loadByBatch) {
-            if (this.getCurrentSub().isSortingEnabled()) {
-                let msg = "Sorting articles at " + new Date().toTimeString();
-                if (this.sortedArticlesCount > 0 && !this.loadByBatch) {
-                    msg += " (Previous sorted count: " + this.sortedArticlesCount + ")";
-                }
-                console.log(msg);
-            }
-            this.sortArticles();
-            if (!this.loadByBatch) {
-                this.sortedArticlesCount = this.getCurrentUnreadCount();
-            }
-        }
-    }
-
     checkLastAddedArticle() {
         if ($(ext.uncheckedArticlesSelector).length == 0) {
             this.prepareMarkAsRead();
@@ -207,6 +171,10 @@ export class ArticleManager {
     }
 
     sortArticles() {
+        if (!this.page.get(ext.sortArticlesId)) {
+            return;
+        }
+        this.page.put(ext.sortArticlesId, false);
         let sub = this.getCurrentSub();
         var visibleArticles: Article[] = [], hiddenArticles: Article[] = [];
         (<Element[]>$(ext.articleSelector).toArray()).map<Article>(((a) => {
@@ -236,6 +204,7 @@ export class ArticleManager {
         }
 
         if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
+            console.log("Sorting articles at " + new Date().toTimeString());
             var articlesContainer = $(ext.articleSelector).first().parent();
             var endOfFeed = $(ext.endOfFeedSelector).detach();
             if (articlesContainer.find("h4").length > 0) {

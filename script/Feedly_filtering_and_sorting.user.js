@@ -62,7 +62,7 @@ var ext = {
     "loadByBatchEnabledId": "loadByBatchEnabled",
     "isNewestFirstId": "isNewestFirst",
     "markAsReadAboveBelowReadId": "MarkAsReadAboveBelowRead",
-    "pageBatchIndex": "currentBatchIndex",
+    "sortArticlesId": "isSortArticles",
 };
 
 var exported = {};
@@ -827,18 +827,12 @@ var SettingsManager = (function () {
 
 var ArticleManager = (function () {
     function ArticleManager(subscriptionManager, keywordManager, page) {
-        this.sortedArticlesCount = 0;
-        this.currentBatchIndex = 0;
         this.lastReadArticleAge = -1;
-        this.loadByBatch = false;
         this.subscriptionManager = subscriptionManager;
         this.keywordManager = keywordManager;
         this.articleSorterFactory = new ArticleSorterFactory();
         this.page = page;
     }
-    ArticleManager.prototype.setLoadByBatch = function (loadByBatch) {
-        this.loadByBatch = loadByBatch;
-    };
     ArticleManager.prototype.refreshArticles = function () {
         var _this = this;
         this.resetArticles();
@@ -849,11 +843,9 @@ var ArticleManager = (function () {
             _this.addArticle(e, true);
         });
         this.checkLastAddedArticle();
-        this.checkSortArticles();
+        this.sortArticles();
     };
     ArticleManager.prototype.resetArticles = function () {
-        this.sortedArticlesCount = 0;
-        this.currentBatchIndex = 0;
         this.lastReadArticleAge = -1;
         this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
@@ -878,7 +870,7 @@ var ArticleManager = (function () {
         if (!skipCheck) {
             article.checked();
             this.checkLastAddedArticle();
-            this.checkSortArticles();
+            this.sortArticles();
         }
     };
     ArticleManager.prototype.filterAndRestrict = function (article) {
@@ -979,32 +971,6 @@ var ArticleManager = (function () {
         var s = 30 + (x % 5 + 1) * 10;
         return "hsl(" + h + ", " + s + "%, 80%)";
     };
-    ArticleManager.prototype.checkSortArticles = function () {
-        if (this.loadByBatch && this.sortedArticlesCount == this.getCurrentUnreadCount()) {
-            var pageBatchIndex = this.page.get(ext.pageBatchIndex);
-            var batchSize = this.page.get(ext.batchSizeId, true);
-            if (batchSize == this.sortedArticlesCount && (!pageBatchIndex || pageBatchIndex != this.currentBatchIndex)) {
-                this.currentBatchIndex = pageBatchIndex;
-                this.sortedArticlesCount = 0;
-            }
-        }
-        if (this.loadByBatch) {
-            this.sortedArticlesCount++;
-        }
-        if ((this.sortedArticlesCount == this.getCurrentUnreadCount()) == this.loadByBatch) {
-            if (this.getCurrentSub().isSortingEnabled()) {
-                var msg = "Sorting articles at " + new Date().toTimeString();
-                if (this.sortedArticlesCount > 0 && !this.loadByBatch) {
-                    msg += " (Previous sorted count: " + this.sortedArticlesCount + ")";
-                }
-                console.log(msg);
-            }
-            this.sortArticles();
-            if (!this.loadByBatch) {
-                this.sortedArticlesCount = this.getCurrentUnreadCount();
-            }
-        }
-    };
     ArticleManager.prototype.checkLastAddedArticle = function () {
         if ($(ext.uncheckedArticlesSelector).length == 0) {
             this.prepareMarkAsRead();
@@ -1012,6 +978,10 @@ var ArticleManager = (function () {
         }
     };
     ArticleManager.prototype.sortArticles = function () {
+        if (!this.page.get(ext.sortArticlesId)) {
+            return;
+        }
+        this.page.put(ext.sortArticlesId, false);
         var sub = this.getCurrentSub();
         var visibleArticles = [], hiddenArticles = [];
         $(ext.articleSelector).toArray().map((function (a) {
@@ -1043,6 +1013,7 @@ var ArticleManager = (function () {
             this.sortArticleArray(visibleArticles);
         }
         if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
+            console.log("Sorting articles at " + new Date().toTimeString());
             var articlesContainer = $(ext.articleSelector).first().parent();
             var endOfFeed = $(ext.endOfFeedSelector).detach();
             if (articlesContainer.find("h4").length > 0) {
@@ -1381,7 +1352,7 @@ var FeedlyPage = (function () {
     function FeedlyPage() {
         this.hiddingInfoClass = "FFnS_Hiding_Info";
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture"], this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture);
+        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture", "fetchMoreEntries", "loadNextBatch"], this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch);
         injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
@@ -1592,6 +1563,49 @@ var FeedlyPage = (function () {
     FeedlyPage.prototype.getById = function (id) {
         return document.getElementById(id + "_main");
     };
+    FeedlyPage.prototype.fetchMoreEntries = function (batchSize) {
+        var autoLoadingMessageId = "FFnS_LoadingMessage";
+        var stream = getStreamPage().stream;
+        if ($(".message.loading").length == 0) {
+            $(ext.articleSelector).first().parent().before($("<div>", {
+                id: autoLoadingMessageId,
+                class: "message loading",
+                text: "Auto loading all articles"
+            }));
+        }
+        stream.setBatchSize(batchSize);
+        console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
+        stream.askMoreEntries();
+        stream.askingMoreEntries = false;
+    };
+    FeedlyPage.prototype.loadNextBatch = function (ev) {
+        ev && ev.stopPropagation();
+        var navigo = window["streets"].service("navigo");
+        var reader = window["streets"].service('reader');
+        var entries = navigo.originalEntries || navigo.getEntries();
+        var markAsReadEntryIds = entries.sort(function (a, b) {
+            return a.jsonInfo.crawled - b.jsonInfo.crawled;
+        }).map(function (e) {
+            return e.id;
+        });
+        var lastReadEntryId = getFFnS(ext.lastReadEntryId);
+        if (lastReadEntryId) {
+            var idx = markAsReadEntryIds.indexOf(lastReadEntryId);
+            if (idx < markAsReadEntryIds.length - 1) {
+                markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
+            }
+        }
+        var ids = getFFnS(ext.articlesToMarkAsReadId);
+        if (ids) {
+            markAsReadEntryIds = markAsReadEntryIds.concat(ids);
+        }
+        reader.askMarkEntriesAsRead(markAsReadEntryIds);
+        window.scrollTo(0, 0);
+        $(ext.articleSelector).first().parent().empty();
+        navigo.originalEntries = null;
+        navigo.entries = [];
+        fetchMoreEntries(getFFnS(ext.batchSizeId, true));
+    };
     FeedlyPage.prototype.overrideLoadingEntries = function () {
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
         var loadNextBatchBtnId = "#FFnS_LoadNextBatchBtn";
@@ -1601,56 +1615,6 @@ var FeedlyPage = (function () {
         var reader = window["streets"].service('reader');
         var streamId = reader.listSubscriptions()[0].id;
         var autoLoadAllArticleDefaultBatchSize = 1000;
-        var fetchMoreEntries = function (batchSize) {
-            var stream = getStreamPage().stream;
-            if ($(".message.loading").length == 0) {
-                $(ext.articleSelector).first().parent().before($("<div>", {
-                    id: autoLoadingMessageId.substring(1),
-                    class: "message loading",
-                    text: "Auto loading all articles"
-                }));
-            }
-            stream.setBatchSize(batchSize);
-            console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
-            stream.askMoreEntries();
-            stream.askingMoreEntries = false;
-        };
-        var secondaryMarkAsReadBtnsCb = function () {
-            var len = $(ext.articleSelector).length;
-            if (len == 0) {
-                len = getFFnS(ext.batchSizeId, true);
-            }
-            $(secondaryMarkAsReadBtnsSelector).find("span").text(len);
-        };
-        var loadNextBatch = function (ev) {
-            ev.stopPropagation();
-            var entries = navigo.originalEntries || navigo.getEntries();
-            var markAsReadEntryIds = entries.sort(function (a, b) {
-                return a.jsonInfo.crawled - b.jsonInfo.crawled;
-            }).map(function (e) {
-                return e.id;
-            });
-            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
-            if (lastReadEntryId) {
-                var idx = markAsReadEntryIds.indexOf(lastReadEntryId);
-                if (idx < markAsReadEntryIds.length - 1) {
-                    markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
-                }
-            }
-            var ids = getFFnS(ext.articlesToMarkAsReadId);
-            if (ids) {
-                markAsReadEntryIds = markAsReadEntryIds.concat(ids);
-            }
-            reader.askMarkEntriesAsRead(markAsReadEntryIds);
-            window.scrollTo(0, 0);
-            $(ext.articleSelector).first().parent().empty();
-            navigo.originalEntries = null;
-            navigo.entries = [];
-            var batchIdx = getFFnS(ext.pageBatchIndex) || 0;
-            putFFnS(ext.pageBatchIndex, ++batchIdx);
-            fetchMoreEntries(getFFnS(ext.batchSizeId, true));
-            secondaryMarkAsReadBtnsCb();
-        };
         var isAutoLoad = function () {
             try {
                 return getStreamPage() != null &&
@@ -1680,6 +1644,9 @@ var FeedlyPage = (function () {
         var navigoPrototype = Object.getPrototypeOf(navigo);
         var setEntries = navigoPrototype.setEntries;
         navigoPrototype.setEntries = function (entries) {
+            if (entries.length > 0) {
+                putFFnS(ext.sortArticlesId, true);
+            }
             if (entries.length > 0 && entries[entries.length - 1].jsonInfo.unread && isAutoLoad()) {
                 var isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
                 var firstLoadByBatch_1 = false;
@@ -1737,13 +1704,7 @@ var FeedlyPage = (function () {
         });
         NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, function (e) {
             if (getFFnS(ext.loadByBatchEnabledId, true)) {
-                onClickCapture($(e), function (ev) {
-                    if (!getStreamPage().stream.state.hasAllEntries) {
-                        loadNextBatch(ev);
-                    }
-                });
                 $(secondaryMarkAsReadBtnsSelector).attr("title", loadByBatchText);
-                secondaryMarkAsReadBtnsCb();
             }
         });
     };
@@ -1754,7 +1715,10 @@ var FeedlyPage = (function () {
         var prototype = pagesPkg.ReactPage.prototype;
         var markAsRead = prototype.markAsRead;
         prototype.markAsRead = function (lastEntryObject) {
-            if (getFFnS(ext.keepNewArticlesUnreadId) && !(lastEntryObject && lastEntryObject.asOf)) {
+            if (getFFnS(ext.loadByBatchEnabledId, true) && !getStreamPage().stream.state.hasAllEntries) {
+                loadNextBatch();
+            }
+            else if (getFFnS(ext.keepNewArticlesUnreadId) && !(lastEntryObject && lastEntryObject.asOf)) {
                 console.log("Marking as read with keeping new articles unread");
                 var idsToMarkAsRead = getFFnS(ext.articlesToMarkAsReadId);
                 if (idsToMarkAsRead) {
@@ -1895,7 +1859,6 @@ var UIManager = (function () {
                     _this.updateSubscription().then(function () {
                         _this.initUI();
                         _this.registerSettings();
-                        _this.articleManager.setLoadByBatch(_this.loadByBatchEnabledCB.getValue());
                         _this.updateMenu();
                         _this.initSettingsCallbacks();
                         p.done();
@@ -2132,9 +2095,6 @@ var UIManager = (function () {
     UIManager.prototype.initSettingsCallbacks = function () {
         var _this = this;
         this.htmlSubscriptionManager.setUpCallbacks();
-        this.loadByBatchEnabledCB.setAdditionalChangeCallback(function (enabled) {
-            _this.articleManager.setLoadByBatch(enabled);
-        });
         $id(this.closeBtnId).click(function () {
             $id(_this.settingsDivContainerId).toggle();
         });
