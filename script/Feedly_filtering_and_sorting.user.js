@@ -14,7 +14,7 @@
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @resource    jscolor.js https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     2.9.6
+// @version     2.9.7
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1588,16 +1588,18 @@ var FeedlyPage = (function () {
         }).map(function (e) {
             return e.id;
         });
-        var lastReadEntryId = getFFnS(ext.lastReadEntryId);
-        if (lastReadEntryId) {
-            var idx = markAsReadEntryIds.indexOf(lastReadEntryId);
-            if (idx < markAsReadEntryIds.length - 1) {
-                markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
+        if (getFFnS(ext.keepNewArticlesUnreadId)) {
+            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
+            if (lastReadEntryId) {
+                var idx = markAsReadEntryIds.indexOf(lastReadEntryId);
+                if (idx < markAsReadEntryIds.length - 1) {
+                    markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
+                }
             }
-        }
-        var ids = getFFnS(ext.articlesToMarkAsReadId);
-        if (ids) {
-            markAsReadEntryIds = markAsReadEntryIds.concat(ids);
+            var ids = getFFnS(ext.articlesToMarkAsReadId);
+            if (ids) {
+                markAsReadEntryIds = lastReadEntryId ? markAsReadEntryIds.concat(ids) : ids;
+            }
         }
         reader.askMarkEntriesAsRead(markAsReadEntryIds);
         window.scrollTo(0, 0);

@@ -272,17 +272,18 @@ export class FeedlyPage {
         }).map<string>(e => {
             return e.id;
         });
-
-        var lastReadEntryId = getFFnS(ext.lastReadEntryId);
-        if (lastReadEntryId) {
-            let idx = markAsReadEntryIds.indexOf(lastReadEntryId);
-            if (idx < markAsReadEntryIds.length - 1) {
-                markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
+        if (getFFnS(ext.keepNewArticlesUnreadId)) {
+            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
+            if (lastReadEntryId) {
+                let idx = markAsReadEntryIds.indexOf(lastReadEntryId);
+                if (idx < markAsReadEntryIds.length - 1) {
+                    markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
+                }
             }
-        }
-        var ids: string[] = getFFnS(ext.articlesToMarkAsReadId);
-        if (ids) {
-            markAsReadEntryIds = markAsReadEntryIds.concat(ids);
+            var ids: string[] = getFFnS(ext.articlesToMarkAsReadId);
+            if (ids) {
+                markAsReadEntryIds = lastReadEntryId ? markAsReadEntryIds.concat(ids) : ids;
+            }
         }
         reader.askMarkEntriesAsRead(markAsReadEntryIds);
         window.scrollTo(0, 0);
