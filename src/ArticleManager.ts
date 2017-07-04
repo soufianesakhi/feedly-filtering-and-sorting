@@ -32,7 +32,7 @@ export class ArticleManager {
             this.addArticle(e, true);
         });
         this.checkLastAddedArticle();
-        this.sortArticles();
+        this.sortArticles(true);
     }
 
     resetArticles() {
@@ -170,8 +170,8 @@ export class ArticleManager {
         }
     }
 
-    sortArticles() {
-        if (!this.page.get(ext.sortArticlesId)) {
+    sortArticles(force?: boolean) {
+        if (!this.page.get(ext.sortArticlesId) && !force) {
             return;
         }
         this.page.put(ext.sortArticlesId, false);
