@@ -7,7 +7,7 @@ var ext = {
 
 	"urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
 
-	"settingsBtnPredecessorSelector": ".button-refresh",
+	"settingsBtnPredecessorSelector": ".icon-toolbar-refresh-secondary, .button-refresh",
 	"articleSelector": ".list-entries > .entry:not([gap-article])",
 	"unreadArticlesSelector": ".list-entries > .entry.unread:not([gap-article])",
 	"uncheckedArticlesSelector": ".list-entries > .entry:not([checked-FFnS])",
@@ -21,7 +21,7 @@ var ext = {
 	"articleTitleAttribute": "data-title",
 	"articleEntryIdAttribute": "data-entryid",
 	"popularitySelector": ".engagement",
-	"hidingInfoSibling": "header > h1 .button-dropdown",
+	"hidingInfoSibling": "header .right-col, header > h1 .button-dropdown",
 	"endOfFeedSelector": ".list-entries h4:contains(End of feed)",
 
 	"lastReadEntryId": "lastReadEntry",

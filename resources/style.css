@@ -191,6 +191,10 @@ input {
     content: '';
 }
 
+.FFnS_Hiding_Info {
+    text-align: center;
+}
+
 .fx .open-in-new-tab-button.mark-as-read,
 .fx .mark-as-read-above-below-button.mark-as-read {
     background-repeat: no-repeat;

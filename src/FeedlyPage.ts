@@ -227,7 +227,7 @@ export class FeedlyPage {
         if (hiddenCount == 0) {
             return;
         }
-        $(ext.hidingInfoSibling).after("<div class='detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
+        $(ext.hidingInfoSibling).after("<div class='col-xs-2 col-md-2 detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
     }
 
     clearHiddingInfo() {
