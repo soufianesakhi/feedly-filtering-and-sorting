@@ -99,7 +99,7 @@ export class SettingsManager {
     }
 
     getActualSubscriptionURL(): string {
-        return document.URL.replace(this.urlPrefixPattern, "");
+        return decodeURIComponent(document.URL.replace(this.urlPrefixPattern, ""));
     }
 
     isGlobalMode(): boolean {
