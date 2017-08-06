@@ -406,9 +406,11 @@ export class FeedlyPage {
         var prototype = pagesPkg.ReactPage.prototype;
         var markAsRead: Function = prototype.markAsRead;
         prototype.markAsRead = function (lastEntryObject) {
-            if (getFFnS(ext.loadByBatchEnabledId, true) && !getStreamPage().stream.state.hasAllEntries) {
+            if (lastEntryObject && lastEntryObject.asOf) {
+                markAsRead.call(this, lastEntryObject);
+            } else if (getFFnS(ext.loadByBatchEnabledId, true) && !getStreamPage().stream.state.hasAllEntries) {
                 loadNextBatch();
-            } else if (getFFnS(ext.keepNewArticlesUnreadId) && !(lastEntryObject && lastEntryObject.asOf)) {
+            } else if (getFFnS(ext.keepNewArticlesUnreadId)) {
                 console.log("Marking as read with keeping new articles unread");
 
                 var idsToMarkAsRead: string[] = getFFnS(ext.articlesToMarkAsReadId);
