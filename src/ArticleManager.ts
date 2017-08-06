@@ -253,8 +253,21 @@ export class ArticleManager {
         if (!sub.isSortingEnabled()) {
             return;
         }
-        var sortingTypes = [sub.getSortingType()].concat(sub.getAdditionalSortingTypes());
+        let st = sub.getSortingType();
+        var sortingTypes = [st].concat(sub.getAdditionalSortingTypes());
         articles.sort(this.articleSorterFactory.getSorter(sortingTypes));
+
+        if (SortingType.SourceNewestReceiveDate == st) {
+            let sourceToArticles: { [key: string]: Article[] } = {};
+            articles.forEach(a => {
+                let sourceArticles = (sourceToArticles[a.getSource()] || (sourceToArticles[a.getSource()] = []), sourceToArticles[a.getSource()]);
+                sourceArticles.push(a);
+            });
+            articles.length = 0;
+            for (let source in sourceToArticles) {
+                articles.push(...sourceToArticles[source]);
+            }
+        }
     }
 
     isOldestFirst(): boolean {
@@ -308,6 +321,7 @@ class ArticleSorterFactory {
         this.sorterByType[SortingType.PublishDateOldFirst] = publishDateSorter(false);
         this.sorterByType[SortingType.SourceAsc] = sourceSorter(true);
         this.sorterByType[SortingType.SourceDesc] = sourceSorter(false);
+        this.sorterByType[SortingType.SourceNewestReceiveDate] = receivedDateSorter(true);
     }
 
     getSorter(sortingTypes: SortingType[]): (a: Article, b: Article) => number {

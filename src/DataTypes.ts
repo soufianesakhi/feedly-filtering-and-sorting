@@ -10,7 +10,8 @@ export enum SortingType {
     SourceAsc,
     SourceDesc,
     ReceivedDateNewFirst,
-    ReceivedDateOldFirst
+    ReceivedDateOldFirst,
+    SourceNewestReceiveDate
 }
 
 export enum FilteringType {

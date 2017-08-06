@@ -225,7 +225,8 @@ export class UIManager {
             { name: "ReceivedDateNewFirst", value: SortingType.ReceivedDateNewFirst },
             { name: "ReceivedDateOldFirst", value: SortingType.ReceivedDateOldFirst },
             { name: "SourceAsc", value: SortingType.SourceAsc },
-            { name: "SourceDesc", value: SortingType.SourceDesc }
+            { name: "SourceDesc", value: SortingType.SourceDesc },
+            { name: "SourceNewestReceiveDate", value: SortingType.SourceNewestReceiveDate },
         ]);
     }
 
