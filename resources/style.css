@@ -169,12 +169,12 @@ input {
 }
 
 .ShowSettingsBtn {
-	background-image: url("http://megaicons.net/static/img/icons_sizes/8/178/512/objects-empty-filter-icon.png");
+	background-image: url("https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/web-ext/icons/128.png");
 	background-size: 20px 20px;
 	background-position: center center;
 	background-repeat: no-repeat;
-	color: #757575;
 	background-color: transparent;
+	filter: grayscale(1);
 	font-weight: normal;
 	min-width: 0;
 	height: 40px;
