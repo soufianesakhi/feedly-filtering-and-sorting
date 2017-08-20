@@ -382,6 +382,15 @@ export class FeedlyPage {
                     }
                 }
             }
+            setTimeout(() => {
+                let markAsReadEntries = $(ext.articleSelector + "." + ext.markAsReadImmediatelyClass);
+                if (markAsReadEntries.length == 0) {
+                    return;
+                }
+                let ids = $.map<Element, string>(markAsReadEntries.toArray(), e => $(e).attr(ext.articleEntryIdAttribute));
+                reader.askMarkEntriesAsRead(ids);
+                markAsReadEntries.removeClass(ext.markAsReadImmediatelyClass).removeClass("unread").addClass("read");
+            }, 1000);
             return setEntries.apply(this, arguments);
         };
 

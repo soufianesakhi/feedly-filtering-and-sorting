@@ -67,6 +67,10 @@ export class Subscription {
         return this.dto.alwaysUseDefaultMatchingAreas;
     }
 
+    isMarkAsReadFiltered(): boolean {
+        return this.dto.markAsReadFiltered;
+    }
+
     getAdvancedControlsReceivedPeriod(): AdvancedControlsReceivedPeriod {
         return this.dto.advancedControlsReceivedPeriod;
     }

@@ -44,7 +44,8 @@ export class UIManager {
                 "KeepUnread_AdvancedControlsReceivedPeriod", "Hide_AdvancedControlsReceivedPeriod",
                 "ShowIfHot_AdvancedControlsReceivedPeriod", "MarkAsReadVisible_AdvancedControlsReceivedPeriod",
                 "OpenAndMarkAsRead", "MarkAsReadAboveBelow", "HideWhenMarkAboveBelow", "HideAfterRead",
-                "ReplaceHiddenWithGap", "AlwaysUseDefaultMatchingAreas", "VisualOpenAndMarkAsRead"]
+                "ReplaceHiddenWithGap", "AlwaysUseDefaultMatchingAreas", "VisualOpenAndMarkAsRead",
+                "MarkAsReadFiltered"]
         },
         {
             type: HTMLElementType.NumberInput, ids: ["MinPopularity_AdvancedControlsReceivedPeriod"]

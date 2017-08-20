@@ -42,4 +42,5 @@ var ext = {
 	"isNewestFirstId": "isNewestFirst",
 	"markAsReadAboveBelowReadId": "MarkAsReadAboveBelowRead",
 	"sortArticlesId": "isSortArticles",
+	"markAsReadImmediatelyClass": "FFnS-mark-as-read",
 }

@@ -75,7 +75,11 @@ export class ArticleManager {
                 hide = this.keywordManager.matchKeywords(article, sub, FilteringType.RestrictedOn, true);
             }
             if (sub.isFilteringEnabled()) {
-                hide = hide || this.keywordManager.matchKeywords(article, sub, FilteringType.FilteredOut);
+                let filtered = this.keywordManager.matchKeywords(article, sub, FilteringType.FilteredOut);
+                hide = hide || filtered;
+                if (filtered && sub.isMarkAsReadFiltered()) {
+                    article.get().addClass(ext.markAsReadImmediatelyClass);
+                }
             }
             if (hide) {
                 article.setVisible(false);
