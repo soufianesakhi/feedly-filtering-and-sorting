@@ -306,7 +306,7 @@ export class FeedlyPage {
         var isAutoLoad: () => boolean = () => {
             try {
                 return getStreamPage() != null &&
-                    ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesSelector).length > 0)
+                    ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesCountSelector).length > 0)
                     && !(getStreamPage().stream.state.info.subscribed === false)
                     && getFFnS(ext.autoLoadAllArticlesId, true);
             } catch (e) {

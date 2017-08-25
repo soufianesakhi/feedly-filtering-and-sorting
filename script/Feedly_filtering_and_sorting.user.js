@@ -30,19 +30,20 @@ var ext = {
     "moveDownIconLink": "https://cdn2.iconfinder.com/data/icons/designers-and-developers-icon-set/32/move_down-32.png",
     "urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
     "settingsBtnPredecessorSelector": ".icon-toolbar-refresh-secondary, .button-refresh",
-    "articleSelector": ".list-entries > .entry:not([gap-article])",
-    "unreadArticlesSelector": ".list-entries > .entry.unread:not([gap-article])",
-    "uncheckedArticlesSelector": ".list-entries > .entry:not([checked-FFnS])",
+    "articleSelector": ".list-entries [data-entryid][data-title]:not([gap-article])",
+    "unreadArticlesCountSelector": ".list-entries > .entry.unread:not([gap-article]), .list-entries .unread.u100",
+    "uncheckedArticlesSelector": ".list-entries [data-entryid][data-title]:not([checked-FFnS])",
     "readArticleClass": "read",
+    "articleViewClass": "u100Entry",
     "loadingMessageSelector": ".list-entries .message.loading",
     "sectionSelector": "#timeline > .section",
-    "publishAgeSpanSelector": ".ago",
+    "publishAgeSpanSelector": ".ago, .metadata [title^=published]",
     "publishAgeTimestampAttr": "title",
-    "articleSourceSelector": ".source",
+    "articleSourceSelector": ".source, .sourceTitle",
     "subscriptionChangeSelector": "header .heading",
     "articleTitleAttribute": "data-title",
     "articleEntryIdAttribute": "data-entryid",
-    "popularitySelector": ".engagement",
+    "popularitySelector": ".engagement, .nbrRecommendations",
     "hidingInfoSibling": "header .right-col, header > h1 .button-dropdown",
     "endOfFeedSelector": ".list-entries h4:contains(End of feed)",
     "lastReadEntryId": "lastReadEntry",
@@ -1182,8 +1183,14 @@ var Article = (function () {
                 this.publishAge = this.entryInfos.published;
             }
             else {
-                this.body = this.article.find(".summary").text().toLowerCase();
-                this.author = this.article.find(".authors").text().replace("by", "").toLowerCase();
+                var isArticleView = $(article).hasClass(ext.articleViewClass);
+                this.body = this.article.find(isArticleView ? ".content" : ".summary").text().toLowerCase();
+                this.author = (isArticleView ?
+                    (function () {
+                        var metadata = $(article).find(".metadata").text().trim().replace(/\s\s+/ig, "\n").split("\n");
+                        return metadata[3] === "/" ? metadata[2] : metadata[3];
+                    })() :
+                    this.article.find(".authors").text()).replace("by", "").trim().toLowerCase();
                 var ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
                 var ageSplit = ageStr.split("--");
                 var publishDate = ageSplit[0].replace(/[^:]*:/, "").trim();
@@ -1205,7 +1212,7 @@ var Article = (function () {
         // Source
         var source = this.article.find(ext.articleSourceSelector);
         if (source != null) {
-            this.source = source.text();
+            this.source = source.text().trim();
         }
     }
     Article.prototype.get = function () {
@@ -1643,7 +1650,7 @@ var FeedlyPage = (function () {
         var isAutoLoad = function () {
             try {
                 return getStreamPage() != null &&
-                    ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesSelector).length > 0)
+                    ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesCountSelector).length > 0)
                     && !(getStreamPage().stream.state.info.subscribed === false)
                     && getFFnS(ext.autoLoadAllArticlesId, true);
             }
@@ -2425,7 +2432,9 @@ var UIManager = (function () {
             }
             this.articleManager.addArticle(article);
             var articleObserver = new MutationObserver(function (mr, observer) {
-                if ($(article).hasClass(ext.readArticleClass) && !$(article).hasClass("inlineFrame")) {
+                var readClassElement = !$(article).hasClass(ext.articleViewClass) ?
+                    $(article) : $(article).closest(".u100");
+                if (readClassElement.hasClass(ext.readArticleClass) && !$(article).hasClass("inlineFrame")) {
                     if (_this.subscription.isHideAfterRead()) {
                         if (_this.subscription.isReplaceHiddenWithGap()) {
                             $(article).attr('gap-article', "true");

@@ -388,8 +388,15 @@ export class Article {
                 this.receivedAge = this.entryInfos.received;
                 this.publishAge = this.entryInfos.published;
             } else {
-                this.body = this.article.find(".summary").text().toLowerCase();
-                this.author = this.article.find(".authors").text().replace("by", "").toLowerCase();
+                let isArticleView = $(article).hasClass(ext.articleViewClass);
+                this.body = this.article.find(isArticleView ? ".content" : ".summary").text().toLowerCase();
+                this.author = (isArticleView ?
+                    (() => {
+                        let metadata = $(article).find(".metadata").text().trim().replace(/\s\s+/ig, "\n").split("\n");
+                        return metadata[3] === "/" ? metadata[2] : metadata[3];
+                    })() :
+                    this.article.find(".authors").text()
+                ).replace("by", "").trim().toLowerCase();
                 var ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
                 var ageSplit = ageStr.split("--");
                 var publishDate = ageSplit[0].replace(/[^:]*:/, "").trim();
@@ -414,7 +421,7 @@ export class Article {
         // Source
         var source = this.article.find(ext.articleSourceSelector);
         if (source != null) {
-            this.source = source.text();
+            this.source = source.text().trim();
         }
     }
 

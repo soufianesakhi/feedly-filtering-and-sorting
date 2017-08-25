@@ -648,7 +648,9 @@ export class UIManager {
             }
             this.articleManager.addArticle(article);
             var articleObserver = new MutationObserver((mr, observer) => {
-                if ($(article).hasClass(ext.readArticleClass) && !$(article).hasClass("inlineFrame")) {
+                let readClassElement = !$(article).hasClass(ext.articleViewClass) ?
+                    $(article) : $(article).closest(".u100");
+                if (readClassElement.hasClass(ext.readArticleClass) && !$(article).hasClass("inlineFrame")) {
                     if (this.subscription.isHideAfterRead()) {
                         if (this.subscription.isReplaceHiddenWithGap()) {
                             $(article).attr('gap-article', "true");
