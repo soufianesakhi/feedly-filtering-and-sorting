@@ -147,6 +147,7 @@ export class FeedlyPage {
             var cardsView = a.hasClass("u5");
             var magazineView = a.hasClass("u4");
             var titleView = a.hasClass("u0");
+            var articleView = a.hasClass(ext.articleViewClass);
             var addButton = (id: string, attributes) => {
                 attributes.type = "button";
                 attributes.style = getFFnS(id) ? "" : "display: none";
@@ -154,12 +155,14 @@ export class FeedlyPage {
                 if (titleView) {
                     attributes.class += " condensed-toolbar-icon icon";
                 }
+
                 var e = $("<button>", attributes);
                 if (cardsView) {
                     a.find(".mark-as-read").last().before(e);
                 } else if (magazineView) {
-                    attributes.style += "margin-right: 10px;"
                     a.find(".ago").after(e);
+                } else if (articleView) {
+                    a.find(".metadata").append(e);
                 } else {
                     $(element).prepend(e)
                 }
