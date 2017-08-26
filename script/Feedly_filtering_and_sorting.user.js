@@ -35,6 +35,7 @@ var ext = {
     "uncheckedArticlesSelector": ".list-entries [data-entryid][data-title]:not([checked-FFnS])",
     "readArticleClass": "read",
     "articleViewClass": "u100Entry",
+    "articleViewEntrySelector": ".u100",
     "loadingMessageSelector": ".list-entries .message.loading",
     "sectionSelector": "#timeline > .section",
     "publishAgeSpanSelector": ".ago, .metadata [title^=published]",
@@ -1541,6 +1542,9 @@ var FeedlyPage = (function () {
                 event.stopPropagation();
                 window.open(link, link);
                 reader.askMarkEntryAsRead(entryId);
+                if (articleView) {
+                    $(a).closest(ext.articleViewEntrySelector).removeClass("unread").addClass("read");
+                }
             };
             onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
             var visualElement;
@@ -2436,7 +2440,7 @@ var UIManager = (function () {
             this.articleManager.addArticle(article);
             var articleObserver = new MutationObserver(function (mr, observer) {
                 var readClassElement = !$(article).hasClass(ext.articleViewClass) ?
-                    $(article) : $(article).closest(".u100");
+                    $(article) : $(article).closest(ext.articleViewEntrySelector);
                 if (readClassElement.hasClass(ext.readArticleClass) && !$(article).hasClass("inlineFrame")) {
                     if (_this.subscription.isHideAfterRead()) {
                         if (_this.subscription.isReplaceHiddenWithGap()) {

@@ -186,6 +186,9 @@ export class FeedlyPage {
                 event.stopPropagation();
                 window.open(link, link);
                 reader.askMarkEntryAsRead(entryId);
+                if (articleView) {
+                    $(a).closest(ext.articleViewEntrySelector).removeClass("unread").addClass("read");
+                }
             }
             onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
 

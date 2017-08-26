@@ -13,6 +13,7 @@ var ext = {
 	"uncheckedArticlesSelector": ".list-entries [data-entryid][data-title]:not([checked-FFnS])",
 	"readArticleClass": "read",
 	"articleViewClass": "u100Entry",
+	"articleViewEntrySelector": ".u100",
 	"loadingMessageSelector": ".list-entries .message.loading",
 	"sectionSelector": "#timeline > .section",
 	"publishAgeSpanSelector": ".ago, .metadata [title^=published]",
