@@ -41,8 +41,7 @@ Two settings modes are available:
   - A group of subscriptions can share the same settings by linking them to the same subscription.
 
 Presentation support:
-- The `Title Only`, `Magazine` and `Cards` views are fully supported.
-- The `Full Articles` view is not currently supported (does not use the same rendering engine as the other views).
+- All the views are supported: `Title Only`, `Magazine`, `Cards` and `Article`.
 
 ## [Changelog](https://github.com/soufianesakhi/feedly-filtering-and-sorting/releases)
 

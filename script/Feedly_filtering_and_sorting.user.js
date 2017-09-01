@@ -14,7 +14,7 @@
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @resource    jscolor.js https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.2.1
+// @version     3.3.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1608,7 +1608,7 @@ var FeedlyPage = (function () {
         var autoLoadingMessageId = "FFnS_LoadingMessage";
         var stream = getStreamPage().stream;
         if ($(".message.loading").length == 0) {
-            $(ext.articlesContainerSelector).prepend($("<div>", {
+            $(ext.articlesContainerSelector).before($("<div>", {
                 id: autoLoadingMessageId,
                 class: "message loading",
                 text: "Auto loading all articles"

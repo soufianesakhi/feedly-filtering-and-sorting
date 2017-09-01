@@ -256,7 +256,7 @@ export class FeedlyPage {
         var autoLoadingMessageId = "FFnS_LoadingMessage";
         let stream = getStreamPage().stream;
         if ($(".message.loading").length == 0) {
-            $(ext.articlesContainerSelector).prepend($("<div>", {
+            $(ext.articlesContainerSelector).before($("<div>", {
                 id: autoLoadingMessageId,
                 class: "message loading",
                 text: "Auto loading all articles"
