@@ -187,7 +187,7 @@ export class FeedlyPage {
                 window.open(link, link);
                 reader.askMarkEntryAsRead(entryId);
                 if (articleView) {
-                    $(a).closest(ext.articleViewEntrySelector).removeClass("unread").addClass("read");
+                    $(a).closest(ext.articleViewEntryContainerSelector).removeClass("unread").addClass("read");
                 }
             }
             onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
@@ -256,7 +256,7 @@ export class FeedlyPage {
         var autoLoadingMessageId = "FFnS_LoadingMessage";
         let stream = getStreamPage().stream;
         if ($(".message.loading").length == 0) {
-            $(ext.articleSelector).first().parent().before($("<div>", {
+            $(ext.articlesContainerSelector).prepend($("<div>", {
                 id: autoLoadingMessageId,
                 class: "message loading",
                 text: "Auto loading all articles"
@@ -293,7 +293,7 @@ export class FeedlyPage {
         }
         reader.askMarkEntriesAsRead(markAsReadEntryIds);
         window.scrollTo(0, 0);
-        $(ext.articleSelector).first().parent().empty();
+        $(ext.articlesContainerSelector).empty();
         navigo.originalEntries = null;
         navigo.entries = [];
         fetchMoreEntries(getFFnS(ext.batchSizeId, true));
@@ -377,7 +377,7 @@ export class FeedlyPage {
                             $(loadNextBatchBtnId).remove();
                         }
                     } else if (isLoadByBatch && $(loadNextBatchBtnId).length == 0) {
-                        $(ext.articleSelector).first().parent().after($('<button>', {
+                        $(ext.articlesContainerSelector).after($('<button>', {
                             id: loadNextBatchBtnId.substring(1),
                             class: "full-width secondary",
                             type: "button",

@@ -215,7 +215,8 @@ input {
     height: 24px;
 }
 
-.fx .u100 .mark-as-read-above-below-button.mark-as-read, .fx .open-in-new-tab-button.mark-as-read {
+.fx .u100 .mark-as-read-above-below-button.mark-as-read, .fx .u100 .open-in-new-tab-button.mark-as-read {
+    margin-left: 20px;
     width: 24px;
     height: 24px;
 }

@@ -78,7 +78,7 @@ export class ArticleManager {
                 let filtered = this.keywordManager.matchKeywords(article, sub, FilteringType.FilteredOut);
                 hide = hide || filtered;
                 if (filtered && sub.isMarkAsReadFiltered()) {
-                    article.get().addClass(ext.markAsReadImmediatelyClass);
+                    article.addClass(ext.markAsReadImmediatelyClass);
                 }
             }
             if (hide) {
@@ -209,17 +209,17 @@ export class ArticleManager {
 
         if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
             console.log("Sorting articles at " + new Date().toTimeString());
-            var articlesContainer = $(ext.articleSelector).first().parent();
+            var articlesContainer = $(ext.articlesContainerSelector);
             var endOfFeed = $(ext.endOfFeedSelector).detach();
             if (articlesContainer.find("h4").length > 0) {
                 articlesContainer.before($("<h4>"));
             }
             articlesContainer.empty();
             visibleArticles.forEach((article) => {
-                articlesContainer.append(article.get());
+                articlesContainer.append(article.getContainer());
             });
             hiddenArticles.forEach((article) => {
-                articlesContainer.append(article.get());
+                articlesContainer.append(article.getContainer());
             });
             if (endOfFeed) {
                 articlesContainer.append(endOfFeed);
@@ -364,6 +364,7 @@ export class EntryInfos {
 export class Article {
     private checkedAttr = "checked-FFnS";
     private article: JQuery;
+    private container: JQuery;
     private entryId: string;
     title: string;
     body: string;
@@ -423,10 +424,12 @@ export class Article {
         if (source != null) {
             this.source = source.text().trim();
         }
+
+        this.container = this.article.closest(".list-entries > div");
     }
 
-    get(): JQuery {
-        return this.article;
+    addClass(c) {
+        return this.article.addClass(c);
     }
 
     getTitle(): string {
@@ -460,16 +463,19 @@ export class Article {
 
     setVisible(visible?: boolean) {
         if (visible != null && !visible) {
-            this.article.css("display", "none");
-            let articlesContainer = this.article.parent();
-            this.article.detach().appendTo(articlesContainer);
+            this.container.css("display", "none");
+            this.container.detach().appendTo($(ext.articlesContainerSelector));
         } else {
-            this.article.css("display", "");
+            this.container.css("display", "");
         }
     }
 
+    getContainer() {
+        return this.container;
+    }
+
     isVisible(): boolean {
-        return !(this.article.css("display") === "none");
+        return !(this.container.css("display") === "none");
     }
 
     checked() {
