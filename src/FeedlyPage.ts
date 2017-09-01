@@ -212,7 +212,7 @@ export class FeedlyPage {
     }
 
     reset() {
-        this.clearHiddingInfo();
+        this.clearHidingInfo();
         var i = sessionStorage.length;
         while (i--) {
             var key = sessionStorage.key(i);
@@ -222,21 +222,21 @@ export class FeedlyPage {
         }
     }
 
-    showHiddingInfo() {
+    showHidingInfo() {
         var hiddenCount = 0;
         $(ext.articleSelector).each((i, a) => {
-            if ($(a).css("display") === "none") {
+            if (!$(a).is(':visible')) {
                 hiddenCount++;
             }
         })
-        this.clearHiddingInfo();
+        this.clearHidingInfo();
         if (hiddenCount == 0) {
             return;
         }
         $(ext.hidingInfoSibling).after("<div class='col-xs-2 col-md-2 detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
     }
 
-    clearHiddingInfo() {
+    clearHidingInfo() {
         $("." + this.hiddingInfoClass).remove();
     }
 

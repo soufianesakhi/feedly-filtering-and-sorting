@@ -987,7 +987,7 @@ var ArticleManager = (function () {
     ArticleManager.prototype.checkLastAddedArticle = function () {
         if ($(ext.uncheckedArticlesSelector).length == 0) {
             this.prepareMarkAsRead();
-            this.page.showHiddingInfo();
+            this.page.showHidingInfo();
         }
     };
     ArticleManager.prototype.sortArticles = function (force) {
@@ -1570,7 +1570,7 @@ var FeedlyPage = (function () {
         });
     };
     FeedlyPage.prototype.reset = function () {
-        this.clearHiddingInfo();
+        this.clearHidingInfo();
         var i = sessionStorage.length;
         while (i--) {
             var key = sessionStorage.key(i);
@@ -1579,20 +1579,20 @@ var FeedlyPage = (function () {
             }
         }
     };
-    FeedlyPage.prototype.showHiddingInfo = function () {
+    FeedlyPage.prototype.showHidingInfo = function () {
         var hiddenCount = 0;
         $(ext.articleSelector).each(function (i, a) {
-            if ($(a).css("display") === "none") {
+            if (!$(a).is(':visible')) {
                 hiddenCount++;
             }
         });
-        this.clearHiddingInfo();
+        this.clearHidingInfo();
         if (hiddenCount == 0) {
             return;
         }
         $(ext.hidingInfoSibling).after("<div class='col-xs-2 col-md-2 detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
     };
-    FeedlyPage.prototype.clearHiddingInfo = function () {
+    FeedlyPage.prototype.clearHidingInfo = function () {
         $("." + this.hiddingInfoClass).remove();
     };
     FeedlyPage.prototype.put = function (id, value, persistent) {

@@ -170,7 +170,7 @@ export class ArticleManager {
     checkLastAddedArticle() {
         if ($(ext.uncheckedArticlesSelector).length == 0) {
             this.prepareMarkAsRead();
-            this.page.showHiddingInfo();
+            this.page.showHidingInfo();
         }
     }
 
