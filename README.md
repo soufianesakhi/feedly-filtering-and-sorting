@@ -56,6 +56,8 @@ Two options are available:
 
 - Google Chrome: https://chrome.google.com/webstore/detail/feedly-filtering-and-sort/anknmaofbemimfabppdffklbfiecikgo
 
+- Firefox: https://addons.mozilla.org/en-US/firefox/addon/feedly_filtering_and_sorting/
+
 ### Install as a user script
 This script relies on the user scripts extensions like [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) or [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en).
 
