@@ -214,8 +214,8 @@ export class ArticleManager {
             if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
                 console.log("Sorting articles at " + new Date().toTimeString());
                 endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
-                if (articlesContainer.find("h4").length > 0) {
-                    articlesContainer.before($("<h4>"));
+                if (articlesContainer.find("h4").length > 0 && !articlesContainer.prev().is("h4")) {
+                    articlesContainer.before("<h4>Latest</h4>");
                 }
                 articlesContainer.empty();
                 visibleArticles.forEach((article) => {
@@ -470,7 +470,8 @@ export class Article {
     setVisible(visible?: boolean) {
         if (visible != null && !visible) {
             this.container.css("display", "none");
-            this.container.detach().appendTo($(ext.articlesContainerSelector));
+            let articlesContainer = this.container.closest($(ext.articlesContainerSelector));
+            this.container.detach().appendTo(articlesContainer);
         } else {
             this.container.css("display", "");
         }

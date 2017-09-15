@@ -14,7 +14,7 @@
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @resource    jscolor.js https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.3.0.1
+// @version     3.4.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1034,8 +1034,8 @@ var ArticleManager = (function () {
             if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
                 console.log("Sorting articles at " + new Date().toTimeString());
                 endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
-                if (articlesContainer.find("h4").length > 0) {
-                    articlesContainer.before($("<h4>"));
+                if (articlesContainer.find("h4").length > 0 && !articlesContainer.prev().is("h4")) {
+                    articlesContainer.before("<h4>Latest</h4>");
                 }
                 articlesContainer.empty();
                 visibleArticles.forEach(function (article) {
@@ -1253,7 +1253,8 @@ var Article = (function () {
     Article.prototype.setVisible = function (visible) {
         if (visible != null && !visible) {
             this.container.css("display", "none");
-            this.container.detach().appendTo($(ext.articlesContainerSelector));
+            var articlesContainer = this.container.closest($(ext.articlesContainerSelector));
+            this.container.detach().appendTo(articlesContainer);
         }
         else {
             this.container.css("display", "");
@@ -1615,7 +1616,7 @@ var FeedlyPage = (function () {
         var autoLoadingMessageId = "FFnS_LoadingMessage";
         var stream = getStreamPage().stream;
         if ($(".message.loading").length == 0) {
-            $(ext.articlesContainerSelector).before($("<div>", {
+            $(ext.articlesContainerSelector).first().before($("<div>", {
                 id: autoLoadingMessageId,
                 class: "message loading",
                 text: "Auto loading all articles"
@@ -1734,7 +1735,7 @@ var FeedlyPage = (function () {
                         }
                     }
                     else if (isLoadByBatch && $(loadNextBatchBtnId).length == 0) {
-                        $(ext.articlesContainerSelector).after($('<button>', {
+                        $(ext.articlesContainerSelector).last().after($('<button>', {
                             id: loadNextBatchBtnId.substring(1),
                             class: "full-width secondary",
                             type: "button",

@@ -14,9 +14,7 @@ When this extension/script is enabled, a filter icon will appear next to the set
 
 ![Import settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/settings_controls.PNG)
 
-The `Unread Only` option is required to be enabled.
-
-Additionally the `Latest` sort option must be enabled to use sorting functionality (it's not required when the sorting is not enabled and the pin hot articles option is disabled).
+The `Unread Only` option is required to be enabled to support all the features.
 
 ![Feedly settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/feedly_settings.PNG)
 

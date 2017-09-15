@@ -256,7 +256,7 @@ export class FeedlyPage {
         var autoLoadingMessageId = "FFnS_LoadingMessage";
         let stream = getStreamPage().stream;
         if ($(".message.loading").length == 0) {
-            $(ext.articlesContainerSelector).before($("<div>", {
+            $(ext.articlesContainerSelector).first().before($("<div>", {
                 id: autoLoadingMessageId,
                 class: "message loading",
                 text: "Auto loading all articles"
@@ -377,7 +377,7 @@ export class FeedlyPage {
                             $(loadNextBatchBtnId).remove();
                         }
                     } else if (isLoadByBatch && $(loadNextBatchBtnId).length == 0) {
-                        $(ext.articlesContainerSelector).after($('<button>', {
+                        $(ext.articlesContainerSelector).last().after($('<button>', {
                             id: loadNextBatchBtnId.substring(1),
                             class: "full-width secondary",
                             type: "button",
