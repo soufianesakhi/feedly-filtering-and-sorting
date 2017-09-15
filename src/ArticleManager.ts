@@ -180,55 +180,61 @@ export class ArticleManager {
         }
         this.page.put(ext.sortArticlesId, false);
         let sub = this.getCurrentSub();
-        var visibleArticles: Article[] = [], hiddenArticles: Article[] = [];
-        (<Element[]>$(ext.articleSelector).toArray()).map<Article>(((a) => {
-            return new Article(a);
-        })).forEach((a) => {
-            if (a.isVisible()) {
-                visibleArticles.push(a);
-            } else {
-                hiddenArticles.push(a);
-            }
-        });
-        if (sub.isPinHotToTop()) {
-            var hotArticles: Article[] = [];
-            var normalArticles: Article[] = [];
-            visibleArticles.forEach((article) => {
-                if (article.isHot()) {
-                    hotArticles.push(article);
+        let endOfFeed: JQuery;
+        let sortedVisibleEntryIds: string[] = [];
+        $(ext.articlesContainerSelector).each((i, c) => {
+            let visibleArticles: Article[] = [];
+            let hiddenArticles: Article[] = [];
+            let articlesContainer = $(c);
+            articlesContainer.find(ext.containerArticleSelector).each((i, e) => {
+                let a = new Article(e);
+                if (a.isVisible()) {
+                    visibleArticles.push(a);
                 } else {
-                    normalArticles.push(article);
+                    hiddenArticles.push(a);
                 }
             });
-            this.sortArticleArray(hotArticles);
-            this.sortArticleArray(normalArticles);
-            visibleArticles = hotArticles.concat(normalArticles);
-        } else {
-            this.sortArticleArray(visibleArticles);
-        }
-
-        if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
-            console.log("Sorting articles at " + new Date().toTimeString());
-            var articlesContainer = $(ext.articlesContainerSelector);
-            var endOfFeed = $(ext.endOfFeedSelector).detach();
-            if (articlesContainer.find("h4").length > 0) {
-                articlesContainer.before($("<h4>"));
-            }
-            articlesContainer.empty();
-            visibleArticles.forEach((article) => {
-                articlesContainer.append(article.getContainer());
-            });
-            hiddenArticles.forEach((article) => {
-                articlesContainer.append(article.getContainer());
-            });
-            if (endOfFeed) {
-                articlesContainer.append(endOfFeed);
+            if (sub.isPinHotToTop()) {
+                var hotArticles: Article[] = [];
+                var normalArticles: Article[] = [];
+                visibleArticles.forEach((article) => {
+                    if (article.isHot()) {
+                        hotArticles.push(article);
+                    } else {
+                        normalArticles.push(article);
+                    }
+                });
+                this.sortArticleArray(hotArticles);
+                this.sortArticleArray(normalArticles);
+                visibleArticles = hotArticles.concat(normalArticles);
             } else {
-                $(ext.endOfFeedSelector).detach().appendTo(articlesContainer);
+                this.sortArticleArray(visibleArticles);
             }
+
+            if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
+                console.log("Sorting articles at " + new Date().toTimeString());
+                endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
+                if (articlesContainer.find("h4").length > 0) {
+                    articlesContainer.before($("<h4>"));
+                }
+                articlesContainer.empty();
+                visibleArticles.forEach((article) => {
+                    articlesContainer.append(article.getContainer());
+                });
+                hiddenArticles.forEach((article) => {
+                    articlesContainer.append(article.getContainer());
+                });
+            }
+            sortedVisibleEntryIds.push(...visibleArticles.map(a => a.getEntryId()));
+        });
+
+        let lastContainer = $(ext.articlesContainerSelector).last();
+        if (endOfFeed) {
+            lastContainer.append(endOfFeed);
+        } else {
+            $(ext.endOfFeedSelector).detach().appendTo(lastContainer);
         }
-        var sortedVisibleArticles = visibleArticles.map(a => a.getEntryId());
-        this.page.put(ext.sortedVisibleArticlesId, sortedVisibleArticles);
+        this.page.put(ext.sortedVisibleArticlesId, sortedVisibleEntryIds);
     }
 
     prepareMarkAsRead() {

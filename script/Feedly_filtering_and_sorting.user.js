@@ -31,6 +31,7 @@ var ext = {
     "urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
     "settingsBtnPredecessorSelector": ".icon-toolbar-refresh-secondary, .button-refresh",
     "articlesContainerSelector": ".list-entries",
+    "containerArticleSelector": " [data-entryid][data-title]:not([gap-article])",
     "articleSelector": ".list-entries [data-entryid][data-title]:not([gap-article])",
     "unreadArticlesCountSelector": ".list-entries > .entry.unread:not([gap-article]), .list-entries .unread.u100",
     "uncheckedArticlesSelector": ".list-entries [data-entryid][data-title]:not([checked-FFnS])",
@@ -991,63 +992,69 @@ var ArticleManager = (function () {
         }
     };
     ArticleManager.prototype.sortArticles = function (force) {
+        var _this = this;
         if (!this.page.get(ext.sortArticlesId) && !force) {
             return;
         }
         this.page.put(ext.sortArticlesId, false);
         var sub = this.getCurrentSub();
-        var visibleArticles = [], hiddenArticles = [];
-        $(ext.articleSelector).toArray().map((function (a) {
-            return new Article(a);
-        })).forEach(function (a) {
-            if (a.isVisible()) {
-                visibleArticles.push(a);
-            }
-            else {
-                hiddenArticles.push(a);
-            }
-        });
-        if (sub.isPinHotToTop()) {
-            var hotArticles = [];
-            var normalArticles = [];
-            visibleArticles.forEach(function (article) {
-                if (article.isHot()) {
-                    hotArticles.push(article);
+        var endOfFeed;
+        var sortedVisibleEntryIds = [];
+        $(ext.articlesContainerSelector).each(function (i, c) {
+            var visibleArticles = [];
+            var hiddenArticles = [];
+            var articlesContainer = $(c);
+            articlesContainer.find(ext.containerArticleSelector).each(function (i, e) {
+                var a = new Article(e);
+                if (a.isVisible()) {
+                    visibleArticles.push(a);
                 }
                 else {
-                    normalArticles.push(article);
+                    hiddenArticles.push(a);
                 }
             });
-            this.sortArticleArray(hotArticles);
-            this.sortArticleArray(normalArticles);
-            visibleArticles = hotArticles.concat(normalArticles);
-        }
-        else {
-            this.sortArticleArray(visibleArticles);
-        }
-        if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
-            console.log("Sorting articles at " + new Date().toTimeString());
-            var articlesContainer = $(ext.articlesContainerSelector);
-            var endOfFeed = $(ext.endOfFeedSelector).detach();
-            if (articlesContainer.find("h4").length > 0) {
-                articlesContainer.before($("<h4>"));
-            }
-            articlesContainer.empty();
-            visibleArticles.forEach(function (article) {
-                articlesContainer.append(article.getContainer());
-            });
-            hiddenArticles.forEach(function (article) {
-                articlesContainer.append(article.getContainer());
-            });
-            if (endOfFeed) {
-                articlesContainer.append(endOfFeed);
+            if (sub.isPinHotToTop()) {
+                var hotArticles = [];
+                var normalArticles = [];
+                visibleArticles.forEach(function (article) {
+                    if (article.isHot()) {
+                        hotArticles.push(article);
+                    }
+                    else {
+                        normalArticles.push(article);
+                    }
+                });
+                _this.sortArticleArray(hotArticles);
+                _this.sortArticleArray(normalArticles);
+                visibleArticles = hotArticles.concat(normalArticles);
             }
             else {
-                $(ext.endOfFeedSelector).detach().appendTo(articlesContainer);
+                _this.sortArticleArray(visibleArticles);
             }
+            if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
+                console.log("Sorting articles at " + new Date().toTimeString());
+                endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
+                if (articlesContainer.find("h4").length > 0) {
+                    articlesContainer.before($("<h4>"));
+                }
+                articlesContainer.empty();
+                visibleArticles.forEach(function (article) {
+                    articlesContainer.append(article.getContainer());
+                });
+                hiddenArticles.forEach(function (article) {
+                    articlesContainer.append(article.getContainer());
+                });
+            }
+            sortedVisibleEntryIds.push.apply(sortedVisibleEntryIds, visibleArticles.map(function (a) { return a.getEntryId(); }));
+        });
+        var lastContainer = $(ext.articlesContainerSelector).last();
+        if (endOfFeed) {
+            lastContainer.append(endOfFeed);
         }
-        var sortedVisibleArticles = visibleArticles.map(function (a) { return a.getEntryId(); });
-        this.page.put(ext.sortedVisibleArticlesId, sortedVisibleArticles);
+        else {
+            $(ext.endOfFeedSelector).detach().appendTo(lastContainer);
+        }
+        this.page.put(ext.sortedVisibleArticlesId, sortedVisibleEntryIds);
     };
     ArticleManager.prototype.prepareMarkAsRead = function () {
         if (this.lastReadArticleGroup.length > 0) {
