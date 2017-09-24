@@ -228,6 +228,7 @@ export class UIManager {
             { name: "SourceAsc", value: SortingType.SourceAsc },
             { name: "SourceDesc", value: SortingType.SourceDesc },
             { name: "SourceNewestReceiveDate", value: SortingType.SourceNewestReceiveDate },
+            { name: "Random", value: SortingType.Random },
         ]);
     }
 

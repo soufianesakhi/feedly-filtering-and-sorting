@@ -332,6 +332,9 @@ class ArticleSorterFactory {
         this.sorterByType[SortingType.SourceAsc] = sourceSorter(true);
         this.sorterByType[SortingType.SourceDesc] = sourceSorter(false);
         this.sorterByType[SortingType.SourceNewestReceiveDate] = receivedDateSorter(true);
+        this.sorterByType[SortingType.Random] = () => {
+            return Math.random() - 0.5;
+        };
     }
 
     getSorter(sortingTypes: SortingType[]): (a: Article, b: Article) => number {

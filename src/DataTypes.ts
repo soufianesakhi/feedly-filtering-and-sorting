@@ -11,7 +11,8 @@ export enum SortingType {
     SourceDesc,
     ReceivedDateNewFirst,
     ReceivedDateOldFirst,
-    SourceNewestReceiveDate
+    SourceNewestReceiveDate,
+    Random
 }
 
 export enum FilteringType {
