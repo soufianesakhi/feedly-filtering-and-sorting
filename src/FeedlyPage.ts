@@ -94,6 +94,18 @@ export class FeedlyPage {
                     });
                 }
                 var markAsRead = getFFnS(ext.markAsReadAboveBelowReadId);
+                if (markAsRead) {
+                    var navigo = window["streets"].service("navigo");
+                    let entries: any[] = navigo.originalEntries || navigo.getEntries();
+                    let keptUnreadEntryIds = entries.filter(e => {
+                        return e.wasKeptUnread();
+                    }).map<string>(e => {
+                        return e.id;
+                    });
+                    sortedVisibleArticles = sortedVisibleArticles.filter(id => {
+                        return keptUnreadEntryIds.indexOf(id) < 0;
+                    });
+                }
                 var index = sortedVisibleArticles.indexOf(entryId);
                 if (index == -1) {
                     return;
@@ -273,7 +285,9 @@ export class FeedlyPage {
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
         let entries: any[] = navigo.originalEntries || navigo.getEntries();
-        let markAsReadEntryIds = entries.sort((a, b) => {
+        let markAsReadEntryIds = entries.filter(e => {
+            return !e.wasKeptUnread();
+        }).sort((a, b) => {
             return a.jsonInfo.crawled - b.jsonInfo.crawled;
         }).map<string>(e => {
             return e.id;

@@ -1467,6 +1467,18 @@ var FeedlyPage = (function () {
                     });
                 }
                 var markAsRead = getFFnS(ext.markAsReadAboveBelowReadId);
+                if (markAsRead) {
+                    var navigo = window["streets"].service("navigo");
+                    var entries = navigo.originalEntries || navigo.getEntries();
+                    var keptUnreadEntryIds_1 = entries.filter(function (e) {
+                        return e.wasKeptUnread();
+                    }).map(function (e) {
+                        return e.id;
+                    });
+                    sortedVisibleArticles = sortedVisibleArticles.filter(function (id) {
+                        return keptUnreadEntryIds_1.indexOf(id) < 0;
+                    });
+                }
                 var index = sortedVisibleArticles.indexOf(entryId);
                 if (index == -1) {
                     return;
@@ -1636,7 +1648,9 @@ var FeedlyPage = (function () {
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
         var entries = navigo.originalEntries || navigo.getEntries();
-        var markAsReadEntryIds = entries.sort(function (a, b) {
+        var markAsReadEntryIds = entries.filter(function (e) {
+            return !e.wasKeptUnread();
+        }).sort(function (a, b) {
             return a.jsonInfo.crawled - b.jsonInfo.crawled;
         }).map(function (e) {
             return e.id;
