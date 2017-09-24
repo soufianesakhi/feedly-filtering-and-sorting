@@ -1399,7 +1399,7 @@ var FeedlyPage = (function () {
     function FeedlyPage() {
         this.hiddingInfoClass = "FFnS_Hiding_Info";
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture", "fetchMoreEntries", "loadNextBatch"], this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch);
+        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture", "fetchMoreEntries", "loadNextBatch", "getKeptUnreadEntryIds"], this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds);
         injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
@@ -1451,6 +1451,16 @@ var FeedlyPage = (function () {
     FeedlyPage.prototype.onClickCapture = function (element, callback) {
         element.get(0).addEventListener('click', callback, true);
     };
+    FeedlyPage.prototype.getKeptUnreadEntryIds = function () {
+        var navigo = window["streets"].service("navigo");
+        var entries = navigo.originalEntries || navigo.getEntries();
+        var keptUnreadEntryIds = entries.filter(function (e) {
+            return e.wasKeptUnread();
+        }).map(function (e) {
+            return e.id;
+        });
+        return keptUnreadEntryIds;
+    };
     FeedlyPage.prototype.onNewArticle = function () {
         var reader = window["streets"].service('reader');
         var getLink = function (a) {
@@ -1468,13 +1478,7 @@ var FeedlyPage = (function () {
                 }
                 var markAsRead = getFFnS(ext.markAsReadAboveBelowReadId);
                 if (markAsRead) {
-                    var navigo = window["streets"].service("navigo");
-                    var entries = navigo.originalEntries || navigo.getEntries();
-                    var keptUnreadEntryIds_1 = entries.filter(function (e) {
-                        return e.wasKeptUnread();
-                    }).map(function (e) {
-                        return e.id;
-                    });
+                    var keptUnreadEntryIds_1 = getKeptUnreadEntryIds();
                     sortedVisibleArticles = sortedVisibleArticles.filter(function (id) {
                         return keptUnreadEntryIds_1.indexOf(id) < 0;
                     });
@@ -1648,9 +1652,7 @@ var FeedlyPage = (function () {
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
         var entries = navigo.originalEntries || navigo.getEntries();
-        var markAsReadEntryIds = entries.filter(function (e) {
-            return !e.wasKeptUnread();
-        }).sort(function (a, b) {
+        var markAsReadEntryIds = entries.sort(function (a, b) {
             return a.jsonInfo.crawled - b.jsonInfo.crawled;
         }).map(function (e) {
             return e.id;
@@ -1668,6 +1670,10 @@ var FeedlyPage = (function () {
                 markAsReadEntryIds = lastReadEntryId ? markAsReadEntryIds.concat(ids) : ids;
             }
         }
+        var keptUnreadEntryIds = getKeptUnreadEntryIds();
+        markAsReadEntryIds = markAsReadEntryIds.filter(function (id) {
+            return keptUnreadEntryIds.indexOf(id) < 0;
+        });
         reader.askMarkEntriesAsRead(markAsReadEntryIds);
         window.scrollTo(0, 0);
         $(ext.articlesContainerSelector).empty();
@@ -1803,10 +1809,12 @@ var FeedlyPage = (function () {
                 console.log("Marking as read with keeping new articles unread");
                 var idsToMarkAsRead = getFFnS(ext.articlesToMarkAsReadId);
                 if (idsToMarkAsRead) {
-                    console.log(idsToMarkAsRead.length + " new articles will be marked as read");
-                    idsToMarkAsRead.forEach(function (id) {
-                        reader.askMarkEntryAsRead(id);
+                    var keptUnreadEntryIds_2 = getKeptUnreadEntryIds();
+                    idsToMarkAsRead = idsToMarkAsRead.filter(function (id) {
+                        return keptUnreadEntryIds_2.indexOf(id) < 0;
                     });
+                    console.log(idsToMarkAsRead.length + " new articles will be marked as read");
+                    reader.askMarkEntriesAsRead(idsToMarkAsRead);
                 }
                 var lastReadEntryId = getFFnS(ext.lastReadEntryId);
                 console.log("The last read entry id: " + lastReadEntryId);

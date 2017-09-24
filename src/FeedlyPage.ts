@@ -13,14 +13,15 @@ declare var getStreamPage: () => any;
 declare var onClickCapture: (element: JQuery, callback: (event: MouseEvent) => any) => void;
 declare var fetchMoreEntries: (batchSize: number) => void;
 declare var loadNextBatch: (ev?: MouseEvent) => void;
+declare var getKeptUnreadEntryIds: () => string[];
 
 export class FeedlyPage {
     hiddingInfoClass = "FFnS_Hiding_Info";
 
     constructor() {
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture", "fetchMoreEntries", "loadNextBatch"],
-            this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch);
+        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture", "fetchMoreEntries", "loadNextBatch", "getKeptUnreadEntryIds"],
+            this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds);
         injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
@@ -78,6 +79,17 @@ export class FeedlyPage {
         element.get(0).addEventListener('click', callback, true);
     }
 
+    getKeptUnreadEntryIds() {
+        var navigo = window["streets"].service("navigo");
+        let entries: any[] = navigo.originalEntries || navigo.getEntries();
+        let keptUnreadEntryIds = entries.filter(e => {
+            return e.wasKeptUnread();
+        }).map<string>(e => {
+            return e.id;
+        });
+        return keptUnreadEntryIds;
+    }
+
     onNewArticle() {
         var reader = window["streets"].service('reader');
         var getLink = (a: JQuery) => {
@@ -95,13 +107,7 @@ export class FeedlyPage {
                 }
                 var markAsRead = getFFnS(ext.markAsReadAboveBelowReadId);
                 if (markAsRead) {
-                    var navigo = window["streets"].service("navigo");
-                    let entries: any[] = navigo.originalEntries || navigo.getEntries();
-                    let keptUnreadEntryIds = entries.filter(e => {
-                        return e.wasKeptUnread();
-                    }).map<string>(e => {
-                        return e.id;
-                    });
+                    let keptUnreadEntryIds = getKeptUnreadEntryIds();
                     sortedVisibleArticles = sortedVisibleArticles.filter(id => {
                         return keptUnreadEntryIds.indexOf(id) < 0;
                     });
@@ -285,9 +291,7 @@ export class FeedlyPage {
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
         let entries: any[] = navigo.originalEntries || navigo.getEntries();
-        let markAsReadEntryIds = entries.filter(e => {
-            return !e.wasKeptUnread();
-        }).sort((a, b) => {
+        let markAsReadEntryIds = entries.sort((a, b) => {
             return a.jsonInfo.crawled - b.jsonInfo.crawled;
         }).map<string>(e => {
             return e.id;
@@ -305,6 +309,10 @@ export class FeedlyPage {
                 markAsReadEntryIds = lastReadEntryId ? markAsReadEntryIds.concat(ids) : ids;
             }
         }
+        let keptUnreadEntryIds = getKeptUnreadEntryIds();
+        markAsReadEntryIds = markAsReadEntryIds.filter(id => {
+            return keptUnreadEntryIds.indexOf(id) < 0;
+        });
         reader.askMarkEntriesAsRead(markAsReadEntryIds);
         window.scrollTo(0, 0);
         $(ext.articlesContainerSelector).empty();
@@ -444,10 +452,12 @@ export class FeedlyPage {
 
                 var idsToMarkAsRead: string[] = getFFnS(ext.articlesToMarkAsReadId);
                 if (idsToMarkAsRead) {
-                    console.log(idsToMarkAsRead.length + " new articles will be marked as read");
-                    idsToMarkAsRead.forEach(id => {
-                        reader.askMarkEntryAsRead(id);
+                    let keptUnreadEntryIds = getKeptUnreadEntryIds();
+                    idsToMarkAsRead = idsToMarkAsRead.filter(id => {
+                        return keptUnreadEntryIds.indexOf(id) < 0;
                     });
+                    console.log(idsToMarkAsRead.length + " new articles will be marked as read");
+                    reader.askMarkEntriesAsRead(idsToMarkAsRead);
                 }
                 var lastReadEntryId = getFFnS(ext.lastReadEntryId);
                 console.log("The last read entry id: " + lastReadEntryId);
