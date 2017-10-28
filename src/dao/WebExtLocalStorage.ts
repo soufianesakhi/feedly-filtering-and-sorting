@@ -1,15 +1,16 @@
 /// <reference path="../_references.d.ts" />
 
-import { LocalStorage, LocalStorageArea, PromiseLocalStorageArea } from "./LocalStorage";
+import { LocalStorage, StorageArea, PromiseStorageArea } from "./LocalStorage";
 import { AsyncResult } from "../AsyncResult";
-import { injectScriptText } from "../Utils";
+import { injectScriptText, callbackBindedTo } from "../Utils";
 
 export class WebExtLocalStorage implements LocalStorage {
-    storage: LocalStorageArea;
-    promiseStorage: PromiseLocalStorageArea;
+    storage: StorageArea;
+    promiseStorage: PromiseStorageArea;
     browser;
     keys: string[] = [];
     isArray = false;
+    useSyncStorageId = "USE_SYNC_STORAGE";
 
     constructor() {
         if (typeof (chrome) != "undefined") {
@@ -18,10 +19,9 @@ export class WebExtLocalStorage implements LocalStorage {
             this.browser = browser;
         }
         try {
-            this.promiseStorage = this.browser.storage.local;
+            this.browser.storage.local;
         } catch (e) {
             this.browser = browser;
-            this.promiseStorage = this.browser.storage.local;
         }
     }
 
@@ -89,25 +89,46 @@ export class WebExtLocalStorage implements LocalStorage {
         return this.keys;
     }
 
-    public init(): AsyncResult<any> {
+    private initStorage() {
         return new AsyncResult<any>((p) => {
-            var t = this;
             var callback = (result) => {
                 if ($.isArray(result)) {
-                    t.isArray = true;
+                    this.isArray = true;
                 }
-                t.keys = t.keys.concat(Object.keys(t.isArray ? result[0] : result));
+                var useSyncStorage = (this.isArray ? result[0] : result)[this.useSyncStorageId];
+                if (!useSyncStorage) {
+                    if (this.promiseStorage) {
+                        this.promiseStorage = this.browser.storage.local;
+                    } else {
+                        this.storage = this.browser.storage.local;
+                    }
+                }
                 p.done();
             };
             try {
-                this.promiseStorage.get(null).then(callback, (e) => {
+                this.promiseStorage = this.browser.storage.sync;
+                this.promiseStorage.get(this.useSyncStorageId).then(callback, (e) => {
                     throw e;
                 });
             } catch (e) {
                 this.promiseStorage = null;
-                this.storage = this.browser.storage.local;
-                this.storage.get(null, callback);
+                this.storage = this.browser.storage.sync;
+                this.storage.get(this.useSyncStorageId, callback);
             }
+        }, this);
+    }
+
+    public init(): AsyncResult<any> {
+        return new AsyncResult<any>((p) => {
+            this.initStorage().then(() => {
+                var callback = (result) => {
+                    this.keys = this.keys.concat(Object.keys(this.isArray ? result[0] : result));
+                    p.done();
+                };
+                this.promiseStorage ?
+                    this.promiseStorage.get(null).then(callback, this.onError) :
+                    this.storage.get(null, callback);
+            }, this);
         }, this);
     }
 
@@ -124,6 +145,11 @@ export class WebExtLocalStorage implements LocalStorage {
             }
         });
     }
+
+    public isSyncSupported(): boolean {
+        return true;
+    }
+
 }
 
 var LocalPersistence = new WebExtLocalStorage();

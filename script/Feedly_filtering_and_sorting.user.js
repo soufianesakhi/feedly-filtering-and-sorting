@@ -396,6 +396,9 @@ var UserScriptStorage = (function () {
     UserScriptStorage.prototype.loadScript = function (name) {
         injectScriptText(GM_getResourceText(name));
     };
+    UserScriptStorage.prototype.isSyncSupported = function () {
+        return false;
+    };
     return UserScriptStorage;
 }());
 var LocalPersistence = new UserScriptStorage();

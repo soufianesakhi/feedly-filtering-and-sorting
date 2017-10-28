@@ -10,9 +10,10 @@ export interface LocalStorage {
     listKeys(): string[];
     init(): AsyncResult<any>;
     loadScript(name: string);
+    isSyncSupported(): boolean;
 }
 
-export interface PromiseLocalStorageArea {
+export interface PromiseStorageArea {
     /**
      * Sets multiple items.
      * @param keys An object containing one or more key/value pairs to be stored in storage. If an item already exists, its value will be updated.
@@ -31,7 +32,7 @@ export interface PromiseLocalStorageArea {
     get(key: string | string[]): PromiseLike<any>;
 }
 
-export interface LocalStorageArea {
+export interface StorageArea {
     /**
      * Sets multiple items.
      * @param items An object which gives each key/value pair to update storage with.

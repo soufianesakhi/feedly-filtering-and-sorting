@@ -29,5 +29,11 @@
         "node-creation-observer.js",
         "jquery.min.js",
         "jscolor.js"
-    ]
+    ],
+    "applications": {
+        "gecko": {
+            "id": "{a485fc91-0e20-4400-a9d0-bb7fc054a716}",
+            "strict_min_version": "48.0"
+        }
+    }
 }

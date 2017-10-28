@@ -5,7 +5,6 @@ import { AsyncResult } from "../AsyncResult";
 import { injectScriptText } from "../Utils";
 
 export class UserScriptStorage implements LocalStorage {
-
     public getAsync<t>(id: string, defaultValue: t): AsyncResult<t> {
         return new AsyncResult<t>((p) => {
             p.result(JSON.parse(GM_getValue(id, JSON.stringify(defaultValue))));
@@ -45,6 +44,10 @@ export class UserScriptStorage implements LocalStorage {
 
     loadScript(name: string) {
         injectScriptText(GM_getResourceText(name));
+    }
+
+    public isSyncSupported(): boolean {
+        return false;
     }
 
 }
