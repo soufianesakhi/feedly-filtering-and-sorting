@@ -40,6 +40,7 @@ export class FeedlyPage {
         }
         this.put(ext.markAsReadAboveBelowReadId, sub.isMarkAsReadAboveBelowRead());
         this.put(ext.visualOpenAndMarkAsReadId, sub.isVisualOpenAndMarkAsRead());
+        this.put(ext.titleOpenAndMarkAsReadId, sub.isTitleOpenAndMarkAsRead());
     }
 
     updateCheck(enabled: boolean, id: string, className: string) {
@@ -220,6 +221,14 @@ export class FeedlyPage {
                 onClickCapture(visualElement, e => {
                     if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
                         openAndMarkAsRead(e);
+                    }
+                });
+            }
+            if (titleView) {
+                onClickCapture(a.find(".content"), e => {
+                    if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
+                        e.stopPropagation();
+                        reader.askMarkEntryAsRead(entryId);
                     }
                 });
             }

@@ -43,6 +43,10 @@ export class Subscription {
         return this.dto.visualOpenAndMarkAsRead;
     }
 
+    isTitleOpenAndMarkAsRead(): boolean {
+        return this.dto.titleOpenAndMarkAsRead;
+    }
+
     isMarkAsReadAboveBelow(): boolean {
         return this.dto.markAsReadAboveBelow;
     }

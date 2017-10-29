@@ -7,6 +7,7 @@ export class SubscriptionDTO {
     sortingEnabled = true;
     openAndMarkAsRead = true;
     visualOpenAndMarkAsRead = false;
+    titleOpenAndMarkAsRead = false;
     markAsReadAboveBelow = false;
     markAsReadAboveBelowRead = true;
     hideWhenMarkAboveBelow = false;
