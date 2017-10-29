@@ -1,6 +1,6 @@
 /// <reference path="../_references.d.ts" />
 
-import { LocalStorage, StorageArea, PromiseStorageArea } from "./LocalStorage";
+import { LocalStorage, StorageArea, PromiseStorageArea, SyncStorageManager } from "./LocalStorage";
 import { AsyncResult } from "../AsyncResult";
 import { injectScriptText, callbackBindedTo } from "../Utils";
 
@@ -11,6 +11,7 @@ export class WebExtLocalStorage implements LocalStorage {
     keys: string[] = [];
     isArray = false;
     useSyncStorageId = "USE_SYNC_STORAGE";
+    syncStorageEnabled: boolean;
 
     constructor() {
         if (typeof (chrome) != "undefined") {
@@ -95,8 +96,8 @@ export class WebExtLocalStorage implements LocalStorage {
                 if ($.isArray(result)) {
                     this.isArray = true;
                 }
-                var useSyncStorage = (this.isArray ? result[0] : result)[this.useSyncStorageId];
-                if (!useSyncStorage) {
+                this.syncStorageEnabled = (this.isArray ? result[0] : result)[this.useSyncStorageId];
+                if (!this.syncStorageEnabled) {
                     if (this.promiseStorage) {
                         this.promiseStorage = this.browser.storage.local;
                     } else {
@@ -146,8 +147,31 @@ export class WebExtLocalStorage implements LocalStorage {
         });
     }
 
-    public isSyncSupported(): boolean {
-        return true;
+    getSyncStorageManager(): SyncStorageManager {
+        let _this = this;
+        return {
+            isSyncEnabled(): boolean {
+                return _this.syncStorageEnabled;
+            },
+            setSyncEnabled(enabled: boolean) {
+                _this.syncStorageEnabled = enabled;
+                let storage = enabled ? _this.browser.storage.sync : _this.browser.storage.local;
+                let saveCallback = () => {
+                    console.log("Sync storage " + (enabled ? "enabled" : "disabled"));
+                }
+                let toSave = {};
+                toSave[_this.useSyncStorageId] = enabled;
+                if (_this.promiseStorage) {
+                    let syncStorage: PromiseStorageArea = _this.browser.storage.sync;
+                    _this.promiseStorage = storage;
+                    syncStorage.set(toSave).then(saveCallback);
+                } else {
+                    let syncStorage: StorageArea = _this.browser.storage.sync;
+                    _this.storage = storage;
+                    syncStorage.set(toSave, saveCallback);
+                }
+            }
+        }
     }
 
 }

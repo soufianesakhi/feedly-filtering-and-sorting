@@ -14,6 +14,7 @@ import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscrip
 import { $id, bindMarkup, isChecked, setChecked, onClick } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 import { AsyncResult } from "./AsyncResult";
+import { LocalPersistence, SyncStorageManager } from "./dao/LocalStorage"
 
 export class UIManager {
     page: FeedlyPage;
@@ -74,6 +75,7 @@ export class UIManager {
                         this.registerSettings();
                         this.updateMenu();
                         this.initSettingsCallbacks();
+                        this.initSyncSettings();
                         p.done();
                     }, this);
                 }, this);
@@ -400,6 +402,20 @@ export class UIManager {
         }
         toggleFilteringKeywordMatchingSelects();
         useDefaultMatchingAreas.change(toggleFilteringKeywordMatchingSelects);
+    }
+
+    initSyncSettings() {
+        let syncManager = LocalPersistence.getSyncStorageManager();
+        let syncCBId = "FFnS_syncSettingsEnabled";
+        if (syncManager) {
+            setChecked(syncCBId, syncManager.isSyncEnabled());
+            $id(syncCBId).change(() => {
+                syncManager.setSyncEnabled(isChecked($id(syncCBId)));
+                this.refreshPage();
+            });
+        } else {
+            $id(syncCBId).closest(".setting_group").remove();
+        }
     }
 
     registerAdditionalSortingType(): string {

@@ -5,10 +5,8 @@ import { Subscription } from "./Subscription";
 import { SubscriptionDTO, AdvancedControlsReceivedPeriod, ColoringRule } from "./SubscriptionDTO";
 import { SettingsManager } from "./SettingsManager";
 import { registerAccessors, deepClone } from "./Utils";
-import { LocalStorage } from "./dao/LocalStorage";
+import { LocalPersistence } from "./dao/LocalStorage";
 import { AsyncResult } from "./AsyncResult";
-
-declare var LocalPersistence: LocalStorage;
 
 export class SubscriptionDAO {
     private SUBSCRIPTION_ID_PREFIX = "subscription_";

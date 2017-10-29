@@ -1,6 +1,6 @@
 /// <reference path="../_references.d.ts" />
 
-import { LocalStorage } from "./LocalStorage";
+import { LocalStorage, SyncStorageManager } from "./LocalStorage";
 import { AsyncResult } from "../AsyncResult";
 import { injectScriptText } from "../Utils";
 
@@ -46,8 +46,8 @@ export class UserScriptStorage implements LocalStorage {
         injectScriptText(GM_getResourceText(name));
     }
 
-    public isSyncSupported(): boolean {
-        return false;
+    getSyncStorageManager(): SyncStorageManager {
+        return null;
     }
 
 }
