@@ -164,9 +164,6 @@ export function injectClasses(...classes: Function[]) {
 export function injectScriptText(srcTxt: string, sourceURL?: string) {
     if (sourceURL) {
         srcTxt += "//# sourceURL=" + sourceURL;
-        if (typeof (InstallTrigger) != "undefined") {
-            srcTxt = "eval(`" + srcTxt + "`)";
-        }
     }
     var script = document.createElement("script");
     script.type = 'text/javascript';

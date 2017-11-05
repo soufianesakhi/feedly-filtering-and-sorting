@@ -27,8 +27,7 @@
     ],
     "web_accessible_resources": [
         "node-creation-observer.js",
-        "jquery.min.js",
-        "jscolor.js"
+        "jquery.min.js"
     ],
     "applications": {
         "gecko": {
