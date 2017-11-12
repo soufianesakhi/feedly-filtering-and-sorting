@@ -3,7 +3,8 @@
 // @namespace   https://github.com/soufianesakhi/feedly-filtering-and-sorting
 // @description Enhance the feedly website with advanced filtering, sorting and more
 // @author      Soufiane Sakhi
-// @license     MIT licensed, Copyright (c) 2016-2017 Soufiane Sakhi (https://opensource.org/licenses/MIT)
+// @copyright   2016-2017, Soufiane Sakhi
+// @license     MIT; https://opensource.org/licenses/MIT
 // @homepageURL https://github.com/soufianesakhi/feedly-filtering-and-sorting
 // @supportURL  https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues
 // @icon        https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/web-ext/icons/128.png
@@ -14,7 +15,7 @@
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @resource    jscolor.js https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.6.0
+// @version     3.6.0.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -240,9 +241,6 @@ function injectClasses() {
 function injectScriptText(srcTxt, sourceURL) {
     if (sourceURL) {
         srcTxt += "//# sourceURL=" + sourceURL;
-        if (typeof (InstallTrigger) != "undefined") {
-            srcTxt = "eval(`" + srcTxt + "`)";
-        }
     }
     var script = document.createElement("script");
     script.type = 'text/javascript';
@@ -2823,7 +2821,6 @@ function injectResources() {
     injectStyleText(templates.styleCSS);
     LocalPersistence.loadScript("jquery.min.js");
     LocalPersistence.loadScript("node-creation-observer.js");
-    LocalPersistence.loadScript("jscolor.js");
 }
 $(document).ready(function () {
     injectResources();
