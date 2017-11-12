@@ -1,18 +1,32 @@
 /// <reference path="./_references.d.ts" />
 
 import { UIManager } from "./UIManager";
-import { callbackBindedTo, injectStyleText } from "./Utils";
+import { callbackBindedTo, injectStyleText, bindMarkup } from "./Utils";
 import { FeedlyPage } from "./FeedlyPage";
 import { LocalStorage } from "./dao/LocalStorage";
 import { INITIALIZER } from "./initializer/Initializer";
 
 var DEBUG = false;
 
+function initResources() {
+    INITIALIZER.loadScript("jquery.min.js");
+    INITIALIZER.loadScript("node-creation-observer.js");
+    let urls = INITIALIZER.getResourceURLs();
+    ext.plusIconLink = urls.plusIconURL;
+    ext.eraseIconLink = urls.eraseIconURL;
+    ext.closeIconLink = urls.closeIconURL;
+    ext.moveUpIconLink = urls.moveUpIconURL;
+    ext.moveDownIconLink = urls.moveDownIconURL;
+    templates.styleCSS = bindMarkup(templates.styleCSS, [
+        { name: "open-in-new-tab-url", value: urls.openInNewTabURL },
+        { name: "extension-icon", value: urls.extensionIconURL },
+    ]);
+    injectStyleText(templates.styleCSS);
+}
+
 $(document).ready(function () {
     try {
-        INITIALIZER.loadScript("jquery.min.js");
-        INITIALIZER.loadScript("node-creation-observer.js");
-        injectStyleText(templates.styleCSS);
+        initResources();
         var uiManager = new UIManager();
         var uiManagerBind = callbackBindedTo(uiManager);
 

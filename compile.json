@@ -3,6 +3,7 @@
         "src": [
             "Header",
             "Externals",
+            "Templates",
             "Utils",
             "DataTypes",
             "AsyncResult",
@@ -14,7 +15,6 @@
             "SettingsManager",
             "ArticleManager",
             "KeywordManager",
-            "Templates",
             "FeedlyPage",
             "UIManager",
             "HTMLSubscription",
@@ -26,6 +26,7 @@
     "web-ext": {
         "src": [
             "Externals",
+            "Templates",
             "Utils",
             "DataTypes",
             "AsyncResult",
@@ -37,7 +38,6 @@
             "SettingsManager",
             "ArticleManager",
             "KeywordManager",
-            "Templates",
             "FeedlyPage",
             "UIManager",
             "HTMLSubscription",

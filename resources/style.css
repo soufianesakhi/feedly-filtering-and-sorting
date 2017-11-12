@@ -169,7 +169,7 @@ input {
 }
 
 .ShowSettingsBtn {
-	background-image: url("https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/web-ext/icons/128.png");
+	background-image: url("{{extension-icon}}");
 	background-size: 20px 20px;
 	background-position: center center;
 	background-repeat: no-repeat;
@@ -204,7 +204,7 @@ input {
 
 .fx .open-in-new-tab-button.mark-as-read,
 .fx .entry.u0 .open-in-new-tab-button.condensed-toolbar-icon {
-    background-image: url('http://findicons.com/files/icons/2315/default_icon/256/open_in_new_window.png');
+    background-image: url('{{open-in-new-tab-url}}');
     background-size: 18px 18px;
 }
 

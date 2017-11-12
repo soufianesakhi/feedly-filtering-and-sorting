@@ -1,6 +1,6 @@
 /// <reference path="../_references.d.ts" />
 
-import { Initializer } from "./Initializer";
+import { Initializer, ResourceURLs } from "./Initializer";
 import { injectScriptText } from "../Utils";
 
 export class WebExtInitializer implements Initializer {
@@ -20,7 +20,7 @@ export class WebExtInitializer implements Initializer {
 
     loadScript(name: string) {
         $.ajax({
-            url: this.browser.extension.getURL(name),
+            url: this.getURL(name),
             dataType: "text",
             async: false,
             success: (result) => {
@@ -30,6 +30,22 @@ export class WebExtInitializer implements Initializer {
                 console.log(errorThrown);
             }
         });
+    }
+
+    getResourceURLs(): ResourceURLs {
+        return {
+            plusIconURL: this.getURL("images/plus.png"),
+            eraseIconURL: this.getURL("images/erase.png"),
+            closeIconURL: this.getURL("images/close.png"),
+            moveUpIconURL: this.getURL("images/move-up.png"),
+            moveDownIconURL: this.getURL("images/move-down.png"),
+            openInNewTabURL: this.getURL("images/open-in-new-tab.png"),
+            extensionIconURL: this.getURL("icons/128.png")
+        }
+    }
+
+    getURL(name: string) {
+        return this.browser.extension.getURL(name);
     }
 
 }

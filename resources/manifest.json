@@ -26,6 +26,8 @@
         }
     ],
     "web_accessible_resources": [
+        "images/*.png",
+        "icons/*.png",
         "node-creation-observer.js",
         "jquery.min.js"
     ],
