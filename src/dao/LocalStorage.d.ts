@@ -5,13 +5,12 @@ import { AsyncResult } from "../AsyncResult";
 declare var LocalPersistence: LocalStorage;
 
 export interface LocalStorage {
+    init(): AsyncResult<any>;
     getAsync<t>(id: string, defaultValue: t): AsyncResult<t>;
     getItemsAsync<t>(ids: string[]): AsyncResult<{ [key: string]: t }>;
     put(id: string, value: any);
     delete(id: string);
     listKeys(): string[];
-    init(): AsyncResult<any>;
-    loadScript(name: string);
     getSyncStorageManager(): SyncStorageManager;
 }
 

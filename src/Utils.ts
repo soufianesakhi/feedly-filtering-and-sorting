@@ -180,7 +180,6 @@ export function exportFile(content: string, filename?: string) {
     var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
     var downloadLink = document.createElement("a");
     downloadLink.download = filename ? filename : "export.json";
-    downloadLink.innerHTML = "Download File";
     downloadLink.href = textToSaveAsURL;
     downloadLink.onclick = function () {
         $(downloadLink).remove();

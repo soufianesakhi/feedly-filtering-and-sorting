@@ -32,6 +32,9 @@
         "src/_references.d.ts",
         "src/dao/LocalStorage.d.ts",
         "src/dao/UserScriptStorage.ts",
-        "src/dao/WebExtLocalStorage.ts"
+        "src/dao/WebExtLocalStorage.ts",
+        "src/initializer/Initializer.d.ts",
+        "src/initializer/UserScriptInitializer.ts",
+        "src/initializer/WebExtInitializer.ts"
     ]
 }

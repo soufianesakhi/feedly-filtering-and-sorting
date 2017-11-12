@@ -13,7 +13,6 @@
 // @require     https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
-// @resource    jscolor.js https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
 // @version     3.6.0.1
 // @grant       GM_setValue
@@ -255,7 +254,6 @@ function exportFile(content, filename) {
     var textToSaveAsURL = window.URL.createObjectURL(textToSaveAsBlob);
     var downloadLink = document.createElement("a");
     downloadLink.download = filename ? filename : "export.json";
-    downloadLink.innerHTML = "Download File";
     downloadLink.href = textToSaveAsURL;
     downloadLink.onclick = function () {
         $(downloadLink).remove();
@@ -358,6 +356,16 @@ var AsyncResult = (function () {
     return AsyncResult;
 }());
 
+var UserScriptInitializer = (function () {
+    function UserScriptInitializer() {
+    }
+    UserScriptInitializer.prototype.loadScript = function (name) {
+        injectScriptText(GM_getResourceText(name));
+    };
+    return UserScriptInitializer;
+}());
+var INITIALIZER = new UserScriptInitializer();
+
 var UserScriptStorage = (function () {
     function UserScriptStorage() {
     }
@@ -391,9 +399,6 @@ var UserScriptStorage = (function () {
         return new AsyncResult(function (p) {
             p.done();
         }, this);
-    };
-    UserScriptStorage.prototype.loadScript = function (name) {
-        injectScriptText(GM_getResourceText(name));
     };
     UserScriptStorage.prototype.getSyncStorageManager = function () {
         return null;
@@ -2817,21 +2822,23 @@ var HTMLGlobalSettings = (function () {
 }());
 
 var DEBUG = false;
-function injectResources() {
-    injectStyleText(templates.styleCSS);
-    LocalPersistence.loadScript("jquery.min.js");
-    LocalPersistence.loadScript("node-creation-observer.js");
-}
 $(document).ready(function () {
-    injectResources();
-    var uiManager = new UIManager();
-    var uiManagerBind = callbackBindedTo(uiManager);
-    NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
-        console.log("Feedly page fully loaded");
-        uiManager.init().then(function () {
-            NodeCreationObserver.onCreation(ext.articleSelector, uiManagerBind(uiManager.addArticle));
-            NodeCreationObserver.onCreation(ext.sectionSelector, uiManagerBind(uiManager.addSection));
-            NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, uiManagerBind(uiManager.updatePage));
-        }, this);
-    }, true);
+    try {
+        INITIALIZER.loadScript("jquery.min.js");
+        INITIALIZER.loadScript("node-creation-observer.js");
+        injectStyleText(templates.styleCSS);
+        var uiManager = new UIManager();
+        var uiManagerBind = callbackBindedTo(uiManager);
+        NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
+            console.log("Feedly page fully loaded");
+            uiManager.init().then(function () {
+                NodeCreationObserver.onCreation(ext.articleSelector, uiManagerBind(uiManager.addArticle));
+                NodeCreationObserver.onCreation(ext.sectionSelector, uiManagerBind(uiManager.addSection));
+                NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, uiManagerBind(uiManager.updatePage));
+            }, this);
+        }, true);
+    }
+    catch (e) {
+        console.log(e);
+    }
 });

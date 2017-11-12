@@ -42,10 +42,6 @@ export class UserScriptStorage implements LocalStorage {
         }, this);
     }
 
-    loadScript(name: string) {
-        injectScriptText(GM_getResourceText(name));
-    }
-
     getSyncStorageManager(): SyncStorageManager {
         return null;
     }

@@ -2,7 +2,7 @@
 
 import { LocalStorage, StorageArea, PromiseStorageArea, SyncStorageManager } from "./LocalStorage";
 import { AsyncResult } from "../AsyncResult";
-import { injectScriptText, callbackBindedTo } from "../Utils";
+import { BROWSER } from "../initializer/Initializer";
 
 export class WebExtLocalStorage implements LocalStorage {
     storage: StorageArea;
@@ -14,16 +14,7 @@ export class WebExtLocalStorage implements LocalStorage {
     syncStorageEnabled: boolean;
 
     constructor() {
-        if (typeof (chrome) != "undefined") {
-            this.browser = chrome;
-        } else {
-            this.browser = browser;
-        }
-        try {
-            this.browser.storage.local;
-        } catch (e) {
-            this.browser = browser;
-        }
+        this.browser = BROWSER;
     }
 
     onError = function (e) {
@@ -131,20 +122,6 @@ export class WebExtLocalStorage implements LocalStorage {
                     this.storage.get(null, callback);
             }, this);
         }, this);
-    }
-
-    loadScript(name: string) {
-        $.ajax({
-            url: this.browser.extension.getURL(name),
-            dataType: "text",
-            async: false,
-            success: (result) => {
-                injectScriptText(result);
-            },
-            error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-                console.log(errorThrown);
-            }
-        });
     }
 
     getSyncStorageManager(): SyncStorageManager {
