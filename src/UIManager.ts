@@ -46,10 +46,10 @@ export class UIManager {
                 "ShowIfHot_AdvancedControlsReceivedPeriod", "MarkAsReadVisible_AdvancedControlsReceivedPeriod",
                 "OpenAndMarkAsRead", "MarkAsReadAboveBelow", "HideWhenMarkAboveBelow", "HideAfterRead",
                 "ReplaceHiddenWithGap", "AlwaysUseDefaultMatchingAreas", "VisualOpenAndMarkAsRead",
-                "TitleOpenAndMarkAsRead", "MarkAsReadFiltered"]
+                "TitleOpenAndMarkAsRead", "MarkAsReadFiltered", "AutoRefreshEnabled"]
         },
         {
-            type: HTMLElementType.NumberInput, ids: ["MinPopularity_AdvancedControlsReceivedPeriod"]
+            type: HTMLElementType.NumberInput, ids: ["MinPopularity_AdvancedControlsReceivedPeriod", "AutoRefreshMinutes"]
         }
     ];
 
@@ -75,7 +75,7 @@ export class UIManager {
                         this.registerSettings();
                         this.updateMenu();
                         this.initSettingsCallbacks();
-                        this.initSyncSettings();
+                        this.postInit();
                         p.done();
                     }, this);
                 }, this);
@@ -404,7 +404,7 @@ export class UIManager {
         useDefaultMatchingAreas.change(toggleFilteringKeywordMatchingSelects);
     }
 
-    initSyncSettings() {
+    postInit() {
         let syncManager = LocalPersistence.getSyncStorageManager();
         let syncCBId = "FFnS_syncSettingsEnabled";
         if (syncManager) {
@@ -415,6 +415,12 @@ export class UIManager {
             });
         } else {
             $id(syncCBId).closest(".setting_group").remove();
+        }
+
+        if (this.subscription.isAutoRefreshEnabled()) {
+            setInterval(() => {
+                $(".icon-toolbar-refresh-secondary").first().click();
+            }, this.subscription.getAutoRefreshTime());
         }
     }
 

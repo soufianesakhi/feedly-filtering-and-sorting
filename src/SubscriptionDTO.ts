@@ -23,6 +23,8 @@ export class SubscriptionDTO {
     alwaysUseDefaultMatchingAreas = true;
     keywordMatchingMethod: KeywordMatchingMethod = KeywordMatchingMethod.Simple;
     coloringRules: ColoringRule[] = [];
+    autoRefreshEnabled = false;
+    autoRefreshMinutes = 60;
 
     constructor(url: string) {
         this.url = url;

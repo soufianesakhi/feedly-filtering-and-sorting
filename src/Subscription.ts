@@ -95,6 +95,14 @@ export class Subscription {
         return this.dto.keywordMatchingMethod;
     }
 
+    isAutoRefreshEnabled(): boolean {
+        return this.dto.autoRefreshEnabled;
+    }
+
+    getAutoRefreshTime(): number {
+        return this.dto.autoRefreshMinutes * 60 * 1000;
+    }
+
     setHours_AdvancedControlsReceivedPeriod(hours: number) {
         if (hours > 23) {
             return;

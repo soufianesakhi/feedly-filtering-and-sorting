@@ -138,7 +138,7 @@
 							<img src="{{plusIconLink}}" class="FFnS_icon" title="Add a new coloring rule" />
 						</span>
 						<span id="FFnS_EraseColoringRules">
-							<img src="{{eraseIconLink}}" class="FFnS_icon" title="Remove all the coloring rule" />
+							<img src="{{eraseIconLink}}" class="FFnS_icon" title="Remove all the coloring rules" />
 						</span>
 						<span id="FFnS_ColoringRules"></span>
 					</fieldset>
@@ -201,6 +201,14 @@
 						<div class="setting_group">
 							<span>Mark as read filtered articles</span>
 							<input id="FFnS_MarkAsReadFiltered" type="checkbox">
+						</div>
+						<div class="setting_group">
+							<span class="tooltip">Auto refresh
+								<span class="tooltiptext tooltip-top">The articles will be reloaded periodically following the configured minutes</span>
+							</span>
+							<input id="FFnS_AutoRefreshEnabled" type="checkbox">
+							<input id="FFnS_AutoRefreshMinutes" class="FFnS_input" type="number" min="1">
+							<span>(minutes)</span>
 						</div>
 					</fieldset>
 				</div>

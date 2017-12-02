@@ -95,7 +95,6 @@
 .tooltip-top {
     bottom: 100%;
     left: 50%;
-    margin-left: -60px;
 }
 
 .tooltip:hover .tooltiptext {
@@ -126,7 +125,7 @@
     margin-right: 1%;
 }
 
-#FFnS_MinPopularity_AdvancedControlsReceivedPeriod, #FFnS_batchSize {
+#FFnS_MinPopularity_AdvancedControlsReceivedPeriod, #FFnS_batchSize, #FFnS_AutoRefreshMinutes {
     width: 45px;
 }
 
