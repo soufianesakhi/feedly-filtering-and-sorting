@@ -28,18 +28,16 @@ The `Unread Only` option is required to be enabled to support all the features.
 - Advanced controls (keep recently published articles unread, ...).
 - Pin hot articles to top.
 - Import/export all settings from/to file.
-- Advanced settings management (Import from / link to an other subscription).
+- Advanced settings management (Import from / link to an other subscription, sync the settings across all the browser instances).
 - Tweak the page (Add buttons to open articles in a new tab, mark as read/unread, ...).
+- Auto refresh articles periodically.
 
-Two settings modes are available: 
-- Global settings: same settings used for all subscriptions and categories.
+Two settings configurations are available: 
+- Global settings: same configuration used for all subscriptions and categories.
 - Subscription settings:
-  - Subscription and category specific settings
+  - Subscription and category specific configurations
   - The default settings values are the global settings.
-  - A group of subscriptions can share the same settings by linking them to the same subscription.
-
-Presentation support:
-- All the views are supported: `Title Only`, `Magazine`, `Cards` and `Article`.
+  - A group of subscriptions can share the same configuration by linking them to the same subscription.
 
 ## [Changelog](https://github.com/soufianesakhi/feedly-filtering-and-sorting/releases)
 
