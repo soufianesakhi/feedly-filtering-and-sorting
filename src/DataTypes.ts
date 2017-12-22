@@ -12,7 +12,9 @@ export enum SortingType {
     ReceivedDateNewFirst,
     ReceivedDateOldFirst,
     SourceNewestReceiveDate,
-    Random
+    Random,
+    PublishDayNewFirst,
+    PublishDayOldFirst
 }
 
 export enum FilteringType {

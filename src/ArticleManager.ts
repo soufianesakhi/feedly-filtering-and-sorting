@@ -314,6 +314,20 @@ class ArticleSorterFactory {
                 return (a.getPublishAge() - b.getPublishAge()) * multiplier;
             }
         }
+        function publishDaySorter(isNewFirst: boolean) {
+            var multiplier = isNewFirst ? -1 : 1;
+            return (a: Article, b: Article) => {
+                let dateA = a.getPublishDate(), dateB = b.getPublishDate();
+                let result = dateA.getFullYear() - dateB.getFullYear();
+                if (result == 0) {
+                    result = dateA.getMonth() - dateB.getMonth();
+                    if (result == 0) {
+                        result = dateA.getDay() - dateB.getDay();
+                    }
+                }
+                return result * multiplier;
+            }
+        }
         function sourceSorter(isAscending: boolean) {
             var multiplier = isAscending ? 1 : -1;
             return (a: Article, b: Article) => {
@@ -329,6 +343,8 @@ class ArticleSorterFactory {
         this.sorterByType[SortingType.ReceivedDateOldFirst] = receivedDateSorter(false);
         this.sorterByType[SortingType.PublishDateNewFirst] = publishDateSorter(true);
         this.sorterByType[SortingType.PublishDateOldFirst] = publishDateSorter(false);
+        this.sorterByType[SortingType.PublishDayNewFirst] = publishDaySorter(true);
+        this.sorterByType[SortingType.PublishDayOldFirst] = publishDaySorter(false);
         this.sorterByType[SortingType.SourceAsc] = sourceSorter(true);
         this.sorterByType[SortingType.SourceDesc] = sourceSorter(false);
         this.sorterByType[SortingType.SourceNewestReceiveDate] = receivedDateSorter(true);
@@ -459,6 +475,10 @@ export class Article {
 
     getPublishAge(): number {
         return this.publishAge;
+    }
+
+    getPublishDate(): Date {
+        return new Date(this.publishAge);
     }
 
     isHot(): boolean {
