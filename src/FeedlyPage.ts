@@ -322,7 +322,7 @@ export class FeedlyPage {
         markAsReadEntryIds = markAsReadEntryIds.filter(id => {
             return keptUnreadEntryIds.indexOf(id) < 0;
         });
-        reader.askMarkEntriesAsRead(markAsReadEntryIds);
+        reader.askMarkEntriesAsRead(markAsReadEntryIds, {});
         window.scrollTo(0, 0);
         $(ext.articlesContainerSelector).empty();
         navigo.originalEntries = null;
@@ -425,7 +425,7 @@ export class FeedlyPage {
                     return;
                 }
                 let ids = $.map<Element, string>(markAsReadEntries.toArray(), e => $(e).attr(ext.articleEntryIdAttribute));
-                reader.askMarkEntriesAsRead(ids);
+                reader.askMarkEntriesAsRead(ids, {});
                 markAsReadEntries.removeClass(ext.markAsReadImmediatelyClass).removeClass("unread").addClass("read");
             }, 1000);
             return setEntries.apply(this, arguments);
@@ -466,7 +466,7 @@ export class FeedlyPage {
                         return keptUnreadEntryIds.indexOf(id) < 0;
                     });
                     console.log(idsToMarkAsRead.length + " new articles will be marked as read");
-                    reader.askMarkEntriesAsRead(idsToMarkAsRead);
+                    reader.askMarkEntriesAsRead(idsToMarkAsRead, {});
                 }
                 var lastReadEntryId = getFFnS(ext.lastReadEntryId);
                 console.log("The last read entry id: " + lastReadEntryId);

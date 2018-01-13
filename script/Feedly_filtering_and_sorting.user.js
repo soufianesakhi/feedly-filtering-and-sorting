@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.8.0
+// @version     3.8.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1734,7 +1734,7 @@ var FeedlyPage = (function () {
         markAsReadEntryIds = markAsReadEntryIds.filter(function (id) {
             return keptUnreadEntryIds.indexOf(id) < 0;
         });
-        reader.askMarkEntriesAsRead(markAsReadEntryIds);
+        reader.askMarkEntriesAsRead(markAsReadEntryIds, {});
         window.scrollTo(0, 0);
         $(ext.articlesContainerSelector).empty();
         navigo.originalEntries = null;
@@ -1836,7 +1836,7 @@ var FeedlyPage = (function () {
                     return;
                 }
                 var ids = $.map(markAsReadEntries.toArray(), function (e) { return $(e).attr(ext.articleEntryIdAttribute); });
-                reader.askMarkEntriesAsRead(ids);
+                reader.askMarkEntriesAsRead(ids, {});
                 markAsReadEntries.removeClass(ext.markAsReadImmediatelyClass).removeClass("unread").addClass("read");
             }, 1000);
             return setEntries.apply(this, arguments);
@@ -1874,7 +1874,7 @@ var FeedlyPage = (function () {
                         return keptUnreadEntryIds_2.indexOf(id) < 0;
                     });
                     console.log(idsToMarkAsRead.length + " new articles will be marked as read");
-                    reader.askMarkEntriesAsRead(idsToMarkAsRead);
+                    reader.askMarkEntriesAsRead(idsToMarkAsRead, {});
                 }
                 var lastReadEntryId = getFFnS(ext.lastReadEntryId);
                 console.log("The last read entry id: " + lastReadEntryId);
