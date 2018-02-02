@@ -1829,6 +1829,12 @@ var FeedlyPage = (function () {
         var prototype = pagesPkg.ReactPage.prototype;
         var markAsRead = prototype.markAsRead;
         prototype.markAsRead = function (lastEntryObject) {
+            var _this = this;
+            var jumpToNext = function () {
+                navigo.getNextURI() ?
+                    _this.feedly.jumpToNext() :
+                    _this.feedly.loadDefaultPage();
+            };
             if (lastEntryObject && lastEntryObject.asOf) {
                 markAsRead.call(this, lastEntryObject);
             }
@@ -1849,12 +1855,11 @@ var FeedlyPage = (function () {
                 else {
                     console.log("No article to mark as read");
                 }
-                navigo.getNextURI() ?
-                    this.feedly.jumpToNext() :
-                    this.feedly.loadDefaultPage();
+                jumpToNext();
             }
             else {
                 markAsRead.call(this, lastEntryObject);
+                jumpToNext();
             }
         };
     };

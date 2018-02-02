@@ -444,6 +444,11 @@ export class FeedlyPage {
         var prototype = pagesPkg.ReactPage.prototype;
         var markAsRead: Function = prototype.markAsRead;
         prototype.markAsRead = function (lastEntryObject) {
+            let jumpToNext = () => {
+                navigo.getNextURI() ?
+                    this.feedly.jumpToNext() :
+                    this.feedly.loadDefaultPage();
+            }
             if (lastEntryObject && lastEntryObject.asOf) {
                 markAsRead.call(this, lastEntryObject);
             } else if (getFFnS(ext.loadByBatchEnabledId, true) && !getStreamPage().stream.state.hasAllEntries) {
@@ -462,12 +467,10 @@ export class FeedlyPage {
                 } else {
                     console.log("No article to mark as read");
                 }
-
-                navigo.getNextURI() ?
-                    this.feedly.jumpToNext() :
-                    this.feedly.loadDefaultPage();
+                jumpToNext();
             } else {
                 markAsRead.call(this, lastEntryObject);
+                jumpToNext();
             }
         }
     }
