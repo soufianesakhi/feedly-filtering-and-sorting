@@ -49,7 +49,6 @@ var ext = {
     "popularitySelector": ".engagement, .nbrRecommendations",
     "hidingInfoSibling": "header .right-col, header > h1 .button-dropdown",
     "endOfFeedSelector": ".list-entries h4:contains(End of feed)",
-    "lastReadEntryId": "lastReadEntry",
     "keepNewArticlesUnreadId": "keepNewArticlesUnread",
     "articlesToMarkAsReadId": "articlesToMarkAsRead",
     "sortedVisibleArticlesId": "sortedVisibleArticles",
@@ -883,7 +882,6 @@ var SettingsManager = (function () {
 
 var ArticleManager = (function () {
     function ArticleManager(subscriptionManager, keywordManager, page) {
-        this.lastReadArticleAge = -1;
         this.subscriptionManager = subscriptionManager;
         this.keywordManager = keywordManager;
         this.articleSorterFactory = new ArticleSorterFactory();
@@ -902,8 +900,6 @@ var ArticleManager = (function () {
         this.sortArticles(true);
     };
     ArticleManager.prototype.resetArticles = function () {
-        this.lastReadArticleAge = -1;
-        this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
     };
     ArticleManager.prototype.refreshColoring = function () {
@@ -962,15 +958,8 @@ var ArticleManager = (function () {
                 var threshold = Date.now() - advControls.maxHours * 3600 * 1000;
                 var receivedAge = article.getReceivedAge();
                 if (receivedAge <= threshold) {
-                    if (advControls.keepUnread && (this.lastReadArticleAge == -1 ||
-                        receivedAge >= this.lastReadArticleAge)) {
-                        if (receivedAge != this.lastReadArticleAge) {
-                            this.lastReadArticleGroup = [article];
-                        }
-                        else {
-                            this.lastReadArticleGroup.push(article);
-                        }
-                        this.lastReadArticleAge = receivedAge;
+                    if (advControls.keepUnread) {
+                        this.articlesToMarkAsRead.push(article);
                     }
                 }
                 else {
@@ -1103,18 +1092,6 @@ var ArticleManager = (function () {
         this.page.put(ext.sortedVisibleArticlesId, sortedVisibleEntryIds);
     };
     ArticleManager.prototype.prepareMarkAsRead = function () {
-        if (this.lastReadArticleGroup.length > 0) {
-            var lastReadArticle;
-            if (this.isOldestFirst()) {
-                lastReadArticle = this.lastReadArticleGroup[this.lastReadArticleGroup.length - 1];
-            }
-            else {
-                lastReadArticle = this.lastReadArticleGroup[0];
-            }
-            if (lastReadArticle != null) {
-                this.page.put(ext.lastReadEntryId, lastReadArticle.getEntryId());
-            }
-        }
         if (this.articlesToMarkAsRead.length > 0) {
             var ids = this.articlesToMarkAsRead.map(function (article) {
                 return article.getEntryId();
@@ -1712,23 +1689,16 @@ var FeedlyPage = (function () {
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
         var entries = navigo.originalEntries || navigo.getEntries();
-        var markAsReadEntryIds = entries.sort(function (a, b) {
-            return a.jsonInfo.crawled - b.jsonInfo.crawled;
-        }).map(function (e) {
-            return e.id;
-        });
+        var markAsReadEntryIds;
         if (getFFnS(ext.keepNewArticlesUnreadId)) {
-            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
-            if (lastReadEntryId) {
-                var idx = markAsReadEntryIds.indexOf(lastReadEntryId);
-                if (idx < markAsReadEntryIds.length - 1) {
-                    markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
-                }
-            }
-            var ids = getFFnS(ext.articlesToMarkAsReadId);
-            if (ids) {
-                markAsReadEntryIds = lastReadEntryId ? markAsReadEntryIds.concat(ids) : ids;
-            }
+            markAsReadEntryIds = getFFnS(ext.articlesToMarkAsReadId);
+        }
+        else {
+            markAsReadEntryIds = entries.sort(function (a, b) {
+                return a.jsonInfo.crawled - b.jsonInfo.crawled;
+            }).map(function (e) {
+                return e.id;
+            });
         }
         var keptUnreadEntryIds = getKeptUnreadEntryIds();
         markAsReadEntryIds = markAsReadEntryIds.filter(function (id) {
@@ -1876,15 +1846,8 @@ var FeedlyPage = (function () {
                     console.log(idsToMarkAsRead.length + " new articles will be marked as read");
                     reader.askMarkEntriesAsRead(idsToMarkAsRead, {});
                 }
-                var lastReadEntryId = getFFnS(ext.lastReadEntryId);
-                console.log("The last read entry id: " + lastReadEntryId);
-                if (lastReadEntryId) {
-                    lastEntryObject = { lastReadEntryId: lastReadEntryId, partial: true };
-                    reader.askMarkStreamAsRead(navigo.getMarkAsReadScope(), lastEntryObject, function () {
-                        console.log("Marked page partially as read: " + JSON.stringify(lastEntryObject));
-                    }, function (a, c) {
-                        console.log(c);
-                    });
+                else {
+                    console.log("No article to mark as read");
                 }
                 navigo.getNextURI() ?
                     this.feedly.jumpToNext() :

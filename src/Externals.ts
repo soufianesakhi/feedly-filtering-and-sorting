@@ -28,7 +28,6 @@ var ext = {
 	"hidingInfoSibling": "header .right-col, header > h1 .button-dropdown",
 	"endOfFeedSelector": ".list-entries h4:contains(End of feed)",
 
-	"lastReadEntryId": "lastReadEntry",
 	"keepNewArticlesUnreadId": "keepNewArticlesUnread",
 	"articlesToMarkAsReadId": "articlesToMarkAsRead",
 	"sortedVisibleArticlesId": "sortedVisibleArticles",

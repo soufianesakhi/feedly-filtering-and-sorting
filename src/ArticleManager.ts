@@ -12,8 +12,6 @@ export class ArticleManager {
     articleSorterFactory: ArticleSorterFactory;
     keywordManager: KeywordManager;
     page: FeedlyPage;
-    lastReadArticleAge = -1;
-    lastReadArticleGroup: Article[];
     articlesToMarkAsRead: Article[];
 
     constructor(subscriptionManager: SettingsManager, keywordManager: KeywordManager, page: FeedlyPage) {
@@ -36,8 +34,6 @@ export class ArticleManager {
     }
 
     resetArticles() {
-        this.lastReadArticleAge = -1;
-        this.lastReadArticleGroup = [];
         this.articlesToMarkAsRead = [];
     }
 
@@ -99,14 +95,8 @@ export class ArticleManager {
                 var threshold = Date.now() - advControls.maxHours * 3600 * 1000;
                 var receivedAge = article.getReceivedAge();
                 if (receivedAge <= threshold) {
-                    if (advControls.keepUnread && (this.lastReadArticleAge == -1 ||
-                        receivedAge >= this.lastReadArticleAge)) {
-                        if (receivedAge != this.lastReadArticleAge) {
-                            this.lastReadArticleGroup = [article]
-                        } else {
-                            this.lastReadArticleGroup.push(article);
-                        }
-                        this.lastReadArticleAge = receivedAge;
+                    if (advControls.keepUnread) {
+                        this.articlesToMarkAsRead.push(article);
                     }
                 } else {
                     if (advControls.showIfHot && (article.isHot() ||
@@ -238,18 +228,6 @@ export class ArticleManager {
     }
 
     prepareMarkAsRead() {
-        if (this.lastReadArticleGroup.length > 0) {
-            var lastReadArticle: Article;
-            if (this.isOldestFirst()) {
-                lastReadArticle = this.lastReadArticleGroup[this.lastReadArticleGroup.length - 1];
-            } else {
-                lastReadArticle = this.lastReadArticleGroup[0];
-            }
-            if (lastReadArticle != null) {
-                this.page.put(ext.lastReadEntryId, lastReadArticle.getEntryId());
-            }
-        }
-
         if (this.articlesToMarkAsRead.length > 0) {
             var ids = this.articlesToMarkAsRead.map<string>((article) => {
                 return article.getEntryId();

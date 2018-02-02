@@ -300,23 +300,15 @@ export class FeedlyPage {
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
         let entries: any[] = navigo.originalEntries || navigo.getEntries();
-        let markAsReadEntryIds = entries.sort((a, b) => {
-            return a.jsonInfo.crawled - b.jsonInfo.crawled;
-        }).map<string>(e => {
-            return e.id;
-        });
+        let markAsReadEntryIds: string[];
         if (getFFnS(ext.keepNewArticlesUnreadId)) {
-            var lastReadEntryId = getFFnS(ext.lastReadEntryId);
-            if (lastReadEntryId) {
-                let idx = markAsReadEntryIds.indexOf(lastReadEntryId);
-                if (idx < markAsReadEntryIds.length - 1) {
-                    markAsReadEntryIds = markAsReadEntryIds.slice(0, idx + 1);
-                }
-            }
-            var ids: string[] = getFFnS(ext.articlesToMarkAsReadId);
-            if (ids) {
-                markAsReadEntryIds = lastReadEntryId ? markAsReadEntryIds.concat(ids) : ids;
-            }
+            markAsReadEntryIds = getFFnS(ext.articlesToMarkAsReadId);
+        } else {
+            markAsReadEntryIds = entries.sort((a, b) => {
+                return a.jsonInfo.crawled - b.jsonInfo.crawled;
+            }).map<string>(e => {
+                return e.id;
+            });
         }
         let keptUnreadEntryIds = getKeptUnreadEntryIds();
         markAsReadEntryIds = markAsReadEntryIds.filter(id => {
@@ -467,16 +459,8 @@ export class FeedlyPage {
                     });
                     console.log(idsToMarkAsRead.length + " new articles will be marked as read");
                     reader.askMarkEntriesAsRead(idsToMarkAsRead, {});
-                }
-                var lastReadEntryId = getFFnS(ext.lastReadEntryId);
-                console.log("The last read entry id: " + lastReadEntryId);
-                if (lastReadEntryId) {
-                    lastEntryObject = { lastReadEntryId: lastReadEntryId, partial: true };
-                    reader.askMarkStreamAsRead(navigo.getMarkAsReadScope(), lastEntryObject, function () {
-                        console.log("Marked page partially as read: " + JSON.stringify(lastEntryObject));
-                    }, function (a, c) {
-                        console.log(c);
-                    });
+                } else {
+                    console.log("No article to mark as read");
                 }
 
                 navigo.getNextURI() ?
