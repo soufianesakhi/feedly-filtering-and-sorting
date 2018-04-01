@@ -70,6 +70,7 @@ export class UIManager {
                 this.batchSizeInput = new HTMLGlobalSettings<number>(ext.batchSizeId, 200, this);
                 this.globalSettings = [this.autoLoadAllArticlesCB, this.loadByBatchEnabledCB, this.batchSizeInput, this.globalSettingsEnabledCB];
                 this.initGlobalSettings(this.globalSettings.slice(0)).then(() => {
+                    this.page.initAutoLoad();
                     this.updateSubscription().then(() => {
                         this.initUI();
                         this.registerSettings();

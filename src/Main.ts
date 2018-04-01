@@ -2,7 +2,6 @@
 
 import { UIManager } from "./UIManager";
 import { callbackBindedTo, injectStyleText, bindMarkup } from "./Utils";
-import { FeedlyPage } from "./FeedlyPage";
 import { LocalStorage } from "./dao/LocalStorage";
 import { INITIALIZER } from "./initializer/Initializer";
 

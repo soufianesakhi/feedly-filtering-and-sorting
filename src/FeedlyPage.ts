@@ -52,9 +52,20 @@ export class FeedlyPage {
         }
     }
 
+    initAutoLoad() {
+        if (this.get(ext.autoLoadAllArticlesId, true)) {
+            executeWindow("Feedly-Page-FFnS-InitAutoLoad.js", this.autoLoad);
+        }
+    }
+
     initWindow() {
         window["ext"] = getFFnS("ext");
         NodeCreationObserver.init("observed-page");
+    }
+
+    autoLoad() {
+        var navigo = window["streets"].service("navigo");
+        navigo.setEntries(navigo.getEntries());
     }
 
     getStreamPage(): any {

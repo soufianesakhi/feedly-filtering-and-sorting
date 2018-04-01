@@ -1456,9 +1456,18 @@ var FeedlyPage = (function () {
             $("." + className).css("display", "none");
         }
     };
+    FeedlyPage.prototype.initAutoLoad = function () {
+        if (this.get(ext.autoLoadAllArticlesId, true)) {
+            executeWindow("Feedly-Page-FFnS-InitAutoLoad.js", this.autoLoad);
+        }
+    };
     FeedlyPage.prototype.initWindow = function () {
         window["ext"] = getFFnS("ext");
         NodeCreationObserver.init("observed-page");
+    };
+    FeedlyPage.prototype.autoLoad = function () {
+        var navigo = window["streets"].service("navigo");
+        navigo.setEntries(navigo.getEntries());
     };
     FeedlyPage.prototype.getStreamPage = function () {
         var observers = window["streets"].service("navigo").observers;
@@ -1974,6 +1983,7 @@ var UIManager = (function () {
                 _this.batchSizeInput = new HTMLGlobalSettings(ext.batchSizeId, 200, _this);
                 _this.globalSettings = [_this.autoLoadAllArticlesCB, _this.loadByBatchEnabledCB, _this.batchSizeInput, _this.globalSettingsEnabledCB];
                 _this.initGlobalSettings(_this.globalSettings.slice(0)).then(function () {
+                    _this.page.initAutoLoad();
                     _this.updateSubscription().then(function () {
                         _this.initUI();
                         _this.registerSettings();
