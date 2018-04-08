@@ -1840,9 +1840,9 @@ var FeedlyPage = (function () {
         prototype.markAsRead = function (lastEntryObject) {
             var _this = this;
             var jumpToNext = function () {
-                navigo.getNextURI() ?
-                    _this.feedly.jumpToNext() :
-                    _this.feedly.loadDefaultPage();
+                if (navigo.getNextURI() && !/latest\/?$/i.test(document.URL)) {
+                    _this.feedly.jumpToNext();
+                }
             };
             if (lastEntryObject && lastEntryObject.asOf) {
                 markAsRead.call(this, lastEntryObject);

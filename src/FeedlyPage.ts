@@ -456,9 +456,9 @@ export class FeedlyPage {
         var markAsRead: Function = prototype.markAsRead;
         prototype.markAsRead = function (lastEntryObject) {
             let jumpToNext = () => {
-                navigo.getNextURI() ?
-                    this.feedly.jumpToNext() :
-                    this.feedly.loadDefaultPage();
+                if (navigo.getNextURI() && !/latest\/?$/i.test(document.URL)) {
+                    this.feedly.jumpToNext();
+                }
             }
             if (lastEntryObject && lastEntryObject.asOf) {
                 markAsRead.call(this, lastEntryObject);
