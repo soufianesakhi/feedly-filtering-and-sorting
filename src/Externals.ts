@@ -49,4 +49,7 @@ var ext = {
 	"markAsReadImmediatelyClass": "FFnS-mark-as-read",
 	"openCurrentFeedArticlesId": "isOpenCurrentFeedArticles",
 	"openCurrentFeedArticlesClass": "open-current-articles-in-new-tab-button",
+	"openCurrentFeedArticlesUnreadOnlyId": "openCurrentFeedArticlesUnreadOnly",
+	"markAsReadOnOpenCurrentFeedArticlesId": "isMarkAsReadOnOpenCurrentFeedArticles",
+	"maxOpenCurrentFeedArticlesId": "maxOpenCurrentFeedArticles",
 }

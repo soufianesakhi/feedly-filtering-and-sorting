@@ -12,6 +12,9 @@ export class SubscriptionDTO {
     markAsReadAboveBelowRead = true;
     hideWhenMarkAboveBelow = false;
     openCurrentFeedArticles = false;
+    openCurrentFeedArticlesUnreadOnly = true;
+    markAsReadOnOpenCurrentFeedArticles = true;
+    maxOpenCurrentFeedArticles = 0;
     hideAfterRead = false;
     replaceHiddenWithGap = false;
     markAsReadFiltered = false;

@@ -63,6 +63,18 @@ export class Subscription {
         return this.dto.openCurrentFeedArticles;
     }
 
+    isOpenCurrentFeedArticlesUnreadOnly(): boolean {
+        return this.dto.openCurrentFeedArticlesUnreadOnly;
+    }
+
+    isMarkAsReadOnOpenCurrentFeedArticles(): boolean {
+        return this.dto.openCurrentFeedArticles;
+    }
+
+    getMaxOpenCurrentFeedArticles(): number {
+        return this.dto.maxOpenCurrentFeedArticles;
+    }
+
     isHideAfterRead(): boolean {
         return this.dto.hideAfterRead;
     }

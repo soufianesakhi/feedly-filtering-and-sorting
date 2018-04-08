@@ -125,7 +125,7 @@
     margin-right: 1%;
 }
 
-#FFnS_MinPopularity_AdvancedControlsReceivedPeriod, #FFnS_batchSize, #FFnS_AutoRefreshMinutes {
+#FFnS_MinPopularity_AdvancedControlsReceivedPeriod, #FFnS_batchSize, #FFnS_AutoRefreshMinutes, #FFnS_MaxOpenCurrentFeedArticles {
     width: 45px;
 }
 

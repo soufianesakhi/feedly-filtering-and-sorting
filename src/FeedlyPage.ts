@@ -43,6 +43,9 @@ export class FeedlyPage {
         this.put(ext.markAsReadAboveBelowReadId, sub.isMarkAsReadAboveBelowRead());
         this.put(ext.visualOpenAndMarkAsReadId, sub.isVisualOpenAndMarkAsRead());
         this.put(ext.titleOpenAndMarkAsReadId, sub.isTitleOpenAndMarkAsRead());
+        this.put(ext.openCurrentFeedArticlesUnreadOnlyId, sub.isOpenCurrentFeedArticlesUnreadOnly());
+        this.put(ext.maxOpenCurrentFeedArticlesId, sub.getMaxOpenCurrentFeedArticles());
+        this.put(ext.markAsReadOnOpenCurrentFeedArticlesId, sub.isMarkAsReadOnOpenCurrentFeedArticles());
     }
 
     updateCheck(enabled: boolean, id: string, className: string) {
@@ -95,7 +98,7 @@ export class FeedlyPage {
             });
             let feedButtonsContainer = $("<div>");
             feedButtonsContainer.append(openCurrentFeedArticlesBtn);
-            $(ext.articlesContainerSelector).first().parent().prepend(feedButtonsContainer);
+            $("header.header").parent().after(feedButtonsContainer);
             onClickCapture(openCurrentFeedArticlesBtn, (event: MouseEvent) => {
                 event.stopPropagation();
                 let sortedVisibleArticles = getSortedVisibleArticles();
@@ -106,13 +109,13 @@ export class FeedlyPage {
                     let link = $(a).find(".title").attr("href");
                     window.open(link, link);
                 });
-                /* var articleView = $(getById(sortedVisibleArticles[0]))
-                    .closest(ext.articleSelector).hasClass(ext.articleViewClass);
-                window.open(link, link);
-                reader.askMarkEntryAsRead(entryId);
-                if (articleView) {
-                    $(a).closest(ext.articleViewEntryContainerSelector).removeClass("unread").addClass("read");
-                } */
+                if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
+                    let reader = window["streets"].service('reader');
+                    sortedVisibleArticles.forEach(entryId => {
+                        reader.askMarkEntryAsRead(entryId);
+                        $(getById(entryId)).removeClass("unread").addClass("read");
+                    });
+                }
             });
         });
     }
