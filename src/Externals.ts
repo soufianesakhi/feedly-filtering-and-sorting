@@ -47,4 +47,6 @@ var ext = {
 	"markAsReadAboveBelowReadId": "MarkAsReadAboveBelowRead",
 	"sortArticlesId": "isSortArticles",
 	"markAsReadImmediatelyClass": "FFnS-mark-as-read",
+	"openCurrentFeedArticlesId": "isOpenCurrentFeedArticles",
+	"openCurrentFeedArticlesClass": "open-current-articles-in-new-tab-button",
 }

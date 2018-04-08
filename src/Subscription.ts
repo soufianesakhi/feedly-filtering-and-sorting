@@ -59,6 +59,10 @@ export class Subscription {
         return this.dto.hideWhenMarkAboveBelow;
     }
 
+    isOpenCurrentFeedArticles(): boolean {
+        return this.dto.openCurrentFeedArticles;
+    }
+
     isHideAfterRead(): boolean {
         return this.dto.hideAfterRead;
     }

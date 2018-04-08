@@ -207,6 +207,17 @@ input {
     background-size: 18px 18px;
 }
 
+.fx .open-current-articles-in-new-tab-button {
+    background-image: url('{{open-in-new-tab-url}}');
+    background-size: 18px 18px;
+    background-repeat: no-repeat;
+    background-color: white;
+    display: block;
+    margin-left: auto;
+    min-width: 10px;
+    padding: 10px;
+}
+
 .fx           .mark-as-read-above-below-button.mark-as-read,
 .fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon,
 .fx .entry.u5 .mark-as-read-above-below-button {

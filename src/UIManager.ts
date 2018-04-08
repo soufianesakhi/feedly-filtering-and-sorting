@@ -46,7 +46,7 @@ export class UIManager {
                 "ShowIfHot_AdvancedControlsReceivedPeriod", "MarkAsReadVisible_AdvancedControlsReceivedPeriod",
                 "OpenAndMarkAsRead", "MarkAsReadAboveBelow", "HideWhenMarkAboveBelow", "HideAfterRead",
                 "ReplaceHiddenWithGap", "AlwaysUseDefaultMatchingAreas", "VisualOpenAndMarkAsRead",
-                "TitleOpenAndMarkAsRead", "MarkAsReadFiltered", "AutoRefreshEnabled"]
+                "TitleOpenAndMarkAsRead", "MarkAsReadFiltered", "AutoRefreshEnabled", "OpenCurrentFeedArticles"]
         },
         {
             type: HTMLElementType.NumberInput, ids: ["MinPopularity_AdvancedControlsReceivedPeriod", "AutoRefreshMinutes"]

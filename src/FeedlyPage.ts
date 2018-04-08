@@ -8,7 +8,8 @@ import { executeWindow, injectToWindow, injectStyleText, injectClasses } from ".
 
 declare var getFFnS: (id: string, persistent?: boolean) => any;
 declare var putFFnS: (id: string, value: any, persistent?: boolean) => any;
-declare var getById: (id: string) => any;
+declare var getById: (id: string) => HTMLElement;
+declare var getSortedVisibleArticles: () => string[];
 declare var getStreamPage: () => any;
 declare var onClickCapture: (element: JQuery, callback: (event: MouseEvent) => any) => void;
 declare var fetchMoreEntries: (batchSize: number) => void;
@@ -20,8 +21,8 @@ export class FeedlyPage {
 
     constructor() {
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture", "fetchMoreEntries", "loadNextBatch", "getKeptUnreadEntryIds"],
-            this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds);
+        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture", "fetchMoreEntries", "loadNextBatch", "getKeptUnreadEntryIds", "getSortedVisibleArticles"],
+            this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
         injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
@@ -29,6 +30,7 @@ export class FeedlyPage {
     update(sub: Subscription) {
         this.updateCheck(sub.isOpenAndMarkAsRead(), ext.openAndMarkAsReadId, ext.openAndMarkAsReadClass);
         this.updateCheck(sub.isMarkAsReadAboveBelow(), ext.markAsReadAboveBelowId, ext.markAsReadAboveBelowClass);
+        this.updateCheck(sub.isOpenCurrentFeedArticles(), ext.openCurrentFeedArticlesId, ext.openCurrentFeedArticlesClass);
         if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
             this.put(ext.keepNewArticlesUnreadId, true);
         }
@@ -84,6 +86,34 @@ export class FeedlyPage {
             if (streamPage) {
                 putFFnS(ext.isNewestFirstId, streamPage.stream._sort === "newest", true);
             }
+
+            let openCurrentFeedArticlesBtn = $("<button>", {
+                title: "Open all current feed articles in a new tab",
+                class: ext.openCurrentFeedArticlesClass,
+                style: getFFnS(ext.openCurrentFeedArticlesId) ? "" : "display: none",
+                type: "button"
+            });
+            let feedButtonsContainer = $("<div>");
+            feedButtonsContainer.append(openCurrentFeedArticlesBtn);
+            $(ext.articlesContainerSelector).first().parent().prepend(feedButtonsContainer);
+            onClickCapture(openCurrentFeedArticlesBtn, (event: MouseEvent) => {
+                event.stopPropagation();
+                let sortedVisibleArticles = getSortedVisibleArticles();
+                if (sortedVisibleArticles.length == 0) {
+                    return;
+                }
+                sortedVisibleArticles.map(id => getById(id)).forEach(a => {
+                    let link = $(a).find(".title").attr("href");
+                    window.open(link, link);
+                });
+                /* var articleView = $(getById(sortedVisibleArticles[0]))
+                    .closest(ext.articleSelector).hasClass(ext.articleViewClass);
+                window.open(link, link);
+                reader.askMarkEntryAsRead(entryId);
+                if (articleView) {
+                    $(a).closest(ext.articleViewEntryContainerSelector).removeClass("unread").addClass("read");
+                } */
+            });
         });
     }
 
@@ -102,6 +132,17 @@ export class FeedlyPage {
         return keptUnreadEntryIds;
     }
 
+    getSortedVisibleArticles(): string[] {
+        var sortedVisibleArticles: string[] = getFFnS(ext.sortedVisibleArticlesId);
+        if (!sortedVisibleArticles) {
+            sortedVisibleArticles = [];
+            $(ext.articleSelector).each((i, a) => {
+                sortedVisibleArticles.push($(a).attr(ext.articleEntryIdAttribute));
+            });
+        }
+        return sortedVisibleArticles;
+    }
+
     onNewArticle() {
         var reader = window["streets"].service('reader');
         var getLink = (a: JQuery) => {
@@ -110,13 +151,7 @@ export class FeedlyPage {
         var getMarkAsReadAboveBelowCallback = (entryId: string, above: boolean) => {
             return (event: MouseEvent) => {
                 event.stopPropagation();
-                var sortedVisibleArticles: string[] = getFFnS(ext.sortedVisibleArticlesId);
-                if (!sortedVisibleArticles) {
-                    sortedVisibleArticles = [];
-                    $(ext.articleSelector).each((i, a) => {
-                        sortedVisibleArticles.push($(a).attr(ext.articleEntryIdAttribute));
-                    });
-                }
+                var sortedVisibleArticles = getSortedVisibleArticles();
                 var markAsRead = getFFnS(ext.markAsReadAboveBelowReadId);
                 if (markAsRead) {
                     let keptUnreadEntryIds = getKeptUnreadEntryIds();
@@ -286,7 +321,7 @@ export class FeedlyPage {
         return JSON.parse(sessionStorage.getItem("FFnS" + (persistent ? "#" : "_") + id));
     }
 
-    getById(id: string) {
+    getById(id: string): HTMLElement {
         return document.getElementById(id + "_main");
     }
 
