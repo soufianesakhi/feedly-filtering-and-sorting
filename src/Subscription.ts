@@ -68,7 +68,7 @@ export class Subscription {
     }
 
     isMarkAsReadOnOpenCurrentFeedArticles(): boolean {
-        return this.dto.openCurrentFeedArticles;
+        return this.dto.markAsReadOnOpenCurrentFeedArticles;
     }
 
     getMaxOpenCurrentFeedArticles(): number {

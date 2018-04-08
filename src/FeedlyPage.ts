@@ -101,17 +101,28 @@ export class FeedlyPage {
             $("header.header").parent().after(feedButtonsContainer);
             onClickCapture(openCurrentFeedArticlesBtn, (event: MouseEvent) => {
                 event.stopPropagation();
-                let sortedVisibleArticles = getSortedVisibleArticles();
-                if (sortedVisibleArticles.length == 0) {
+                let articlesToOpen = getSortedVisibleArticles();
+                if (articlesToOpen.length == 0) {
                     return;
                 }
-                sortedVisibleArticles.map(id => getById(id)).forEach(a => {
+                if (getFFnS(ext.openCurrentFeedArticlesUnreadOnlyId)) {
+                    articlesToOpen = articlesToOpen.filter(id => {
+                        return $(getById(id)).hasClass("unread");
+                    });
+                }
+                let max = getFFnS(ext.maxOpenCurrentFeedArticlesId);
+                if (max && max > 0) {
+                    if (max < articlesToOpen.length) {
+                        articlesToOpen.length = max;
+                    }
+                }
+                articlesToOpen.map(id => getById(id)).forEach(a => {
                     let link = $(a).find(".title").attr("href");
                     window.open(link, link);
                 });
                 if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
                     let reader = window["streets"].service('reader');
-                    sortedVisibleArticles.forEach(entryId => {
+                    articlesToOpen.forEach(entryId => {
                         reader.askMarkEntryAsRead(entryId);
                         $(getById(entryId)).removeClass("unread").addClass("read");
                     });

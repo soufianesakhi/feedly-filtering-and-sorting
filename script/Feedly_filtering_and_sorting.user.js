@@ -543,7 +543,7 @@ var Subscription = (function () {
         return this.dto.openCurrentFeedArticlesUnreadOnly;
     };
     Subscription.prototype.isMarkAsReadOnOpenCurrentFeedArticles = function () {
-        return this.dto.openCurrentFeedArticles;
+        return this.dto.markAsReadOnOpenCurrentFeedArticles;
     };
     Subscription.prototype.getMaxOpenCurrentFeedArticles = function () {
         return this.dto.maxOpenCurrentFeedArticles;
@@ -1520,17 +1520,28 @@ var FeedlyPage = (function () {
             $("header.header").parent().after(feedButtonsContainer);
             onClickCapture(openCurrentFeedArticlesBtn, function (event) {
                 event.stopPropagation();
-                var sortedVisibleArticles = getSortedVisibleArticles();
-                if (sortedVisibleArticles.length == 0) {
+                var articlesToOpen = getSortedVisibleArticles();
+                if (articlesToOpen.length == 0) {
                     return;
                 }
-                sortedVisibleArticles.map(function (id) { return getById(id); }).forEach(function (a) {
+                if (getFFnS(ext.openCurrentFeedArticlesUnreadOnlyId)) {
+                    articlesToOpen = articlesToOpen.filter(function (id) {
+                        return $(getById(id)).hasClass("unread");
+                    });
+                }
+                var max = getFFnS(ext.maxOpenCurrentFeedArticlesId);
+                if (max && max > 0) {
+                    if (max < articlesToOpen.length) {
+                        articlesToOpen.length = max;
+                    }
+                }
+                articlesToOpen.map(function (id) { return getById(id); }).forEach(function (a) {
                     var link = $(a).find(".title").attr("href");
                     window.open(link, link);
                 });
                 if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
                     var reader_1 = window["streets"].service('reader');
-                    sortedVisibleArticles.forEach(function (entryId) {
+                    articlesToOpen.forEach(function (entryId) {
                         reader_1.askMarkEntryAsRead(entryId);
                         $(getById(entryId)).removeClass("unread").addClass("read");
                     });
