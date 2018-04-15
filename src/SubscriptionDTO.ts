@@ -29,6 +29,8 @@ export class SubscriptionDTO {
     coloringRules: ColoringRule[] = [];
     autoRefreshEnabled = false;
     autoRefreshMinutes = 60;
+    hideDuplicates = false;
+    markAsReadDuplicates = false;
 
     constructor(url: string) {
         this.url = url;

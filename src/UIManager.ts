@@ -47,7 +47,8 @@ export class UIManager {
                 "OpenAndMarkAsRead", "MarkAsReadAboveBelow", "HideWhenMarkAboveBelow", "HideAfterRead",
                 "ReplaceHiddenWithGap", "AlwaysUseDefaultMatchingAreas", "VisualOpenAndMarkAsRead",
                 "TitleOpenAndMarkAsRead", "MarkAsReadFiltered", "AutoRefreshEnabled", "OpenCurrentFeedArticles",
-                "OpenCurrentFeedArticlesUnreadOnly", "MarkAsReadOnOpenCurrentFeedArticles"]
+                "OpenCurrentFeedArticlesUnreadOnly", "MarkAsReadOnOpenCurrentFeedArticles", "HideDuplicates",
+                "MarkAsReadDuplicates"]
         },
         {
             type: HTMLElementType.NumberInput, ids: [

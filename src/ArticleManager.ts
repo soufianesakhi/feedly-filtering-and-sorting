@@ -13,6 +13,8 @@ export class ArticleManager {
     keywordManager: KeywordManager;
     page: FeedlyPage;
     articlesToMarkAsRead: Article[];
+    url2Article: { [url: string]: Article };
+    title2Article: { [title: string]: Article };
 
     constructor(subscriptionManager: SettingsManager, keywordManager: KeywordManager, page: FeedlyPage) {
         this.subscriptionManager = subscriptionManager;
@@ -35,6 +37,8 @@ export class ArticleManager {
 
     resetArticles() {
         this.articlesToMarkAsRead = [];
+        this.url2Article = {};
+        this.title2Article = {};
     }
 
     refreshColoring() {
@@ -112,6 +116,37 @@ export class ArticleManager {
                 console.log(err);
             }
         }
+
+        if (sub.isHideDuplicates() || sub.isMarkAsReadDuplicates()) {
+            let url = article.getUrl();
+            let title = article.getTitle();
+            if (!this.checkDuplicate(article, this.url2Article[url])) {
+                this.url2Article[url] = article;
+                if (!this.checkDuplicate(article, this.title2Article[title])) {
+                    this.title2Article[title] = article;
+                }
+            }
+        }
+    }
+
+    checkDuplicate(a: Article, b: Article): boolean {
+        if (!b || a.getEntryId() === b.getEntryId()) {
+            return false;
+        }
+        var sub = this.getCurrentSub();
+        let toKeep = (a.getPublishAge() > b.getPublishAge()) ? a : b;
+        let duplicate = (a.getPublishAge() > b.getPublishAge()) ? b : a;
+        this.title2Article[a.getTitle()] = toKeep;
+        this.title2Article[b.getTitle()] = toKeep;
+        this.url2Article[a.getUrl()] = toKeep;
+        this.url2Article[b.getUrl()] = toKeep;
+        if (sub.isHideDuplicates()) {
+            duplicate.setVisible(false);
+        }
+        if (sub.isMarkAsReadDuplicates()) {
+            this.articlesToMarkAsRead.push(duplicate);
+        }
+        return true;
     }
 
     applyColoringRules(article: Article) {
@@ -376,6 +411,7 @@ export class Article {
     private receivedAge: number;
     private publishAge: number;
     private popularity: number;
+    private url: string;
     private entryInfos: EntryInfos;
 
     constructor(article: Element) {
@@ -428,6 +464,9 @@ export class Article {
             this.source = source.text().trim();
         }
 
+        // URL
+        this.url = this.article.find(".title").attr("href");
+
         this.container = this.article.closest(".list-entries > div");
     }
 
@@ -437,6 +476,10 @@ export class Article {
 
     getTitle(): string {
         return this.title;
+    }
+
+    getUrl() {
+        return this.url;
     }
 
     getSource(): string {

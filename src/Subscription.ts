@@ -119,6 +119,14 @@ export class Subscription {
         return this.dto.autoRefreshMinutes * 60 * 1000;
     }
 
+    isHideDuplicates(): boolean {
+        return this.dto.hideDuplicates;
+    }
+
+    isMarkAsReadDuplicates(): boolean {
+        return this.dto.markAsReadDuplicates;
+    }
+
     setHours_AdvancedControlsReceivedPeriod(hours: number) {
         if (hours > 23) {
             return;
