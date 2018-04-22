@@ -1951,8 +1951,8 @@ var FeedlyPage = (function () {
         prototype.markAsRead = function (lastEntryObject) {
             var _this = this;
             var jumpToNext = function () {
-                if (navigo.getNextURI() && !/latest\/?$/i.test(document.URL)) {
-                    _this.feedly.jumpToNext();
+                if (!/latest\/?$/i.test(document.URL)) {
+                    navigo.getNextURI() ? _this.feedly.jumpToNext() : _this.feedly.loadDefaultPage();
                 }
             };
             if (lastEntryObject && lastEntryObject.asOf) {
