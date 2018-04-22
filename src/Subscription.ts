@@ -127,6 +127,10 @@ export class Subscription {
         return this.dto.markAsReadDuplicates;
     }
 
+    getFilteringByReadingTime() {
+        return this.dto.filteringByReadingTime;
+    }
+
     setHours_AdvancedControlsReceivedPeriod(hours: number) {
         if (hours > 23) {
             return;

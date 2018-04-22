@@ -48,11 +48,13 @@ export class UIManager {
                 "ReplaceHiddenWithGap", "AlwaysUseDefaultMatchingAreas", "VisualOpenAndMarkAsRead",
                 "TitleOpenAndMarkAsRead", "MarkAsReadFiltered", "AutoRefreshEnabled", "OpenCurrentFeedArticles",
                 "OpenCurrentFeedArticlesUnreadOnly", "MarkAsReadOnOpenCurrentFeedArticles", "HideDuplicates",
-                "MarkAsReadDuplicates"]
+                "MarkAsReadDuplicates", "Enabled_FilteringByReadingTime", "KeepUnread_FilteringByReadingTime",
+            ]
         },
         {
             type: HTMLElementType.NumberInput, ids: [
-                "MinPopularity_AdvancedControlsReceivedPeriod", "AutoRefreshMinutes", "MaxOpenCurrentFeedArticles"
+                "MinPopularity_AdvancedControlsReceivedPeriod", "AutoRefreshMinutes", "MaxOpenCurrentFeedArticles",
+                "ThresholdMinutes_FilteringByReadingTime", "WordsPerMinute_FilteringByReadingTime"
             ]
         }
     ];
@@ -328,13 +330,11 @@ export class UIManager {
                 }
             }
         );
-        this.htmlSubscriptionManager.registerSettings([ext.markAsReadAboveBelowReadId], HTMLElementType.SelectBox, {
-            update: (subscriptionSetting: HTMLSubscriptionSetting) => {
-                $id(subscriptionSetting.htmlId).val(subscriptionSetting.manager.subscription.isMarkAsReadAboveBelowRead() + "");
-            },
-            getHTMLValue: (subscriptionSetting) => {
-                return $id(subscriptionSetting.htmlId).val() === "true";
-            },
+        this.htmlSubscriptionManager.registerSelectBoxBoolean(ext.markAsReadAboveBelowReadId, (subscription: Subscription) => {
+            return subscription.isMarkAsReadAboveBelowRead();
+        });
+        this.htmlSubscriptionManager.registerSelectBoxBoolean("FilterLong_FilteringByReadingTime", (subscription: Subscription) => {
+            return subscription.getFilteringByReadingTime().filterLong;
         });
     }
 

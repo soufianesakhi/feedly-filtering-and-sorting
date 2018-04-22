@@ -3,6 +3,7 @@
 import { UIManager } from "./UIManager"
 import { HTMLElementType } from "./DataTypes"
 import { $id, setChecked, isChecked } from "./Utils";
+import { Subscription } from "./Subscription";
 
 export interface HTMLSubscriptionSettingConfig {
     update: (subscriptionSetting: HTMLSubscriptionSetting) => void;
@@ -72,6 +73,17 @@ export class HTMLSubscriptionManager {
 
     registerSettings(ids: string[], type: HTMLElementType, subscriptionSettingConfig?: HTMLSubscriptionSettingConfig) {
         this.addSettings(ids, this.configByElementType[type], subscriptionSettingConfig);
+    }
+
+    registerSelectBoxBoolean(id: string, getValueCallback: (subscription: Subscription) => any) {
+        this.registerSettings([id], HTMLElementType.SelectBox, {
+            update: (subscriptionSetting: HTMLSubscriptionSetting) => {
+                $id(subscriptionSetting.htmlId).val(getValueCallback(subscriptionSetting.manager.subscription) + "");
+            },
+            getHTMLValue: (subscriptionSetting) => {
+                return $id(subscriptionSetting.htmlId).val() === "true";
+            },
+        });
     }
 
     addSettings(ids: string[], config: HTMLSubscriptionSettingConfig, subscriptionSettingConfig?: HTMLSubscriptionSettingConfig) {

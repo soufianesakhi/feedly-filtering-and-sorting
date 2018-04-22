@@ -12,7 +12,7 @@
 				<span>Load articles by batch</span>
 				<input id="FFnS_loadByBatchEnabled" type="checkbox">
 				<span>Batch size</span>
-				<input id="FFnS_batchSize" class="FFnS_input" type="number" min="50" max="1000" step="50">
+				<input id="FFnS_batchSize" class="FFnS_input MediumNumberInput" type="number" min="50" max="1000" step="50">
 			</div>
 
 			<div class="setting_group">
@@ -134,7 +134,7 @@
 								maximum articles to open
 								<span class="tooltiptext">If set to 0, all the articles will be opened</span>
 							</span>
-							<input id="FFnS_MaxOpenCurrentFeedArticles" class="FFnS_input" type="number" min="0" step="1">
+							<input id="FFnS_MaxOpenCurrentFeedArticles" class="FFnS_input MediumNumberInput" type="number" min="0" step="1">
 							<span> mark as read</span>
 							<input id="FFnS_MarkAsReadOnOpenCurrentFeedArticles" type="checkbox">
 						</div>
@@ -180,12 +180,36 @@
 						</div>
 						<div class="setting_group">
 							<span>Visible if hot or popularity superior to:</span>
-							<input id="FFnS_MinPopularity_AdvancedControlsReceivedPeriod" class="FFnS_input" type="number" min="0" step="100">
+							<input id="FFnS_MinPopularity_AdvancedControlsReceivedPeriod" class="FFnS_input MediumNumberInput" type="number" min="0"
+							 step="100">
 							<input id="FFnS_ShowIfHot_AdvancedControlsReceivedPeriod" type="checkbox">
 							<span class="tooltip">Marked as read if hot or popular
 								<span class="tooltiptext">Mark as read the articles made visible if hot or with popularity superior to the defined value</span>
 							</span>
 							<input id="FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod" type="checkbox">
+						</div>
+					</fieldset>
+					<fieldset>
+						<legend>Reading time</legend>
+						<div class="setting_group">
+							<span>Enable filtering of articles with reading time </span>
+							<select id="FFnS_FilterLong_FilteringByReadingTime" class="FFnS_input">
+								<option value="true" selected>superior</option>
+								<option value="false">inferior</option>
+							</select>
+							<span>to </span>
+							<input id="FFnS_ThresholdMinutes_FilteringByReadingTime" class="FFnS_input MediumNumberInput" type="number" min="1">
+							<input id="FFnS_Enabled_FilteringByReadingTime" type="checkbox">
+						</div>
+						<div class="setting_group">
+							<span class="tooltip">Keep unread
+								<span class="tooltiptext">When this option is enabled, the filtered articles will be kept unread</span>
+							</span>
+							<input id="FFnS_KeepUnread_FilteringByReadingTime" type="checkbox">
+							<span class="tooltip">Reading speed :
+								<span class="tooltiptext">The average words read per minute</span>
+							</span>
+							<input id="FFnS_WordsPerMinute_FilteringByReadingTime" class="FFnS_input MediumNumberInput" type="number" min="1">
 						</div>
 					</fieldset>
 					<fieldset>
@@ -221,7 +245,7 @@
 								<span class="tooltiptext tooltip-top">The articles will be reloaded periodically following the configured minutes</span>
 							</span>
 							<input id="FFnS_AutoRefreshEnabled" type="checkbox">
-							<input id="FFnS_AutoRefreshMinutes" class="FFnS_input" type="number" min="1">
+							<input id="FFnS_AutoRefreshMinutes" class="FFnS_input MediumNumberInput" type="number" min="1">
 							<span>(minutes)</span>
 						</div>
 						<div class="setting_group">

@@ -31,6 +31,7 @@ export class SubscriptionDTO {
     autoRefreshMinutes = 60;
     hideDuplicates = false;
     markAsReadDuplicates = false;
+    filteringByReadingTime = new FilteringByReadingTime();
 
     constructor(url: string) {
         this.url = url;
@@ -47,6 +48,14 @@ export class AdvancedControlsReceivedPeriod {
     showIfHot = false;
     minPopularity = 200;
     markAsReadVisible = false;
+}
+
+export class FilteringByReadingTime {
+    enabled = false;
+    filterLong = true;
+    thresholdMinutes = 5;
+    keepUnread = false;
+    wordsPerMinute = 200;
 }
 
 export class ColoringRule {
