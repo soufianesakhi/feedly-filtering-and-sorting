@@ -1159,7 +1159,9 @@ var ArticleManager = (function () {
                 if (articlesContainer.find("h4").length > 0 && !articlesContainer.prev().is("h4")) {
                     articlesContainer.before("<h4>Latest</h4>");
                 }
+                var loadingMessage = articlesContainer.find(".message.loading").detach();
                 articlesContainer.empty();
+                articlesContainer.append(loadingMessage);
                 visibleArticles.forEach(function (article) {
                     articlesContainer.append(article.getContainer());
                 });
