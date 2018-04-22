@@ -31,8 +31,10 @@ export class FeedlyPage {
         this.updateCheck(sub.isOpenAndMarkAsRead(), ext.openAndMarkAsReadId, ext.openAndMarkAsReadClass);
         this.updateCheck(sub.isMarkAsReadAboveBelow(), ext.markAsReadAboveBelowId, ext.markAsReadAboveBelowClass);
         this.updateCheck(sub.isOpenCurrentFeedArticles(), ext.openCurrentFeedArticlesId, ext.openCurrentFeedArticlesClass);
-        if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
-            this.put(ext.keepNewArticlesUnreadId, true);
+        const filteringByReadingTime = sub.getFilteringByReadingTime();
+        if (sub.getAdvancedControlsReceivedPeriod().keepUnread ||
+            (filteringByReadingTime.enabled && filteringByReadingTime.keepUnread)) {
+            this.put(ext.keepArticlesUnreadId, true);
         }
         if (sub.isHideWhenMarkAboveBelow()) {
             this.put(ext.hideWhenMarkAboveBelowId, true);
@@ -360,8 +362,10 @@ export class FeedlyPage {
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
         let entries: any[] = navigo.originalEntries || navigo.getEntries();
-        let markAsReadEntryIds: string[] = getFFnS(ext.articlesToMarkAsReadId);
-        if (!markAsReadEntryIds || markAsReadEntryIds.length === 0) {
+        let markAsReadEntryIds: string[];
+        if (getFFnS(ext.keepArticlesUnreadId)) {
+            markAsReadEntryIds = getFFnS(ext.articlesToMarkAsReadId);
+        } else {
             markAsReadEntryIds = entries.sort((a, b) => {
                 return a.jsonInfo.crawled - b.jsonInfo.crawled;
             }).map<string>(e => {
@@ -511,21 +515,24 @@ export class FeedlyPage {
                 markAsRead.call(this, lastEntryObject);
             } else if (getFFnS(ext.loadByBatchEnabledId, true) && !getStreamPage().stream.state.hasAllEntries) {
                 loadNextBatch();
-            } else {
-                let idsToMarkAsRead: string[] = getFFnS(ext.articlesToMarkAsReadId);
-                if (idsToMarkAsRead && idsToMarkAsRead.length > 0) {
-                    console.log("Marking as read with keeping specific articles as unread");
+            } else if (getFFnS(ext.keepArticlesUnreadId)) {
+                console.log("Marking as read with keeping new articles unread");
+
+                var idsToMarkAsRead: string[] = getFFnS(ext.articlesToMarkAsReadId);
+                if (idsToMarkAsRead) {
                     let keptUnreadEntryIds = getKeptUnreadEntryIds();
                     idsToMarkAsRead = idsToMarkAsRead.filter(id => {
                         return keptUnreadEntryIds.indexOf(id) < 0;
                     });
                     console.log(idsToMarkAsRead.length + " new articles will be marked as read");
                     reader.askMarkEntriesAsRead(idsToMarkAsRead, {});
-                    jumpToNext();
                 } else {
-                    markAsRead.call(this, lastEntryObject);
-                    jumpToNext();
+                    console.log("No article to mark as read");
                 }
+                jumpToNext();
+            } else {
+                markAsRead.call(this, lastEntryObject);
+                jumpToNext();
             }
         }
     }

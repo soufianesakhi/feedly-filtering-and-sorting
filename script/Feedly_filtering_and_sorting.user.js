@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.10.0
+// @version     3.11.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -49,7 +49,7 @@ var ext = {
     "popularitySelector": ".engagement, .nbrRecommendations",
     "hidingInfoSibling": "header .right-col, header > h1 .button-dropdown",
     "endOfFeedSelector": ".list-entries h4:contains(End of feed)",
-    "keepNewArticlesUnreadId": "keepNewArticlesUnread",
+    "keepArticlesUnreadId": "keepArticlesUnread",
     "articlesToMarkAsReadId": "articlesToMarkAsRead",
     "sortedVisibleArticlesId": "sortedVisibleArticles",
     "openAndMarkAsReadId": "isOpenAndMarkAsRead",
@@ -1038,7 +1038,6 @@ var ArticleManager = (function () {
         if (filteringByReadingTime.enabled) {
             var thresholdWords = filteringByReadingTime.thresholdMinutes * filteringByReadingTime.wordsPerMinute;
             var articleWords = article.body.split(" ").length;
-            console.log("articleWords", articleWords);
             if (articleWords != thresholdWords &&
                 filteringByReadingTime.filterLong == articleWords > thresholdWords) {
                 article.setVisible(false);
@@ -1528,8 +1527,10 @@ var FeedlyPage = (function () {
         this.updateCheck(sub.isOpenAndMarkAsRead(), ext.openAndMarkAsReadId, ext.openAndMarkAsReadClass);
         this.updateCheck(sub.isMarkAsReadAboveBelow(), ext.markAsReadAboveBelowId, ext.markAsReadAboveBelowClass);
         this.updateCheck(sub.isOpenCurrentFeedArticles(), ext.openCurrentFeedArticlesId, ext.openCurrentFeedArticlesClass);
-        if (sub.getAdvancedControlsReceivedPeriod().keepUnread) {
-            this.put(ext.keepNewArticlesUnreadId, true);
+        var filteringByReadingTime = sub.getFilteringByReadingTime();
+        if (sub.getAdvancedControlsReceivedPeriod().keepUnread ||
+            (filteringByReadingTime.enabled && filteringByReadingTime.keepUnread)) {
+            this.put(ext.keepArticlesUnreadId, true);
         }
         if (sub.isHideWhenMarkAboveBelow()) {
             this.put(ext.hideWhenMarkAboveBelowId, true);
@@ -1837,8 +1838,11 @@ var FeedlyPage = (function () {
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
         var entries = navigo.originalEntries || navigo.getEntries();
-        var markAsReadEntryIds = getFFnS(ext.articlesToMarkAsReadId);
-        if (!markAsReadEntryIds || markAsReadEntryIds.length === 0) {
+        var markAsReadEntryIds;
+        if (getFFnS(ext.keepArticlesUnreadId)) {
+            markAsReadEntryIds = getFFnS(ext.articlesToMarkAsReadId);
+        }
+        else {
             markAsReadEntryIds = entries.sort(function (a, b) {
                 return a.jsonInfo.crawled - b.jsonInfo.crawled;
             }).map(function (e) {
@@ -1986,22 +1990,25 @@ var FeedlyPage = (function () {
             else if (getFFnS(ext.loadByBatchEnabledId, true) && !getStreamPage().stream.state.hasAllEntries) {
                 loadNextBatch();
             }
-            else {
+            else if (getFFnS(ext.keepArticlesUnreadId)) {
+                console.log("Marking as read with keeping new articles unread");
                 var idsToMarkAsRead = getFFnS(ext.articlesToMarkAsReadId);
-                if (idsToMarkAsRead && idsToMarkAsRead.length > 0) {
-                    console.log("Marking as read with keeping specific articles as unread");
+                if (idsToMarkAsRead) {
                     var keptUnreadEntryIds_2 = getKeptUnreadEntryIds();
                     idsToMarkAsRead = idsToMarkAsRead.filter(function (id) {
                         return keptUnreadEntryIds_2.indexOf(id) < 0;
                     });
                     console.log(idsToMarkAsRead.length + " new articles will be marked as read");
                     reader.askMarkEntriesAsRead(idsToMarkAsRead, {});
-                    jumpToNext();
                 }
                 else {
-                    markAsRead.call(this, lastEntryObject);
-                    jumpToNext();
+                    console.log("No article to mark as read");
                 }
+                jumpToNext();
+            }
+            else {
+                markAsRead.call(this, lastEntryObject);
+                jumpToNext();
             }
         };
     };

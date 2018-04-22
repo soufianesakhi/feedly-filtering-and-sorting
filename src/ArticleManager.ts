@@ -132,7 +132,6 @@ export class ArticleManager {
         if (filteringByReadingTime.enabled) {
             let thresholdWords = filteringByReadingTime.thresholdMinutes * filteringByReadingTime.wordsPerMinute;
             let articleWords = article.body.split(" ").length;
-            console.log("articleWords", articleWords);
             if (articleWords != thresholdWords &&
                 filteringByReadingTime.filterLong == articleWords > thresholdWords) {
                 article.setVisible(false);
