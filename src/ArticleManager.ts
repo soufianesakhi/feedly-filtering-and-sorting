@@ -127,6 +127,19 @@ export class ArticleManager {
                 }
             }
         }
+
+        const filteringByReadingTime = sub.getFilteringByReadingTime();
+        if (filteringByReadingTime.enabled) {
+            let thresholdWords = filteringByReadingTime.thresholdMinutes * filteringByReadingTime.wordsPerMinute;
+            let articleWords = article.body.split(" ").length;
+            console.log("articleWords", articleWords);
+            if (articleWords != thresholdWords &&
+                filteringByReadingTime.filterLong == articleWords > thresholdWords) {
+                article.setVisible(false);
+            } else if (filteringByReadingTime.keepUnread) {
+                this.articlesToMarkAsRead.push(article);
+            }
+        }
     }
 
     checkDuplicate(a: Article, b: Article): boolean {

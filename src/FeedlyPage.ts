@@ -360,10 +360,8 @@ export class FeedlyPage {
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service('reader');
         let entries: any[] = navigo.originalEntries || navigo.getEntries();
-        let markAsReadEntryIds: string[];
-        if (getFFnS(ext.keepNewArticlesUnreadId)) {
-            markAsReadEntryIds = getFFnS(ext.articlesToMarkAsReadId);
-        } else {
+        let markAsReadEntryIds: string[] = getFFnS(ext.articlesToMarkAsReadId);
+        if (!markAsReadEntryIds || markAsReadEntryIds.length === 0) {
             markAsReadEntryIds = entries.sort((a, b) => {
                 return a.jsonInfo.crawled - b.jsonInfo.crawled;
             }).map<string>(e => {
@@ -513,24 +511,21 @@ export class FeedlyPage {
                 markAsRead.call(this, lastEntryObject);
             } else if (getFFnS(ext.loadByBatchEnabledId, true) && !getStreamPage().stream.state.hasAllEntries) {
                 loadNextBatch();
-            } else if (getFFnS(ext.keepNewArticlesUnreadId)) {
-                console.log("Marking as read with keeping new articles unread");
-
-                var idsToMarkAsRead: string[] = getFFnS(ext.articlesToMarkAsReadId);
-                if (idsToMarkAsRead) {
+            } else {
+                let idsToMarkAsRead: string[] = getFFnS(ext.articlesToMarkAsReadId);
+                if (idsToMarkAsRead && idsToMarkAsRead.length > 0) {
+                    console.log("Marking as read with keeping specific articles as unread");
                     let keptUnreadEntryIds = getKeptUnreadEntryIds();
                     idsToMarkAsRead = idsToMarkAsRead.filter(id => {
                         return keptUnreadEntryIds.indexOf(id) < 0;
                     });
                     console.log(idsToMarkAsRead.length + " new articles will be marked as read");
                     reader.askMarkEntriesAsRead(idsToMarkAsRead, {});
+                    jumpToNext();
                 } else {
-                    console.log("No article to mark as read");
+                    markAsRead.call(this, lastEntryObject);
+                    jumpToNext();
                 }
-                jumpToNext();
-            } else {
-                markAsRead.call(this, lastEntryObject);
-                jumpToNext();
             }
         }
     }
