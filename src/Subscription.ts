@@ -1,8 +1,8 @@
 /// <reference path="./_references.d.ts" />
 
-import { SubscriptionDTO, AdvancedControlsReceivedPeriod, ColoringRule } from "./SubscriptionDTO";
+import { FilteringType, KeywordMatchingArea, KeywordMatchingMethod, SortingType } from "./DataTypes";
 import { SubscriptionDAO } from "./SubscriptionDAO";
-import { FilteringType, SortingType, getFilteringTypes, KeywordMatchingArea, KeywordMatchingMethod } from "./DataTypes";
+import { AdvancedControlsReceivedPeriod, ColoringRule, SubscriptionDTO } from "./SubscriptionDTO";
 
 export class Subscription {
     dto: SubscriptionDTO;
@@ -125,6 +125,14 @@ export class Subscription {
 
     isMarkAsReadDuplicates(): boolean {
         return this.dto.markAsReadDuplicates;
+    }
+
+    isCrossCheckDuplicates(): boolean {
+        return this.dto.crossCheckDuplicates;
+    }
+
+    getCrossCheckDuplicatesDays() {
+        return this.dto.crossCheckDuplicatesDays;
     }
 
     getFilteringByReadingTime() {

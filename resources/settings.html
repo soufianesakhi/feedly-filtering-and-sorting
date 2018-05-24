@@ -224,6 +224,31 @@
 						</span>
 					</fieldset>
 					<fieldset>
+						<legend>Duplicates filtering</legend>
+						<div class="setting_group">
+							<span class="tooltip">Hide duplicates
+								<span class="tooltiptext tooltip-top">The duplicate articles will be hidden based on the url and the title. For each duplicate article group, only the
+									most recently published one will be kept.</span>
+							</span>
+							<input id="FFnS_HideDuplicates" type="checkbox">
+						</div>
+						<div class="setting_group">
+							<span class="tooltip">Mark as read
+								<span class="tooltiptext tooltip-top">The duplicate articles will be marked as read (based on the same rules of the 'Hide duplicates' option).</span>
+							</span>
+							<input id="FFnS_MarkAsReadDuplicates" type="checkbox">
+						</div>
+						<div class="setting_group">
+							<span class="tooltip">Enable cross checking with persistence up to:
+								<span class="tooltiptext tooltip-top">The duplicates will be checked across all subscriptions and categories against current articles and stored articles.
+									The url and title of all articles published less then the configured days will be stored.</span>
+							</span>
+							<input id="FFnS_CrossCheckDuplicatesDays" class="FFnS_input MediumNumberInput" type="number" min="0">
+							<span> days </span>
+							<input id="FFnS_CrossCheckDuplicates" type="checkbox">
+						</div>
+					</fieldset>
+					<fieldset>
 						<legend>Misc</legend>
 						<div class="setting_group">
 							<span>Group hot articles & pin to top</span>
@@ -248,19 +273,6 @@
 							<input id="FFnS_AutoRefreshEnabled" type="checkbox">
 							<input id="FFnS_AutoRefreshMinutes" class="FFnS_input MediumNumberInput" type="number" min="1">
 							<span>(minutes)</span>
-						</div>
-						<div class="setting_group">
-							<span class="tooltip">Hide duplicates
-								<span class="tooltiptext tooltip-top">The duplicate articles will be hidden based on the url and the title. For each duplicate article group, only the
-									most recently published one will be kept.</span>
-							</span>
-							<input id="FFnS_HideDuplicates" type="checkbox">
-						</div>
-						<div class="setting_group">
-							<span class="tooltip">Mark as read duplicates
-								<span class="tooltiptext tooltip-top">The duplicate articles will be marked as read (based on the same rules of the 'Hide duplicates' option).</span>
-							</span>
-							<input id="FFnS_MarkAsReadDuplicates" type="checkbox">
 						</div>
 					</fieldset>
 				</div>

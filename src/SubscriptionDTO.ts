@@ -31,6 +31,8 @@ export class SubscriptionDTO {
     autoRefreshMinutes = 60;
     hideDuplicates = false;
     markAsReadDuplicates = false;
+    crossCheckDuplicates = false;
+    crossCheckDuplicatesDays = 3;
     filteringByReadingTime = new FilteringByReadingTime();
 
     constructor(url: string) {

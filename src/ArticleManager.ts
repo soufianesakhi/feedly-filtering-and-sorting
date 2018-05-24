@@ -1,14 +1,13 @@
 /// <reference path="./_references.d.ts" />
 
-import { FilteringType, SortingType, ColoringRuleSource } from "./DataTypes";
-import { Subscription } from "./Subscription";
-import { SettingsManager } from "./SettingsManager";
-import { KeywordManager } from "./KeywordManager";
-import { $id, isChecked, injectStyleText } from "./Utils";
+import { ColoringRuleSource, FilteringType, SortingType } from "./DataTypes";
 import { FeedlyPage } from "./FeedlyPage";
+import { KeywordManager } from "./KeywordManager";
+import { SettingsManager } from "./SettingsManager";
+import { Subscription } from "./Subscription";
 
 export class ArticleManager {
-    subscriptionManager: SettingsManager;
+    settingsManager: SettingsManager;
     articleSorterFactory: ArticleSorterFactory;
     keywordManager: KeywordManager;
     page: FeedlyPage;
@@ -16,8 +15,8 @@ export class ArticleManager {
     url2Article: { [url: string]: Article };
     title2Article: { [title: string]: Article };
 
-    constructor(subscriptionManager: SettingsManager, keywordManager: KeywordManager, page: FeedlyPage) {
-        this.subscriptionManager = subscriptionManager;
+    constructor(settingsManager: SettingsManager, keywordManager: KeywordManager, page: FeedlyPage) {
+        this.settingsManager = settingsManager;
         this.keywordManager = keywordManager;
         this.articleSorterFactory = new ArticleSorterFactory();
         this.page = page;
@@ -48,7 +47,7 @@ export class ArticleManager {
     }
 
     getCurrentSub(): Subscription {
-        return this.subscriptionManager.getCurrentSubscription();
+        return this.settingsManager.getCurrentSubscription();
     }
 
     getCurrentUnreadCount() {

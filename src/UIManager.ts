@@ -1,20 +1,17 @@
 /// <reference path="./_references.d.ts" />
 
-import {
-    FilteringType, SortingType, KeywordMatchingArea, KeywordMatchingMethod,
-    HTMLElementType, getFilteringTypes, getFilteringTypeId, ColoringRuleSource
-} from "./DataTypes";
-import { Subscription } from "./Subscription";
-import { AdvancedControlsReceivedPeriod, ColoringRule } from "./SubscriptionDTO";
 import { ArticleManager } from "./ArticleManager";
-import { SettingsManager } from "./SettingsManager";
-import { KeywordManager } from "./KeywordManager";
+import { AsyncResult } from "./AsyncResult";
+import { ColoringRuleSource, FilteringType, HTMLElementType, KeywordMatchingArea, KeywordMatchingMethod, SortingType, getFilteringTypeId, getFilteringTypes } from "./DataTypes";
+import { FeedlyPage } from "./FeedlyPage";
 import { HTMLGlobalSettings } from "./HTMLGlobalSettings";
 import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
-import { $id, bindMarkup, isChecked, setChecked, onClick } from "./Utils";
-import { FeedlyPage } from "./FeedlyPage";
-import { AsyncResult } from "./AsyncResult";
-import { LocalPersistence, SyncStorageManager } from "./dao/LocalStorage"
+import { KeywordManager } from "./KeywordManager";
+import { SettingsManager } from "./SettingsManager";
+import { Subscription } from "./Subscription";
+import { ColoringRule } from "./SubscriptionDTO";
+import { $id, bindMarkup, isChecked, onClick, setChecked } from "./Utils";
+import { LocalPersistence } from "./dao/LocalStorage";
 
 export class UIManager {
     page: FeedlyPage;
@@ -49,12 +46,13 @@ export class UIManager {
                 "TitleOpenAndMarkAsRead", "MarkAsReadFiltered", "AutoRefreshEnabled", "OpenCurrentFeedArticles",
                 "OpenCurrentFeedArticlesUnreadOnly", "MarkAsReadOnOpenCurrentFeedArticles", "HideDuplicates",
                 "MarkAsReadDuplicates", "Enabled_FilteringByReadingTime", "KeepUnread_FilteringByReadingTime",
+                "CrossCheckDuplicates"
             ]
         },
         {
             type: HTMLElementType.NumberInput, ids: [
                 "MinPopularity_AdvancedControlsReceivedPeriod", "AutoRefreshMinutes", "MaxOpenCurrentFeedArticles",
-                "ThresholdMinutes_FilteringByReadingTime", "WordsPerMinute_FilteringByReadingTime"
+                "ThresholdMinutes_FilteringByReadingTime", "WordsPerMinute_FilteringByReadingTime", "CrossCheckDuplicatesDays",
             ]
         }
     ];
