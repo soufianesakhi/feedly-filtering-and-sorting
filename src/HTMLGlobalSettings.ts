@@ -1,11 +1,9 @@
 /// <reference path="./_references.d.ts" />
 
-import { UIManager } from "./UIManager"
-import { $id, setChecked, isChecked } from "./Utils";
-import { LocalStorage } from "./dao/LocalStorage";
 import { AsyncResult } from "./AsyncResult";
-
-declare var LocalPersistence: LocalStorage;
+import { UIManager } from "./UIManager";
+import { $id, isChecked, setChecked } from "./Utils";
+import { DataStore } from "./dao/Storage";
 
 export class HTMLGlobalSettings<T extends boolean | number> {
     id: string;
@@ -30,7 +28,7 @@ export class HTMLGlobalSettings<T extends boolean | number> {
 
     init(): AsyncResult<any> {
         return new AsyncResult<any>((p) => {
-            LocalPersistence.getAsync(this.id, this.defaultValue).then((value) => {
+            DataStore.getAsync(this.id, this.defaultValue).then((value) => {
                 this.setValue(value);
                 p.done();
             }, this);
@@ -57,7 +55,7 @@ export class HTMLGlobalSettings<T extends boolean | number> {
     }
 
     save() {
-        LocalPersistence.put(this.id, this.value);
+        DataStore.put(this.id, this.value);
     }
 
     sessionStore() {

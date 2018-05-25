@@ -433,9 +433,12 @@ var UserScriptStorage = (function () {
     UserScriptStorage.prototype.getSyncStorageManager = function () {
         return null;
     };
+    UserScriptStorage.prototype.getLocalStorage = function () {
+        return this;
+    };
     return UserScriptStorage;
 }());
-var LocalPersistence = new UserScriptStorage();
+var DataStore = new UserScriptStorage();
 
 var SubscriptionDTO = (function () {
     function SubscriptionDTO(url) {
@@ -679,13 +682,13 @@ var SubscriptionDAO = (function () {
     SubscriptionDAO.prototype.init = function () {
         var _this = this;
         return new AsyncResult(function (p) {
-            LocalPersistence.init().then(function () {
+            DataStore.init().then(function () {
                 var t = _this;
                 var onLoad = function (sub) {
                     t.defaultSubscription = sub;
                     p.done();
                 };
-                if (LocalPersistence.listKeys().indexOf(_this.getSubscriptionId(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL)) > -1) {
+                if (DataStore.listKeys().indexOf(_this.getSubscriptionId(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL)) > -1) {
                     _this.loadSubscription(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL).then(onLoad, _this);
                 }
                 else {
@@ -710,7 +713,7 @@ var SubscriptionDAO = (function () {
     SubscriptionDAO.prototype.save = function (dto) {
         var url = dto.url;
         var id = this.getSubscriptionId(url);
-        LocalPersistence.put(id, dto);
+        DataStore.put(id, dto);
         console.log("Subscription saved: " + JSON.stringify(dto));
     };
     SubscriptionDAO.prototype.saveAll = function (subscriptions) {
@@ -729,7 +732,7 @@ var SubscriptionDAO = (function () {
         var _this = this;
         return new AsyncResult(function (p) {
             var ids = _this.getAllSubscriptionIds();
-            LocalPersistence.getItemsAsync(ids).then(function (results) {
+            DataStore.getItemsAsync(ids).then(function (results) {
                 for (var key in results) {
                     var url = results[key].url;
                     if (!url) {
@@ -746,7 +749,7 @@ var SubscriptionDAO = (function () {
     SubscriptionDAO.prototype.load = function (url) {
         var _this = this;
         return new AsyncResult(function (p) {
-            LocalPersistence.getAsync(_this.getSubscriptionId(url), null).then(function (dto) {
+            DataStore.getAsync(_this.getSubscriptionId(url), null).then(function (dto) {
                 var cloneURL;
                 if (dto) {
                     var linkedURL = dto.linkedUrl;
@@ -772,7 +775,7 @@ var SubscriptionDAO = (function () {
         }, this);
     };
     SubscriptionDAO.prototype.delete = function (url) {
-        LocalPersistence.delete(this.getSubscriptionId(url));
+        DataStore.delete(this.getSubscriptionId(url));
         console.log("Deleted: " + url);
     };
     SubscriptionDAO.prototype.clone = function (dtoToClone, cloneUrl) {
@@ -802,7 +805,7 @@ var SubscriptionDAO = (function () {
     };
     SubscriptionDAO.prototype.getAllSubscriptionIds = function () {
         var _this = this;
-        return LocalPersistence.listKeys().filter(function (value) {
+        return DataStore.listKeys().filter(function (value) {
             return value.indexOf(_this.SUBSCRIPTION_ID_PREFIX) == 0;
         });
     };
@@ -819,7 +822,7 @@ var SubscriptionDAO = (function () {
         var id = this.getSubscriptionId(url);
         var linkedSub = new LinkedSubscriptionDTO(linkedURL);
         var t = this;
-        LocalPersistence.put(id, linkedSub);
+        DataStore.put(id, linkedSub);
         console.log("Subscription linked: " + JSON.stringify(linkedSub));
     };
     SubscriptionDAO.prototype.isURLGlobal = function (url) {
@@ -2443,7 +2446,7 @@ var UIManager = (function () {
     };
     UIManager.prototype.postInit = function () {
         var _this = this;
-        var syncManager = LocalPersistence.getSyncStorageManager();
+        var syncManager = DataStore.getSyncStorageManager();
         var syncCBId = "FFnS_syncSettingsEnabled";
         if (syncManager) {
             setChecked(syncCBId, syncManager.isSyncEnabled());
@@ -2936,7 +2939,7 @@ var HTMLGlobalSettings = (function () {
     HTMLGlobalSettings.prototype.init = function () {
         var _this = this;
         return new AsyncResult(function (p) {
-            LocalPersistence.getAsync(_this.id, _this.defaultValue).then(function (value) {
+            DataStore.getAsync(_this.id, _this.defaultValue).then(function (value) {
                 _this.setValue(value);
                 p.done();
             }, _this);
@@ -2958,7 +2961,7 @@ var HTMLGlobalSettings = (function () {
         this.additionalChangeCallback = additionalChangeCallback;
     };
     HTMLGlobalSettings.prototype.save = function () {
-        LocalPersistence.put(this.id, this.value);
+        DataStore.put(this.id, this.value);
     };
     HTMLGlobalSettings.prototype.sessionStore = function () {
         if (this.sessionStoreEnabled) {

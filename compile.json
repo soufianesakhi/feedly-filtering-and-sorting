@@ -31,7 +31,7 @@
             "DataTypes",
             "AsyncResult",
             "initializer/WebExtInitializer",
-            "dao/WebExtLocalStorage",
+            "dao/WebExtStorage",
             "SubscriptionDTO",
             "Subscription",
             "SubscriptionDAO",

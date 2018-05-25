@@ -1,8 +1,7 @@
 /// <reference path="./_references.d.ts" />
 
 import { UIManager } from "./UIManager";
-import { callbackBindedTo, injectStyleText, bindMarkup } from "./Utils";
-import { LocalStorage } from "./dao/LocalStorage";
+import { bindMarkup, callbackBindedTo, injectStyleText } from "./Utils";
 import { INITIALIZER } from "./initializer/Initializer";
 
 var DEBUG = false;

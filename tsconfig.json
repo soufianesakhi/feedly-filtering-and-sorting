@@ -30,7 +30,7 @@
         "src/UIManager.ts",
         "src/Utils.ts",
         "src/_references.d.ts",
-        "src/dao/LocalStorage.d.ts",
+        "src/dao/Storage.d.ts",
         "src/dao/UserScriptStorage.ts",
         "src/dao/WebExtLocalStorage.ts",
         "src/initializer/Initializer.d.ts",

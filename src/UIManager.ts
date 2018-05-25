@@ -11,7 +11,7 @@ import { SettingsManager } from "./SettingsManager";
 import { Subscription } from "./Subscription";
 import { ColoringRule } from "./SubscriptionDTO";
 import { $id, bindMarkup, isChecked, onClick, setChecked } from "./Utils";
-import { LocalPersistence } from "./dao/LocalStorage";
+import { DataStore } from "./dao/Storage";
 
 export class UIManager {
     page: FeedlyPage;
@@ -410,7 +410,7 @@ export class UIManager {
     }
 
     postInit() {
-        let syncManager = LocalPersistence.getSyncStorageManager();
+        let syncManager = DataStore.getSyncStorageManager();
         let syncCBId = "FFnS_syncSettingsEnabled";
         if (syncManager) {
             setChecked(syncCBId, syncManager.isSyncEnabled());

@@ -1,10 +1,9 @@
 /// <reference path="../_references.d.ts" />
 
-import { LocalStorage, SyncStorageManager } from "./LocalStorage";
 import { AsyncResult } from "../AsyncResult";
-import { injectScriptText } from "../Utils";
+import { StorageManager, SyncStorageManager } from "./Storage";
 
-export class UserScriptStorage implements LocalStorage {
+export class UserScriptStorage implements StorageManager {
     public getAsync<t>(id: string, defaultValue: t): AsyncResult<t> {
         return new AsyncResult<t>((p) => {
             p.result(JSON.parse(GM_getValue(id, JSON.stringify(defaultValue))));
@@ -46,6 +45,9 @@ export class UserScriptStorage implements LocalStorage {
         return null;
     }
 
+    getLocalStorage() {
+        return this;
+    }
 }
 
-var LocalPersistence = new UserScriptStorage();
+var DataStore = new UserScriptStorage();

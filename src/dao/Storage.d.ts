@@ -2,16 +2,20 @@
 
 import { AsyncResult } from "../AsyncResult";
 
-declare var LocalPersistence: LocalStorage;
+declare var DataStore: StorageManager;
 
-export interface LocalStorage {
-    init(): AsyncResult<any>;
+export interface StorageAdapter {
     getAsync<t>(id: string, defaultValue: t): AsyncResult<t>;
     getItemsAsync<t>(ids: string[]): AsyncResult<{ [key: string]: t }>;
     put(id: string, value: any);
     delete(id: string);
+}
+
+export interface StorageManager extends StorageAdapter {
+    init(): AsyncResult<any>;
     listKeys(): string[];
     getSyncStorageManager(): SyncStorageManager;
+    getLocalStorage(): StorageAdapter;
 }
 
 export interface SyncStorageManager {
