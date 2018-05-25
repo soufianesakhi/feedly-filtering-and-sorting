@@ -1,10 +1,8 @@
 /// <reference path="./_references.d.ts" />
 
-import { Subscription } from "./Subscription";
-import { SettingsManager } from "./SettingsManager";
 import { EntryInfos } from "./ArticleManager";
-import { HTMLGlobalSettings } from "./HTMLGlobalSettings";
-import { executeWindow, injectToWindow, injectStyleText, injectClasses } from "./Utils";
+import { Subscription } from "./Subscription";
+import { executeWindow, injectClasses, injectToWindow } from "./Utils";
 
 declare var getFFnS: (id: string, persistent?: boolean) => any;
 declare var putFFnS: (id: string, value: any, persistent?: boolean) => any;
@@ -322,7 +320,7 @@ export class FeedlyPage {
         if (hiddenCount == 0) {
             return;
         }
-        $(ext.hidingInfoSibling).after("<div class='col-xs-2 col-md-2 detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
+        $(ext.hidingInfoSibling).after("<div class='col-xs-3 col-md-3 detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
     }
 
     clearHidingInfo() {

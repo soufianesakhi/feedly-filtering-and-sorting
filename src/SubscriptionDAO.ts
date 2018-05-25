@@ -4,7 +4,7 @@ import { AsyncResult } from "./AsyncResult";
 import { Subscription } from "./Subscription";
 import { AdvancedControlsReceivedPeriod, ColoringRule, FilteringByReadingTime, SubscriptionDTO } from "./SubscriptionDTO";
 import { deepClone, registerAccessors } from "./Utils";
-import { StorageManager, DataStore } from "./dao/Storage";
+import { DataStore } from "./dao/Storage";
 
 export class SubscriptionDAO {
     private SUBSCRIPTION_ID_PREFIX = "subscription_";
@@ -34,11 +34,17 @@ export class SubscriptionDAO {
         }, this);
     }
 
-    loadSubscription(url: string): AsyncResult<Subscription> {
+    loadSubscription(url: string, forceReloadGlobalSettings?: boolean): AsyncResult<Subscription> {
         return new AsyncResult<Subscription>((p) => {
             var sub = new Subscription(this);
+            if (forceReloadGlobalSettings) {
+                url = this.GLOBAL_SETTINGS_SUBSCRIPTION_URL;
+            }
             this.load(url).then((dto) => {
                 sub.dto = dto;
+                if (forceReloadGlobalSettings) {
+                    this.defaultSubscription = sub;
+                }
                 p.result(sub);
             }, this);
         }, this);

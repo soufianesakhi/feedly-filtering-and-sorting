@@ -27,9 +27,22 @@ export class HTMLGlobalSettings<T extends boolean | number> {
     }
 
     init(): AsyncResult<any> {
+        return this.load();
+    }
+
+    load(): AsyncResult<any> {
         return new AsyncResult<any>((p) => {
             DataStore.getAsync(this.id, this.defaultValue).then((value) => {
                 this.setValue(value);
+                p.done();
+            }, this);
+        }, this);
+    }
+
+    reset(): AsyncResult<any> {
+        return new AsyncResult<any>((p) => {
+            this.load().then(() => {
+                this.refreshHTMLValue();
                 p.done();
             }, this);
         }, this);

@@ -26,6 +26,7 @@ export class UIManager {
     globalSettingsEnabledCB: HTMLGlobalSettings<boolean>;
     globalSettings: HTMLGlobalSettings<any>[];
     containsReadArticles = false;
+    forceReloadGlobalSettings = false;
 
     keywordToId = {};
     idCount = 1;
@@ -100,6 +101,18 @@ export class UIManager {
         }
     }
 
+    resetGlobalSettings(settings: HTMLGlobalSettings<any>[]): AsyncResult<any> {
+        if (settings.length == 1) {
+            return settings[0].reset();
+        } else {
+            return new AsyncResult<any>((p) => {
+                settings.pop().reset().then(() => {
+                    this.resetGlobalSettings(settings).chain(p);
+                }, this);
+            }, this);
+        }
+    }
+
     updatePage() {
         try {
             this.resetPage();
@@ -128,7 +141,7 @@ export class UIManager {
     updateSubscription(): AsyncResult<any> {
         return new AsyncResult<any>((p) => {
             var globalSettingsEnabled = this.globalSettingsEnabledCB.getValue();
-            this.settingsManager.loadSubscription(globalSettingsEnabled).then((sub) => {
+            this.settingsManager.loadSubscription(globalSettingsEnabled, this.forceReloadGlobalSettings).then((sub) => {
                 this.subscription = sub;
                 p.done();
             }, this);
@@ -416,7 +429,11 @@ export class UIManager {
             setChecked(syncCBId, syncManager.isSyncEnabled());
             $id(syncCBId).change(() => {
                 syncManager.setSyncEnabled(isChecked($id(syncCBId)));
-                this.refreshPage();
+                this.forceReloadGlobalSettings = true;
+                this.resetGlobalSettings(this.globalSettings.slice(0)).then(() => {
+                    this.refreshPage();
+                    this.forceReloadGlobalSettings = false;
+                }, this);
             });
         } else {
             $id(syncCBId).closest(".setting_group").remove();

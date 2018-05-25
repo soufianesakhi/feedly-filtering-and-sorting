@@ -32,7 +32,7 @@
         "src/_references.d.ts",
         "src/dao/Storage.d.ts",
         "src/dao/UserScriptStorage.ts",
-        "src/dao/WebExtLocalStorage.ts",
+        "src/dao/WebExtStorage.ts",
         "src/initializer/Initializer.d.ts",
         "src/initializer/UserScriptInitializer.ts",
         "src/initializer/WebExtInitializer.ts"

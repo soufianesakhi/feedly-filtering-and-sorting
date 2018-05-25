@@ -25,14 +25,18 @@ export class SettingsManager {
         }, this);
     }
 
-    loadSubscription(globalSettingsEnabled: boolean): AsyncResult<Subscription> {
+    loadSubscription(globalSettingsEnabled: boolean, forceReloadGlobalSettings: boolean): AsyncResult<Subscription> {
         return new AsyncResult<Subscription>((p) => {
             var onLoad = (sub: Subscription) => {
                 this.currentSubscription = sub;
                 p.result(sub);
             };
             if (globalSettingsEnabled) {
-                onLoad.call(this, this.dao.getGlobalSettings());
+                if (forceReloadGlobalSettings) {
+                    this.dao.loadSubscription(null, true).then(onLoad, this);
+                } else {
+                    onLoad.call(this, this.dao.getGlobalSettings());
+                }
             } else {
                 this.dao.loadSubscription(this.getActualSubscriptionURL()).then(onLoad, this);
             }
