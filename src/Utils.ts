@@ -188,3 +188,19 @@ export function exportFile(content: string, filename?: string) {
     document.body.appendChild(downloadLink);
     downloadLink.click();
 }
+
+
+export function getDateWithoutTime(date: Date): Date {
+    let result = new Date(date.getTime());
+    result.setHours(0);
+    result.setMinutes(0);
+    result.setSeconds(0);
+    result.setMilliseconds(0);
+    return result;
+}
+
+export function pushIfAbsent(array: any[], value) {
+    if (array.indexOf(value) < 0) {
+        array.push(value);
+    }
+}

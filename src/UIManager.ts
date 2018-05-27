@@ -66,9 +66,9 @@ export class UIManager {
             this.settingsManager = new SettingsManager(this);
             this.keywordManager = new KeywordManager();
             this.page = new FeedlyPage();
-            this.articleManager = new ArticleManager(this.settingsManager, this.keywordManager, this.page);
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
             this.settingsManager.init().then(() => {
+                this.articleManager = new ArticleManager(this.settingsManager, this.keywordManager, this.page);
                 this.autoLoadAllArticlesCB = new HTMLGlobalSettings<boolean>(ext.autoLoadAllArticlesId, false, this);
                 this.globalSettingsEnabledCB = new HTMLGlobalSettings<boolean>("globalSettingsEnabled", true, this, true, false);
                 this.loadByBatchEnabledCB = new HTMLGlobalSettings<boolean>(ext.loadByBatchEnabledId, false, this);

@@ -5,6 +5,8 @@ import { FeedlyPage } from "./FeedlyPage";
 import { KeywordManager } from "./KeywordManager";
 import { SettingsManager } from "./SettingsManager";
 import { Subscription } from "./Subscription";
+import { getDateWithoutTime, pushIfAbsent } from "./Utils";
+import { DataStore, StorageAdapter } from "./dao/Storage";
 
 export class ArticleManager {
     settingsManager: SettingsManager;
@@ -12,14 +14,14 @@ export class ArticleManager {
     keywordManager: KeywordManager;
     page: FeedlyPage;
     articlesToMarkAsRead: Article[];
-    url2Article: { [url: string]: Article };
-    title2Article: { [title: string]: Article };
+    duplicateChecker: DuplicateChecker;
 
     constructor(settingsManager: SettingsManager, keywordManager: KeywordManager, page: FeedlyPage) {
         this.settingsManager = settingsManager;
         this.keywordManager = keywordManager;
         this.articleSorterFactory = new ArticleSorterFactory();
         this.page = page;
+        this.duplicateChecker = new DuplicateChecker(this);
     }
 
     refreshArticles() {
@@ -30,14 +32,14 @@ export class ArticleManager {
         $(ext.articleSelector).each((i, e) => {
             this.addArticle(e, true);
         });
-        this.checkLastAddedArticle();
+        this.checkLastAddedArticle(true);
         this.sortArticles(true);
+        this.duplicateChecker.refresh();
     }
 
     resetArticles() {
         this.articlesToMarkAsRead = [];
-        this.url2Article = {};
-        this.title2Article = {};
+        this.duplicateChecker.reset();
     }
 
     refreshColoring() {
@@ -116,16 +118,7 @@ export class ArticleManager {
             }
         }
 
-        if (sub.isHideDuplicates() || sub.isMarkAsReadDuplicates()) {
-            let url = article.getUrl();
-            let title = article.getTitle();
-            if (!this.checkDuplicate(article, this.url2Article[url])) {
-                this.url2Article[url] = article;
-                if (!this.checkDuplicate(article, this.title2Article[title])) {
-                    this.title2Article[title] = article;
-                }
-            }
-        }
+        this.duplicateChecker.check(article);
 
         const filteringByReadingTime = sub.getFilteringByReadingTime();
         if (filteringByReadingTime.enabled) {
@@ -138,26 +131,6 @@ export class ArticleManager {
                 this.articlesToMarkAsRead.push(article);
             }
         }
-    }
-
-    checkDuplicate(a: Article, b: Article): boolean {
-        if (!b || a.getEntryId() === b.getEntryId()) {
-            return false;
-        }
-        var sub = this.getCurrentSub();
-        let toKeep = (a.getPublishAge() > b.getPublishAge()) ? a : b;
-        let duplicate = (a.getPublishAge() > b.getPublishAge()) ? b : a;
-        this.title2Article[a.getTitle()] = toKeep;
-        this.title2Article[b.getTitle()] = toKeep;
-        this.url2Article[a.getUrl()] = toKeep;
-        this.url2Article[b.getUrl()] = toKeep;
-        if (sub.isHideDuplicates()) {
-            duplicate.setVisible(false);
-        }
-        if (sub.isMarkAsReadDuplicates()) {
-            this.articlesToMarkAsRead.push(duplicate);
-        }
-        return true;
     }
 
     applyColoringRules(article: Article) {
@@ -203,10 +176,14 @@ export class ArticleManager {
         return "hsl(" + h + ", " + s + "%, 80%)";
     }
 
-    checkLastAddedArticle() {
-        if ($(ext.uncheckedArticlesSelector).length == 0) {
+    checkLastAddedArticle(refresh?: boolean) {
+        const allArticlesChecked = $(ext.uncheckedArticlesSelector).length == 0;
+        if (allArticlesChecked) {
             this.prepareMarkAsRead();
             this.page.showHidingInfo();
+            if (!refresh) {
+                this.duplicateChecker.allArticlesChecked();
+            }
         }
     }
 
@@ -308,6 +285,182 @@ export class ArticleManager {
 
     isOldestFirst(): boolean {
         return !this.page.get(ext.isNewestFirstId, true);
+    }
+
+}
+
+class CrossArticleStorage { // TODO: global settings
+    URLS_KEY_PREFIX = "cross_article_urls_";
+    TITLES_KEY_PREFIX = "cross_article_titles_";
+    DAYS_ARRAY_KEY = "cross_article_days";
+    private crossUrls: { [day: number]: string[] } = {};
+    private crossTitles: { [day: number]: string[] } = {};
+    private daysArray: number[] = [];
+    private localStorage: StorageAdapter;
+
+    constructor(articleManager: ArticleManager) {
+        this.localStorage = DataStore.getLocalStorage();
+        this.localStorage.getAsync<number[]>(this.DAYS_ARRAY_KEY, []).then(result => {
+            console.log("[Duplicates cross checking] Loading the stored days");
+            this.setAndCleanDays(result);
+            console.log(this.daysArray);
+            this.daysArray.forEach(this.loadDay, this);
+        }, this);
+    }
+
+    addArticle(a: Article) {
+        const articleDay = getDateWithoutTime(a.getReceivedDate()).getTime();
+        if (articleDay < this.getThresholdDay()) {
+            return;
+        }
+        this.initDay(articleDay);
+        try {
+            pushIfAbsent(this.crossUrls[articleDay], a.getUrl());
+            pushIfAbsent(this.crossTitles[articleDay], a.getTitle());
+        } catch (e) {
+            console.error(e.message + ": " + articleDay + ". Days and urls:");
+            console.log(this.daysArray);
+            console.log(this.crossUrls);
+        }
+    }
+
+    save() {
+        console.log("[Duplicates cross checking] Saving the days: ");
+        console.log(this.daysArray);
+        this.saveDaysArray();
+        this.daysArray.forEach(this.saveDay, this);
+    }
+
+    private getUrlsKey(day: number) {
+        return this.URLS_KEY_PREFIX + day;
+    }
+
+    private getTitlesKey(day: number) {
+        return this.TITLES_KEY_PREFIX + day;
+    }
+
+    private getThresholdDay() {
+        const maxDays = 1; // TODO global settings
+        let thresholdDate = getDateWithoutTime(new Date());
+        thresholdDate.setDate(thresholdDate.getDate() - maxDays);
+        let thresholdDay = thresholdDate.getTime();
+        return thresholdDay;
+    }
+
+    private setAndCleanDays(crossArticleDays: number[]) {
+        this.daysArray = crossArticleDays.slice(0);
+        let thresholdDay = this.getThresholdDay();
+        crossArticleDays.filter(day => day < thresholdDay).forEach(this.cleanDay, this);
+    }
+
+    private initDay(day: number) {
+        if (this.daysArray.indexOf(day) < 0) {
+            this.daysArray.push(day);
+            this.crossUrls[day] = [];
+            this.crossTitles[day] = [];
+            console.log(this.crossUrls);
+            console.log(this.daysArray);
+        }
+    }
+
+    private loadDay(day: number) {
+        return this.localStorage.getAsync<string[]>(this.getUrlsKey(day), []).then(result => {
+            console.log("[Duplicates cross checking] Loaded the urls for the day: " + new Date(day).toLocaleDateString());
+            console.log(result);
+            this.crossUrls[day] = result;
+            this.localStorage.getAsync<string[]>(this.getTitlesKey(day), []).then(result => {
+                console.log("[Duplicates cross checking] Loaded the titles for the day: " + new Date(day).toLocaleDateString());
+                console.log(result);
+                this.crossTitles[day] = result;
+            }, this);
+        }, this);
+    }
+
+    private cleanDay(day: number) {
+        console.log("[Duplicates cross checking] Cleaning the stored day: " + new Date(day).toLocaleDateString());
+        this.daysArray.splice(this.daysArray.indexOf(day), 1);
+        this.saveDaysArray();
+        delete this.crossUrls[day];
+        delete this.crossTitles[day];
+        this.localStorage.delete(this.getUrlsKey(day));
+        this.localStorage.delete(this.getTitlesKey(day));
+    }
+
+    private saveDay(day: number) {
+        console.log("[Duplicates cross checking] Saving the day: " + new Date(day).toLocaleDateString());
+        console.log(this.crossTitles[day]);
+        this.localStorage.put(this.getUrlsKey(day), this.crossUrls[day]);
+        this.localStorage.put(this.getTitlesKey(day), this.crossTitles[day]);
+    }
+
+    private saveDaysArray() {
+        this.localStorage.put(this.DAYS_ARRAY_KEY, this.daysArray);
+    }
+}
+
+class DuplicateChecker { // TODO implement cross duplicate checking
+    url2Article: { [url: string]: Article };
+    title2Article: { [title: string]: Article };
+    currentSessionNotDuplicateIds: { [id: string]: boolean } = {};
+    crossArticles: CrossArticleStorage;
+
+    constructor(private articleManager: ArticleManager) {
+        this.crossArticles = new CrossArticleStorage(articleManager);
+    }
+
+    reset() {
+        this.url2Article = {};
+        this.title2Article = {};
+    }
+
+    refresh() {
+        // TODO
+    }
+
+    allArticlesChecked() {
+        this.crossArticles.save();
+    }
+
+    check(article: Article) {
+        var sub = this.articleManager.getCurrentSub();
+        if (sub.isHideDuplicates() || sub.isMarkAsReadDuplicates()) {
+            let url = article.getUrl();
+            let title = article.getTitle();
+            if (!this.checkDuplicate(article, this.url2Article[url])) {
+                this.url2Article[url] = article;
+                if (!this.checkDuplicate(article, this.title2Article[title])) {
+                    this.title2Article[title] = article;
+                    if (sub.isCrossCheckDuplicates()) {
+                        this.crossArticles.addArticle(article)
+                        const id = article.getEntryId();
+                        if (!this.currentSessionNotDuplicateIds[id]) {
+
+                            this.currentSessionNotDuplicateIds[id] = true;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    checkDuplicate(a: Article, b: Article): boolean {
+        if (!b || a.getEntryId() === b.getEntryId()) {
+            return false;
+        }
+        var sub = this.articleManager.getCurrentSub();
+        let toKeep = (a.getPublishAge() > b.getPublishAge()) ? a : b;
+        let duplicate = (a.getPublishAge() > b.getPublishAge()) ? b : a;
+        this.title2Article[a.getTitle()] = toKeep;
+        this.title2Article[b.getTitle()] = toKeep;
+        this.url2Article[a.getUrl()] = toKeep;
+        this.url2Article[b.getUrl()] = toKeep;
+        if (sub.isHideDuplicates()) {
+            duplicate.setVisible(false);
+        }
+        if (sub.isMarkAsReadDuplicates()) {
+            this.articleManager.articlesToMarkAsRead.push(duplicate);
+        }
+        return true;
     }
 
 }
@@ -505,6 +658,10 @@ export class Article {
 
     getReceivedAge(): number {
         return this.receivedAge;
+    }
+
+    getReceivedDate(): Date {
+        return new Date(this.receivedAge);
     }
 
     getPublishAge(): number {
