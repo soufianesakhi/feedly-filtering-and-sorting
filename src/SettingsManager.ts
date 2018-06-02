@@ -1,18 +1,18 @@
 /// <reference path="./_references.d.ts" />
 
-import { FilteringType, SortingType } from "./DataTypes";
+import { AsyncResult } from "./AsyncResult";
 import { Subscription } from "./Subscription";
 import { SubscriptionDAO } from "./SubscriptionDAO";
 import { SubscriptionDTO } from "./SubscriptionDTO";
-import { AsyncResult } from "./AsyncResult";
-import { exportFile } from "./Utils";
 import { UIManager } from "./UIManager";
+import { exportFile } from "./Utils";
 
 export class SettingsManager {
     private currentSubscription: Subscription;
     private dao: SubscriptionDAO;
     private urlPrefixPattern = new RegExp(ext.urlPrefixPattern, "i");
     private uiManager: UIManager;
+    private crossCheckDuplicatesSettings = new CrossCheckDuplicatesSettings();
 
     constructor(uiManager: UIManager) {
         this.dao = new SubscriptionDAO();
@@ -113,6 +113,10 @@ export class SettingsManager {
     getCurrentSubscription() {
         return this.currentSubscription;
     }
+
+    getCrossCheckDuplicatesSettings() {
+        return this.crossCheckDuplicatesSettings;
+    }
 }
 
 interface SettingsExport {
@@ -121,4 +125,32 @@ interface SettingsExport {
     batchSize: number;
     globalSettingsEnabled: boolean;
     subscriptions: { [key: string]: SubscriptionDTO; };
+}
+
+export class CrossCheckDuplicatesSettings {
+    enabled: boolean;
+    days: number;
+    changeCallback: Function;
+
+    setChangeCallback(fun: Function) {
+        this.changeCallback = fun;
+    }
+
+    isEnabled(): boolean {
+        return this.enabled;
+    }
+
+    setEnabled(enabled: boolean) {
+        this.enabled = enabled;
+        this.changeCallback();
+    }
+
+    getDays() {
+        return this.days;
+    }
+
+    setDays(days: number) {
+        this.days = days;
+        this.changeCallback();
+    }
 }

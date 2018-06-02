@@ -24,6 +24,8 @@ export class UIManager {
     loadByBatchEnabledCB: HTMLGlobalSettings<boolean>;
     batchSizeInput: HTMLGlobalSettings<number>;
     globalSettingsEnabledCB: HTMLGlobalSettings<boolean>;
+    crossCheckDuplicatesCB: HTMLGlobalSettings<boolean>;
+    crossCheckDuplicatesDaysInput: HTMLGlobalSettings<number>;
     globalSettings: HTMLGlobalSettings<any>[];
     containsReadArticles = false;
     forceReloadGlobalSettings = false;
@@ -47,13 +49,12 @@ export class UIManager {
                 "TitleOpenAndMarkAsRead", "MarkAsReadFiltered", "AutoRefreshEnabled", "OpenCurrentFeedArticles",
                 "OpenCurrentFeedArticlesUnreadOnly", "MarkAsReadOnOpenCurrentFeedArticles", "HideDuplicates",
                 "MarkAsReadDuplicates", "Enabled_FilteringByReadingTime", "KeepUnread_FilteringByReadingTime",
-                "CrossCheckDuplicates"
             ]
         },
         {
             type: HTMLElementType.NumberInput, ids: [
                 "MinPopularity_AdvancedControlsReceivedPeriod", "AutoRefreshMinutes", "MaxOpenCurrentFeedArticles",
-                "ThresholdMinutes_FilteringByReadingTime", "WordsPerMinute_FilteringByReadingTime", "CrossCheckDuplicatesDays",
+                "ThresholdMinutes_FilteringByReadingTime", "WordsPerMinute_FilteringByReadingTime",
             ]
         }
     ];
@@ -73,7 +74,15 @@ export class UIManager {
                 this.globalSettingsEnabledCB = new HTMLGlobalSettings<boolean>("globalSettingsEnabled", true, this, true, false);
                 this.loadByBatchEnabledCB = new HTMLGlobalSettings<boolean>(ext.loadByBatchEnabledId, false, this);
                 this.batchSizeInput = new HTMLGlobalSettings<number>(ext.batchSizeId, 200, this);
-                this.globalSettings = [this.autoLoadAllArticlesCB, this.loadByBatchEnabledCB, this.batchSizeInput, this.globalSettingsEnabledCB];
+                const crossCheckSettings = this.settingsManager.getCrossCheckDuplicatesSettings();
+                this.crossCheckDuplicatesCB = new HTMLGlobalSettings<boolean>("CrossCheckDuplicates", false, this, false, false);
+                this.crossCheckDuplicatesDaysInput = new HTMLGlobalSettings<number>("CrossCheckDuplicatesDays", 3, this, false, false);
+                this.crossCheckDuplicatesCB.setAdditionalChangeCallback(val => crossCheckSettings.setEnabled(val));
+                this.crossCheckDuplicatesDaysInput.setAdditionalChangeCallback(val => crossCheckSettings.setDays(val));
+                this.globalSettings = [
+                    this.autoLoadAllArticlesCB, this.loadByBatchEnabledCB, this.batchSizeInput, this.globalSettingsEnabledCB,
+                    this.crossCheckDuplicatesCB, this.crossCheckDuplicatesDaysInput
+                ];
                 this.initGlobalSettings(this.globalSettings.slice(0)).then(() => {
                     this.page.initAutoLoad();
                     this.updateSubscription().then(() => {

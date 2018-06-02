@@ -281,16 +281,15 @@ function exportFile(content, filename) {
 }
 function getDateWithoutTime(date) {
     var result = new Date(date.getTime());
-    result.setHours(0);
-    result.setMinutes(0);
-    result.setSeconds(0);
-    result.setMilliseconds(0);
+    result.setHours(0, 0, 0, 0);
     return result;
 }
 function pushIfAbsent(array, value) {
     if (array.indexOf(value) < 0) {
         array.push(value);
+        return true;
     }
+    return false;
 }
 
 var SortingType;
@@ -485,8 +484,6 @@ var SubscriptionDTO = (function () {
         this.autoRefreshMinutes = 60;
         this.hideDuplicates = false;
         this.markAsReadDuplicates = false;
-        this.crossCheckDuplicates = false;
-        this.crossCheckDuplicatesDays = 3;
         this.filteringByReadingTime = new FilteringByReadingTime();
         this.url = url;
         getFilteringTypes().forEach(function (type) {
@@ -617,12 +614,6 @@ var Subscription = (function () {
     };
     Subscription.prototype.isMarkAsReadDuplicates = function () {
         return this.dto.markAsReadDuplicates;
-    };
-    Subscription.prototype.isCrossCheckDuplicates = function () {
-        return this.dto.crossCheckDuplicates;
-    };
-    Subscription.prototype.getCrossCheckDuplicatesDays = function () {
-        return this.dto.crossCheckDuplicatesDays;
     };
     Subscription.prototype.getFilteringByReadingTime = function () {
         return this.dto.filteringByReadingTime;
@@ -859,6 +850,7 @@ var LinkedSubscriptionDTO = (function () {
 var SettingsManager = (function () {
     function SettingsManager(uiManager) {
         this.urlPrefixPattern = new RegExp(ext.urlPrefixPattern, "i");
+        this.crossCheckDuplicatesSettings = new CrossCheckDuplicatesSettings();
         this.dao = new SubscriptionDAO();
         this.uiManager = uiManager;
     }
@@ -956,7 +948,32 @@ var SettingsManager = (function () {
     SettingsManager.prototype.getCurrentSubscription = function () {
         return this.currentSubscription;
     };
+    SettingsManager.prototype.getCrossCheckDuplicatesSettings = function () {
+        return this.crossCheckDuplicatesSettings;
+    };
     return SettingsManager;
+}());
+var CrossCheckDuplicatesSettings = (function () {
+    function CrossCheckDuplicatesSettings() {
+    }
+    CrossCheckDuplicatesSettings.prototype.setChangeCallback = function (fun) {
+        this.changeCallback = fun;
+    };
+    CrossCheckDuplicatesSettings.prototype.isEnabled = function () {
+        return this.enabled;
+    };
+    CrossCheckDuplicatesSettings.prototype.setEnabled = function (enabled) {
+        this.enabled = enabled;
+        this.changeCallback();
+    };
+    CrossCheckDuplicatesSettings.prototype.getDays = function () {
+        return this.days;
+    };
+    CrossCheckDuplicatesSettings.prototype.setDays = function (days) {
+        this.days = days;
+        this.changeCallback();
+    };
+    return CrossCheckDuplicatesSettings;
 }());
 
 var ArticleManager = (function () {
@@ -978,7 +995,6 @@ var ArticleManager = (function () {
         });
         this.checkLastAddedArticle(true);
         this.sortArticles(true);
-        this.duplicateChecker.refresh();
     };
     ArticleManager.prototype.resetArticles = function () {
         this.articlesToMarkAsRead = [];
@@ -1234,35 +1250,86 @@ var CrossArticleStorage = (function () {
         this.crossUrls = {};
         this.crossTitles = {};
         this.daysArray = [];
-        this.localStorage = DataStore.getLocalStorage();
-        this.localStorage.getAsync(this.DAYS_ARRAY_KEY, []).then(function (result) {
-            console.log("[Duplicates cross checking] Loading the stored days");
-            _this.setAndCleanDays(result);
-            console.log(_this.daysArray);
-            _this.daysArray.forEach(_this.loadDay, _this);
-        }, this);
+        this.changedDays = [];
+        this.articlesToAdd = [];
+        this.initializing = false;
+        this.ready = false;
+        this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
+        this.crossCheckSettings.setChangeCallback(function () { return _this.refresh(); });
     }
     CrossArticleStorage.prototype.addArticle = function (a) {
+        if (!this.isReady()) {
+            this.articlesToAdd.push(a);
+            return;
+        }
         var articleDay = getDateWithoutTime(a.getReceivedDate()).getTime();
         if (articleDay < this.getThresholdDay()) {
             return;
         }
         this.initDay(articleDay);
         try {
-            pushIfAbsent(this.crossUrls[articleDay], a.getUrl());
-            pushIfAbsent(this.crossTitles[articleDay], a.getTitle());
+            var changed = pushIfAbsent(this.crossUrls[articleDay], a.getUrl());
+            changed = pushIfAbsent(this.crossTitles[articleDay], a.getTitle()) || changed;
+            if (changed) {
+                pushIfAbsent(this.changedDays, articleDay);
+            }
         }
         catch (e) {
             console.error(e.message + ": " + articleDay + ". Days and urls:");
-            console.log(this.daysArray);
+            console.log(this.daysArray.map(this.formatDay));
             console.log(this.crossUrls);
         }
     };
     CrossArticleStorage.prototype.save = function () {
-        console.log("[Duplicates cross checking] Saving the days: ");
-        console.log(this.daysArray);
+        if (!this.isReady() || this.changedDays.length == 0) {
+            return;
+        }
         this.saveDaysArray();
-        this.daysArray.forEach(this.saveDay, this);
+        this.changedDays.forEach(this.saveDay, this);
+        this.changedDays = [];
+    };
+    CrossArticleStorage.prototype.isReady = function () {
+        return this.ready;
+    };
+    CrossArticleStorage.prototype.init = function () {
+        var _this = this;
+        return new AsyncResult(function (p) {
+            _this.localStorage = DataStore.getLocalStorage();
+            _this.localStorage.getAsync(_this.DAYS_ARRAY_KEY, []).then(function (result) {
+                console.log("[Duplicates cross checking] Loading the stored days ...");
+                _this.setAndCleanDays(result);
+                _this.loadDays(_this.daysArray.slice(0)).chain(p);
+            }, _this);
+        }, this);
+    };
+    CrossArticleStorage.prototype.refresh = function () {
+        var _this = this;
+        if (this.crossCheckSettings.isEnabled()) {
+            if (!this.isReady()) {
+                if (this.initializing) {
+                    return;
+                }
+                this.initializing = true;
+                this.init().then(function () {
+                    _this.ready = true;
+                    _this.articlesToAdd.forEach(_this.addArticle, _this);
+                    _this.articlesToAdd = [];
+                    _this.save();
+                    _this.initializing = false;
+                }, this);
+            }
+            else {
+                this.setAndCleanDays(this.daysArray);
+                this.addArticles();
+                this.save();
+            }
+        }
+    };
+    CrossArticleStorage.prototype.addArticles = function () {
+        var _this = this;
+        $(ext.articleSelector).each(function (i, e) {
+            _this.addArticle(new Article(e));
+        });
     };
     CrossArticleStorage.prototype.getUrlsKey = function (day) {
         return this.URLS_KEY_PREFIX + day;
@@ -1271,7 +1338,7 @@ var CrossArticleStorage = (function () {
         return this.TITLES_KEY_PREFIX + day;
     };
     CrossArticleStorage.prototype.getThresholdDay = function () {
-        var maxDays = 1; // TODO global settings
+        var maxDays = this.crossCheckSettings.getDays();
         var thresholdDate = getDateWithoutTime(new Date());
         thresholdDate.setDate(thresholdDate.getDate() - maxDays);
         var thresholdDay = thresholdDate.getTime();
@@ -1287,25 +1354,36 @@ var CrossArticleStorage = (function () {
             this.daysArray.push(day);
             this.crossUrls[day] = [];
             this.crossTitles[day] = [];
-            console.log(this.crossUrls);
-            console.log(this.daysArray);
+        }
+    };
+    CrossArticleStorage.prototype.loadDays = function (days) {
+        var _this = this;
+        if (days.length == 1) {
+            return this.loadDay(days[0]);
+        }
+        else {
+            return new AsyncResult(function (p) {
+                _this.loadDay(days.pop()).then(function () {
+                    _this.loadDays(days).chain(p);
+                }, _this);
+            }, this);
         }
     };
     CrossArticleStorage.prototype.loadDay = function (day) {
         var _this = this;
-        return this.localStorage.getAsync(this.getUrlsKey(day), []).then(function (result) {
-            console.log("[Duplicates cross checking] Loaded the urls for the day: " + new Date(day).toLocaleDateString());
-            console.log(result);
-            _this.crossUrls[day] = result;
-            _this.localStorage.getAsync(_this.getTitlesKey(day), []).then(function (result) {
-                console.log("[Duplicates cross checking] Loaded the titles for the day: " + new Date(day).toLocaleDateString());
-                console.log(result);
-                _this.crossTitles[day] = result;
+        return new AsyncResult(function (p) {
+            _this.localStorage.getAsync(_this.getUrlsKey(day), []).then(function (result) {
+                _this.crossUrls[day] = result;
+                _this.localStorage.getAsync(_this.getTitlesKey(day), []).then(function (result) {
+                    _this.crossTitles[day] = result;
+                    console.log("[Duplicates cross checking] Loaded successfully the day: " + _this.formatDay(day) + ", title count: " + _this.crossTitles[day].length);
+                    p.done();
+                }, _this);
             }, _this);
         }, this);
     };
     CrossArticleStorage.prototype.cleanDay = function (day) {
-        console.log("[Duplicates cross checking] Cleaning the stored day: " + new Date(day).toLocaleDateString());
+        console.log("[Duplicates cross checking] Cleaning the stored day: " + this.formatDay(day));
         this.daysArray.splice(this.daysArray.indexOf(day), 1);
         this.saveDaysArray();
         delete this.crossUrls[day];
@@ -1314,13 +1392,15 @@ var CrossArticleStorage = (function () {
         this.localStorage.delete(this.getTitlesKey(day));
     };
     CrossArticleStorage.prototype.saveDay = function (day) {
-        console.log("[Duplicates cross checking] Saving the day: " + new Date(day).toLocaleDateString());
-        console.log(this.crossTitles[day]);
+        console.log("[Duplicates cross checking] Saving the day: " + this.formatDay(day) + ", title count: " + this.crossTitles[day].length);
         this.localStorage.put(this.getUrlsKey(day), this.crossUrls[day]);
         this.localStorage.put(this.getTitlesKey(day), this.crossTitles[day]);
     };
     CrossArticleStorage.prototype.saveDaysArray = function () {
         this.localStorage.put(this.DAYS_ARRAY_KEY, this.daysArray);
+    };
+    CrossArticleStorage.prototype.formatDay = function (day) {
+        return new Date(day).toLocaleDateString();
     };
     return CrossArticleStorage;
 }());
@@ -1329,16 +1409,16 @@ var DuplicateChecker = (function () {
         this.articleManager = articleManager;
         this.currentSessionNotDuplicateIds = {};
         this.crossArticles = new CrossArticleStorage(articleManager);
+        this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
     }
     DuplicateChecker.prototype.reset = function () {
         this.url2Article = {};
         this.title2Article = {};
     };
-    DuplicateChecker.prototype.refresh = function () {
-        // TODO
-    };
     DuplicateChecker.prototype.allArticlesChecked = function () {
-        this.crossArticles.save();
+        if (this.crossCheckSettings.isEnabled()) {
+            this.crossArticles.save();
+        }
     };
     DuplicateChecker.prototype.check = function (article) {
         var sub = this.articleManager.getCurrentSub();
@@ -1349,7 +1429,7 @@ var DuplicateChecker = (function () {
                 this.url2Article[url] = article;
                 if (!this.checkDuplicate(article, this.title2Article[title])) {
                     this.title2Article[title] = article;
-                    if (sub.isCrossCheckDuplicates()) {
+                    if (this.crossCheckSettings.isEnabled()) {
                         this.crossArticles.addArticle(article);
                         var id = article.getEntryId();
                         if (!this.currentSessionNotDuplicateIds[id]) {
@@ -2276,13 +2356,12 @@ var UIManager = (function () {
                     "TitleOpenAndMarkAsRead", "MarkAsReadFiltered", "AutoRefreshEnabled", "OpenCurrentFeedArticles",
                     "OpenCurrentFeedArticlesUnreadOnly", "MarkAsReadOnOpenCurrentFeedArticles", "HideDuplicates",
                     "MarkAsReadDuplicates", "Enabled_FilteringByReadingTime", "KeepUnread_FilteringByReadingTime",
-                    "CrossCheckDuplicates"
                 ]
             },
             {
                 type: HTMLElementType.NumberInput, ids: [
                     "MinPopularity_AdvancedControlsReceivedPeriod", "AutoRefreshMinutes", "MaxOpenCurrentFeedArticles",
-                    "ThresholdMinutes_FilteringByReadingTime", "WordsPerMinute_FilteringByReadingTime", "CrossCheckDuplicatesDays",
+                    "ThresholdMinutes_FilteringByReadingTime", "WordsPerMinute_FilteringByReadingTime",
                 ]
             }
         ];
@@ -2302,7 +2381,15 @@ var UIManager = (function () {
                 _this.globalSettingsEnabledCB = new HTMLGlobalSettings("globalSettingsEnabled", true, _this, true, false);
                 _this.loadByBatchEnabledCB = new HTMLGlobalSettings(ext.loadByBatchEnabledId, false, _this);
                 _this.batchSizeInput = new HTMLGlobalSettings(ext.batchSizeId, 200, _this);
-                _this.globalSettings = [_this.autoLoadAllArticlesCB, _this.loadByBatchEnabledCB, _this.batchSizeInput, _this.globalSettingsEnabledCB];
+                var crossCheckSettings = _this.settingsManager.getCrossCheckDuplicatesSettings();
+                _this.crossCheckDuplicatesCB = new HTMLGlobalSettings("CrossCheckDuplicates", false, _this, false, false);
+                _this.crossCheckDuplicatesDaysInput = new HTMLGlobalSettings("CrossCheckDuplicatesDays", 3, _this, false, false);
+                _this.crossCheckDuplicatesCB.setAdditionalChangeCallback(function (val) { return crossCheckSettings.setEnabled(val); });
+                _this.crossCheckDuplicatesDaysInput.setAdditionalChangeCallback(function (val) { return crossCheckSettings.setDays(val); });
+                _this.globalSettings = [
+                    _this.autoLoadAllArticlesCB, _this.loadByBatchEnabledCB, _this.batchSizeInput, _this.globalSettingsEnabledCB,
+                    _this.crossCheckDuplicatesCB, _this.crossCheckDuplicatesDaysInput
+                ];
                 _this.initGlobalSettings(_this.globalSettings.slice(0)).then(function () {
                     _this.page.initAutoLoad();
                     _this.updateSubscription().then(function () {

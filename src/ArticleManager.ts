@@ -1,9 +1,10 @@
 /// <reference path="./_references.d.ts" />
 
+import { AsyncResult } from "./AsyncResult";
 import { ColoringRuleSource, FilteringType, SortingType } from "./DataTypes";
 import { FeedlyPage } from "./FeedlyPage";
 import { KeywordManager } from "./KeywordManager";
-import { SettingsManager } from "./SettingsManager";
+import { CrossCheckDuplicatesSettings, SettingsManager } from "./SettingsManager";
 import { Subscription } from "./Subscription";
 import { getDateWithoutTime, pushIfAbsent } from "./Utils";
 import { DataStore, StorageAdapter } from "./dao/Storage";
@@ -34,7 +35,6 @@ export class ArticleManager {
         });
         this.checkLastAddedArticle(true);
         this.sortArticles(true);
-        this.duplicateChecker.refresh();
     }
 
     resetArticles() {
@@ -289,46 +289,98 @@ export class ArticleManager {
 
 }
 
-class CrossArticleStorage { // TODO: global settings
+class CrossArticleStorage {
     URLS_KEY_PREFIX = "cross_article_urls_";
     TITLES_KEY_PREFIX = "cross_article_titles_";
     DAYS_ARRAY_KEY = "cross_article_days";
     private crossUrls: { [day: number]: string[] } = {};
     private crossTitles: { [day: number]: string[] } = {};
     private daysArray: number[] = [];
+    private changedDays: number[] = [];
     private localStorage: StorageAdapter;
+    private crossCheckSettings: CrossCheckDuplicatesSettings;
+    private articlesToAdd: Article[] = [];
+    private initializing = false;
+    private ready = false;
 
     constructor(articleManager: ArticleManager) {
-        this.localStorage = DataStore.getLocalStorage();
-        this.localStorage.getAsync<number[]>(this.DAYS_ARRAY_KEY, []).then(result => {
-            console.log("[Duplicates cross checking] Loading the stored days");
-            this.setAndCleanDays(result);
-            console.log(this.daysArray);
-            this.daysArray.forEach(this.loadDay, this);
-        }, this);
+        this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
+        this.crossCheckSettings.setChangeCallback(() => this.refresh());
     }
 
     addArticle(a: Article) {
+        if (!this.isReady()) {
+            this.articlesToAdd.push(a);
+            return;
+        }
         const articleDay = getDateWithoutTime(a.getReceivedDate()).getTime();
         if (articleDay < this.getThresholdDay()) {
             return;
         }
         this.initDay(articleDay);
         try {
-            pushIfAbsent(this.crossUrls[articleDay], a.getUrl());
-            pushIfAbsent(this.crossTitles[articleDay], a.getTitle());
+            let changed = pushIfAbsent(this.crossUrls[articleDay], a.getUrl());
+            changed = pushIfAbsent(this.crossTitles[articleDay], a.getTitle()) || changed;
+            if (changed) {
+                pushIfAbsent(this.changedDays, articleDay);
+            }
         } catch (e) {
             console.error(e.message + ": " + articleDay + ". Days and urls:");
-            console.log(this.daysArray);
+            console.log(this.daysArray.map(this.formatDay));
             console.log(this.crossUrls);
         }
     }
 
     save() {
-        console.log("[Duplicates cross checking] Saving the days: ");
-        console.log(this.daysArray);
+        if (!this.isReady() || this.changedDays.length == 0) {
+            return;
+        }
         this.saveDaysArray();
-        this.daysArray.forEach(this.saveDay, this);
+        this.changedDays.forEach(this.saveDay, this);
+        this.changedDays = [];
+    }
+
+    private isReady() {
+        return this.ready;
+    }
+
+    private init() {
+        return new AsyncResult<any>((p) => {
+            this.localStorage = DataStore.getLocalStorage();
+            this.localStorage.getAsync<number[]>(this.DAYS_ARRAY_KEY, []).then(result => {
+                console.log("[Duplicates cross checking] Loading the stored days ...");
+                this.setAndCleanDays(result);
+                this.loadDays(this.daysArray.slice(0)).chain(p);
+            }, this);
+        }, this);
+    }
+
+    private refresh() {
+        if (this.crossCheckSettings.isEnabled()) {
+            if (!this.isReady()) {
+                if (this.initializing) {
+                    return;
+                }
+                this.initializing = true;
+                this.init().then(() => {
+                    this.ready = true;
+                    this.articlesToAdd.forEach(this.addArticle, this);
+                    this.articlesToAdd = [];
+                    this.save();
+                    this.initializing = false;
+                }, this);
+            } else {
+                this.setAndCleanDays(this.daysArray);
+                this.addArticles();
+                this.save();
+            }
+        }
+    }
+
+    private addArticles() {
+        $(ext.articleSelector).each((i, e) => {
+            this.addArticle(new Article(e));
+        });
     }
 
     private getUrlsKey(day: number) {
@@ -340,7 +392,7 @@ class CrossArticleStorage { // TODO: global settings
     }
 
     private getThresholdDay() {
-        const maxDays = 1; // TODO global settings
+        const maxDays = this.crossCheckSettings.getDays();
         let thresholdDate = getDateWithoutTime(new Date());
         thresholdDate.setDate(thresholdDate.getDate() - maxDays);
         let thresholdDay = thresholdDate.getTime();
@@ -358,26 +410,36 @@ class CrossArticleStorage { // TODO: global settings
             this.daysArray.push(day);
             this.crossUrls[day] = [];
             this.crossTitles[day] = [];
-            console.log(this.crossUrls);
-            console.log(this.daysArray);
+        }
+    }
+
+    loadDays(days: number[]): AsyncResult<any> {
+        if (days.length == 1) {
+            return this.loadDay(days[0]);
+        } else {
+            return new AsyncResult<any>((p) => {
+                this.loadDay(days.pop()).then(() => {
+                    this.loadDays(days).chain(p);
+                }, this);
+            }, this);
         }
     }
 
     private loadDay(day: number) {
-        return this.localStorage.getAsync<string[]>(this.getUrlsKey(day), []).then(result => {
-            console.log("[Duplicates cross checking] Loaded the urls for the day: " + new Date(day).toLocaleDateString());
-            console.log(result);
-            this.crossUrls[day] = result;
-            this.localStorage.getAsync<string[]>(this.getTitlesKey(day), []).then(result => {
-                console.log("[Duplicates cross checking] Loaded the titles for the day: " + new Date(day).toLocaleDateString());
-                console.log(result);
-                this.crossTitles[day] = result;
+        return new AsyncResult<any>((p) => {
+            this.localStorage.getAsync<string[]>(this.getUrlsKey(day), []).then(result => {
+                this.crossUrls[day] = result;
+                this.localStorage.getAsync<string[]>(this.getTitlesKey(day), []).then(result => {
+                    this.crossTitles[day] = result;
+                    console.log("[Duplicates cross checking] Loaded successfully the day: " + this.formatDay(day) + ", title count: " + this.crossTitles[day].length);
+                    p.done();
+                }, this);
             }, this);
         }, this);
     }
 
     private cleanDay(day: number) {
-        console.log("[Duplicates cross checking] Cleaning the stored day: " + new Date(day).toLocaleDateString());
+        console.log("[Duplicates cross checking] Cleaning the stored day: " + this.formatDay(day));
         this.daysArray.splice(this.daysArray.indexOf(day), 1);
         this.saveDaysArray();
         delete this.crossUrls[day];
@@ -387,14 +449,17 @@ class CrossArticleStorage { // TODO: global settings
     }
 
     private saveDay(day: number) {
-        console.log("[Duplicates cross checking] Saving the day: " + new Date(day).toLocaleDateString());
-        console.log(this.crossTitles[day]);
+        console.log("[Duplicates cross checking] Saving the day: " + this.formatDay(day) + ", title count: " + this.crossTitles[day].length);
         this.localStorage.put(this.getUrlsKey(day), this.crossUrls[day]);
         this.localStorage.put(this.getTitlesKey(day), this.crossTitles[day]);
     }
 
     private saveDaysArray() {
         this.localStorage.put(this.DAYS_ARRAY_KEY, this.daysArray);
+    }
+
+    private formatDay(day: number) {
+        return new Date(day).toLocaleDateString();
     }
 }
 
@@ -403,9 +468,11 @@ class DuplicateChecker { // TODO implement cross duplicate checking
     title2Article: { [title: string]: Article };
     currentSessionNotDuplicateIds: { [id: string]: boolean } = {};
     crossArticles: CrossArticleStorage;
+    crossCheckSettings: CrossCheckDuplicatesSettings;
 
     constructor(private articleManager: ArticleManager) {
         this.crossArticles = new CrossArticleStorage(articleManager);
+        this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
     }
 
     reset() {
@@ -413,12 +480,10 @@ class DuplicateChecker { // TODO implement cross duplicate checking
         this.title2Article = {};
     }
 
-    refresh() {
-        // TODO
-    }
-
     allArticlesChecked() {
-        this.crossArticles.save();
+        if (this.crossCheckSettings.isEnabled()) {
+            this.crossArticles.save();
+        }
     }
 
     check(article: Article) {
@@ -430,7 +495,7 @@ class DuplicateChecker { // TODO implement cross duplicate checking
                 this.url2Article[url] = article;
                 if (!this.checkDuplicate(article, this.title2Article[title])) {
                     this.title2Article[title] = article;
-                    if (sub.isCrossCheckDuplicates()) {
+                    if (this.crossCheckSettings.isEnabled()) {
                         this.crossArticles.addArticle(article)
                         const id = article.getEntryId();
                         if (!this.currentSessionNotDuplicateIds[id]) {

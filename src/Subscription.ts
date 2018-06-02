@@ -127,14 +127,6 @@ export class Subscription {
         return this.dto.markAsReadDuplicates;
     }
 
-    isCrossCheckDuplicates(): boolean {
-        return this.dto.crossCheckDuplicates;
-    }
-
-    getCrossCheckDuplicatesDays() {
-        return this.dto.crossCheckDuplicatesDays;
-    }
-
     getFilteringByReadingTime() {
         return this.dto.filteringByReadingTime;
     }
