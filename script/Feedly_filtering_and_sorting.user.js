@@ -1241,14 +1241,16 @@ var ArticleManager = (function () {
     };
     return ArticleManager;
 }());
-var CrossArticleStorage = (function () {
-    function CrossArticleStorage(articleManager) {
+var CrossArticleManager = (function () {
+    function CrossArticleManager(articleManager, duplicateChecker) {
         var _this = this;
+        this.duplicateChecker = duplicateChecker;
         this.URLS_KEY_PREFIX = "cross_article_urls_";
         this.TITLES_KEY_PREFIX = "cross_article_titles_";
         this.DAYS_ARRAY_KEY = "cross_article_days";
         this.crossUrls = {};
         this.crossTitles = {};
+        this.currentSessionNotDuplicateIds = {};
         this.daysArray = [];
         this.changedDays = [];
         this.articlesToAdd = [];
@@ -1257,10 +1259,15 @@ var CrossArticleStorage = (function () {
         this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
         this.crossCheckSettings.setChangeCallback(function () { return _this.refresh(); });
     }
-    CrossArticleStorage.prototype.addArticle = function (a) {
-        if (!this.isReady()) {
-            this.articlesToAdd.push(a);
+    CrossArticleManager.prototype.addArticle = function (a, duplicate) {
+        if (!this.crossCheckSettings.isEnabled() || !this.isReady()) {
+            if (!this.isReady()) {
+                this.articlesToAdd.push(a);
+            }
             return;
+        }
+        if (!duplicate) {
+            this.checkDuplicate(a);
         }
         var articleDay = getDateWithoutTime(a.getReceivedDate()).getTime();
         if (articleDay < this.getThresholdDay()) {
@@ -1280,18 +1287,34 @@ var CrossArticleStorage = (function () {
             console.log(this.crossUrls);
         }
     };
-    CrossArticleStorage.prototype.save = function () {
-        if (!this.isReady() || this.changedDays.length == 0) {
+    CrossArticleManager.prototype.save = function () {
+        if (!this.crossCheckSettings.isEnabled() || !this.isReady() || this.changedDays.length == 0) {
             return;
         }
         this.saveDaysArray();
         this.changedDays.forEach(this.saveDay, this);
         this.changedDays = [];
     };
-    CrossArticleStorage.prototype.isReady = function () {
+    CrossArticleManager.prototype.checkDuplicate = function (a) {
+        var _this = this;
+        var id = a.getEntryId();
+        if (!this.currentSessionNotDuplicateIds[id]) {
+            var found = this.daysArray.some(function (day) {
+                return _this.crossUrls[day].indexOf(a.getUrl()) > -1 ||
+                    _this.crossTitles[day].indexOf(a.getTitle()) > -1;
+            }, this);
+            if (found) {
+                this.duplicateChecker.setDuplicate(a);
+            }
+            else {
+                this.currentSessionNotDuplicateIds[id] = true;
+            }
+        }
+    };
+    CrossArticleManager.prototype.isReady = function () {
         return this.ready;
     };
-    CrossArticleStorage.prototype.init = function () {
+    CrossArticleManager.prototype.init = function () {
         var _this = this;
         return new AsyncResult(function (p) {
             _this.localStorage = DataStore.getLocalStorage();
@@ -1302,7 +1325,7 @@ var CrossArticleStorage = (function () {
             }, _this);
         }, this);
     };
-    CrossArticleStorage.prototype.refresh = function () {
+    CrossArticleManager.prototype.refresh = function () {
         var _this = this;
         if (this.crossCheckSettings.isEnabled()) {
             if (!this.isReady()) {
@@ -1312,7 +1335,7 @@ var CrossArticleStorage = (function () {
                 this.initializing = true;
                 this.init().then(function () {
                     _this.ready = true;
-                    _this.articlesToAdd.forEach(_this.addArticle, _this);
+                    _this.articlesToAdd.forEach(function (a) { return _this.addArticle(a); });
                     _this.articlesToAdd = [];
                     _this.save();
                     _this.initializing = false;
@@ -1325,38 +1348,38 @@ var CrossArticleStorage = (function () {
             }
         }
     };
-    CrossArticleStorage.prototype.addArticles = function () {
+    CrossArticleManager.prototype.addArticles = function () {
         var _this = this;
         $(ext.articleSelector).each(function (i, e) {
             _this.addArticle(new Article(e));
         });
     };
-    CrossArticleStorage.prototype.getUrlsKey = function (day) {
+    CrossArticleManager.prototype.getUrlsKey = function (day) {
         return this.URLS_KEY_PREFIX + day;
     };
-    CrossArticleStorage.prototype.getTitlesKey = function (day) {
+    CrossArticleManager.prototype.getTitlesKey = function (day) {
         return this.TITLES_KEY_PREFIX + day;
     };
-    CrossArticleStorage.prototype.getThresholdDay = function () {
+    CrossArticleManager.prototype.getThresholdDay = function () {
         var maxDays = this.crossCheckSettings.getDays();
         var thresholdDate = getDateWithoutTime(new Date());
         thresholdDate.setDate(thresholdDate.getDate() - maxDays);
         var thresholdDay = thresholdDate.getTime();
         return thresholdDay;
     };
-    CrossArticleStorage.prototype.setAndCleanDays = function (crossArticleDays) {
+    CrossArticleManager.prototype.setAndCleanDays = function (crossArticleDays) {
         this.daysArray = crossArticleDays.slice(0);
         var thresholdDay = this.getThresholdDay();
         crossArticleDays.filter(function (day) { return day < thresholdDay; }).forEach(this.cleanDay, this);
     };
-    CrossArticleStorage.prototype.initDay = function (day) {
+    CrossArticleManager.prototype.initDay = function (day) {
         if (this.daysArray.indexOf(day) < 0) {
             this.daysArray.push(day);
             this.crossUrls[day] = [];
             this.crossTitles[day] = [];
         }
     };
-    CrossArticleStorage.prototype.loadDays = function (days) {
+    CrossArticleManager.prototype.loadDays = function (days) {
         var _this = this;
         if (days.length == 1) {
             return this.loadDay(days[0]);
@@ -1369,7 +1392,7 @@ var CrossArticleStorage = (function () {
             }, this);
         }
     };
-    CrossArticleStorage.prototype.loadDay = function (day) {
+    CrossArticleManager.prototype.loadDay = function (day) {
         var _this = this;
         return new AsyncResult(function (p) {
             _this.localStorage.getAsync(_this.getUrlsKey(day), []).then(function (result) {
@@ -1382,7 +1405,7 @@ var CrossArticleStorage = (function () {
             }, _this);
         }, this);
     };
-    CrossArticleStorage.prototype.cleanDay = function (day) {
+    CrossArticleManager.prototype.cleanDay = function (day) {
         console.log("[Duplicates cross checking] Cleaning the stored day: " + this.formatDay(day));
         this.daysArray.splice(this.daysArray.indexOf(day), 1);
         this.saveDaysArray();
@@ -1391,73 +1414,68 @@ var CrossArticleStorage = (function () {
         this.localStorage.delete(this.getUrlsKey(day));
         this.localStorage.delete(this.getTitlesKey(day));
     };
-    CrossArticleStorage.prototype.saveDay = function (day) {
+    CrossArticleManager.prototype.saveDay = function (day) {
         console.log("[Duplicates cross checking] Saving the day: " + this.formatDay(day) + ", title count: " + this.crossTitles[day].length);
         this.localStorage.put(this.getUrlsKey(day), this.crossUrls[day]);
         this.localStorage.put(this.getTitlesKey(day), this.crossTitles[day]);
     };
-    CrossArticleStorage.prototype.saveDaysArray = function () {
+    CrossArticleManager.prototype.saveDaysArray = function () {
         this.localStorage.put(this.DAYS_ARRAY_KEY, this.daysArray);
     };
-    CrossArticleStorage.prototype.formatDay = function (day) {
+    CrossArticleManager.prototype.formatDay = function (day) {
         return new Date(day).toLocaleDateString();
     };
-    return CrossArticleStorage;
+    return CrossArticleManager;
 }());
 var DuplicateChecker = (function () {
     function DuplicateChecker(articleManager) {
         this.articleManager = articleManager;
-        this.currentSessionNotDuplicateIds = {};
-        this.crossArticles = new CrossArticleStorage(articleManager);
-        this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
+        this.crossArticles = new CrossArticleManager(articleManager, this);
     }
     DuplicateChecker.prototype.reset = function () {
         this.url2Article = {};
         this.title2Article = {};
     };
     DuplicateChecker.prototype.allArticlesChecked = function () {
-        if (this.crossCheckSettings.isEnabled()) {
-            this.crossArticles.save();
-        }
+        this.crossArticles.save();
     };
     DuplicateChecker.prototype.check = function (article) {
         var sub = this.articleManager.getCurrentSub();
         if (sub.isHideDuplicates() || sub.isMarkAsReadDuplicates()) {
             var url = article.getUrl();
             var title = article.getTitle();
+            var duplicate = true;
             if (!this.checkDuplicate(article, this.url2Article[url])) {
                 this.url2Article[url] = article;
                 if (!this.checkDuplicate(article, this.title2Article[title])) {
                     this.title2Article[title] = article;
-                    if (this.crossCheckSettings.isEnabled()) {
-                        this.crossArticles.addArticle(article);
-                        var id = article.getEntryId();
-                        if (!this.currentSessionNotDuplicateIds[id]) {
-                            this.currentSessionNotDuplicateIds[id] = true;
-                        }
-                    }
+                    duplicate = false;
                 }
             }
+            this.crossArticles.addArticle(article, duplicate);
         }
     };
     DuplicateChecker.prototype.checkDuplicate = function (a, b) {
         if (!b || a.getEntryId() === b.getEntryId()) {
             return false;
         }
-        var sub = this.articleManager.getCurrentSub();
         var toKeep = (a.getPublishAge() > b.getPublishAge()) ? a : b;
         var duplicate = (a.getPublishAge() > b.getPublishAge()) ? b : a;
         this.title2Article[a.getTitle()] = toKeep;
         this.title2Article[b.getTitle()] = toKeep;
         this.url2Article[a.getUrl()] = toKeep;
         this.url2Article[b.getUrl()] = toKeep;
+        this.setDuplicate(a);
+        return true;
+    };
+    DuplicateChecker.prototype.setDuplicate = function (duplicate) {
+        var sub = this.articleManager.getCurrentSub();
         if (sub.isHideDuplicates()) {
             duplicate.setVisible(false);
         }
         if (sub.isMarkAsReadDuplicates()) {
             this.articleManager.articlesToMarkAsRead.push(duplicate);
         }
-        return true;
     };
     return DuplicateChecker;
 }());

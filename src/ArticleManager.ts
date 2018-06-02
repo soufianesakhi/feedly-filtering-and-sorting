@@ -289,12 +289,13 @@ export class ArticleManager {
 
 }
 
-class CrossArticleStorage {
+class CrossArticleManager {
     URLS_KEY_PREFIX = "cross_article_urls_";
     TITLES_KEY_PREFIX = "cross_article_titles_";
     DAYS_ARRAY_KEY = "cross_article_days";
     private crossUrls: { [day: number]: string[] } = {};
     private crossTitles: { [day: number]: string[] } = {};
+    private currentSessionNotDuplicateIds: { [id: string]: boolean } = {};
     private daysArray: number[] = [];
     private changedDays: number[] = [];
     private localStorage: StorageAdapter;
@@ -303,15 +304,20 @@ class CrossArticleStorage {
     private initializing = false;
     private ready = false;
 
-    constructor(articleManager: ArticleManager) {
+    constructor(articleManager: ArticleManager, private duplicateChecker: DuplicateChecker) {
         this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
         this.crossCheckSettings.setChangeCallback(() => this.refresh());
     }
 
-    addArticle(a: Article) {
-        if (!this.isReady()) {
-            this.articlesToAdd.push(a);
+    addArticle(a: Article, duplicate?: boolean) {
+        if (!this.crossCheckSettings.isEnabled() || !this.isReady()) {
+            if (!this.isReady()) {
+                this.articlesToAdd.push(a);
+            }
             return;
+        }
+        if (!duplicate) {
+            this.checkDuplicate(a);
         }
         const articleDay = getDateWithoutTime(a.getReceivedDate()).getTime();
         if (articleDay < this.getThresholdDay()) {
@@ -332,12 +338,27 @@ class CrossArticleStorage {
     }
 
     save() {
-        if (!this.isReady() || this.changedDays.length == 0) {
+        if (!this.crossCheckSettings.isEnabled() || !this.isReady() || this.changedDays.length == 0) {
             return;
         }
         this.saveDaysArray();
         this.changedDays.forEach(this.saveDay, this);
         this.changedDays = [];
+    }
+
+    checkDuplicate(a: Article) {
+        const id = a.getEntryId();
+        if (!this.currentSessionNotDuplicateIds[id]) {
+            let found = this.daysArray.some(day => {
+                return this.crossUrls[day].indexOf(a.getUrl()) > -1 ||
+                    this.crossTitles[day].indexOf(a.getTitle()) > -1;
+            }, this);
+            if (found) {
+                this.duplicateChecker.setDuplicate(a);
+            } else {
+                this.currentSessionNotDuplicateIds[id] = true;
+            }
+        }
     }
 
     private isReady() {
@@ -364,7 +385,7 @@ class CrossArticleStorage {
                 this.initializing = true;
                 this.init().then(() => {
                     this.ready = true;
-                    this.articlesToAdd.forEach(this.addArticle, this);
+                    this.articlesToAdd.forEach(a => this.addArticle(a));
                     this.articlesToAdd = [];
                     this.save();
                     this.initializing = false;
@@ -463,16 +484,13 @@ class CrossArticleStorage {
     }
 }
 
-class DuplicateChecker { // TODO implement cross duplicate checking
+class DuplicateChecker {
     url2Article: { [url: string]: Article };
     title2Article: { [title: string]: Article };
-    currentSessionNotDuplicateIds: { [id: string]: boolean } = {};
-    crossArticles: CrossArticleStorage;
-    crossCheckSettings: CrossCheckDuplicatesSettings;
+    crossArticles: CrossArticleManager;
 
     constructor(private articleManager: ArticleManager) {
-        this.crossArticles = new CrossArticleStorage(articleManager);
-        this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
+        this.crossArticles = new CrossArticleManager(articleManager, this);
     }
 
     reset() {
@@ -481,9 +499,7 @@ class DuplicateChecker { // TODO implement cross duplicate checking
     }
 
     allArticlesChecked() {
-        if (this.crossCheckSettings.isEnabled()) {
-            this.crossArticles.save();
-        }
+        this.crossArticles.save();
     }
 
     check(article: Article) {
@@ -491,20 +507,15 @@ class DuplicateChecker { // TODO implement cross duplicate checking
         if (sub.isHideDuplicates() || sub.isMarkAsReadDuplicates()) {
             let url = article.getUrl();
             let title = article.getTitle();
+            let duplicate = true;
             if (!this.checkDuplicate(article, this.url2Article[url])) {
                 this.url2Article[url] = article;
                 if (!this.checkDuplicate(article, this.title2Article[title])) {
                     this.title2Article[title] = article;
-                    if (this.crossCheckSettings.isEnabled()) {
-                        this.crossArticles.addArticle(article)
-                        const id = article.getEntryId();
-                        if (!this.currentSessionNotDuplicateIds[id]) {
-
-                            this.currentSessionNotDuplicateIds[id] = true;
-                        }
-                    }
+                    duplicate = false;
                 }
             }
+            this.crossArticles.addArticle(article, duplicate);
         }
     }
 
@@ -512,22 +523,25 @@ class DuplicateChecker { // TODO implement cross duplicate checking
         if (!b || a.getEntryId() === b.getEntryId()) {
             return false;
         }
-        var sub = this.articleManager.getCurrentSub();
         let toKeep = (a.getPublishAge() > b.getPublishAge()) ? a : b;
         let duplicate = (a.getPublishAge() > b.getPublishAge()) ? b : a;
         this.title2Article[a.getTitle()] = toKeep;
         this.title2Article[b.getTitle()] = toKeep;
         this.url2Article[a.getUrl()] = toKeep;
         this.url2Article[b.getUrl()] = toKeep;
+        this.setDuplicate(a);
+        return true;
+    }
+
+    setDuplicate(duplicate: Article) {
+        var sub = this.articleManager.getCurrentSub();
         if (sub.isHideDuplicates()) {
             duplicate.setVisible(false);
         }
         if (sub.isMarkAsReadDuplicates()) {
             this.articleManager.articlesToMarkAsRead.push(duplicate);
         }
-        return true;
     }
-
 }
 
 class ArticleSorterFactory {
