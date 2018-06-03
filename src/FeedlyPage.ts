@@ -309,7 +309,7 @@ export class FeedlyPage {
         }
     }
 
-    showHidingInfo() {
+    refreshHidingInfo() {
         var hiddenCount = 0;
         $(ext.articleSelector).each((i, a) => {
             if (!$(a).is(':visible')) {

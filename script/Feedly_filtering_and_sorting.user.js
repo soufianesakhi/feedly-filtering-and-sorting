@@ -1135,7 +1135,7 @@ var ArticleManager = (function () {
         var allArticlesChecked = $(ext.uncheckedArticlesSelector).length == 0;
         if (allArticlesChecked) {
             this.prepareMarkAsRead();
-            this.page.showHidingInfo();
+            this.page.refreshHidingInfo();
             if (!refresh) {
                 this.duplicateChecker.allArticlesChecked();
             }
@@ -1247,13 +1247,13 @@ var CrossArticleManager = (function () {
         this.duplicateChecker = duplicateChecker;
         this.URLS_KEY_PREFIX = "cross_article_urls_";
         this.TITLES_KEY_PREFIX = "cross_article_titles_";
+        this.IDS_KEY_PREFIX = "cross_article_ids_";
         this.DAYS_ARRAY_KEY = "cross_article_days";
         this.crossUrls = {};
         this.crossTitles = {};
-        this.currentSessionNotDuplicateIds = {};
+        this.crossIds = {};
         this.daysArray = [];
         this.changedDays = [];
-        this.articlesToAdd = [];
         this.initializing = false;
         this.ready = false;
         this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
@@ -1261,13 +1261,10 @@ var CrossArticleManager = (function () {
     }
     CrossArticleManager.prototype.addArticle = function (a, duplicate) {
         if (!this.crossCheckSettings.isEnabled() || !this.isReady()) {
-            if (!this.isReady()) {
-                this.articlesToAdd.push(a);
-            }
             return;
         }
         if (!duplicate) {
-            this.checkDuplicate(a);
+            duplicate = this.checkDuplicate(a);
         }
         var articleDay = getDateWithoutTime(a.getReceivedDate()).getTime();
         if (articleDay < this.getThresholdDay()) {
@@ -1277,6 +1274,9 @@ var CrossArticleManager = (function () {
         try {
             var changed = pushIfAbsent(this.crossUrls[articleDay], a.getUrl());
             changed = pushIfAbsent(this.crossTitles[articleDay], a.getTitle()) || changed;
+            if (!duplicate) {
+                changed = pushIfAbsent(this.crossIds[articleDay], a.getEntryId()) || changed;
+            }
             if (changed) {
                 pushIfAbsent(this.changedDays, articleDay);
             }
@@ -1298,18 +1298,18 @@ var CrossArticleManager = (function () {
     CrossArticleManager.prototype.checkDuplicate = function (a) {
         var _this = this;
         var id = a.getEntryId();
-        if (!this.currentSessionNotDuplicateIds[id]) {
+        var checkedNotDuplicate = this.daysArray.some(function (day) { return _this.crossIds[day].indexOf(id) > -1; });
+        if (!checkedNotDuplicate) {
             var found = this.daysArray.some(function (day) {
                 return _this.crossUrls[day].indexOf(a.getUrl()) > -1 ||
                     _this.crossTitles[day].indexOf(a.getTitle()) > -1;
             }, this);
             if (found) {
                 this.duplicateChecker.setDuplicate(a);
-            }
-            else {
-                this.currentSessionNotDuplicateIds[id] = true;
+                return true;
             }
         }
+        return false;
     };
     CrossArticleManager.prototype.isReady = function () {
         return this.ready;
@@ -1321,7 +1321,13 @@ var CrossArticleManager = (function () {
             _this.localStorage.getAsync(_this.DAYS_ARRAY_KEY, []).then(function (result) {
                 console.log("[Duplicates cross checking] Loading the stored days ...");
                 _this.setAndCleanDays(result);
-                _this.loadDays(_this.daysArray.slice(0)).chain(p);
+                if (_this.daysArray.length == 0) {
+                    console.log("[Duplicates cross checking] No day was stored");
+                    p.done();
+                }
+                else {
+                    _this.loadDays(_this.daysArray.slice(0)).chain(p);
+                }
             }, _this);
         }, this);
     };
@@ -1335,8 +1341,7 @@ var CrossArticleManager = (function () {
                 this.initializing = true;
                 this.init().then(function () {
                     _this.ready = true;
-                    _this.articlesToAdd.forEach(function (a) { return _this.addArticle(a); });
-                    _this.articlesToAdd = [];
+                    _this.addArticles();
                     _this.save();
                     _this.initializing = false;
                 }, this);
@@ -1360,6 +1365,9 @@ var CrossArticleManager = (function () {
     CrossArticleManager.prototype.getTitlesKey = function (day) {
         return this.TITLES_KEY_PREFIX + day;
     };
+    CrossArticleManager.prototype.getIdsKey = function (day) {
+        return this.IDS_KEY_PREFIX + day;
+    };
     CrossArticleManager.prototype.getThresholdDay = function () {
         var maxDays = this.crossCheckSettings.getDays();
         var thresholdDate = getDateWithoutTime(new Date());
@@ -1377,6 +1385,7 @@ var CrossArticleManager = (function () {
             this.daysArray.push(day);
             this.crossUrls[day] = [];
             this.crossTitles[day] = [];
+            this.crossIds[day] = [];
         }
     };
     CrossArticleManager.prototype.loadDays = function (days) {
@@ -1395,12 +1404,15 @@ var CrossArticleManager = (function () {
     CrossArticleManager.prototype.loadDay = function (day) {
         var _this = this;
         return new AsyncResult(function (p) {
-            _this.localStorage.getAsync(_this.getUrlsKey(day), []).then(function (result) {
-                _this.crossUrls[day] = result;
-                _this.localStorage.getAsync(_this.getTitlesKey(day), []).then(function (result) {
-                    _this.crossTitles[day] = result;
-                    console.log("[Duplicates cross checking] Loaded successfully the day: " + _this.formatDay(day) + ", title count: " + _this.crossTitles[day].length);
-                    p.done();
+            _this.localStorage.getAsync(_this.getIdsKey(day), []).then(function (result) {
+                _this.crossIds[day] = result;
+                _this.localStorage.getAsync(_this.getUrlsKey(day), []).then(function (result) {
+                    _this.crossUrls[day] = result;
+                    _this.localStorage.getAsync(_this.getTitlesKey(day), []).then(function (result) {
+                        _this.crossTitles[day] = result;
+                        console.log("[Duplicates cross checking] Loaded successfully the day: " + _this.formatDay(day) + ", title count: " + _this.crossTitles[day].length);
+                        p.done();
+                    }, _this);
                 }, _this);
             }, _this);
         }, this);
@@ -1411,6 +1423,7 @@ var CrossArticleManager = (function () {
         this.saveDaysArray();
         delete this.crossUrls[day];
         delete this.crossTitles[day];
+        delete this.crossIds[day];
         this.localStorage.delete(this.getUrlsKey(day));
         this.localStorage.delete(this.getTitlesKey(day));
     };
@@ -1418,6 +1431,7 @@ var CrossArticleManager = (function () {
         console.log("[Duplicates cross checking] Saving the day: " + this.formatDay(day) + ", title count: " + this.crossTitles[day].length);
         this.localStorage.put(this.getUrlsKey(day), this.crossUrls[day]);
         this.localStorage.put(this.getTitlesKey(day), this.crossTitles[day]);
+        this.localStorage.put(this.getIdsKey(day), this.crossIds[day]);
     };
     CrossArticleManager.prototype.saveDaysArray = function () {
         this.localStorage.put(this.DAYS_ARRAY_KEY, this.daysArray);
@@ -1472,6 +1486,7 @@ var DuplicateChecker = (function () {
         var sub = this.articleManager.getCurrentSub();
         if (sub.isHideDuplicates()) {
             duplicate.setVisible(false);
+            this.articleManager.page.refreshHidingInfo();
         }
         if (sub.isMarkAsReadDuplicates()) {
             this.articleManager.articlesToMarkAsRead.push(duplicate);
@@ -2064,7 +2079,7 @@ var FeedlyPage = (function () {
             }
         }
     };
-    FeedlyPage.prototype.showHidingInfo = function () {
+    FeedlyPage.prototype.refreshHidingInfo = function () {
         var hiddenCount = 0;
         $(ext.articleSelector).each(function (i, a) {
             if (!$(a).is(':visible')) {

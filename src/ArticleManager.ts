@@ -180,7 +180,7 @@ export class ArticleManager {
         const allArticlesChecked = $(ext.uncheckedArticlesSelector).length == 0;
         if (allArticlesChecked) {
             this.prepareMarkAsRead();
-            this.page.showHidingInfo();
+            this.page.refreshHidingInfo();
             if (!refresh) {
                 this.duplicateChecker.allArticlesChecked();
             }
@@ -292,15 +292,15 @@ export class ArticleManager {
 class CrossArticleManager {
     URLS_KEY_PREFIX = "cross_article_urls_";
     TITLES_KEY_PREFIX = "cross_article_titles_";
+    IDS_KEY_PREFIX = "cross_article_ids_";
     DAYS_ARRAY_KEY = "cross_article_days";
     private crossUrls: { [day: number]: string[] } = {};
     private crossTitles: { [day: number]: string[] } = {};
-    private currentSessionNotDuplicateIds: { [id: string]: boolean } = {};
+    private crossIds: { [day: number]: string[] } = {};
     private daysArray: number[] = [];
     private changedDays: number[] = [];
     private localStorage: StorageAdapter;
     private crossCheckSettings: CrossCheckDuplicatesSettings;
-    private articlesToAdd: Article[] = [];
     private initializing = false;
     private ready = false;
 
@@ -311,13 +311,10 @@ class CrossArticleManager {
 
     addArticle(a: Article, duplicate?: boolean) {
         if (!this.crossCheckSettings.isEnabled() || !this.isReady()) {
-            if (!this.isReady()) {
-                this.articlesToAdd.push(a);
-            }
             return;
         }
         if (!duplicate) {
-            this.checkDuplicate(a);
+            duplicate = this.checkDuplicate(a);
         }
         const articleDay = getDateWithoutTime(a.getReceivedDate()).getTime();
         if (articleDay < this.getThresholdDay()) {
@@ -327,6 +324,9 @@ class CrossArticleManager {
         try {
             let changed = pushIfAbsent(this.crossUrls[articleDay], a.getUrl());
             changed = pushIfAbsent(this.crossTitles[articleDay], a.getTitle()) || changed;
+            if (!duplicate) {
+                changed = pushIfAbsent(this.crossIds[articleDay], a.getEntryId()) || changed;
+            }
             if (changed) {
                 pushIfAbsent(this.changedDays, articleDay);
             }
@@ -348,17 +348,18 @@ class CrossArticleManager {
 
     checkDuplicate(a: Article) {
         const id = a.getEntryId();
-        if (!this.currentSessionNotDuplicateIds[id]) {
+        const checkedNotDuplicate = this.daysArray.some(day => this.crossIds[day].indexOf(id) > -1);
+        if (!checkedNotDuplicate) {
             let found = this.daysArray.some(day => {
                 return this.crossUrls[day].indexOf(a.getUrl()) > -1 ||
                     this.crossTitles[day].indexOf(a.getTitle()) > -1;
             }, this);
             if (found) {
                 this.duplicateChecker.setDuplicate(a);
-            } else {
-                this.currentSessionNotDuplicateIds[id] = true;
+                return true;
             }
         }
+        return false;
     }
 
     private isReady() {
@@ -371,7 +372,12 @@ class CrossArticleManager {
             this.localStorage.getAsync<number[]>(this.DAYS_ARRAY_KEY, []).then(result => {
                 console.log("[Duplicates cross checking] Loading the stored days ...");
                 this.setAndCleanDays(result);
-                this.loadDays(this.daysArray.slice(0)).chain(p);
+                if (this.daysArray.length == 0) {
+                    console.log("[Duplicates cross checking] No day was stored");
+                    p.done();
+                } else {
+                    this.loadDays(this.daysArray.slice(0)).chain(p);
+                }
             }, this);
         }, this);
     }
@@ -385,8 +391,7 @@ class CrossArticleManager {
                 this.initializing = true;
                 this.init().then(() => {
                     this.ready = true;
-                    this.articlesToAdd.forEach(a => this.addArticle(a));
-                    this.articlesToAdd = [];
+                    this.addArticles();
                     this.save();
                     this.initializing = false;
                 }, this);
@@ -412,6 +417,10 @@ class CrossArticleManager {
         return this.TITLES_KEY_PREFIX + day;
     }
 
+    private getIdsKey(day: number) {
+        return this.IDS_KEY_PREFIX + day;
+    }
+
     private getThresholdDay() {
         const maxDays = this.crossCheckSettings.getDays();
         let thresholdDate = getDateWithoutTime(new Date());
@@ -431,6 +440,7 @@ class CrossArticleManager {
             this.daysArray.push(day);
             this.crossUrls[day] = [];
             this.crossTitles[day] = [];
+            this.crossIds[day] = [];
         }
     }
 
@@ -448,12 +458,15 @@ class CrossArticleManager {
 
     private loadDay(day: number) {
         return new AsyncResult<any>((p) => {
-            this.localStorage.getAsync<string[]>(this.getUrlsKey(day), []).then(result => {
-                this.crossUrls[day] = result;
-                this.localStorage.getAsync<string[]>(this.getTitlesKey(day), []).then(result => {
-                    this.crossTitles[day] = result;
-                    console.log("[Duplicates cross checking] Loaded successfully the day: " + this.formatDay(day) + ", title count: " + this.crossTitles[day].length);
-                    p.done();
+            this.localStorage.getAsync<string[]>(this.getIdsKey(day), []).then(result => {
+                this.crossIds[day] = result;
+                this.localStorage.getAsync<string[]>(this.getUrlsKey(day), []).then(result => {
+                    this.crossUrls[day] = result;
+                    this.localStorage.getAsync<string[]>(this.getTitlesKey(day), []).then(result => {
+                        this.crossTitles[day] = result;
+                        console.log("[Duplicates cross checking] Loaded successfully the day: " + this.formatDay(day) + ", title count: " + this.crossTitles[day].length);
+                        p.done();
+                    }, this);
                 }, this);
             }, this);
         }, this);
@@ -465,6 +478,7 @@ class CrossArticleManager {
         this.saveDaysArray();
         delete this.crossUrls[day];
         delete this.crossTitles[day];
+        delete this.crossIds[day];
         this.localStorage.delete(this.getUrlsKey(day));
         this.localStorage.delete(this.getTitlesKey(day));
     }
@@ -473,6 +487,7 @@ class CrossArticleManager {
         console.log("[Duplicates cross checking] Saving the day: " + this.formatDay(day) + ", title count: " + this.crossTitles[day].length);
         this.localStorage.put(this.getUrlsKey(day), this.crossUrls[day]);
         this.localStorage.put(this.getTitlesKey(day), this.crossTitles[day]);
+        this.localStorage.put(this.getIdsKey(day), this.crossIds[day]);
     }
 
     private saveDaysArray() {
@@ -537,6 +552,7 @@ class DuplicateChecker {
         var sub = this.articleManager.getCurrentSub();
         if (sub.isHideDuplicates()) {
             duplicate.setVisible(false);
+            this.articleManager.page.refreshHidingInfo();
         }
         if (sub.isMarkAsReadDuplicates()) {
             this.articleManager.articlesToMarkAsRead.push(duplicate);
