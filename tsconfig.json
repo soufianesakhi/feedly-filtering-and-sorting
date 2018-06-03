@@ -16,6 +16,7 @@
         "src/ArticleManager.ts",
         "src/AsyncResult.ts",
         "src/DataTypes.ts",
+        "src/DuplicatesManager.ts",
         "src/Externals.ts",
         "src/FeedlyPage.ts",
         "src/HTMLGlobalSettings.ts",
