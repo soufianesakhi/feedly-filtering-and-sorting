@@ -1,14 +1,10 @@
 /// <reference path="./_references.d.ts" />
 
+import { Article, ArticleManager } from "./ArticleManager";
 import { AsyncResult } from "./AsyncResult";
-import { ColoringRuleSource, FilteringType, SortingType } from "./DataTypes";
-import { FeedlyPage } from "./FeedlyPage";
-import { KeywordManager } from "./KeywordManager";
-import { CrossCheckDuplicatesSettings, SettingsManager } from "./SettingsManager";
-import { Subscription } from "./Subscription";
+import { CrossCheckDuplicatesSettings } from "./SettingsManager";
 import { getDateWithoutTime, pushIfAbsent } from "./Utils";
 import { DataStore, StorageAdapter } from "./dao/Storage";
-import { ArticleManager, Article } from "./ArticleManager";
 
 export class DuplicateChecker {
     url2Article: { [url: string]: Article };
@@ -25,7 +21,7 @@ export class DuplicateChecker {
     }
 
     allArticlesChecked() {
-        this.crossArticles.save();
+        this.crossArticles.save(true);
     }
 
     check(article: Article) {
@@ -119,7 +115,10 @@ class CrossArticleManager {
         }
     }
 
-    save() {
+    save(saveAll?: boolean) {
+        if (saveAll) {
+            this.changedDays = this.daysArray;
+        }
         if (!this.crossCheckSettings.isEnabled() || !this.isReady() || this.changedDays.length == 0) {
             return;
         }

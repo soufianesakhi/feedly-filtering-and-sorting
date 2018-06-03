@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.12.0
+// @version     3.12.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1455,7 +1455,7 @@ var DuplicateChecker = (function () {
         this.title2Article = {};
     };
     DuplicateChecker.prototype.allArticlesChecked = function () {
-        this.crossArticles.save();
+        this.crossArticles.save(true);
     };
     DuplicateChecker.prototype.check = function (article) {
         var sub = this.articleManager.getCurrentSub();
@@ -1544,7 +1544,10 @@ var CrossArticleManager = (function () {
             console.log(this.crossUrls);
         }
     };
-    CrossArticleManager.prototype.save = function () {
+    CrossArticleManager.prototype.save = function (saveAll) {
+        if (saveAll) {
+            this.changedDays = this.daysArray;
+        }
         if (!this.crossCheckSettings.isEnabled() || !this.isReady() || this.changedDays.length == 0) {
             return;
         }
