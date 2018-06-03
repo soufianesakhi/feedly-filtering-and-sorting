@@ -20,7 +20,7 @@ The `Unread Only` option is required to be enabled to support all the features.
 
 ## Features
 
-- Filtering: Hide the articles that contain at least one of the filtering keywords.
+- Filtering: Hide the articles that contain at least one of the filtering keywords, duplicates or by reading time.
 - Restricting: Show only articles that contain at least one of the restricting keywords.
 - Advanced keyword matching: Specify areas to search, searching method (simple, pattern (RegExp), ...)
 - Multi level sorting: by popularity, by title, by source or by publish date.
@@ -30,6 +30,7 @@ The `Unread Only` option is required to be enabled to support all the features.
 - Import/export all settings from/to file.
 - Advanced settings management (Import from / link to an other subscription, sync the settings across all the browser instances).
 - Tweak the page (Add buttons to open articles in a new tab, mark as read/unread, ...).
+- Add coloring rules to highlight titles
 - Auto refresh articles periodically.
 
 Two settings configurations are available: 
