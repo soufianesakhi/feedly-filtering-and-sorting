@@ -2037,6 +2037,12 @@ var FeedlyPage = (function () {
                 class: ext.openAndMarkAsReadClass,
                 title: "Open in a new window/tab and mark as read"
             });
+            if (articleView) {
+                markAsReadBelowElement.detach().insertAfter(markAsReadAboveElement);
+            }
+            else if (magazineView) {
+                markAsReadAboveElement.detach().insertAfter(markAsReadBelowElement);
+            }
             var link = getLink(a);
             var openAndMarkAsRead = function (event) {
                 event.stopPropagation();

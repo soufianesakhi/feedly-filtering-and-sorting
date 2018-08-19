@@ -260,6 +260,12 @@ export class FeedlyPage {
                 title: "Open in a new window/tab and mark as read"
             });
 
+            if (articleView) {
+                markAsReadBelowElement.detach().insertAfter(markAsReadAboveElement);
+            } else if (magazineView) {
+                markAsReadAboveElement.detach().insertAfter(markAsReadBelowElement);
+            }
+
             var link = getLink(a);
             let openAndMarkAsRead = (event: MouseEvent) => {
                 event.stopPropagation();
