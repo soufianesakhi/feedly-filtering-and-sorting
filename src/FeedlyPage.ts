@@ -513,6 +513,8 @@ export class FeedlyPage {
             let jumpToNext = () => {
                 if (!/latest\/?$/i.test(document.URL)) {
                     navigo.getNextURI() ? this.feedly.jumpToNext() : this.feedly.loadDefaultPage();
+                } else {
+                    this.feedly.jumpToNext();
                 }
             }
             if (lastEntryObject && lastEntryObject.asOf) {

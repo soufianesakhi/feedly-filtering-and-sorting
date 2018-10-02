@@ -2279,6 +2279,9 @@ var FeedlyPage = (function () {
                 if (!/latest\/?$/i.test(document.URL)) {
                     navigo.getNextURI() ? _this.feedly.jumpToNext() : _this.feedly.loadDefaultPage();
                 }
+                else {
+                    _this.feedly.jumpToNext();
+                }
             };
             if (lastEntryObject && lastEntryObject.asOf) {
                 markAsRead.call(this, lastEntryObject);
