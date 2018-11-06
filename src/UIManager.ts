@@ -2,7 +2,8 @@
 
 import { ArticleManager } from "./ArticleManager";
 import { AsyncResult } from "./AsyncResult";
-import { ColoringRuleSource, FilteringType, HTMLElementType, KeywordMatchingArea, KeywordMatchingMethod, SortingType, getFilteringTypeId, getFilteringTypes } from "./DataTypes";
+import { DataStore } from "./dao/Storage";
+import { ColoringRuleSource, FilteringType, getFilteringTypeId, getFilteringTypes, HTMLElementType, KeywordMatchingArea, KeywordMatchingMethod, SortingType } from "./DataTypes";
 import { FeedlyPage } from "./FeedlyPage";
 import { HTMLGlobalSettings } from "./HTMLGlobalSettings";
 import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
@@ -11,7 +12,6 @@ import { SettingsManager } from "./SettingsManager";
 import { Subscription } from "./Subscription";
 import { ColoringRule } from "./SubscriptionDTO";
 import { $id, bindMarkup, isChecked, onClick, setChecked } from "./Utils";
-import { DataStore } from "./dao/Storage";
 
 export class UIManager {
     page: FeedlyPage;
@@ -159,8 +159,9 @@ export class UIManager {
 
     updateMenu() {
         this.htmlSubscriptionManager.update();
-
-        this.refreshFilteringAndSorting();
+        setTimeout(() => {
+            this.refreshFilteringAndSorting();
+        }, 500);
         getFilteringTypes().forEach((type) => {
             this.prepareFilteringList(type);
         });

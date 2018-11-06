@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.12.3
+// @version     3.12.4
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2511,7 +2511,9 @@ var UIManager = (function () {
     UIManager.prototype.updateMenu = function () {
         var _this = this;
         this.htmlSubscriptionManager.update();
-        this.refreshFilteringAndSorting();
+        setTimeout(function () {
+            _this.refreshFilteringAndSorting();
+        }, 500);
         getFilteringTypes().forEach(function (type) {
             _this.prepareFilteringList(type);
         });
