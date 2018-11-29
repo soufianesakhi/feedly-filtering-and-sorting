@@ -23,74 +23,74 @@
 // ==/UserScript==
 
 var ext = {
-    "plusIconLink": "",
-    "eraseIconLink": "",
-    "closeIconLink": "",
-    "moveUpIconLink": "",
-    "moveDownIconLink": "",
-    "urlPrefixPattern": "https?:\/\/[^\/]+\/i\/",
-    "settingsBtnPredecessorSelector": ".icon-toolbar-refresh-secondary, .button-refresh",
-    "articlesContainerSelector": ".list-entries",
-    "containerArticleSelector": " [data-entryid][data-title]:not([gap-article])",
-    "articleSelector": ".list-entries [data-entryid][data-title]:not([gap-article])",
-    "unreadArticlesCountSelector": ".list-entries > .entry.unread:not([gap-article]), .list-entries .unread.u100",
-    "uncheckedArticlesSelector": ".list-entries [data-entryid][data-title]:not([checked-FFnS])",
-    "readArticleClass": "read",
-    "articleViewClass": "u100Entry",
-    "articleViewEntryContainerSelector": ".u100",
-    "loadingMessageSelector": ".list-entries .message.loading",
-    "sectionSelector": "#timeline > .section",
-    "publishAgeSpanSelector": ".ago, .metadata [title^=published]",
-    "publishAgeTimestampAttr": "title",
-    "articleSourceSelector": ".source, .sourceTitle",
-    "subscriptionChangeSelector": "header .heading",
-    "articleTitleAttribute": "data-title",
-    "articleEntryIdAttribute": "data-entryid",
-    "popularitySelector": ".engagement, .nbrRecommendations",
-    "hidingInfoSibling": "header .right-col, header > h1 .button-dropdown",
-    "endOfFeedSelector": ".list-entries h4:contains(End of feed)",
-    "keepArticlesUnreadId": "keepArticlesUnread",
-    "articlesToMarkAsReadId": "articlesToMarkAsRead",
-    "sortedVisibleArticlesId": "sortedVisibleArticles",
-    "openAndMarkAsReadId": "isOpenAndMarkAsRead",
-    "openAndMarkAsReadClass": "open-in-new-tab-button",
-    "visualOpenAndMarkAsReadId": "isVisualOpenAndMarkAsRead",
-    "titleOpenAndMarkAsReadId": "isTitleOpenAndMarkAsRead",
-    "markAsReadAboveBelowId": "isMarkAsReadAboveBelowId",
-    "markAsReadAboveBelowClass": "mark-as-read-above-below-button",
-    "entryInfosJsonClass": "entryInfosJson",
-    "hideWhenMarkAboveBelowId": "isHideWhenMarkAboveBelow",
-    "hideAfterReadId": "isHideAfterRead",
-    "autoLoadAllArticlesId": "autoLoadAllArticles",
-    "batchSizeId": "batchSize",
-    "loadByBatchEnabledId": "loadByBatchEnabled",
-    "isNewestFirstId": "isNewestFirst",
-    "markAsReadAboveBelowReadId": "MarkAsReadAboveBelowRead",
-    "sortArticlesId": "isSortArticles",
-    "markAsReadImmediatelyClass": "FFnS-mark-as-read",
-    "openCurrentFeedArticlesId": "isOpenCurrentFeedArticles",
-    "openCurrentFeedArticlesClass": "open-current-articles-in-new-tab-button",
-    "openCurrentFeedArticlesUnreadOnlyId": "openCurrentFeedArticlesUnreadOnly",
-    "markAsReadOnOpenCurrentFeedArticlesId": "isMarkAsReadOnOpenCurrentFeedArticles",
-    "maxOpenCurrentFeedArticlesId": "maxOpenCurrentFeedArticles",
+    plusIconLink: "",
+    eraseIconLink: "",
+    closeIconLink: "",
+    moveUpIconLink: "",
+    moveDownIconLink: "",
+    urlPrefixPattern: "https?://[^/]+/i/",
+    settingsBtnPredecessorSelector: ".icon-toolbar-refresh-secondary, .button-refresh",
+    articlesContainerSelector: ".list-entries",
+    containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
+    articleSelector: ".list-entries [data-entryid][data-title]:not([gap-article])",
+    unreadArticlesCountSelector: ".list-entries > .entry.unread:not([gap-article]), .list-entries .unread.u100",
+    uncheckedArticlesSelector: ".list-entries [data-entryid][data-title]:not([checked-FFnS])",
+    readArticleClass: "read",
+    articleViewClass: "u100Entry",
+    articleViewEntryContainerSelector: ".u100",
+    loadingMessageSelector: ".list-entries .message.loading",
+    sectionSelector: "#timeline > .section",
+    publishAgeSpanSelector: ".ago, .metadata [title^=published]",
+    publishAgeTimestampAttr: "title",
+    articleSourceSelector: ".source, .sourceTitle",
+    subscriptionChangeSelector: "header .heading",
+    articleTitleAttribute: "data-title",
+    articleEntryIdAttribute: "data-entryid",
+    popularitySelector: ".engagement, .nbrRecommendations",
+    hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
+    endOfFeedSelector: ".list-entries h4:contains(End of feed)",
+    keepArticlesUnreadId: "keepArticlesUnread",
+    articlesToMarkAsReadId: "articlesToMarkAsRead",
+    sortedVisibleArticlesId: "sortedVisibleArticles",
+    openAndMarkAsReadId: "isOpenAndMarkAsRead",
+    openAndMarkAsReadClass: "open-in-new-tab-button",
+    visualOpenAndMarkAsReadId: "isVisualOpenAndMarkAsRead",
+    titleOpenAndMarkAsReadId: "isTitleOpenAndMarkAsRead",
+    markAsReadAboveBelowId: "isMarkAsReadAboveBelowId",
+    markAsReadAboveBelowClass: "mark-as-read-above-below-button",
+    entryInfosJsonClass: "entryInfosJson",
+    hideWhenMarkAboveBelowId: "isHideWhenMarkAboveBelow",
+    hideAfterReadId: "isHideAfterRead",
+    autoLoadAllArticlesId: "autoLoadAllArticles",
+    batchSizeId: "batchSize",
+    loadByBatchEnabledId: "loadByBatchEnabled",
+    isNewestFirstId: "isNewestFirst",
+    markAsReadAboveBelowReadId: "MarkAsReadAboveBelowRead",
+    sortArticlesId: "isSortArticles",
+    markAsReadImmediatelyClass: "FFnS-mark-as-read",
+    openCurrentFeedArticlesId: "isOpenCurrentFeedArticles",
+    openCurrentFeedArticlesClass: "open-current-articles-in-new-tab-button",
+    openCurrentFeedArticlesUnreadOnlyId: "openCurrentFeedArticlesUnreadOnly",
+    markAsReadOnOpenCurrentFeedArticlesId: "isMarkAsReadOnOpenCurrentFeedArticles",
+    maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles"
 };
 
 var templates = {
-    "settingsHTML": "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' /> <fieldset> <legend>General settings</legend> <div class='setting_group'> <span>Auto load all unread articles</span> <input id='FFnS_autoLoadAllArticles' type='checkbox'> </div> <div class='setting_group'> <span>Load articles by batch</span> <input id='FFnS_loadByBatchEnabled' type='checkbox'> <span>Batch size</span> <input id='FFnS_batchSize' class='FFnS_input MediumNumberInput' type='number' min='50' max='1000' step='50'> </div> <div class='setting_group'> <span class='tooltip'>Always use global settings <span class='tooltiptext'>Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span> </span> <input id='FFnS_globalSettingsEnabled' type='checkbox'> </div> <div class='setting_group'> <span class='tooltip'>Sync settings <span class='tooltiptext'>The settings will be synced by the browser, and be available across all instances of that browser that the user is logged into (e.g. via Chrome sync, or Firefox sync), across different devices.</span> </span> <input id='FFnS_syncSettingsEnabled' type='checkbox'> </div> </fieldset> <fieldset> <legend> <span id='FFnS_settings_mode_title'></span> </legend> <div class='setting_group'> <span class='tooltip'>Filtering enabled <span class='tooltiptext'>Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span> </span> <input id='FFnS_FilteringEnabled' type='checkbox'> </div> <div class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext'>Show only articles that contain at least one of the restricting keywords (not applied if empty)</span> </span> <input id='FFnS_RestrictingEnabled' type='checkbox'> </div> <div class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> </div> {{SortingSelect}} <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li> <a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a> </li> <li> <a href='#FFnS_Tab_KeywordControls'>Keyword controls</a> </li> <li> <a href='#FFnS_Tab_UIControls'>UI controls</a> </li> <li> <a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a> </li> <li> <a href='#FFnS_Tab_SettingsControls'>Settings controls</a> </li> </ul> <div id='FFnS_tabs_content'> {{FilteringList.Type.FilteredOut}} {{FilteringList.Type.RestrictedOn}} <div id='FFnS_Tab_KeywordControls' class='FFnS_Tab_Menu'> <p>The following settings are applied to the filtering and restricting</p> <fieldset> <legend>Matching area (domain)</legend> <div> <span>Search for keywords in the entry's: </span> {{DefaultKeywordMatchingArea}} <span> (Multiple values can be selected)</span> </div> <div> <span>Always use these matching areas</span> <input id='FFnS_AlwaysUseDefaultMatchingAreas' type='checkbox'> <span> (the area select boxes in the filtering and restricting will be invisible when this option is checked)</span> </div> </fieldset> <fieldset> <legend>Matching method</legend> <span>The keywords are treated as : </span> {{KeywordMatchingMethod}} </fieldset> </div> <div id='FFnS_Tab_UIControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Custom buttons</legend> <div> <span>Add a button to open articles in a new window/tab and mark them as read</span> <input id='FFnS_OpenAndMarkAsRead' type='checkbox'> </div> <div> <span>Open articles in a new window/tab and mark them as read when clicking the visual image (Cards &amp; Magazine view)</span> <input id='FFnS_VisualOpenAndMarkAsRead' type='checkbox'> </div> <div> <span>Open articles in a new window/tab and mark them as read when clicking the title (Title view)</span> <input id='FFnS_TitleOpenAndMarkAsRead' type='checkbox'> </div> <div> <span>Add buttons to mark articles above/below as</span> <select id='FFnS_MarkAsReadAboveBelowRead' class='FFnS_input'> <option value='true' selected>read</option> <option value='false'>unread</option> </select> <input id='FFnS_MarkAsReadAboveBelow' type='checkbox'> <span> (Also hide using the same buttons when marking as read</span> <input id='FFnS_HideWhenMarkAboveBelow' type='checkbox'> <span>)</span> </div> <div> <span>Add button to open all current feed articles in a new tab</span> <input id='FFnS_OpenCurrentFeedArticles' type='checkbox'> <span> unread only</span> <input id='FFnS_OpenCurrentFeedArticlesUnreadOnly' type='checkbox'> <span class='tooltip'> maximum articles to open <span class='tooltiptext'>If set to 0, all the articles will be opened</span> </span> <input id='FFnS_MaxOpenCurrentFeedArticles' class='FFnS_input MediumNumberInput' type='number' min='0' step='1'> <span> mark as read</span> <input id='FFnS_MarkAsReadOnOpenCurrentFeedArticles' type='checkbox'> </div> </fieldset> <fieldset> <legend> <span class='tooltip'>Coloring rules to highlight titles <span class='tooltiptext'>For each article, only the first matching coloring rule is applied by following their order. You can move up/down the coloring rules to change this order.</span> </span> </legend> <span id='FFnS_AddColoringRule'> <img src='{{plusIconLink}}' class='FFnS_icon' title='Add a new coloring rule' /> </span> <span id='FFnS_EraseColoringRules'> <img src='{{eraseIconLink}}' class='FFnS_icon' title='Remove all the coloring rules' /> </span> <span id='FFnS_ColoringRules'></span> </fieldset> </div> <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently received articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles received (crawled) less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23'> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0'> <span>days</span> <span>ago should be:</span> </div> <div class='setting_group'> <span class='tooltip'>Kept unread if unread <span class='tooltiptext'>Only the articles that were not marked as read (manually or on scroll) will be kept unread. Please note that by enabling this option, only the loaded articles will be marked as read.</span> </span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox'> </div> <div class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox'> </div> <div class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input MediumNumberInput' type='number' min='0' step='100'> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox'> <span class='tooltip'>Marked as read if hot or popular <span class='tooltiptext'>Mark as read the articles made visible if hot or with popularity superior to the defined value</span> </span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox'> </div> </fieldset> <fieldset> <legend>Reading time</legend> <div class='setting_group'> <span>Enable filtering of articles with reading time </span> <select id='FFnS_FilterLong_FilteringByReadingTime' class='FFnS_input'> <option value='true' selected>superior</option> <option value='false'>inferior</option> </select> <span>to </span> <input id='FFnS_ThresholdMinutes_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1'> <span>minutes: </span> <input id='FFnS_Enabled_FilteringByReadingTime' type='checkbox'> </div> <div class='setting_group'> <span class='tooltip'>Keep unread <span class='tooltiptext'>When this option is enabled, the filtered articles will be kept unread</span> </span> <input id='FFnS_KeepUnread_FilteringByReadingTime' type='checkbox'> <span class='tooltip'>Reading speed : <span class='tooltiptext'>The average words read per minute</span> </span> <input id='FFnS_WordsPerMinute_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1'> </div> </fieldset> <fieldset> <legend>Additional sorting levels (applied when two entries have equal sorting)</legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> <fieldset> <legend>Duplicates filtering</legend> <div class='setting_group'> <span class='tooltip'>Hide duplicates <span class='tooltiptext tooltip-top'>The duplicate articles will be hidden based on the url and the title. For each duplicate article group, only the most recently published one will be kept.</span> </span> <input id='FFnS_HideDuplicates' type='checkbox'> </div> <div class='setting_group'> <span class='tooltip'>Mark as read <span class='tooltiptext tooltip-top'>The duplicate articles will be marked as read (based on the same rules of the 'Hide duplicates' option).</span> </span> <input id='FFnS_MarkAsReadDuplicates' type='checkbox'> </div> <div class='setting_group'> <span class='tooltip'>Enable cross checking with persistence up to: <span class='tooltiptext tooltip-top'>The duplicates will be checked across all subscriptions and categories against current articles and stored articles. The url and title of all articles published less then the configured days will be stored locally (sync not supported).</span> </span> <input id='FFnS_CrossCheckDuplicatesDays' class='FFnS_input MediumNumberInput' type='number' min='0'> <span> days </span> <input id='FFnS_CrossCheckDuplicates' type='checkbox'> </div> </fieldset> <fieldset> <legend>Misc</legend> <div class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox'> </div> <div class='setting_group'> <span>Hide articles after reading them</span> <input id='FFnS_HideAfterRead' type='checkbox'> <span class='tooltip'>Replace with gap <span class='tooltiptext tooltip-top'>Replace the hidden article with a gap with same dimensions.</span> </span> <input id='FFnS_ReplaceHiddenWithGap' type='checkbox'> </div> <div class='setting_group'> <span>Mark as read filtered articles</span> <input id='FFnS_MarkAsReadFiltered' type='checkbox'> </div> <div class='setting_group'> <span class='tooltip'>Auto refresh <span class='tooltiptext tooltip-top'>The articles will be reloaded periodically following the configured minutes</span> </span> <input id='FFnS_AutoRefreshEnabled' type='checkbox'> <input id='FFnS_AutoRefreshMinutes' class='FFnS_input MediumNumberInput' type='number' min='1'> <span>(minutes)</span> </div> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Import/export all settings from/to file</legend> <div class='setting_group'> <span>Import settings </span> <input id='FFnS_ImportSettings' type='file' /> </div> <button id='FFnS_ExportSettings'>Export settings</button> </fieldset> <fieldset> <legend>Subscription management</legend> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input'> {{ImportMenu.SubscriptionOptions}} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'>Import settings from selected subscription</button> <button id='FFnS_SettingsControls_DeleteSub'>Delete selected subscription</button> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'>Link current subscription to selected subscription</button> </fieldset> </div> </div> </fieldset> </div> </div>",
-    "filteringListHTML": "<div id='{{FilteringTypeTabId}}' class='FFnS_Tab_Menu'> {{FilteringKeywordMatchingArea}} <input id='{{inputId}}' class='FFnS_input' size='10' type='text'> <span id='{{plusBtnId}}'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='{{filetringKeywordsId}}'></span> <span id='{{eraseBtnId}}'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div>",
-    "keywordHTML": '<button id="{{keywordId}}" type="button" class="FFnS_keyword">{{keyword}}</button>',
-    "sortingSelectHTML": "<select id='{{Id}}' class='FFnS_input FFnS_select'> <option value='{{PopularityDesc}}'>Sort by popularity (highest to lowest)</option> <option value='{{PopularityAsc}}'>Sort by popularity (lowest to highest)</option> <option value='{{TitleAsc}}'>Sort by title (a -&gt; z)</option> <option value='{{TitleDesc}}'>Sort by title (z -&gt; a)</option> <option value='{{ReceivedDateNewFirst}}'>Sort by received date (new first)</option> <option value='{{ReceivedDateOldFirst}}'>Sort by received date (old first)</option> <option value='{{PublishDateNewFirst}}'>Sort by publish date (new first)</option> <option value='{{PublishDateOldFirst}}'>Sort by publish date (old first)</option> <option value='{{PublishDayNewFirst}}'>Sort by publish day (new first)</option> <option value='{{PublishDayOldFirst}}'>Sort by publish day (old first)</option> <option value='{{SourceAsc}}'>Sort by source title (a -&gt; z)</option> <option value='{{SourceDesc}}'>Sort by source title (z -&gt; a)</option> <option value='{{SourceNewestReceiveDate}}'>Sort by source title (newest received first)</option> <option value='{{Random}}'>Random sort</option> </select>",
-    "keywordMatchingSelectHTML": "<select id='{{Id}}' class='FFnS_input FFnS_keywordMatchingSelect' {{attributes}}> {{defaultOption}} <option value='{{KeywordMatchingArea.Title}}' {{selectFirst}}>Title</option> <option value='{{KeywordMatchingArea.Body}}'>Body (summary)</option> <option value='{{KeywordMatchingArea.Author}}'>Author</option> </select>",
-    "keywordMatchingMethodHTML": "<select id='{{id}}' class='FFnS_input FFnS_KeywordMatchingMethod' {{size}}> <option value='{{KeywordMatchingMethod.Simple}}' selected>Strings (simple match)</option> <option value='{{KeywordMatchingMethod.Word}}'>Words (whole word match)</option> <option value='{{KeywordMatchingMethod.RegExp}}'>Regular expressions (pattern match)</option> </select>",
-    "coloringRuleHTML": "<div id='{{Id}}' class='FFnS_ColoringRule'> <img class='FFnS_RemoveColoringRule FFnS_ColoringRuleManagement' title='Remove the coloring rule' src='{{eraseIconLink}}'> <img class='FFnS_MoveUpColoringRule FFnS_ColoringRuleManagement' title='Move up the order of the coloring rule' src='{{moveUpIconLink}}'> <img class='FFnS_MoveDownColoringRule FFnS_ColoringRuleManagement' title='Move down the order of the coloring rule' src='{{moveDownIconLink}}'> <span>Keyword source: </span> <select class='FFnS_ColoringRule_Source FFnS_input FFnS_select'> <option value='{{SpecificKeywords}}'>Specific keywords</option> <option value='{{RestrictingKeywords}}'>Restricting keywords</option> <option value='{{FilteringKeywords}}'>Filtering keywords</option> <option value='{{SourceTitle}}'>Source title (subscription)</option> </select> <span class='FFnS_ColoringRule_Options'> <span style='display: none'>Highlight all the title</span> <input class='FFnS_HighlightAllTitle' type='checkbox' style='display: none'> <span class='FFnS_SpecificColorGroup'>Color <input class='FFnS_SpecificColor FFnS_input jscolor' value='{{Color}}' size='10' type='text'> </span> </span> <span class='FFnS_ColoringRule_SourceTitleInfos'>All the titles from the same source (subscription) will have the same generated color (only applied when viewing categories)</span> <div class='FFnS_ColoringRule_MatchingMethodGroup'> Keyword matching method: {{KeywordMatchingMethod}}</div> <div class='FFnS_ColoringRule_KeywordsGroup'> <span>Specific keywords: </span> <input class='FFnS_input FFnS_ColoringRule_KeywordInput' size='10' type='text'> <span class='FFnS_ColoringRule_AddKeyword'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span class='FFnS_ColoringRuleKeywords'></span> <span class='FFnS_ColoringRule_EraseKeywords'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div> </div>",
-    "optionHTML": "<option value='{{value}}'>{{value}}</option>",
-    "emptyOptionHTML": "<option value=''>{{value}}</option>",
-    "styleCSS": "#FFnS_settingsDivContainer { display: none; background: rgba(0,0,0,0.9); width: 100%; height: 100%; z-index: 999; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 87%; margin-top: 1%; margin-left: 5%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #E0F5FF; padding: 2%; opacity: 1; overflow-y: auto; overflow-x: hidden; } .FFnS_input { font-size:12px; } #FFnS_tabs_menu { display: block; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #B9E0ED; } #FFnS_tabs_menu li a { padding: 3px; color: #2A687D; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; max-height: 180px; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35A5E2; border-radius: 20px; color: #FFF; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip-top { bottom: 100%; left: 50%; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn, .FFnS_ColoringRuleManagement { float:right; cursor: pointer; width: 24px; height: 24px; padding: 4px; } #FFnS_Tab_SettingsControls button, #FFnS_Tab_SettingsControls input { margin-top: 1%; font-size: 12px; vertical-align: inherit; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type=number]{ width: 30px; margin-left: 1%; margin-right: 1%; } .MediumNumberInput { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { display: inline-block; white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: bold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 1% } fieldset select.FFnS_keywordMatchingSelect { margin-left: 0%; margin-right: 1%; vertical-align: middle; } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('{{extension-icon}}'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; background-color: transparent; filter: grayscale(1); font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0,0,0,0.05); } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .FFnS_Hiding_Info { text-align: center; } .fx .open-in-new-tab-button.mark-as-read, .fx .mark-as-read-above-below-button.mark-as-read { background-repeat: no-repeat; margin-right: 0px; } .fx .open-in-new-tab-button.mark-as-read, .fx .entry.u0 .open-in-new-tab-button.condensed-toolbar-icon { background-image: url('{{open-in-new-tab-url}}'); background-size: 18px 18px; } .fx .open-current-articles-in-new-tab-button { background-image: url('{{open-in-new-tab-url}}'); background-size: 18px 18px; background-repeat: no-repeat; background-color: white; display: block; margin-left: auto; min-width: 10px; padding: 10px; } .fx .mark-as-read-above-below-button.mark-as-read, .fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon, .fx .entry.u5 .mark-as-read-above-below-button { width: 24px; height: 24px; } .fx .u100 .mark-as-read-above-below-button.mark-as-read, .fx .u100 .open-in-new-tab-button.mark-as-read { margin-left: 20px; width: 24px; height: 24px; } .fx button.mark-above-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBggICA8PDxERERMTExUVFRgYGBkZGRoaGhwcHB4eHh8fHyAgICYmJicnJygoKCoqKiwsLC4uLi8vLzAwMDExMTIyMjMzMzk5OTo6Oj09PT4+PkREREhISEtLS01NTU5OTlFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbHJycnh4eHp6enx8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhUO7wAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAA1klEQVQoU3WQiVICQQwFGxBUPLgVROQQEBDFA/7/02KSyS6sVXQVyZvXNezWImfIxCx28JCJOvUUnNVlduOOKreejHFJh4s2fRnQsqg8cdBpYklHZ5eF1dJnZctvTG3EHDL0HQ/PeeEmhX/ilYtIRfFOfi6IA8wjFgU0Irn42UWuUomk8AnxIlew9+DwpsL/rwkjrxJIWcWvyAj00x1BNioeZRH3cvRU0W6tv+eoEio+tFTK0QR2v+biKxUZJr6tv0/nHH/itQo/nZAK2Po+IYlJz9cRkT+a78AFAEXS0AAAAABJRU5ErkJggg==); } .fx button.mark-below-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICA8PDxERERUVFRoaGhwcHB4eHigoKCoqKiwsLC4uLjAwMDExMTIyMjMzMzk5OTo6Oj09PUhISElJSUtLS01NTVFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbG5ubnJycnR0dHV1dXh4eHp6ent7e3x8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACY/twoAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAAxElEQVQoU3WQhxKCMBBEF7D3gg27Inbl/3/uvLtkQNrOJLvZNxcKqEIVYFQO9q3yiaXDWwmYIua9CCbYixWAD189DxbompADAWo2ZcEJyTkDYmBjYxYAfZsUPCKb6/BsYuEC2BdpAx8NKuwY6H0DYK6VEchl8CaaA/zrUoGODMa0tXOJ+ORxd+A1I3qap7iBgpBLliuVI2M1vBRQQ8FVAH9K1EQogddN+p729OV4kCCAOnwSF92xVjcFcFb/kwGroVoqoh+q2r44+TStvAAAAABJRU5ErkJggg==); } .fx .entry.u5 .open-in-new-tab-button, .fx .entry.u5 .mark-as-read-above-below-button { filter: brightness(0) invert(1); } .fx .entry.u5 .open-in-new-tab-button { margin-right: 4px; margin-top: 4px; background-size: 32px 32px; width: 32px; height: 32px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0,0,0,0.05); } #FFnS_Tab_KeywordControls span { vertical-align: top; } #FFnS_Tab_KeywordControls div { margin-top: 2%; } .FFnS_select { vertical-align: middle; } #FFnS_AddSortingType { margin-left: 1%; } .entry[gap-article] { visibility: hidden; } #FFnS_ImportSettings { width: 400px; } .FFnS_ColoringRule { margin-top: 1%; padding: 1%; border: 1px solid #636363; } .FFnS_ColoringRule div { margin-top: 1%; } "
+    settingsHTML: "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' /> <fieldset> <legend>General settings</legend> <div class='setting_group'> <span>Auto load all unread articles</span> <input id='FFnS_autoLoadAllArticles' type='checkbox' /> </div> <div class='setting_group'> <span>Load articles by batch</span> <input id='FFnS_loadByBatchEnabled' type='checkbox' /> <span>Batch size</span> <input id='FFnS_batchSize' class='FFnS_input MediumNumberInput' type='number' min='50' max='1000' step='50' /> </div> <div class='setting_group'> <span class='tooltip' >Always use global settings <span class='tooltiptext' >Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span > </span> <input id='FFnS_globalSettingsEnabled' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Sync settings <span class='tooltiptext' >The settings will be synced by the browser, and be available across all instances of that browser that the user is logged into (e.g. via Chrome sync, or Firefox sync), across different devices.</span > </span> <input id='FFnS_syncSettingsEnabled' type='checkbox' /> </div> </fieldset> <fieldset> <legend><span id='FFnS_settings_mode_title'></span></legend> <div class='setting_group'> <span class='tooltip' >Filtering enabled <span class='tooltiptext' >Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span > </span> <input id='FFnS_FilteringEnabled' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext' >Show only articles that contain at least one of the restricting keywords (not applied if empty)</span > </span> <input id='FFnS_RestrictingEnabled' type='checkbox' /> </div> <div class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> </div> {{ SortingSelect }} <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li><a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a></li> <li><a href='#FFnS_Tab_KeywordControls'>Keyword controls</a></li> <li><a href='#FFnS_Tab_UIControls'>UI controls</a></li> <li><a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a></li> <li><a href='#FFnS_Tab_SettingsControls'>Settings controls</a></li> </ul> <div id='FFnS_tabs_content'> {{ FilteringList.Type.FilteredOut }} {{ FilteringList.Type.RestrictedOn }} <div id='FFnS_Tab_KeywordControls' class='FFnS_Tab_Menu'> <p> The following settings are applied to the filtering and restricting </p> <fieldset> <legend>Matching area (domain)</legend> <div> <span>Search for keywords in the entry's: </span> {{ DefaultKeywordMatchingArea }} <span> (Multiple values can be selected)</span> </div> <div> <span>Always use these matching areas</span> <input id='FFnS_AlwaysUseDefaultMatchingAreas' type='checkbox' /> <span> (the area select boxes in the filtering and restricting will be invisible when this option is checked)</span > </div> </fieldset> <fieldset> <legend>Matching method</legend> <span>The keywords are treated as : </span> {{ KeywordMatchingMethod }} </fieldset> </div> <div id='FFnS_Tab_UIControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Custom buttons</legend> <div> <span >Add a button to open articles in a new window/tab and mark them as read</span > <input id='FFnS_OpenAndMarkAsRead' type='checkbox' /> </div> <div> <span >Open articles in a new window/tab and mark them as read when clicking the visual image (Cards &amp; Magazine view)</span > <input id='FFnS_VisualOpenAndMarkAsRead' type='checkbox' /> </div> <div> <span >Open articles in a new window/tab and mark them as read when clicking the title (Title view)</span > <input id='FFnS_TitleOpenAndMarkAsRead' type='checkbox' /> </div> <div> <span>Add buttons to mark articles above/below as</span> <select id='FFnS_MarkAsReadAboveBelowRead' class='FFnS_input'> <option value='true' selected>read</option> <option value='false'>unread</option> </select> <input id='FFnS_MarkAsReadAboveBelow' type='checkbox' /> <span> (Also hide using the same buttons when marking as read</span > <input id='FFnS_HideWhenMarkAboveBelow' type='checkbox' /> <span>)</span> </div> <div> <span >Add button to open all current feed articles in a new tab</span > <input id='FFnS_OpenCurrentFeedArticles' type='checkbox' /> <span> unread only</span> <input id='FFnS_OpenCurrentFeedArticlesUnreadOnly' type='checkbox' /> <span class='tooltip'> maximum articles to open <span class='tooltiptext' >If set to 0, all the articles will be opened</span > </span> <input id='FFnS_MaxOpenCurrentFeedArticles' class='FFnS_input MediumNumberInput' type='number' min='0' step='1' /> <span> mark as read</span> <input id='FFnS_MarkAsReadOnOpenCurrentFeedArticles' type='checkbox' /> </div> </fieldset> <fieldset> <legend> <span class='tooltip' >Coloring rules to highlight titles <span class='tooltiptext' >For each article, only the first matching coloring rule is applied by following their order. You can move up/down the coloring rules to change this order.</span > </span> </legend> <span id='FFnS_AddColoringRule'> <img src='{{plusIconLink}}' class='FFnS_icon' title='Add a new coloring rule' /> </span> <span id='FFnS_EraseColoringRules'> <img src='{{eraseIconLink}}' class='FFnS_icon' title='Remove all the coloring rules' /> </span> <span id='FFnS_ColoringRules'></span> </fieldset> </div> <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently received articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles received (crawled) less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23' /> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' /> <span>days</span> <span>ago should be:</span> </div> <div class='setting_group'> <span class='tooltip' >Kept unread if unread <span class='tooltiptext' >Only the articles that were not marked as read (manually or on scroll) will be kept unread. Please note that by enabling this option, only the loaded articles will be marked as read.</span > </span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> <div class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> <div class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input MediumNumberInput' type='number' min='0' step='100' /> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox' /> <span class='tooltip' >Marked as read if hot or popular <span class='tooltiptext' >Mark as read the articles made visible if hot or with popularity superior to the defined value</span > </span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> </fieldset> <fieldset> <legend>Reading time</legend> <div class='setting_group'> <span>Enable filtering of articles with reading time </span> <select id='FFnS_FilterLong_FilteringByReadingTime' class='FFnS_input' > <option value='true' selected>superior</option> <option value='false'>inferior</option> </select> <span>to </span> <input id='FFnS_ThresholdMinutes_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1' /> <span>minutes: </span> <input id='FFnS_Enabled_FilteringByReadingTime' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Keep unread <span class='tooltiptext' >When this option is enabled, the filtered articles will be kept unread</span > </span> <input id='FFnS_KeepUnread_FilteringByReadingTime' type='checkbox' /> <span class='tooltip' >Reading speed : <span class='tooltiptext' >The average words read per minute</span > </span> <input id='FFnS_WordsPerMinute_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1' /> </div> </fieldset> <fieldset> <legend> Additional sorting levels (applied when two entries have equal sorting) </legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> <fieldset> <legend>Duplicates filtering</legend> <div class='setting_group'> <span class='tooltip' >Hide duplicates <span class='tooltiptext tooltip-top' >The duplicate articles will be hidden based on the url and the title. For each duplicate article group, only the most recently published one will be kept.</span > </span> <input id='FFnS_HideDuplicates' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Mark as read <span class='tooltiptext tooltip-top' >The duplicate articles will be marked as read (based on the same rules of the 'Hide duplicates' option).</span > </span> <input id='FFnS_MarkAsReadDuplicates' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Enable cross checking with persistence up to: <span class='tooltiptext tooltip-top' >The duplicates will be checked across all subscriptions and categories against current articles and stored articles. The url and title of all articles published less then the configured days will be stored locally (sync not supported).</span > </span> <input id='FFnS_CrossCheckDuplicatesDays' class='FFnS_input MediumNumberInput' type='number' min='0' /> <span> days </span> <input id='FFnS_CrossCheckDuplicates' type='checkbox' /> </div> </fieldset> <fieldset> <legend>Misc</legend> <div class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox' /> </div> <div class='setting_group'> <span>Hide articles after reading them</span> <input id='FFnS_HideAfterRead' type='checkbox' /> <span class='tooltip' >Replace with gap <span class='tooltiptext tooltip-top' >Replace the hidden article with a gap with same dimensions.</span > </span> <input id='FFnS_ReplaceHiddenWithGap' type='checkbox' /> </div> <div class='setting_group'> <span>Mark as read filtered articles</span> <input id='FFnS_MarkAsReadFiltered' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Auto refresh <span class='tooltiptext tooltip-top' >The articles will be reloaded periodically following the configured minutes</span > </span> <input id='FFnS_AutoRefreshEnabled' type='checkbox' /> <input id='FFnS_AutoRefreshMinutes' class='FFnS_input MediumNumberInput' type='number' min='1' /> <span>(minutes)</span> </div> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Import/export all settings from/to file</legend> <div class='setting_group'> <span>Import settings </span> <input id='FFnS_ImportSettings' type='file' /> </div> <button id='FFnS_ExportSettings'>Export settings</button> </fieldset> <fieldset> <legend>Subscription management</legend> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input' > {{ ImportMenu.SubscriptionOptions }} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'> Import settings from selected subscription </button> <button id='FFnS_SettingsControls_DeleteSub'> Delete selected subscription </button> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'> Link current subscription to selected subscription </button> </fieldset> </div> </div> </fieldset> </div> </div> ",
+    filteringListHTML: "<div id='{{FilteringTypeTabId}}' class='FFnS_Tab_Menu'> {{ FilteringKeywordMatchingArea }} <input id='{{inputId}}' class='FFnS_input' size='10' type='text' /> <span id='{{plusBtnId}}'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='{{filetringKeywordsId}}'></span> <span id='{{eraseBtnId}}'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div> ",
+    keywordHTML: '<button id="{{keywordId}}" type="button" class="FFnS_keyword">{{keyword}}</button>',
+    sortingSelectHTML: "<select id='{{Id}}' class='FFnS_input FFnS_select'> <option value='{{PopularityDesc}}' >Sort by popularity (highest to lowest)</option > <option value='{{PopularityAsc}}' >Sort by popularity (lowest to highest)</option > <option value='{{TitleAsc}}'>Sort by title (a -&gt; z)</option> <option value='{{TitleDesc}}'>Sort by title (z -&gt; a)</option> <option value='{{ReceivedDateNewFirst}}' >Sort by received date (new first)</option > <option value='{{ReceivedDateOldFirst}}' >Sort by received date (old first)</option > <option value='{{PublishDateNewFirst}}' >Sort by publish date (new first)</option > <option value='{{PublishDateOldFirst}}' >Sort by publish date (old first)</option > <option value='{{PublishDayNewFirst}}' >Sort by publish day (new first)</option > <option value='{{PublishDayOldFirst}}' >Sort by publish day (old first)</option > <option value='{{SourceAsc}}'>Sort by source title (a -&gt; z)</option> <option value='{{SourceDesc}}'>Sort by source title (z -&gt; a)</option> <option value='{{SourceNewestReceiveDate}}' >Sort by source title (newest received first)</option > <option value='{{Random}}'>Random sort</option> </select> ",
+    keywordMatchingSelectHTML: "<select id='{{Id}}' class='FFnS_input FFnS_keywordMatchingSelect' {{attributes}} > {{ defaultOption }} <option value='{{KeywordMatchingArea.Title}}' {{selectFirst}}>Title</option> <option value='{{KeywordMatchingArea.Body}}'>Body (summary)</option> <option value='{{KeywordMatchingArea.Author}}'>Author</option> </select> ",
+    keywordMatchingMethodHTML: "<select id='{{id}}' class='FFnS_input FFnS_KeywordMatchingMethod' {{size}}> <option value='{{KeywordMatchingMethod.Simple}}' selected >Strings (simple match)</option > <option value='{{KeywordMatchingMethod.Word}}' >Words (whole word match)</option > <option value='{{KeywordMatchingMethod.RegExp}}' >Regular expressions (pattern match)</option > </select> ",
+    coloringRuleHTML: "<div id='{{Id}}' class='FFnS_ColoringRule'> <img class='FFnS_RemoveColoringRule FFnS_ColoringRuleManagement' title='Remove the coloring rule' src='{{eraseIconLink}}' /> <img class='FFnS_MoveUpColoringRule FFnS_ColoringRuleManagement' title='Move up the order of the coloring rule' src='{{moveUpIconLink}}' /> <img class='FFnS_MoveDownColoringRule FFnS_ColoringRuleManagement' title='Move down the order of the coloring rule' src='{{moveDownIconLink}}' /> <span>Keyword source: </span> <select class='FFnS_ColoringRule_Source FFnS_input FFnS_select'> <option value='{{SpecificKeywords}}'>Specific keywords</option> <option value='{{RestrictingKeywords}}'>Restricting keywords</option> <option value='{{FilteringKeywords}}'>Filtering keywords</option> <option value='{{SourceTitle}}'>Source title (subscription)</option> </select> <span class='FFnS_ColoringRule_Options'> <span style='display: none'>Highlight all the title</span> <input class='FFnS_HighlightAllTitle' type='checkbox' style='display: none' /> <span class='FFnS_SpecificColorGroup' >Color <input class='FFnS_SpecificColor FFnS_input jscolor' value='{{Color}}' size='10' type='text' /> </span> </span> <span class='FFnS_ColoringRule_SourceTitleInfos' >All the titles from the same source (subscription) will have the same generated color (only applied when viewing categories)</span > <div class='FFnS_ColoringRule_MatchingMethodGroup'> Keyword matching method: {{ KeywordMatchingMethod }} </div> <div class='FFnS_ColoringRule_KeywordsGroup'> <span>Specific keywords: </span> <input class='FFnS_input FFnS_ColoringRule_KeywordInput' size='10' type='text' /> <span class='FFnS_ColoringRule_AddKeyword'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span class='FFnS_ColoringRuleKeywords'></span> <span class='FFnS_ColoringRule_EraseKeywords'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div> </div> ",
+    optionHTML: "<option value='{{value}}'>{{value}}</option>",
+    emptyOptionHTML: "<option value=''>{{value}}</option>",
+    styleCSS: "#FFnS_settingsDivContainer { display: none; background: rgba(0, 0, 0, 0.9); width: 100%; height: 100%; z-index: 999; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 87%; margin-top: 1%; margin-left: 5%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #e0f5ff; padding: 2%; opacity: 1; overflow-y: auto; overflow-x: hidden; } .FFnS_input { font-size: 12px; } #FFnS_tabs_menu { display: block; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #b9e0ed; } #FFnS_tabs_menu li a { padding: 3px; color: #2a687d; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; max-height: 180px; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35a5e2; border-radius: 20px; color: #fff; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip-top { bottom: 100%; left: 50%; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn, .FFnS_ColoringRuleManagement { float: right; cursor: pointer; width: 24px; height: 24px; padding: 4px; } #FFnS_Tab_SettingsControls button, #FFnS_Tab_SettingsControls input { margin-top: 1%; font-size: 12px; vertical-align: inherit; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type='number'] { width: 30px; margin-left: 1%; margin-right: 1%; } .MediumNumberInput { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { display: inline-block; white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: bold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 1%; } fieldset select.FFnS_keywordMatchingSelect { margin-left: 0%; margin-right: 1%; vertical-align: middle; } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('{{extension-icon}}'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; background-color: transparent; filter: grayscale(1); font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .FFnS_Hiding_Info { text-align: center; } .fx .open-in-new-tab-button.mark-as-read, .fx .mark-as-read-above-below-button.mark-as-read { background-repeat: no-repeat; margin-right: 0px; } .fx .open-in-new-tab-button.mark-as-read, .fx .entry.u0 .open-in-new-tab-button.condensed-toolbar-icon { background-image: url('{{open-in-new-tab-url}}'); background-size: 18px 18px; } .fx .open-current-articles-in-new-tab-button { background-image: url('{{open-in-new-tab-url}}'); background-size: 18px 18px; background-repeat: no-repeat; background-color: white; display: block; margin-left: auto; min-width: 10px; padding: 10px; } .fx .mark-as-read-above-below-button.mark-as-read, .fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon, .fx .entry.u5 .mark-as-read-above-below-button { width: 24px; height: 24px; } .fx .u100 .mark-as-read-above-below-button.mark-as-read, .fx .u100 .open-in-new-tab-button.mark-as-read { margin-left: 20px; width: 24px; height: 24px; } .fx button.mark-above-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBggICA8PDxERERMTExUVFRgYGBkZGRoaGhwcHB4eHh8fHyAgICYmJicnJygoKCoqKiwsLC4uLi8vLzAwMDExMTIyMjMzMzk5OTo6Oj09PT4+PkREREhISEtLS01NTU5OTlFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbHJycnh4eHp6enx8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhUO7wAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAA1klEQVQoU3WQiVICQQwFGxBUPLgVROQQEBDFA/7/02KSyS6sVXQVyZvXNezWImfIxCx28JCJOvUUnNVlduOOKreejHFJh4s2fRnQsqg8cdBpYklHZ5eF1dJnZctvTG3EHDL0HQ/PeeEmhX/ilYtIRfFOfi6IA8wjFgU0Irn42UWuUomk8AnxIlew9+DwpsL/rwkjrxJIWcWvyAj00x1BNioeZRH3cvRU0W6tv+eoEio+tFTK0QR2v+biKxUZJr6tv0/nHH/itQo/nZAK2Po+IYlJz9cRkT+a78AFAEXS0AAAAABJRU5ErkJggg==); } .fx button.mark-below-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICA8PDxERERUVFRoaGhwcHB4eHigoKCoqKiwsLC4uLjAwMDExMTIyMjMzMzk5OTo6Oj09PUhISElJSUtLS01NTVFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbG5ubnJycnR0dHV1dXh4eHp6ent7e3x8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACY/twoAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAAxElEQVQoU3WQhxKCMBBEF7D3gg27Inbl/3/uvLtkQNrOJLvZNxcKqEIVYFQO9q3yiaXDWwmYIua9CCbYixWAD189DxbompADAWo2ZcEJyTkDYmBjYxYAfZsUPCKb6/BsYuEC2BdpAx8NKuwY6H0DYK6VEchl8CaaA/zrUoGODMa0tXOJ+ORxd+A1I3qap7iBgpBLliuVI2M1vBRQQ8FVAH9K1EQogddN+p729OV4kCCAOnwSF92xVjcFcFb/kwGroVoqoh+q2r44+TStvAAAAABJRU5ErkJggg==); } .fx .entry.u5 .open-in-new-tab-button, .fx .entry.u5 .mark-as-read-above-below-button { filter: brightness(0) invert(1); } .fx .entry.u5 .open-in-new-tab-button { margin-right: 4px; margin-top: 4px; background-size: 32px 32px; width: 32px; height: 32px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } #FFnS_Tab_KeywordControls span { vertical-align: top; } #FFnS_Tab_KeywordControls div { margin-top: 2%; } .FFnS_select { vertical-align: middle; } #FFnS_AddSortingType { margin-left: 1%; } .entry[gap-article] { visibility: hidden; } #FFnS_ImportSettings { width: 400px; } .FFnS_ColoringRule { margin-top: 1%; padding: 1%; border: 1px solid #636363; } .FFnS_ColoringRule div { margin-top: 1%; } "
 };
 
 var exported = {};
 function $id(id) {
-    return $('#' + id);
+    return $("#" + id);
 }
 function onClick(jq, handler, thisArg) {
     jq.click(function (eventObject) {
@@ -104,27 +104,27 @@ function onClick(jq, handler, thisArg) {
 }
 function bindMarkup(html, bindings) {
     bindings.forEach(function (binding) {
-        html = html.replace(new RegExp("\{\{" + binding.name + "\}\}", "g"), "" + binding.value);
+        html = html.replace(new RegExp("{{[ ]*" + binding.name + "[ ]*}}", "g"), "" + binding.value);
     });
     return html;
 }
 function callbackBindedTo(thisArg) {
-    return (function (callback) {
+    return function (callback) {
         return callback.bind(this);
-    }).bind(thisArg);
+    }.bind(thisArg);
 }
 function capitalizeFirst(s) {
     return s.charAt(0).toUpperCase() + s.slice(1);
 }
 function isChecked(input) {
-    return input.is(':checked');
+    return input.is(":checked");
 }
 function setChecked(htmlId, checked) {
-    $id(htmlId).prop('checked', checked);
+    $id(htmlId).prop("checked", checked);
 }
 function registerAccessors(srcObject, srcFieldName, targetPrototype, setterCallback, setterCallbackThisArg, fieldObjectName) {
     for (var field in srcObject) {
-        var type = typeof (srcObject[field]);
+        var type = typeof srcObject[field];
         if (type === "object" && !$.isArray(srcObject[field])) {
             registerAccessors(srcObject[field], srcFieldName, targetPrototype, setterCallback, setterCallbackThisArg, field);
         }
@@ -138,7 +138,9 @@ function registerAccessors(srcObject, srcFieldName, targetPrototype, setterCallb
             (function () {
                 var callbackField = field;
                 var getFinalObj = function (callbackSrcObj) {
-                    return fieldObjectName == null ? callbackSrcObj : callbackSrcObj[fieldObjectName];
+                    return fieldObjectName == null
+                        ? callbackSrcObj
+                        : callbackSrcObj[fieldObjectName];
                 };
                 if (targetPrototype[getterName] == null) {
                     targetPrototype[getterName] = function () {
@@ -171,7 +173,7 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
         typedClone = toClone;
     }
     var _loop_1 = function () {
-        type = typeof (typedClone[field]);
+        type = typeof typedClone[field];
         if (toClone[field] == null) {
             return "continue";
         }
@@ -183,7 +185,7 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
                 else {
                     array = toClone[field];
                     if (array.length > 0) {
-                        arrayType = typeof (array[0]);
+                        arrayType = typeof array[0];
                         if (arrayType === "object") {
                             var cloneArray_1 = [];
                             array.forEach(function (element) {
@@ -234,7 +236,10 @@ function injectToWindow(functionNames) {
     }
     var srcTxt = "";
     for (var i = 0; i < functions.length; i++) {
-        srcTxt += functions[i].toString().replace(/^function/, "function " + functionNames[i]) + "\n";
+        srcTxt +=
+            functions[i]
+                .toString()
+                .replace(/^function/, "function " + functionNames[i]) + "\n";
     }
     injectScriptText(srcTxt, "window-" + Date.now());
 }
@@ -246,11 +251,16 @@ function injectClasses() {
     var srcTxt = "";
     for (var i = 0; i < classes.length; i++) {
         var txt = classes[i].toString();
-        var className = (/function ([^\(]+)/i).exec(txt)[1];
-        srcTxt += "var " + className + " = (function () {\n"
-            + classes[i].toString()
-            + "\nreturn " + className + ";"
-            + "\n}());";
+        var className = /function ([^\(]+)/i.exec(txt)[1];
+        srcTxt +=
+            "var " +
+                className +
+                " = (function () {\n" +
+                classes[i].toString() +
+                "\nreturn " +
+                className +
+                ";" +
+                "\n}());";
     }
     injectScriptText(srcTxt, "classes-" + Date.now());
 }
@@ -259,7 +269,7 @@ function injectScriptText(srcTxt, sourceURL) {
         srcTxt += "//# sourceURL=" + sourceURL;
     }
     var script = document.createElement("script");
-    script.type = 'text/javascript';
+    script.type = "text/javascript";
     script.text = srcTxt;
     document.body.appendChild(script);
 }
@@ -361,7 +371,6 @@ var AsyncResult = (function () {
             console.log(e);
         }
     };
-    ;
     AsyncResult.prototype.result = function (result) {
         try {
             this.resultCallback.call(this.resultThisArg, result);
@@ -370,7 +379,6 @@ var AsyncResult = (function () {
             console.log(e);
         }
     };
-    ;
     AsyncResult.prototype.chain = function (asyncResult) {
         this.then(function () {
             asyncResult.done();
@@ -696,6 +704,7 @@ var SubscriptionDAO = (function () {
                     _this.loadSubscription(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL).then(onLoad, _this);
                 }
                 else {
+                    // First time installing
                     var dto = new SubscriptionDTO(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL);
                     _this.save(dto);
                     onLoad.call(_this, new Subscription(_this, dto));
@@ -719,7 +728,6 @@ var SubscriptionDAO = (function () {
             }, _this);
         }, this);
     };
-    ;
     SubscriptionDAO.prototype.save = function (dto) {
         var url = dto.url;
         var id = this.getSubscriptionId(url);
@@ -776,7 +784,9 @@ var SubscriptionDAO = (function () {
                     }
                 }
                 else {
-                    dto = _this.defaultSubscription ? _this.defaultSubscription.dto : new SubscriptionDTO(url);
+                    dto = _this.defaultSubscription
+                        ? _this.defaultSubscription.dto
+                        : new SubscriptionDTO(url);
                     cloneURL = url;
                 }
                 dto = _this.clone(dto, cloneURL);
@@ -790,9 +800,9 @@ var SubscriptionDAO = (function () {
     };
     SubscriptionDAO.prototype.clone = function (dtoToClone, cloneUrl) {
         var clone = deepClone(dtoToClone, new SubscriptionDTO(cloneUrl), {
-            "advancedControlsReceivedPeriod": new AdvancedControlsReceivedPeriod(),
-            "coloringRules": ColoringRule,
-            "filteringByReadingTime": new FilteringByReadingTime(),
+            advancedControlsReceivedPeriod: new AdvancedControlsReceivedPeriod(),
+            coloringRules: ColoringRule,
+            filteringByReadingTime: new FilteringByReadingTime()
         });
         clone.url = cloneUrl;
         return clone;
@@ -876,7 +886,9 @@ var SettingsManager = (function () {
                 }
             }
             else {
-                _this.dao.loadSubscription(_this.getActualSubscriptionURL()).then(onLoad, _this);
+                _this.dao
+                    .loadSubscription(_this.getActualSubscriptionURL())
+                    .then(onLoad, _this);
             }
         }, this);
     };
@@ -1061,8 +1073,9 @@ var ArticleManager = (function () {
                     }
                 }
                 else {
-                    if (advControls.showIfHot && (article.isHot() ||
-                        article.getPopularity() >= advControls.minPopularity)) {
+                    if (advControls.showIfHot &&
+                        (article.isHot() ||
+                            article.getPopularity() >= advControls.minPopularity)) {
                         if (advControls.keepUnread && advControls.markAsReadVisible) {
                             this.articlesToMarkAsRead.push(article);
                         }
@@ -1079,7 +1092,8 @@ var ArticleManager = (function () {
         this.duplicateChecker.check(article);
         var filteringByReadingTime = sub.getFilteringByReadingTime();
         if (filteringByReadingTime.enabled) {
-            var thresholdWords = filteringByReadingTime.thresholdMinutes * filteringByReadingTime.wordsPerMinute;
+            var thresholdWords = filteringByReadingTime.thresholdMinutes *
+                filteringByReadingTime.wordsPerMinute;
             var articleWords = article.body.split(" ").length;
             if (articleWords != thresholdWords &&
                 filteringByReadingTime.filterLong == articleWords > thresholdWords) {
@@ -1127,8 +1141,8 @@ var ArticleManager = (function () {
         for (var i = 0; i < id.length; i++) {
             x += id.charCodeAt(i);
         }
-        var h = (x % 36 + 1) * 1;
-        var s = 30 + (x % 5 + 1) * 10;
+        var h = ((x % 36) + 1) * 1;
+        var s = 30 + ((x % 5) + 1) * 10;
         return "hsl(" + h + ", " + s + "%, 80%)";
     };
     ArticleManager.prototype.checkLastAddedArticle = function (refresh) {
@@ -1184,10 +1198,13 @@ var ArticleManager = (function () {
             if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
                 console.log("Sorting articles at " + new Date().toTimeString());
                 endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
-                if (articlesContainer.find("h4").length > 0 && !articlesContainer.prev().is("h4")) {
+                if (articlesContainer.find("h4").length > 0 &&
+                    !articlesContainer.prev().is("h4")) {
                     articlesContainer.before("<h4>Latest</h4>");
                 }
-                var loadingMessage = articlesContainer.find(".message.loading").detach();
+                var loadingMessage = articlesContainer
+                    .find(".message.loading")
+                    .detach();
                 articlesContainer.empty();
                 articlesContainer.append(loadingMessage);
                 visibleArticles.forEach(function (article) {
@@ -1204,7 +1221,9 @@ var ArticleManager = (function () {
             lastContainer.append(endOfFeed);
         }
         else {
-            $(ext.endOfFeedSelector).detach().appendTo(lastContainer);
+            $(ext.endOfFeedSelector)
+                .detach()
+                .appendTo(lastContainer);
         }
         this.page.put(ext.sortedVisibleArticlesId, sortedVisibleEntryIds);
     };
@@ -1227,7 +1246,9 @@ var ArticleManager = (function () {
         if (SortingType.SourceNewestReceiveDate == st) {
             var sourceToArticles_1 = {};
             articles.forEach(function (a) {
-                var sourceArticles = (sourceToArticles_1[a.getSource()] || (sourceToArticles_1[a.getSource()] = []), sourceToArticles_1[a.getSource()]);
+                var sourceArticles = (sourceToArticles_1[a.getSource()] ||
+                    (sourceToArticles_1[a.getSource()] = []),
+                    sourceToArticles_1[a.getSource()]);
                 sourceArticles.push(a);
             });
             articles.length = 0;
@@ -1352,14 +1373,27 @@ var Article = (function () {
             }
             else {
                 var isArticleView = $(article).hasClass(ext.articleViewClass);
-                this.body = this.article.find(isArticleView ? ".content" : ".summary").text().toLowerCase();
-                this.author = (isArticleView ?
-                    (function () {
-                        var metadata = $(article).find(".metadata").text().trim().replace(/\s\s+/ig, "\n").split("\n");
+                this.body = this.article
+                    .find(isArticleView ? ".content" : ".summary")
+                    .text()
+                    .toLowerCase();
+                this.author = (isArticleView
+                    ? (function () {
+                        var metadata = $(article)
+                            .find(".metadata")
+                            .text()
+                            .trim()
+                            .replace(/\s\s+/gi, "\n")
+                            .split("\n");
                         return metadata[3] === "/" ? metadata[2] : metadata[3];
-                    })() :
-                    this.article.find(".authors").text()).replace("by", "").trim().toLowerCase();
-                var ageStr = this.article.find(ext.publishAgeSpanSelector).attr(ext.publishAgeTimestampAttr);
+                    })()
+                    : this.article.find(".authors").text())
+                    .replace("by", "")
+                    .trim()
+                    .toLowerCase();
+                var ageStr = this.article
+                    .find(ext.publishAgeSpanSelector)
+                    .attr(ext.publishAgeTimestampAttr);
                 var ageSplit = ageStr.split("--");
                 var publishDate = ageSplit[0].replace(/[^:]*:/, "").trim();
                 var receivedDate = ageSplit[1].replace(/[^:]*:/, "").trim();
@@ -1368,9 +1402,15 @@ var Article = (function () {
             }
         }
         // Title
-        this.title = this.article.attr(ext.articleTitleAttribute).trim().toLowerCase();
+        this.title = this.article
+            .attr(ext.articleTitleAttribute)
+            .trim()
+            .toLowerCase();
         // Popularity
-        var popularityStr = this.article.find(ext.popularitySelector).text().trim();
+        var popularityStr = this.article
+            .find(ext.popularitySelector)
+            .text()
+            .trim();
         popularityStr = popularityStr.replace("+", "");
         if (popularityStr.indexOf("K") > -1) {
             popularityStr = popularityStr.replace("K", "");
@@ -1477,8 +1517,8 @@ var DuplicateChecker = (function () {
         if (!b || a.getEntryId() === b.getEntryId()) {
             return false;
         }
-        var toKeep = (a.getPublishAge() > b.getPublishAge()) ? a : b;
-        var duplicate = (a.getPublishAge() > b.getPublishAge()) ? b : a;
+        var toKeep = a.getPublishAge() > b.getPublishAge() ? a : b;
+        var duplicate = a.getPublishAge() > b.getPublishAge() ? b : a;
         this.title2Article[a.getTitle()] = toKeep;
         this.title2Article[b.getTitle()] = toKeep;
         this.url2Article[a.getUrl()] = toKeep;
@@ -1530,9 +1570,11 @@ var CrossArticleManager = (function () {
         this.initDay(articleDay);
         try {
             var changed = pushIfAbsent(this.crossUrls[articleDay], a.getUrl());
-            changed = pushIfAbsent(this.crossTitles[articleDay], a.getTitle()) || changed;
+            changed =
+                pushIfAbsent(this.crossTitles[articleDay], a.getTitle()) || changed;
             if (!duplicate) {
-                changed = pushIfAbsent(this.crossIds[articleDay], a.getEntryId()) || changed;
+                changed =
+                    pushIfAbsent(this.crossIds[articleDay], a.getEntryId()) || changed;
             }
             if (changed) {
                 pushIfAbsent(this.changedDays, articleDay);
@@ -1548,7 +1590,9 @@ var CrossArticleManager = (function () {
         if (saveAll) {
             this.changedDays = this.daysArray;
         }
-        if (!this.crossCheckSettings.isEnabled() || !this.isReady() || this.changedDays.length == 0) {
+        if (!this.crossCheckSettings.isEnabled() ||
+            !this.isReady() ||
+            this.changedDays.length == 0) {
             return;
         }
         this.saveDaysArray();
@@ -1561,8 +1605,8 @@ var CrossArticleManager = (function () {
         var checkedNotDuplicate = this.daysArray.some(function (day) { return _this.crossIds[day].indexOf(id) > -1; });
         if (!checkedNotDuplicate) {
             var found = this.daysArray.some(function (day) {
-                return _this.crossUrls[day].indexOf(a.getUrl()) > -1 ||
-                    _this.crossTitles[day].indexOf(a.getTitle()) > -1;
+                return (_this.crossUrls[day].indexOf(a.getUrl()) > -1 ||
+                    _this.crossTitles[day].indexOf(a.getTitle()) > -1);
             }, this);
             if (found) {
                 this.duplicateChecker.setDuplicate(a);
@@ -1578,7 +1622,9 @@ var CrossArticleManager = (function () {
         var _this = this;
         return new AsyncResult(function (p) {
             _this.localStorage = DataStore.getLocalStorage();
-            _this.localStorage.getAsync(_this.DAYS_ARRAY_KEY, []).then(function (result) {
+            _this.localStorage
+                .getAsync(_this.DAYS_ARRAY_KEY, [])
+                .then(function (result) {
                 console.log("[Duplicates cross checking] Loading the stored days ...");
                 _this.setAndCleanDays(result);
                 if (_this.daysArray.length == 0) {
@@ -1638,7 +1684,9 @@ var CrossArticleManager = (function () {
     CrossArticleManager.prototype.setAndCleanDays = function (crossArticleDays) {
         this.daysArray = crossArticleDays.slice(0);
         var thresholdDay = this.getThresholdDay();
-        crossArticleDays.filter(function (day) { return day < thresholdDay; }).forEach(this.cleanDay, this);
+        crossArticleDays
+            .filter(function (day) { return day < thresholdDay; })
+            .forEach(this.cleanDay, this);
     };
     CrossArticleManager.prototype.initDay = function (day) {
         if (this.daysArray.indexOf(day) < 0) {
@@ -1664,13 +1712,22 @@ var CrossArticleManager = (function () {
     CrossArticleManager.prototype.loadDay = function (day) {
         var _this = this;
         return new AsyncResult(function (p) {
-            _this.localStorage.getAsync(_this.getIdsKey(day), []).then(function (result) {
+            _this.localStorage
+                .getAsync(_this.getIdsKey(day), [])
+                .then(function (result) {
                 _this.crossIds[day] = result;
-                _this.localStorage.getAsync(_this.getUrlsKey(day), []).then(function (result) {
+                _this.localStorage
+                    .getAsync(_this.getUrlsKey(day), [])
+                    .then(function (result) {
                     _this.crossUrls[day] = result;
-                    _this.localStorage.getAsync(_this.getTitlesKey(day), []).then(function (result) {
+                    _this.localStorage
+                        .getAsync(_this.getTitlesKey(day), [])
+                        .then(function (result) {
                         _this.crossTitles[day] = result;
-                        console.log("[Duplicates cross checking] Loaded successfully the day: " + _this.formatDay(day) + ", title count: " + _this.crossTitles[day].length);
+                        console.log("[Duplicates cross checking] Loaded successfully the day: " +
+                            _this.formatDay(day) +
+                            ", title count: " +
+                            _this.crossTitles[day].length);
                         p.done();
                     }, _this);
                 }, _this);
@@ -1678,7 +1735,8 @@ var CrossArticleManager = (function () {
         }, this);
     };
     CrossArticleManager.prototype.cleanDay = function (day) {
-        console.log("[Duplicates cross checking] Cleaning the stored day: " + this.formatDay(day));
+        console.log("[Duplicates cross checking] Cleaning the stored day: " +
+            this.formatDay(day));
         this.daysArray.splice(this.daysArray.indexOf(day), 1);
         this.saveDaysArray();
         delete this.crossUrls[day];
@@ -1688,7 +1746,10 @@ var CrossArticleManager = (function () {
         this.localStorage.delete(this.getTitlesKey(day));
     };
     CrossArticleManager.prototype.saveDay = function (day) {
-        console.log("[Duplicates cross checking] Saving the day: " + this.formatDay(day) + ", title count: " + this.crossTitles[day].length);
+        console.log("[Duplicates cross checking] Saving the day: " +
+            this.formatDay(day) +
+            ", title count: " +
+            this.crossTitles[day].length);
         this.localStorage.put(this.getUrlsKey(day), this.crossUrls[day]);
         this.localStorage.put(this.getTitlesKey(day), this.crossTitles[day]);
         this.localStorage.put(this.getIdsKey(day), this.crossIds[day]);
@@ -1710,7 +1771,7 @@ var KeywordManager = (function () {
         this.matcherFactory = new KeywordMatcherFactory();
     }
     KeywordManager.prototype.insertArea = function (keyword, area) {
-        return this.areaPrefix + KeywordMatchingArea[area] + this.separator + keyword;
+        return (this.areaPrefix + KeywordMatchingArea[area] + this.separator + keyword);
     };
     KeywordManager.prototype.matchSpecficKeywords = function (article, keywords, method) {
         var matcher = this.matcherFactory.getMatcherByMethod(method);
@@ -1809,7 +1870,17 @@ var FeedlyPage = (function () {
     function FeedlyPage() {
         this.hiddingInfoClass = "FFnS_Hiding_Info";
         this.put("ext", ext);
-        injectToWindow(["getFFnS", "putFFnS", "getById", "getStreamPage", "onClickCapture", "fetchMoreEntries", "loadNextBatch", "getKeptUnreadEntryIds", "getSortedVisibleArticles"], this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
+        injectToWindow([
+            "getFFnS",
+            "putFFnS",
+            "getById",
+            "getStreamPage",
+            "onClickCapture",
+            "fetchMoreEntries",
+            "loadNextBatch",
+            "getKeptUnreadEntryIds",
+            "getSortedVisibleArticles"
+        ], this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
         injectClasses(EntryInfos);
         executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
     }
@@ -1880,7 +1951,9 @@ var FeedlyPage = (function () {
             });
             var feedButtonsContainer = $("<div>");
             feedButtonsContainer.append(openCurrentFeedArticlesBtn);
-            $("header.header").parent().after(feedButtonsContainer);
+            $("header.header")
+                .parent()
+                .after(feedButtonsContainer);
             onClickCapture(openCurrentFeedArticlesBtn, function (event) {
                 event.stopPropagation();
                 var articlesToOpen = getSortedVisibleArticles();
@@ -1898,29 +1971,37 @@ var FeedlyPage = (function () {
                         articlesToOpen.length = max;
                     }
                 }
-                articlesToOpen.map(function (id) { return getById(id); }).forEach(function (a) {
-                    var link = $(a).find(".title").attr("href");
+                articlesToOpen
+                    .map(function (id) { return getById(id); })
+                    .forEach(function (a) {
+                    var link = $(a)
+                        .find(".title")
+                        .attr("href");
                     window.open(link, link);
                 });
                 if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
-                    var reader_1 = window["streets"].service('reader');
+                    var reader_1 = window["streets"].service("reader");
                     articlesToOpen.forEach(function (entryId) {
                         reader_1.askMarkEntryAsRead(entryId);
-                        $(getById(entryId)).removeClass("unread").addClass("read");
+                        $(getById(entryId))
+                            .removeClass("unread")
+                            .addClass("read");
                     });
                 }
             });
         });
     };
     FeedlyPage.prototype.onClickCapture = function (element, callback) {
-        element.get(0).addEventListener('click', callback, true);
+        element.get(0).addEventListener("click", callback, true);
     };
     FeedlyPage.prototype.getKeptUnreadEntryIds = function () {
         var navigo = window["streets"].service("navigo");
         var entries = navigo.originalEntries || navigo.getEntries();
-        var keptUnreadEntryIds = entries.filter(function (e) {
+        var keptUnreadEntryIds = entries
+            .filter(function (e) {
             return e.wasKeptUnread();
-        }).map(function (e) {
+        })
+            .map(function (e) {
             return e.id;
         });
         return keptUnreadEntryIds;
@@ -1936,7 +2017,7 @@ var FeedlyPage = (function () {
         return sortedVisibleArticles;
     };
     FeedlyPage.prototype.onNewArticle = function () {
-        var reader = window["streets"].service('reader');
+        var reader = window["streets"].service("reader");
         var getLink = function (a) {
             return a.find(".title").attr("href");
         };
@@ -2012,7 +2093,9 @@ var FeedlyPage = (function () {
                 }
                 var e = $("<button>", attributes);
                 if (cardsView) {
-                    a.find(".mark-as-read").last().before(e);
+                    a.find(".mark-as-read")
+                        .last()
+                        .before(e);
                 }
                 else if (magazineView) {
                     a.find(".ago").after(e);
@@ -2027,11 +2110,15 @@ var FeedlyPage = (function () {
             };
             var markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
                 class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
-                title: "Mark articles below" + (cardsView ? " and on the right" : "") + " as read/unread",
+                title: "Mark articles below" +
+                    (cardsView ? " and on the right" : "") +
+                    " as read/unread"
             });
             var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
                 class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
-                title: "Mark articles above" + (cardsView ? " and on the left" : "") + " as read/unread"
+                title: "Mark articles above" +
+                    (cardsView ? " and on the left" : "") +
+                    " as read/unread"
             });
             var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
                 class: ext.openAndMarkAsReadClass,
@@ -2049,7 +2136,10 @@ var FeedlyPage = (function () {
                 window.open(link, link);
                 reader.askMarkEntryAsRead(entryId);
                 if (articleView) {
-                    $(a).closest(ext.articleViewEntryContainerSelector).removeClass("unread").addClass("read");
+                    $(a)
+                        .closest(ext.articleViewEntryContainerSelector)
+                        .removeClass("unread")
+                        .addClass("read");
                 }
             };
             onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
@@ -2092,7 +2182,7 @@ var FeedlyPage = (function () {
     FeedlyPage.prototype.refreshHidingInfo = function () {
         var hiddenCount = 0;
         $(ext.articleSelector).each(function (i, a) {
-            if (!$(a).is(':visible')) {
+            if (!$(a).is(":visible")) {
                 hiddenCount++;
             }
         });
@@ -2100,7 +2190,11 @@ var FeedlyPage = (function () {
         if (hiddenCount == 0) {
             return;
         }
-        $(ext.hidingInfoSibling).after("<div class='col-xs-3 col-md-3 detail " + this.hiddingInfoClass + "'> (" + hiddenCount + " hidden entries)</div>");
+        $(ext.hidingInfoSibling).after("<div class='col-xs-3 col-md-3 detail " +
+            this.hiddingInfoClass +
+            "'> (" +
+            hiddenCount +
+            " hidden entries)</div>");
     };
     FeedlyPage.prototype.clearHidingInfo = function () {
         $("." + this.hiddingInfoClass).remove();
@@ -2118,30 +2212,37 @@ var FeedlyPage = (function () {
         var autoLoadingMessageId = "FFnS_LoadingMessage";
         var stream = getStreamPage().stream;
         if ($(".message.loading").length == 0) {
-            $(ext.articlesContainerSelector).first().before($("<div>", {
+            $(ext.articlesContainerSelector)
+                .first()
+                .before($("<div>", {
                 id: autoLoadingMessageId,
                 class: "message loading",
                 text: "Auto loading all articles"
             }));
         }
         stream.setBatchSize(batchSize);
-        console.log("Fetching more articles (batch size: " + stream._batchSize + ") at: " + new Date().toTimeString());
+        console.log("Fetching more articles (batch size: " +
+            stream._batchSize +
+            ") at: " +
+            new Date().toTimeString());
         stream.askMoreEntries();
         stream.askingMoreEntries = false;
     };
     FeedlyPage.prototype.loadNextBatch = function (ev) {
         ev && ev.stopPropagation();
         var navigo = window["streets"].service("navigo");
-        var reader = window["streets"].service('reader');
+        var reader = window["streets"].service("reader");
         var entries = navigo.originalEntries || navigo.getEntries();
         var markAsReadEntryIds;
         if (getFFnS(ext.keepArticlesUnreadId)) {
             markAsReadEntryIds = getFFnS(ext.articlesToMarkAsReadId);
         }
         else {
-            markAsReadEntryIds = entries.sort(function (a, b) {
+            markAsReadEntryIds = entries
+                .sort(function (a, b) {
                 return a.jsonInfo.crawled - b.jsonInfo.crawled;
-            }).map(function (e) {
+            })
+                .map(function (e) {
                 return e.id;
             });
         }
@@ -2162,22 +2263,28 @@ var FeedlyPage = (function () {
         var secondaryMarkAsReadBtnsSelector = ".mark-as-read-button.secondary";
         var loadByBatchText = "Mark batch as read and load next batch";
         var navigo = window["streets"].service("navigo");
-        var reader = window["streets"].service('reader');
+        var reader = window["streets"].service("reader");
         var streamId = reader.listSubscriptions()[0].id;
         var autoLoadAllArticleDefaultBatchSize = 1000;
         var isAutoLoad = function () {
             try {
-                return getStreamPage() != null &&
-                    ($(ext.articleSelector).length == 0 || $(ext.unreadArticlesCountSelector).length > 0)
-                    && !(getStreamPage().stream.state.info.subscribed === false)
-                    && getFFnS(ext.autoLoadAllArticlesId, true);
+                return (getStreamPage() != null &&
+                    ($(ext.articleSelector).length == 0 ||
+                        $(ext.unreadArticlesCountSelector).length > 0) &&
+                    !(getStreamPage().stream.state.info.subscribed === false) &&
+                    getFFnS(ext.autoLoadAllArticlesId, true));
             }
             catch (e) {
                 console.log(e);
                 return false;
             }
         };
-        var streamObj = reader.lookupStream(streamId, { unreadOnly: true, featured: 0, sort: "newest", batchSize: 40 });
+        var streamObj = reader.lookupStream(streamId, {
+            unreadOnly: true,
+            featured: 0,
+            sort: "newest",
+            batchSize: 40
+        });
         var prototype = Object.getPrototypeOf(streamObj);
         var setBatchSize = prototype.setBatchSize;
         prototype.setBatchSize = function (customSize) {
@@ -2197,7 +2304,9 @@ var FeedlyPage = (function () {
             if (entries.length > 0) {
                 putFFnS(ext.sortArticlesId, true);
             }
-            if (entries.length > 0 && entries[entries.length - 1].jsonInfo.unread && isAutoLoad()) {
+            if (entries.length > 0 &&
+                entries[entries.length - 1].jsonInfo.unread &&
+                isAutoLoad()) {
                 var isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
                 var firstLoadByBatch_1 = false;
                 if (this.entries.length == 0) {
@@ -2215,7 +2324,11 @@ var FeedlyPage = (function () {
                 }
                 var stream = getStreamPage().stream;
                 var hasAllEntries = stream.state.hasAllEntries;
-                if (!hasAllEntries && !stream.askingMoreEntries && !stream.state.isLoadingEntries && isBatchLoading && $(loadNextBatchBtnId).length == 0) {
+                if (!hasAllEntries &&
+                    !stream.askingMoreEntries &&
+                    !stream.state.isLoadingEntries &&
+                    isBatchLoading &&
+                    $(loadNextBatchBtnId).length == 0) {
                     stream.askingMoreEntries = true;
                     setTimeout(function () {
                         var batchSize = autoLoadAllArticleBatchSize_1;
@@ -2234,7 +2347,9 @@ var FeedlyPage = (function () {
                         }
                     }
                     else if (isLoadByBatch && $(loadNextBatchBtnId).length == 0) {
-                        $(ext.articlesContainerSelector).last().after($('<button>', {
+                        $(ext.articlesContainerSelector)
+                            .last()
+                            .after($("<button>", {
                             id: loadNextBatchBtnId.substring(1),
                             class: "full-width secondary",
                             type: "button",
@@ -2250,9 +2365,14 @@ var FeedlyPage = (function () {
                 if (markAsReadEntries.length == 0) {
                     return;
                 }
-                var ids = $.map(markAsReadEntries.toArray(), function (e) { return $(e).attr(ext.articleEntryIdAttribute); });
+                var ids = $.map(markAsReadEntries.toArray(), function (e) {
+                    return $(e).attr(ext.articleEntryIdAttribute);
+                });
                 reader.askMarkEntriesAsRead(ids, {});
-                markAsReadEntries.removeClass(ext.markAsReadImmediatelyClass).removeClass("unread").addClass("read");
+                markAsReadEntries
+                    .removeClass(ext.markAsReadImmediatelyClass)
+                    .removeClass("unread")
+                    .addClass("read");
             }, 1000);
             return setEntries.apply(this, arguments);
         };
@@ -2268,7 +2388,7 @@ var FeedlyPage = (function () {
         });
     };
     FeedlyPage.prototype.overrideMarkAsRead = function () {
-        var reader = window["streets"].service('reader');
+        var reader = window["streets"].service("reader");
         var navigo = window["streets"].service("navigo");
         var pagesPkg = window["devhd"].pkg("pages");
         var prototype = pagesPkg.ReactPage.prototype;
@@ -2277,7 +2397,9 @@ var FeedlyPage = (function () {
             var _this = this;
             var jumpToNext = function () {
                 if (!/latest\/?$/i.test(document.URL)) {
-                    navigo.getNextURI() ? _this.feedly.jumpToNext() : _this.feedly.loadDefaultPage();
+                    navigo.getNextURI()
+                        ? _this.feedly.jumpToNext()
+                        : _this.feedly.loadDefaultPage();
                 }
                 else {
                     _this.feedly.jumpToNext();
@@ -2286,7 +2408,8 @@ var FeedlyPage = (function () {
             if (lastEntryObject && lastEntryObject.asOf) {
                 markAsRead.call(this, lastEntryObject);
             }
-            else if (getFFnS(ext.loadByBatchEnabledId, true) && !getStreamPage().stream.state.hasAllEntries) {
+            else if (getFFnS(ext.loadByBatchEnabledId, true) &&
+                !getStreamPage().stream.state.hasAllEntries) {
                 loadNextBatch();
             }
             else if (getFFnS(ext.keepArticlesUnreadId)) {
@@ -2330,7 +2453,8 @@ var FeedlyPage = (function () {
             var len = sortedVisibleArticles.length;
             var sorted = len == entries.length;
             for (var i = 0; i < len && sorted; i++) {
-                if (entries[i].id !== sortedVisibleArticles[i] || !filterVisible(entries[i])) {
+                if (entries[i].id !== sortedVisibleArticles[i] ||
+                    !filterVisible(entries[i])) {
                     sorted = false;
                 }
             }
@@ -2338,7 +2462,8 @@ var FeedlyPage = (function () {
                 entries = [].concat(originalEntries);
                 entries = entries.filter(filterVisible);
                 entries.sort(function (a, b) {
-                    return sortedVisibleArticles.indexOf(a.id) - sortedVisibleArticles.indexOf(b.id);
+                    return (sortedVisibleArticles.indexOf(a.id) -
+                        sortedVisibleArticles.indexOf(b.id));
                 });
                 navigo.entries = entries;
             }
@@ -2371,9 +2496,10 @@ var FeedlyPage = (function () {
         prototype.listEntryIds = function () {
             var a = [];
             var entries = navigo.originalEntries || navigo.entries;
-            return entries.forEach(function (b) {
+            return (entries.forEach(function (b) {
                 a.push(b.getId());
-            }), a;
+            }),
+                a);
         };
     };
     return FeedlyPage;
@@ -2388,26 +2514,51 @@ var UIManager = (function () {
         this.sortingSelectId = "SortingType";
         this.htmlSettingsElements = [
             {
-                type: HTMLElementType.SelectBox, ids: [
-                    this.sortingSelectId, "KeywordMatchingMethod", this.getKeywordMatchingSelectId(false)
+                type: HTMLElementType.SelectBox,
+                ids: [
+                    this.sortingSelectId,
+                    "KeywordMatchingMethod",
+                    this.getKeywordMatchingSelectId(false)
                 ]
             },
             {
                 type: HTMLElementType.CheckBox,
-                ids: ["FilteringEnabled", "RestrictingEnabled", "SortingEnabled", "PinHotToTop",
-                    "KeepUnread_AdvancedControlsReceivedPeriod", "Hide_AdvancedControlsReceivedPeriod",
-                    "ShowIfHot_AdvancedControlsReceivedPeriod", "MarkAsReadVisible_AdvancedControlsReceivedPeriod",
-                    "OpenAndMarkAsRead", "MarkAsReadAboveBelow", "HideWhenMarkAboveBelow", "HideAfterRead",
-                    "ReplaceHiddenWithGap", "AlwaysUseDefaultMatchingAreas", "VisualOpenAndMarkAsRead",
-                    "TitleOpenAndMarkAsRead", "MarkAsReadFiltered", "AutoRefreshEnabled", "OpenCurrentFeedArticles",
-                    "OpenCurrentFeedArticlesUnreadOnly", "MarkAsReadOnOpenCurrentFeedArticles", "HideDuplicates",
-                    "MarkAsReadDuplicates", "Enabled_FilteringByReadingTime", "KeepUnread_FilteringByReadingTime",
+                ids: [
+                    "FilteringEnabled",
+                    "RestrictingEnabled",
+                    "SortingEnabled",
+                    "PinHotToTop",
+                    "KeepUnread_AdvancedControlsReceivedPeriod",
+                    "Hide_AdvancedControlsReceivedPeriod",
+                    "ShowIfHot_AdvancedControlsReceivedPeriod",
+                    "MarkAsReadVisible_AdvancedControlsReceivedPeriod",
+                    "OpenAndMarkAsRead",
+                    "MarkAsReadAboveBelow",
+                    "HideWhenMarkAboveBelow",
+                    "HideAfterRead",
+                    "ReplaceHiddenWithGap",
+                    "AlwaysUseDefaultMatchingAreas",
+                    "VisualOpenAndMarkAsRead",
+                    "TitleOpenAndMarkAsRead",
+                    "MarkAsReadFiltered",
+                    "AutoRefreshEnabled",
+                    "OpenCurrentFeedArticles",
+                    "OpenCurrentFeedArticlesUnreadOnly",
+                    "MarkAsReadOnOpenCurrentFeedArticles",
+                    "HideDuplicates",
+                    "MarkAsReadDuplicates",
+                    "Enabled_FilteringByReadingTime",
+                    "KeepUnread_FilteringByReadingTime"
                 ]
             },
             {
-                type: HTMLElementType.NumberInput, ids: [
-                    "MinPopularity_AdvancedControlsReceivedPeriod", "AutoRefreshMinutes", "MaxOpenCurrentFeedArticles",
-                    "ThresholdMinutes_FilteringByReadingTime", "WordsPerMinute_FilteringByReadingTime",
+                type: HTMLElementType.NumberInput,
+                ids: [
+                    "MinPopularity_AdvancedControlsReceivedPeriod",
+                    "AutoRefreshMinutes",
+                    "MaxOpenCurrentFeedArticles",
+                    "ThresholdMinutes_FilteringByReadingTime",
+                    "WordsPerMinute_FilteringByReadingTime"
                 ]
             }
         ];
@@ -2430,11 +2581,19 @@ var UIManager = (function () {
                 var crossCheckSettings = _this.settingsManager.getCrossCheckDuplicatesSettings();
                 _this.crossCheckDuplicatesCB = new HTMLGlobalSettings("CrossCheckDuplicates", false, _this, false, false);
                 _this.crossCheckDuplicatesDaysInput = new HTMLGlobalSettings("CrossCheckDuplicatesDays", 3, _this, false, false);
-                _this.crossCheckDuplicatesCB.setAdditionalChangeCallback(function (val) { return crossCheckSettings.setEnabled(val); });
-                _this.crossCheckDuplicatesDaysInput.setAdditionalChangeCallback(function (val) { return crossCheckSettings.setDays(val); });
+                _this.crossCheckDuplicatesCB.setAdditionalChangeCallback(function (val) {
+                    return crossCheckSettings.setEnabled(val);
+                });
+                _this.crossCheckDuplicatesDaysInput.setAdditionalChangeCallback(function (val) {
+                    return crossCheckSettings.setDays(val);
+                });
                 _this.globalSettings = [
-                    _this.autoLoadAllArticlesCB, _this.loadByBatchEnabledCB, _this.batchSizeInput, _this.globalSettingsEnabledCB,
-                    _this.crossCheckDuplicatesCB, _this.crossCheckDuplicatesDaysInput
+                    _this.autoLoadAllArticlesCB,
+                    _this.loadByBatchEnabledCB,
+                    _this.batchSizeInput,
+                    _this.globalSettingsEnabledCB,
+                    _this.crossCheckDuplicatesCB,
+                    _this.crossCheckDuplicatesDaysInput
                 ];
                 _this.initGlobalSettings(_this.globalSettings.slice(0)).then(function () {
                     _this.page.initAutoLoad();
@@ -2457,7 +2616,10 @@ var UIManager = (function () {
         }
         else {
             return new AsyncResult(function (p) {
-                settings.pop().init().then(function () {
+                settings
+                    .pop()
+                    .init()
+                    .then(function () {
                     _this.initGlobalSettings(settings).chain(p);
                 }, _this);
             }, this);
@@ -2470,7 +2632,10 @@ var UIManager = (function () {
         }
         else {
             return new AsyncResult(function (p) {
-                settings.pop().reset().then(function () {
+                settings
+                    .pop()
+                    .reset()
+                    .then(function () {
                     _this.resetGlobalSettings(settings).chain(p);
                 }, _this);
             }, this);
@@ -2502,7 +2667,9 @@ var UIManager = (function () {
         var _this = this;
         return new AsyncResult(function (p) {
             var globalSettingsEnabled = _this.globalSettingsEnabledCB.getValue();
-            _this.settingsManager.loadSubscription(globalSettingsEnabled, _this.forceReloadGlobalSettings).then(function (sub) {
+            _this.settingsManager
+                .loadSubscription(globalSettingsEnabled, _this.forceReloadGlobalSettings)
+                .then(function (sub) {
                 _this.subscription = sub;
                 p.done();
             }, _this);
@@ -2526,12 +2693,16 @@ var UIManager = (function () {
         });
         // coloring rules
         $("#FFnS_ColoringRules").empty();
-        this.subscription.getColoringRules().forEach(this.registerColoringRule, this);
+        this.subscription
+            .getColoringRules()
+            .forEach(this.registerColoringRule, this);
         this.refreshColoringRuleArrows();
         this.updateSettingsModeTitle();
     };
     UIManager.prototype.updateSettingsModeTitle = function () {
-        var title = this.globalSettingsEnabledCB.getValue() ? "Global" : "Subscription";
+        var title = this.globalSettingsEnabledCB.getValue()
+            ? "Global"
+            : "Subscription";
         title += " settings";
         $id("FFnS_settings_mode_title").text(title);
     };
@@ -2539,8 +2710,11 @@ var UIManager = (function () {
         $id("FFnS_SettingsControls_SelectedSubscription").html(this.getImportOptionsHTML());
         var linkedSubContainer = $id("FFnS_SettingsControls_LinkedSubContainer");
         var linkedSub = $id("FFnS_SettingsControls_LinkedSub");
-        if (((!this.globalSettingsEnabledCB.getValue()) && this.subscription.getURL() !== this.settingsManager.getActualSubscriptionURL()) ||
-            (this.globalSettingsEnabledCB.getValue() && !this.settingsManager.isGlobalMode())) {
+        if ((!this.globalSettingsEnabledCB.getValue() &&
+            this.subscription.getURL() !==
+                this.settingsManager.getActualSubscriptionURL()) ||
+            (this.globalSettingsEnabledCB.getValue() &&
+                !this.settingsManager.isGlobalMode())) {
             linkedSubContainer.css("display", "");
             linkedSub.text("Subscription currently linked to: " + this.subscription.getURL());
         }
@@ -2564,27 +2738,54 @@ var UIManager = (function () {
         var tabsMenuId = this.getHTMLId("tabs_menu");
         var tabsContentContainerId = this.getHTMLId("tabs_content");
         var settingsHtml = bindMarkup(templates.settingsHTML, [
-            { name: "SortingSelect", value: this.getSortingSelectHTML(this.getHTMLId(this.sortingSelectId)) },
-            { name: "FilteringList.Type.FilteredOut", value: this.getFilteringListHTML(FilteringType.FilteredOut) },
-            { name: "FilteringList.Type.RestrictedOn", value: this.getFilteringListHTML(FilteringType.RestrictedOn) },
-            { name: "ImportMenu.SubscriptionOptions", value: this.getImportOptionsHTML() },
+            {
+                name: "SortingSelect",
+                value: this.getSortingSelectHTML(this.getHTMLId(this.sortingSelectId))
+            },
+            {
+                name: "FilteringList.Type.FilteredOut",
+                value: this.getFilteringListHTML(FilteringType.FilteredOut)
+            },
+            {
+                name: "FilteringList.Type.RestrictedOn",
+                value: this.getFilteringListHTML(FilteringType.RestrictedOn)
+            },
+            {
+                name: "ImportMenu.SubscriptionOptions",
+                value: this.getImportOptionsHTML()
+            },
             { name: "closeIconLink", value: ext.closeIconLink },
             { name: "plusIconLink", value: ext.plusIconLink },
             { name: "eraseIconLink", value: ext.eraseIconLink },
-            { name: "DefaultKeywordMatchingArea", value: this.getKeywordMatchingSelectHTML("multiple required", false) },
-            { name: "KeywordMatchingMethod", value: this.getKeywordMatchingMethod(true) },
+            {
+                name: "DefaultKeywordMatchingArea",
+                value: this.getKeywordMatchingSelectHTML("multiple required", false)
+            },
+            {
+                name: "KeywordMatchingMethod",
+                value: this.getKeywordMatchingMethod(true)
+            }
         ]);
         $("body").prepend(settingsHtml);
         // set up tabs
         $("#" + tabsMenuId + " a").click(function (event) {
             event.preventDefault();
-            $(this).parent().addClass("current");
-            $(this).parent().siblings().removeClass("current");
+            $(this)
+                .parent()
+                .addClass("current");
+            $(this)
+                .parent()
+                .siblings()
+                .removeClass("current");
             var tab = $(this).attr("href");
-            $("#" + tabsContentContainerId + " > div").not(tab).css("display", "none");
+            $("#" + tabsContentContainerId + " > div")
+                .not(tab)
+                .css("display", "none");
             $(tab).show();
         });
-        $("#" + tabsContentContainerId + " > div").first().show();
+        $("#" + tabsContentContainerId + " > div")
+            .first()
+            .show();
     };
     UIManager.prototype.getSortingSelectHTML = function (id) {
         return bindMarkup(templates.sortingSelectHTML, [
@@ -2601,8 +2802,11 @@ var UIManager = (function () {
             { name: "ReceivedDateOldFirst", value: SortingType.ReceivedDateOldFirst },
             { name: "SourceAsc", value: SortingType.SourceAsc },
             { name: "SourceDesc", value: SortingType.SourceDesc },
-            { name: "SourceNewestReceiveDate", value: SortingType.SourceNewestReceiveDate },
-            { name: "Random", value: SortingType.Random },
+            {
+                name: "SourceNewestReceiveDate",
+                value: SortingType.SourceNewestReceiveDate
+            },
+            { name: "Random", value: SortingType.Random }
         ]);
     };
     UIManager.prototype.getFilteringListHTML = function (type) {
@@ -2613,14 +2817,19 @@ var UIManager = (function () {
             { name: "plusBtnId", value: this.getHTMLId(ids.plusBtnId) },
             { name: "eraseBtnId", value: this.getHTMLId(ids.eraseBtnId) },
             { name: "filetringKeywordsId", value: ids.filetringKeywordsId },
-            { name: "FilteringKeywordMatchingArea", value: this.getKeywordMatchingSelectHTML("", true, type) }
+            {
+                name: "FilteringKeywordMatchingArea",
+                value: this.getKeywordMatchingSelectHTML("", true, type)
+            }
         ]);
         return filteringListHTML;
     };
     UIManager.prototype.getKeywordMatchingSelectHTML = function (attributes, includeDefaultOption, type) {
-        var defaultOption = includeDefaultOption ? bindMarkup(templates.emptyOptionHTML, [
-            { name: "value", value: "-- area (optional) --" },
-        ]) : "";
+        var defaultOption = includeDefaultOption
+            ? bindMarkup(templates.emptyOptionHTML, [
+                { name: "value", value: "-- area (optional) --" }
+            ])
+            : "";
         var filteringListHTML = bindMarkup(templates.keywordMatchingSelectHTML, [
             { name: "Id", value: this.getKeywordMatchingSelectId(true, type) },
             { name: "attributes", value: attributes },
@@ -2628,7 +2837,7 @@ var UIManager = (function () {
             { name: "selectFirst", value: includeDefaultOption ? "" : "selected" },
             { name: "KeywordMatchingArea.Title", value: KeywordMatchingArea.Title },
             { name: "KeywordMatchingArea.Body", value: KeywordMatchingArea.Body },
-            { name: "KeywordMatchingArea.Author", value: KeywordMatchingArea.Author },
+            { name: "KeywordMatchingArea.Author", value: KeywordMatchingArea.Author }
         ]);
         return filteringListHTML;
     };
@@ -2641,17 +2850,25 @@ var UIManager = (function () {
         id = id || "FFnS_KeywordMatchingMethod";
         return bindMarkup(templates.keywordMatchingMethodHTML, [
             { name: "id", value: id },
-            { name: "KeywordMatchingMethod.Simple", value: KeywordMatchingMethod.Simple },
+            {
+                name: "KeywordMatchingMethod.Simple",
+                value: KeywordMatchingMethod.Simple
+            },
             { name: "KeywordMatchingMethod.Word", value: KeywordMatchingMethod.Word },
-            { name: "KeywordMatchingMethod.RegExp", value: KeywordMatchingMethod.RegExp },
-            { name: "size", value: fullSize ? 'size="3"' : '' },
+            {
+                name: "KeywordMatchingMethod.RegExp",
+                value: KeywordMatchingMethod.RegExp
+            },
+            { name: "size", value: fullSize ? 'size="3"' : "" }
         ]);
     };
     UIManager.prototype.getImportOptionsHTML = function () {
         var optionsHTML = "";
         var urls = this.settingsManager.getAllSubscriptionURLs();
         urls.forEach(function (url) {
-            optionsHTML += bindMarkup(templates.optionHTML, [{ name: "value", value: url }]);
+            optionsHTML += bindMarkup(templates.optionHTML, [
+                { name: "value", value: url }
+            ]);
         });
         return optionsHTML;
     };
@@ -2659,7 +2876,11 @@ var UIManager = (function () {
         var this_ = this;
         NodeCreationObserver.onCreation(ext.settingsBtnPredecessorSelector, function (element) {
             var clone = $(element).clone();
-            $(clone).empty().removeAttr('class').removeAttr('title').addClass("ShowSettingsBtn");
+            $(clone)
+                .empty()
+                .removeAttr("class")
+                .removeAttr("title")
+                .addClass("ShowSettingsBtn");
             $(element).after(clone);
             $(clone).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
@@ -2671,7 +2892,10 @@ var UIManager = (function () {
         this.htmlSettingsElements.forEach(function (element) {
             _this.htmlSubscriptionManager.registerSettings(element.ids, element.type);
         });
-        this.htmlSubscriptionManager.registerSettings(["Hours_AdvancedControlsReceivedPeriod", "Days_AdvancedControlsReceivedPeriod"], HTMLElementType.NumberInput, {
+        this.htmlSubscriptionManager.registerSettings([
+            "Hours_AdvancedControlsReceivedPeriod",
+            "Days_AdvancedControlsReceivedPeriod"
+        ], HTMLElementType.NumberInput, {
             update: function (subscriptionSetting) {
                 var advancedControlsReceivedPeriod = subscriptionSetting.manager.subscription.getAdvancedControlsReceivedPeriod();
                 var maxHours = advancedControlsReceivedPeriod.maxHours;
@@ -2700,7 +2924,7 @@ var UIManager = (function () {
         });
         var importSettings = $id("FFnS_ImportSettings");
         importSettings.change(function () {
-            _this.settingsManager.importAllSettings(importSettings.prop('files')[0]);
+            _this.settingsManager.importAllSettings(importSettings.prop("files")[0]);
         });
         $id("FFnS_ExportSettings").click(function () {
             _this.settingsManager.exportAllSettings();
@@ -2769,24 +2993,28 @@ var UIManager = (function () {
             });
         }
         else {
-            $id(syncCBId).closest(".setting_group").remove();
+            $id(syncCBId)
+                .closest(".setting_group")
+                .remove();
         }
         if (this.subscription.isAutoRefreshEnabled()) {
             setInterval(function () {
-                $(".icon-toolbar-refresh-secondary").first().click();
+                $(".icon-toolbar-refresh-secondary")
+                    .first()
+                    .click();
             }, this.subscription.getAutoRefreshTime());
         }
     };
     UIManager.prototype.registerAdditionalSortingType = function () {
         var _this = this;
-        var id = this.getHTMLId("AdditionalSortingType_" + (this.idCount++));
+        var id = this.getHTMLId("AdditionalSortingType_" + this.idCount++);
         $("#FFnS_AdditionalSortingTypes").append(this.getSortingSelectHTML(id));
         $id(id).change(function () { return _this.updateAdditionalSortingTypes(); });
         return id;
     };
     UIManager.prototype.registerColoringRule = function (cr) {
         var _this = this;
-        var ids = new ColoringRuleHTMLIds(this.getHTMLId("ColoringRule_" + (this.idCount++)));
+        var ids = new ColoringRuleHTMLIds(this.getHTMLId("ColoringRule_" + this.idCount++));
         var self = this;
         // append template
         var html = bindMarkup(templates.coloringRuleHTML, [
@@ -2794,13 +3022,22 @@ var UIManager = (function () {
             { name: "Color", value: cr.color },
             { name: "SpecificKeywords", value: ColoringRuleSource.SpecificKeywords },
             { name: "SourceTitle", value: ColoringRuleSource.SourceTitle },
-            { name: "RestrictingKeywords", value: ColoringRuleSource.RestrictingKeywords },
-            { name: "FilteringKeywords", value: ColoringRuleSource.FilteringKeywords },
-            { name: "KeywordMatchingMethod", value: this.getKeywordMatchingMethod(false, ids.id + "_KeywordMatchingMethod") },
+            {
+                name: "RestrictingKeywords",
+                value: ColoringRuleSource.RestrictingKeywords
+            },
+            {
+                name: "FilteringKeywords",
+                value: ColoringRuleSource.FilteringKeywords
+            },
+            {
+                name: "KeywordMatchingMethod",
+                value: this.getKeywordMatchingMethod(false, ids.id + "_KeywordMatchingMethod")
+            },
             { name: "plusIconLink", value: ext.plusIconLink },
             { name: "eraseIconLink", value: ext.eraseIconLink },
             { name: "moveUpIconLink", value: ext.moveUpIconLink },
-            { name: "moveDownIconLink", value: ext.moveDownIconLink },
+            { name: "moveDownIconLink", value: ext.moveDownIconLink }
         ]);
         $("#FFnS_ColoringRules").append(html);
         // set current values
@@ -2833,8 +3070,11 @@ var UIManager = (function () {
                     console.log(e);
                 }
             }
-            click ? onClick($id(id), callback)
-                : (input ? $id(id)[0].oninput = callback : $id(id).change(callback));
+            click
+                ? onClick($id(id), callback)
+                : input
+                    ? ($id(id)[0].oninput = callback)
+                    : $id(id).change(callback);
             if (onchange) {
                 $id(id)[0].onchange = callback;
             }
@@ -2997,7 +3237,9 @@ var UIManager = (function () {
     };
     UIManager.prototype.updateAdditionalSortingTypes = function () {
         var additionalSortingTypes = [];
-        $("#FFnS_AdditionalSortingTypes > select").each(function (i, e) { return additionalSortingTypes.push($(e).val()); });
+        $("#FFnS_AdditionalSortingTypes > select").each(function (i, e) {
+            return additionalSortingTypes.push($(e).val());
+        });
         this.subscription.setAdditionalSortingTypes(additionalSortingTypes);
         this.refreshFilteringAndSorting();
     };
@@ -3010,12 +3252,14 @@ var UIManager = (function () {
             }
             this.articleManager.addArticle(article);
             var articleObserver = new MutationObserver(function (mr, observer) {
-                var readClassElement = !$(article).hasClass(ext.articleViewClass) ?
-                    $(article) : $(article).closest(ext.articleViewEntryContainerSelector);
-                if (readClassElement.hasClass(ext.readArticleClass) && !$(article).hasClass("inlineFrame")) {
+                var readClassElement = !$(article).hasClass(ext.articleViewClass)
+                    ? $(article)
+                    : $(article).closest(ext.articleViewEntryContainerSelector);
+                if (readClassElement.hasClass(ext.readArticleClass) &&
+                    !$(article).hasClass("inlineFrame")) {
                     if (_this.subscription.isHideAfterRead()) {
                         if (_this.subscription.isReplaceHiddenWithGap()) {
-                            $(article).attr('gap-article', "true");
+                            $(article).attr("gap-article", "true");
                         }
                         else {
                             $(article).remove();
@@ -3032,7 +3276,9 @@ var UIManager = (function () {
     };
     UIManager.prototype.addSection = function (section) {
         if (section.id === "section0") {
-            $(section).find("h2").text(" ");
+            $(section)
+                .find("h2")
+                .text(" ");
         }
         else {
             $(section).remove();
@@ -3048,13 +3294,17 @@ var UIManager = (function () {
     };
     UIManager.prototype.importFromOtherSub = function () {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
-        if (selectedURL && confirm("Import settings from the subscription url /" + selectedURL + " ?")) {
-            this.settingsManager.importSubscription(selectedURL).then(this.refreshPage, this);
+        if (selectedURL &&
+            confirm("Import settings from the subscription url /" + selectedURL + " ?")) {
+            this.settingsManager
+                .importSubscription(selectedURL)
+                .then(this.refreshPage, this);
         }
     };
     UIManager.prototype.linkToSub = function () {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
-        if (selectedURL && confirm("Link current subscription to: /" + selectedURL + " ?")) {
+        if (selectedURL &&
+            confirm("Link current subscription to: /" + selectedURL + " ?")) {
             this.settingsManager.linkToSubscription(selectedURL);
             this.refreshPage();
         }
@@ -3104,7 +3354,8 @@ var ColoringRuleHTMLIds = (function () {
         this.colorId = id + " .FFnS_SpecificColor";
         this.sourceId = id + " .FFnS_ColoringRule_Source";
         this.matchingMethodId = id + " .FFnS_KeywordMatchingMethod";
-        this.matchingMethodContainerId = id + " .FFnS_ColoringRule_MatchingMethodGroup";
+        this.matchingMethodContainerId =
+            id + " .FFnS_ColoringRule_MatchingMethodGroup";
         this.keywordInputId = id + " .FFnS_ColoringRule_KeywordInput";
         this.addBtnId = id + " .FFnS_ColoringRule_AddKeyword";
         this.eraseBtnId = id + " .FFnS_ColoringRule_EraseKeywords";
@@ -3188,7 +3439,7 @@ var HTMLSubscriptionManager = (function () {
             },
             getHTMLValue: function (subscriptionSetting) {
                 return $id(subscriptionSetting.htmlId).val() === "true";
-            },
+            }
         });
     };
     HTMLSubscriptionManager.prototype.addSettings = function (ids, config, subscriptionSettingConfig) {
@@ -3243,7 +3494,7 @@ var HTMLGlobalSettings = (function () {
         if (sessionStore === void 0) { sessionStore = true; }
         this.id = id;
         this.defaultValue = defaultValue;
-        this.isBoolean = typeof (defaultValue) === "boolean";
+        this.isBoolean = typeof defaultValue === "boolean";
         this.uiManager = uiManager;
         this.htmlId = uiManager.getHTMLId(id);
         this.fullRefreshOnChange = fullRefreshOnChange;
@@ -3326,7 +3577,6 @@ var HTMLGlobalSettings = (function () {
             }
             additionalCallback();
         }
-        ;
         if (this.isBoolean) {
             $id(this.htmlId).click(changeCallback);
         }
@@ -3351,7 +3601,7 @@ function initResources() {
     ext.moveDownIconLink = urls.moveDownIconURL;
     templates.styleCSS = bindMarkup(templates.styleCSS, [
         { name: "open-in-new-tab-url", value: urls.openInNewTabURL },
-        { name: "extension-icon", value: urls.extensionIconURL },
+        { name: "extension-icon", value: urls.extensionIconURL }
     ]);
     injectStyleText(templates.styleCSS);
 }

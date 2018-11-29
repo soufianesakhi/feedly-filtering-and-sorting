@@ -1,53 +1,52 @@
 /// <reference path="../_references.d.ts" />
 
-import { Initializer, ResourceURLs } from "./Initializer";
 import { injectScriptText } from "../Utils";
+import { Initializer, ResourceURLs } from "./Initializer";
 
 export class WebExtInitializer implements Initializer {
-    browser: any;
-    constructor() {
-        if (typeof (chrome) != "undefined") {
-            this.browser = chrome;
-        } else {
-            this.browser = browser;
-        }
-        try {
-            this.browser.storage.local;
-        } catch (e) {
-            this.browser = browser;
-        }
+  browser: any;
+  constructor() {
+    if (typeof chrome != "undefined") {
+      this.browser = chrome;
+    } else {
+      this.browser = browser;
     }
-
-    loadScript(name: string) {
-        $.ajax({
-            url: this.getURL(name),
-            dataType: "text",
-            async: false,
-            success: (result) => {
-                injectScriptText(result);
-            },
-            error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
-                console.log(errorThrown);
-            }
-        });
+    try {
+      this.browser.storage.local;
+    } catch (e) {
+      this.browser = browser;
     }
+  }
 
-    getResourceURLs(): ResourceURLs {
-        return {
-            plusIconURL: this.getURL("images/plus.png"),
-            eraseIconURL: this.getURL("images/erase.png"),
-            closeIconURL: this.getURL("images/close.png"),
-            moveUpIconURL: this.getURL("images/move-up.png"),
-            moveDownIconURL: this.getURL("images/move-down.png"),
-            openInNewTabURL: this.getURL("images/open-in-new-tab.png"),
-            extensionIconURL: this.getURL("icons/128.png")
-        }
-    }
+  loadScript(name: string) {
+    $.ajax({
+      url: this.getURL(name),
+      dataType: "text",
+      async: false,
+      success: result => {
+        injectScriptText(result);
+      },
+      error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
+        console.log(errorThrown);
+      }
+    });
+  }
 
-    getURL(name: string) {
-        return this.browser.extension.getURL(name);
-    }
+  getResourceURLs(): ResourceURLs {
+    return {
+      plusIconURL: this.getURL("images/plus.png"),
+      eraseIconURL: this.getURL("images/erase.png"),
+      closeIconURL: this.getURL("images/close.png"),
+      moveUpIconURL: this.getURL("images/move-up.png"),
+      moveDownIconURL: this.getURL("images/move-down.png"),
+      openInNewTabURL: this.getURL("images/open-in-new-tab.png"),
+      extensionIconURL: this.getURL("icons/128.png")
+    };
+  }
 
+  getURL(name: string) {
+    return this.browser.extension.getURL(name);
+  }
 }
 
 var INITIALIZER = new WebExtInitializer();

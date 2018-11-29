@@ -1,34 +1,65 @@
 <div id="{{Id}}" class="FFnS_ColoringRule">
-    <img class="FFnS_RemoveColoringRule FFnS_ColoringRuleManagement" title="Remove the coloring rule" src="{{eraseIconLink}}">
-    <img class="FFnS_MoveUpColoringRule FFnS_ColoringRuleManagement" title="Move up the order of the coloring rule" src="{{moveUpIconLink}}">
-    <img class="FFnS_MoveDownColoringRule FFnS_ColoringRuleManagement" title="Move down the order of the coloring rule" src="{{moveDownIconLink}}">
-    <span>Keyword source: </span>
-    <select class="FFnS_ColoringRule_Source FFnS_input FFnS_select">
-        <option value="{{SpecificKeywords}}">Specific keywords</option>
-        <option value="{{RestrictingKeywords}}">Restricting keywords</option>
-        <option value="{{FilteringKeywords}}">Filtering keywords</option>
-        <option value="{{SourceTitle}}">Source title (subscription)</option>
-    </select>
-    <span class="FFnS_ColoringRule_Options">
-        <span style="display: none">Highlight all the title</span>
-    <input class="FFnS_HighlightAllTitle" type="checkbox" style="display: none">
-    <span class="FFnS_SpecificColorGroup">Color
-            <input class="FFnS_SpecificColor FFnS_input jscolor" value="{{Color}}" size="10" type="text">
-        </span>
+  <img
+    class="FFnS_RemoveColoringRule FFnS_ColoringRuleManagement"
+    title="Remove the coloring rule"
+    src="{{eraseIconLink}}"
+  />
+  <img
+    class="FFnS_MoveUpColoringRule FFnS_ColoringRuleManagement"
+    title="Move up the order of the coloring rule"
+    src="{{moveUpIconLink}}"
+  />
+  <img
+    class="FFnS_MoveDownColoringRule FFnS_ColoringRuleManagement"
+    title="Move down the order of the coloring rule"
+    src="{{moveDownIconLink}}"
+  />
+  <span>Keyword source: </span>
+  <select class="FFnS_ColoringRule_Source FFnS_input FFnS_select">
+    <option value="{{SpecificKeywords}}">Specific keywords</option>
+    <option value="{{RestrictingKeywords}}">Restricting keywords</option>
+    <option value="{{FilteringKeywords}}">Filtering keywords</option>
+    <option value="{{SourceTitle}}">Source title (subscription)</option>
+  </select>
+  <span class="FFnS_ColoringRule_Options">
+    <span style="display: none">Highlight all the title</span>
+    <input
+      class="FFnS_HighlightAllTitle"
+      type="checkbox"
+      style="display: none"
+    />
+    <span class="FFnS_SpecificColorGroup"
+      >Color
+      <input
+        class="FFnS_SpecificColor FFnS_input jscolor"
+        value="{{Color}}"
+        size="10"
+        type="text"
+      />
     </span>
-    <span class="FFnS_ColoringRule_SourceTitleInfos">All the titles from the same source (subscription) will have the same generated color (only applied when viewing categories)</span>
+  </span>
+  <span class="FFnS_ColoringRule_SourceTitleInfos"
+    >All the titles from the same source (subscription) will have the same
+    generated color (only applied when viewing categories)</span
+  >
 
-    <div class="FFnS_ColoringRule_MatchingMethodGroup"> Keyword matching method: {{KeywordMatchingMethod}}</div>
+  <div class="FFnS_ColoringRule_MatchingMethodGroup">
+    Keyword matching method: {{ KeywordMatchingMethod }}
+  </div>
 
-    <div class="FFnS_ColoringRule_KeywordsGroup">
-        <span>Specific keywords: </span>
-        <input class="FFnS_input FFnS_ColoringRule_KeywordInput" size="10" type="text">
-        <span class="FFnS_ColoringRule_AddKeyword">
-            <img src="{{plusIconLink}}" class="FFnS_icon" />
-        </span>
-        <span class="FFnS_ColoringRuleKeywords"></span>
-        <span class="FFnS_ColoringRule_EraseKeywords">
-            <img src="{{eraseIconLink}}" class="FFnS_icon" />
-        </span>
-    </div>
+  <div class="FFnS_ColoringRule_KeywordsGroup">
+    <span>Specific keywords: </span>
+    <input
+      class="FFnS_input FFnS_ColoringRule_KeywordInput"
+      size="10"
+      type="text"
+    />
+    <span class="FFnS_ColoringRule_AddKeyword">
+      <img src="{{plusIconLink}}" class="FFnS_icon" />
+    </span>
+    <span class="FFnS_ColoringRuleKeywords"></span>
+    <span class="FFnS_ColoringRule_EraseKeywords">
+      <img src="{{eraseIconLink}}" class="FFnS_icon" />
+    </span>
+  </div>
 </div>

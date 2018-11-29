@@ -1,51 +1,51 @@
 {
-    "script": {
-        "src": [
-            "Header",
-            "Externals",
-            "Templates",
-            "Utils",
-            "DataTypes",
-            "AsyncResult",
-            "initializer/UserScriptInitializer",
-            "dao/UserScriptStorage",
-            "SubscriptionDTO",
-            "Subscription",
-            "SubscriptionDAO",
-            "SettingsManager",
-            "ArticleManager",
-            "DuplicatesManager",
-            "KeywordManager",
-            "FeedlyPage",
-            "UIManager",
-            "HTMLSubscription",
-            "HTMLGlobalSettings",
-            "Main"
-        ],
-        "dest": "script/<%= pkg.scriptName %>.user.js"
-    },
-    "web-ext": {
-        "src": [
-            "Externals",
-            "Templates",
-            "Utils",
-            "DataTypes",
-            "AsyncResult",
-            "initializer/WebExtInitializer",
-            "dao/WebExtStorage",
-            "SubscriptionDTO",
-            "Subscription",
-            "SubscriptionDAO",
-            "SettingsManager",
-            "ArticleManager",
-            "DuplicatesManager",
-            "KeywordManager",
-            "FeedlyPage",
-            "UIManager",
-            "HTMLSubscription",
-            "HTMLGlobalSettings",
-            "Main"
-        ],
-        "dest": "web-ext/<%= pkg.name %>.js"
-    }
+  "script": {
+    "src": [
+      "Header",
+      "Externals",
+      "Templates",
+      "Utils",
+      "DataTypes",
+      "AsyncResult",
+      "initializer/UserScriptInitializer",
+      "dao/UserScriptStorage",
+      "SubscriptionDTO",
+      "Subscription",
+      "SubscriptionDAO",
+      "SettingsManager",
+      "ArticleManager",
+      "DuplicatesManager",
+      "KeywordManager",
+      "FeedlyPage",
+      "UIManager",
+      "HTMLSubscription",
+      "HTMLGlobalSettings",
+      "Main"
+    ],
+    "dest": "script/<%= pkg.scriptName %>.user.js"
+  },
+  "web-ext": {
+    "src": [
+      "Externals",
+      "Templates",
+      "Utils",
+      "DataTypes",
+      "AsyncResult",
+      "initializer/WebExtInitializer",
+      "dao/WebExtStorage",
+      "SubscriptionDTO",
+      "Subscription",
+      "SubscriptionDAO",
+      "SettingsManager",
+      "ArticleManager",
+      "DuplicatesManager",
+      "KeywordManager",
+      "FeedlyPage",
+      "UIManager",
+      "HTMLSubscription",
+      "HTMLGlobalSettings",
+      "Main"
+    ],
+    "dest": "web-ext/<%= pkg.name %>.js"
+  }
 }

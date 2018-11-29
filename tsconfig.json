@@ -1,41 +1,38 @@
 {
-    "compilerOptions": {
-        "target": "es5",
-        "outDir": "target",
-        "noImplicitUseStrict": true,
-        "watch": true
-    },
-    "filesGlob": [
-        "src/*.ts",
-        "src/**/*.ts"
-    ],
-    "atom": {
-        "rewriteTsconfig": true
-    },
-    "files": [
-        "src/ArticleManager.ts",
-        "src/AsyncResult.ts",
-        "src/DataTypes.ts",
-        "src/DuplicatesManager.ts",
-        "src/Externals.ts",
-        "src/FeedlyPage.ts",
-        "src/HTMLGlobalSettings.ts",
-        "src/HTMLSubscription.ts",
-        "src/KeywordManager.ts",
-        "src/Main.ts",
-        "src/SettingsManager.ts",
-        "src/Subscription.ts",
-        "src/SubscriptionDAO.ts",
-        "src/SubscriptionDTO.ts",
-        "src/Templates.ts",
-        "src/UIManager.ts",
-        "src/Utils.ts",
-        "src/_references.d.ts",
-        "src/dao/Storage.d.ts",
-        "src/dao/UserScriptStorage.ts",
-        "src/dao/WebExtStorage.ts",
-        "src/initializer/Initializer.d.ts",
-        "src/initializer/UserScriptInitializer.ts",
-        "src/initializer/WebExtInitializer.ts"
-    ]
+  "compilerOptions": {
+    "target": "es5",
+    "outDir": "target",
+    "noImplicitUseStrict": true,
+    "watch": true
+  },
+  "filesGlob": ["src/*.ts", "src/**/*.ts"],
+  "atom": {
+    "rewriteTsconfig": true
+  },
+  "files": [
+    "src/ArticleManager.ts",
+    "src/AsyncResult.ts",
+    "src/DataTypes.ts",
+    "src/DuplicatesManager.ts",
+    "src/Externals.ts",
+    "src/FeedlyPage.ts",
+    "src/HTMLGlobalSettings.ts",
+    "src/HTMLSubscription.ts",
+    "src/KeywordManager.ts",
+    "src/Main.ts",
+    "src/SettingsManager.ts",
+    "src/Subscription.ts",
+    "src/SubscriptionDAO.ts",
+    "src/SubscriptionDTO.ts",
+    "src/Templates.ts",
+    "src/UIManager.ts",
+    "src/Utils.ts",
+    "src/_references.d.ts",
+    "src/dao/Storage.d.ts",
+    "src/dao/UserScriptStorage.ts",
+    "src/dao/WebExtStorage.ts",
+    "src/initializer/Initializer.d.ts",
+    "src/initializer/UserScriptInitializer.ts",
+    "src/initializer/WebExtInitializer.ts"
+  ]
 }
