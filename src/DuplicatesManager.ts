@@ -26,7 +26,7 @@ export class DuplicateChecker {
 
   check(article: Article) {
     var sub = this.articleManager.getCurrentSub();
-    if (sub.isHideDuplicates() || sub.isMarkAsReadDuplicates()) {
+    if (sub.checkDuplicates()) {
       let url = article.getUrl();
       let title = article.getTitle();
       let duplicate = true;
@@ -51,11 +51,11 @@ export class DuplicateChecker {
     this.title2Article[b.getTitle()] = toKeep;
     this.url2Article[a.getUrl()] = toKeep;
     this.url2Article[b.getUrl()] = toKeep;
-    this.setDuplicate(a);
+    this.setDuplicate(duplicate, toKeep);
     return true;
   }
 
-  setDuplicate(duplicate: Article) {
+  setDuplicate(duplicate: Article, newerDuplicate = duplicate) {
     var sub = this.articleManager.getCurrentSub();
     if (sub.isHideDuplicates()) {
       duplicate.setVisible(false);
@@ -63,6 +63,9 @@ export class DuplicateChecker {
     }
     if (sub.isMarkAsReadDuplicates()) {
       this.articleManager.articlesToMarkAsRead.push(duplicate);
+    }
+    if (sub.isHighlightDuplicates()) {
+      newerDuplicate.setColor("#" + sub.getHighlightDuplicatesColor());
     }
   }
 }

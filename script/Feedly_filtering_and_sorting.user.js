@@ -620,6 +620,11 @@ var Subscription = (function () {
     Subscription.prototype.getAutoRefreshTime = function () {
         return this.dto.autoRefreshMinutes * 60 * 1000;
     };
+    Subscription.prototype.checkDuplicates = function () {
+        return (this.isHideDuplicates() ||
+            this.isMarkAsReadDuplicates() ||
+            this.isHighlightDuplicates());
+    };
     Subscription.prototype.isHideDuplicates = function () {
         return this.dto.hideDuplicates;
     };
@@ -1509,7 +1514,7 @@ var DuplicateChecker = (function () {
     };
     DuplicateChecker.prototype.check = function (article) {
         var sub = this.articleManager.getCurrentSub();
-        if (sub.isHideDuplicates() || sub.isMarkAsReadDuplicates()) {
+        if (sub.checkDuplicates()) {
             var url = article.getUrl();
             var title = article.getTitle();
             var duplicate = true;
@@ -1533,10 +1538,11 @@ var DuplicateChecker = (function () {
         this.title2Article[b.getTitle()] = toKeep;
         this.url2Article[a.getUrl()] = toKeep;
         this.url2Article[b.getUrl()] = toKeep;
-        this.setDuplicate(a);
+        this.setDuplicate(duplicate, toKeep);
         return true;
     };
-    DuplicateChecker.prototype.setDuplicate = function (duplicate) {
+    DuplicateChecker.prototype.setDuplicate = function (duplicate, newerDuplicate) {
+        if (newerDuplicate === void 0) { newerDuplicate = duplicate; }
         var sub = this.articleManager.getCurrentSub();
         if (sub.isHideDuplicates()) {
             duplicate.setVisible(false);
@@ -1544,6 +1550,9 @@ var DuplicateChecker = (function () {
         }
         if (sub.isMarkAsReadDuplicates()) {
             this.articleManager.articlesToMarkAsRead.push(duplicate);
+        }
+        if (sub.isHighlightDuplicates()) {
+            newerDuplicate.setColor("#" + sub.getHighlightDuplicatesColor());
         }
     };
     return DuplicateChecker;

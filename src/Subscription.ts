@@ -128,6 +128,14 @@ export class Subscription {
     return this.dto.autoRefreshMinutes * 60 * 1000;
   }
 
+  checkDuplicates(): boolean {
+    return (
+      this.isHideDuplicates() ||
+      this.isMarkAsReadDuplicates() ||
+      this.isHighlightDuplicates()
+    );
+  }
+
   isHideDuplicates(): boolean {
     return this.dto.hideDuplicates;
   }
