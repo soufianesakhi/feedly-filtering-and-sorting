@@ -20,20 +20,22 @@ The `Unread Only` option is required to be enabled to support all the features.
 
 ## Features
 
-- Filtering: Hide the articles that contain at least one of the filtering keywords, duplicates or by reading time.
-- Restricting: Show only articles that contain at least one of the restricting keywords.
-- Advanced keyword matching: Specify areas to search, searching method (simple, pattern (RegExp), ...)
 - Multi level sorting: by popularity, by title, by source or by publish date.
+- Filtering: Hide the articles that contain at least one of the filtering keywords or by reading time.
+- Restricting: Show only articles that contain at least one of the restricting keywords.
+- Duplicates checking: Hide, highlight with a color and/or mark as read
+- Advanced keyword matching: Specify areas to search, searching method (simple, pattern (RegExp), ...)
 - Auto load all unread articles at once or by batches (mark as read by batch when there are a lot of unread articles).
 - Advanced controls (keep recently published articles unread, ...).
 - Pin hot articles to top.
 - Import/export all settings from/to file.
 - Advanced settings management (Import from / link to an other subscription, sync the settings across all the browser instances).
 - Tweak the page (Add buttons to open articles in a new tab, mark as read/unread, ...).
-- Add coloring rules to highlight titles
+- Add coloring rules to highlight titles.
 - Auto refresh articles periodically.
 
-Two settings configurations are available: 
+Two settings configurations are available:
+
 - Global settings: same configuration used for all subscriptions and categories.
 - Subscription settings:
   - Subscription and category specific configurations
@@ -43,6 +45,7 @@ Two settings configurations are available:
 ## [Changelog](https://github.com/soufianesakhi/feedly-filtering-and-sorting/releases)
 
 ## Requests
+
 Please report bugs and feature requests in the following [link](https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues).
 
 ## Installation
@@ -56,8 +59,10 @@ Two options are available:
 - Firefox: https://addons.mozilla.org/en-US/firefox/addon/feedly_filtering_and_sorting/
 
 ### Install as a user script
+
 This script relies on the user scripts extensions like [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) or [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en).
 
 After installing the appropriate user scripts extension, you can install the script from the following sites:
+
 - https://greasyfork.org/en/scripts/20483-feedly-filtering-and-sorting
 - https://openuserjs.org/scripts/soufianesakhi/Feedly_filtering_and_sorting
