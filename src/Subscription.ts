@@ -136,6 +136,14 @@ export class Subscription {
     return this.dto.markAsReadDuplicates;
   }
 
+  isHighlightDuplicates(): boolean {
+    return this.dto.highlightDuplicates;
+  }
+
+  getHighlightDuplicatesColor() {
+    return this.dto.highlightDuplicatesColor;
+  }
+
   getFilteringByReadingTime() {
     return this.dto.filteringByReadingTime;
   }

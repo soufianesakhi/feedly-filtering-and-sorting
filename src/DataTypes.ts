@@ -44,7 +44,8 @@ export enum ColoringRuleSource {
 export enum HTMLElementType {
   SelectBox,
   CheckBox,
-  NumberInput
+  NumberInput,
+  ColorInput
 }
 
 export function getFilteringTypes(): FilteringType[] {

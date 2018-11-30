@@ -56,6 +56,10 @@ export class UIManager {
       ]
     },
     {
+      type: HTMLElementType.ColorInput,
+      ids: ["HighlightDuplicatesColor"]
+    },
+    {
       type: HTMLElementType.CheckBox,
       ids: [
         "FilteringEnabled",
@@ -81,6 +85,7 @@ export class UIManager {
         "MarkAsReadOnOpenCurrentFeedArticles",
         "HideDuplicates",
         "MarkAsReadDuplicates",
+        "HighlightDuplicates",
         "Enabled_FilteringByReadingTime",
         "KeepUnread_FilteringByReadingTime"
       ]
@@ -806,9 +811,13 @@ export class UIManager {
   }
 
   refreshColoringRuleArrows() {
-    $(".FFnS_MoveUpColoringRule:not(:first)").show();
+    $(".FFnS_MoveUpColoringRule")
+      .not(":first")
+      .show();
     $(".FFnS_MoveUpColoringRule:first").hide();
-    $(".FFnS_MoveDownColoringRule:not(:last)").show();
+    $(".FFnS_MoveDownColoringRule")
+      .not(":last")
+      .show();
     $(".FFnS_MoveDownColoringRule:last").hide();
   }
 

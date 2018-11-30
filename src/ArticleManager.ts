@@ -12,7 +12,7 @@ export class ArticleManager {
   articleSorterFactory: ArticleSorterFactory;
   keywordManager: KeywordManager;
   page: FeedlyPage;
-  articlesToMarkAsRead: Article[];
+  articlesToMarkAsRead: Article[] = [];
   duplicateChecker: DuplicateChecker;
 
   constructor(

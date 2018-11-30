@@ -73,6 +73,27 @@ export class HTMLSubscriptionManager {
       },
       update: this.configByElementType[HTMLElementType.SelectBox].update
     };
+    this.configByElementType[HTMLElementType.ColorInput] = {
+      setUpChangeCallback: subscriptionSetting => {
+        var callback = this.getChangeCallback(subscriptionSetting);
+        const e = $id(subscriptionSetting.htmlId)[0];
+        e.oninput = ev => {
+          callback();
+        };
+        e.onchange = e.oninput;
+      },
+      getHTMLValue: this.configByElementType[HTMLElementType.SelectBox]
+        .getHTMLValue,
+      update: subscriptionSetting => {
+        var value = this.manager.subscription["get" + subscriptionSetting.id]();
+        const jq = $id(subscriptionSetting.htmlId);
+        jq.val(value);
+        if (!subscriptionSetting["jscolor"]) {
+          subscriptionSetting["jscolor"] = true;
+          new jscolor(jq[0]);
+        }
+      }
+    };
   }
 
   registerSettings(
