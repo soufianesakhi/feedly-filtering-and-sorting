@@ -1503,6 +1503,8 @@ var Article = (function () {
 var DuplicateChecker = (function () {
     function DuplicateChecker(articleManager) {
         this.articleManager = articleManager;
+        this.url2Article = {};
+        this.title2Article = {};
         this.crossArticles = new CrossArticleManager(articleManager, this);
     }
     DuplicateChecker.prototype.reset = function () {

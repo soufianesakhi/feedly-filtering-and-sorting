@@ -7,8 +7,8 @@ import { CrossCheckDuplicatesSettings } from "./SettingsManager";
 import { getDateWithoutTime, pushIfAbsent } from "./Utils";
 
 export class DuplicateChecker {
-  url2Article: { [url: string]: Article };
-  title2Article: { [title: string]: Article };
+  url2Article: { [url: string]: Article } = {};
+  title2Article: { [title: string]: Article } = {};
   crossArticles: CrossArticleManager;
 
   constructor(private articleManager: ArticleManager) {
