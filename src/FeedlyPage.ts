@@ -124,6 +124,7 @@ export class FeedlyPage {
 
   autoLoad() {
     var navigo = window["streets"].service("navigo");
+    navigo.initAutoLoad = true;
     navigo.setEntries(navigo.getEntries());
   }
 
@@ -555,7 +556,8 @@ export class FeedlyPage {
       ) {
         let isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
         let firstLoadByBatch = false;
-        if (this.entries.length == 0) {
+        if (navigo.initAutoLoad) {
+          navigo.initAutoLoad = false;
           window.removeEventListener(
             "scroll",
             getStreamPage()._throttledCheckMoreEntriesNeeded
