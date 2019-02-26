@@ -6,6 +6,7 @@ import { FeedlyPage } from "./FeedlyPage";
 import { KeywordManager } from "./KeywordManager";
 import { SettingsManager } from "./SettingsManager";
 import { Subscription } from "./Subscription";
+import { removeContent } from "./Utils";
 
 export class ArticleManager {
   settingsManager: SettingsManager;
@@ -248,23 +249,15 @@ export class ArticleManager {
       if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
         console.log("Sorting articles at " + new Date().toTimeString());
         endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
-        if (
-          articlesContainer.find("h4").length > 0 &&
-          !articlesContainer.prev().is("h4")
-        ) {
-          articlesContainer.before("<h4>Latest</h4>");
-        }
-        let loadingMessage = articlesContainer
-          .find(".message.loading")
-          .detach();
-        articlesContainer.empty();
-        articlesContainer.append(loadingMessage);
-        visibleArticles.forEach(article => {
-          articlesContainer.append(article.getContainer());
-        });
-        hiddenArticles.forEach(article => {
-          articlesContainer.append(article.getContainer());
-        });
+        removeContent(articlesContainer.find("h4"));
+        let chunks = articlesContainer.find(ext.articlesChunkSelector);
+        let containerChunk = chunks.first().empty();
+        let appendArticle = (article: Article) => {
+          const container = article.getContainer();
+          container.detach().appendTo(containerChunk);
+        };
+        visibleArticles.forEach(appendArticle);
+        hiddenArticles.forEach(appendArticle);
       }
       sortedVisibleEntryIds.push(...visibleArticles.map(a => a.getEntryId()));
     });
@@ -516,7 +509,9 @@ export class Article {
     // URL
     this.url = this.article.find(".title").attr("href");
 
-    this.container = this.article.closest(".list-entries > div");
+    this.container = this.article.closest(
+      ".list-entries > .EntryList__chunk > div"
+    );
   }
 
   addClass(c) {
@@ -567,10 +562,6 @@ export class Article {
   setVisible(visible?: boolean) {
     if (visible != null && !visible) {
       this.container.css("display", "none");
-      let articlesContainer = this.container.closest(
-        $(ext.articlesContainerSelector)
-      );
-      this.container.detach().appendTo(articlesContainer);
     } else {
       this.container.css("display", "");
     }

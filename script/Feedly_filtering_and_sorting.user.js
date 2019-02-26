@@ -31,9 +31,10 @@ var ext = {
     urlPrefixPattern: "https?://[^/]+/i/",
     settingsBtnPredecessorSelector: ".icon-toolbar-refresh-secondary, .button-refresh",
     articlesContainerSelector: ".list-entries",
+    articlesChunkSelector: ".EntryList__chunk",
     containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
     articleSelector: ".list-entries [data-entryid][data-title]:not([gap-article])",
-    unreadArticlesCountSelector: ".list-entries > .entry.unread:not([gap-article]), .list-entries .unread.u100",
+    unreadArticlesCountSelector: ".list-entries .entry.unread:not([gap-article]), .list-entries .unread.u100",
     uncheckedArticlesSelector: ".list-entries [data-entryid][data-title]:not([checked-FFnS])",
     readArticleClass: "read",
     articleViewClass: "u100Entry",
@@ -300,6 +301,17 @@ function pushIfAbsent(array, value) {
         return true;
     }
     return false;
+}
+function removeContent(elements) {
+    elements.each(function (i, element) {
+        var attributes = $.map(element.attributes, function (item) {
+            return item.name;
+        });
+        $.each(attributes, function (i, item) {
+            $(element).removeAttr(item);
+        });
+        $(element).empty();
+    });
 }
 
 var SortingType;
@@ -1213,21 +1225,15 @@ var ArticleManager = (function () {
             if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
                 console.log("Sorting articles at " + new Date().toTimeString());
                 endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
-                if (articlesContainer.find("h4").length > 0 &&
-                    !articlesContainer.prev().is("h4")) {
-                    articlesContainer.before("<h4>Latest</h4>");
-                }
-                var loadingMessage = articlesContainer
-                    .find(".message.loading")
-                    .detach();
-                articlesContainer.empty();
-                articlesContainer.append(loadingMessage);
-                visibleArticles.forEach(function (article) {
-                    articlesContainer.append(article.getContainer());
-                });
-                hiddenArticles.forEach(function (article) {
-                    articlesContainer.append(article.getContainer());
-                });
+                removeContent(articlesContainer.find("h4"));
+                var chunks = articlesContainer.find(ext.articlesChunkSelector);
+                var containerChunk_1 = chunks.first().empty();
+                var appendArticle = function (article) {
+                    var container = article.getContainer();
+                    container.detach().appendTo(containerChunk_1);
+                };
+                visibleArticles.forEach(appendArticle);
+                hiddenArticles.forEach(appendArticle);
             }
             sortedVisibleEntryIds.push.apply(sortedVisibleEntryIds, visibleArticles.map(function (a) { return a.getEntryId(); }));
         });
@@ -1439,7 +1445,7 @@ var Article = (function () {
         }
         // URL
         this.url = this.article.find(".title").attr("href");
-        this.container = this.article.closest(".list-entries > div");
+        this.container = this.article.closest(".list-entries > .EntryList__chunk > div");
     }
     Article.prototype.addClass = function (c) {
         return this.article.addClass(c);
@@ -1478,8 +1484,6 @@ var Article = (function () {
     Article.prototype.setVisible = function (visible) {
         if (visible != null && !visible) {
             this.container.css("display", "none");
-            var articlesContainer = this.container.closest($(ext.articlesContainerSelector));
-            this.container.detach().appendTo(articlesContainer);
         }
         else {
             this.container.css("display", "");

@@ -10,11 +10,12 @@ var ext = {
   settingsBtnPredecessorSelector:
     ".icon-toolbar-refresh-secondary, .button-refresh",
   articlesContainerSelector: ".list-entries",
+  articlesChunkSelector: ".EntryList__chunk",
   containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
   articleSelector:
     ".list-entries [data-entryid][data-title]:not([gap-article])",
   unreadArticlesCountSelector:
-    ".list-entries > .entry.unread:not([gap-article]), .list-entries .unread.u100",
+    ".list-entries .entry.unread:not([gap-article]), .list-entries .unread.u100",
   uncheckedArticlesSelector:
     ".list-entries [data-entryid][data-title]:not([checked-FFnS])",
   readArticleClass: "read",

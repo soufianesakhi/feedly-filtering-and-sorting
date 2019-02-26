@@ -255,3 +255,15 @@ export function pushIfAbsent<T>(array: T[], value: T): boolean {
   }
   return false;
 }
+
+export function removeContent(elements: JQuery) {
+  elements.each((i, element) => {
+    var attributes = $.map(element.attributes, function(item) {
+      return item.name;
+    });
+    $.each(attributes, function(i, item) {
+      $(element).removeAttr(item);
+    });
+    $(element).empty();
+  });
+}
