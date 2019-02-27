@@ -251,7 +251,15 @@ export class ArticleManager {
         endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
         removeContent(articlesContainer.find("h4"));
         let chunks = articlesContainer.find(ext.articlesChunkSelector);
-        let containerChunk = chunks.first().empty();
+        let containerChunk = chunks.first();
+        let appendH4 = containerChunk
+          .children()
+          .first()
+          .is("h4");
+        containerChunk.empty();
+        if (appendH4) {
+          containerChunk.append("<h4>");
+        }
         let appendArticle = (article: Article) => {
           const container = article.getContainer();
           container.detach().appendTo(containerChunk);

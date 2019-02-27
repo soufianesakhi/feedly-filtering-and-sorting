@@ -1227,7 +1227,15 @@ var ArticleManager = (function () {
                 endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
                 removeContent(articlesContainer.find("h4"));
                 var chunks = articlesContainer.find(ext.articlesChunkSelector);
-                var containerChunk_1 = chunks.first().empty();
+                var containerChunk_1 = chunks.first();
+                var appendH4 = containerChunk_1
+                    .children()
+                    .first()
+                    .is("h4");
+                containerChunk_1.empty();
+                if (appendH4) {
+                    containerChunk_1.append("<h4>");
+                }
                 var appendArticle = function (article) {
                     var container = article.getContainer();
                     container.detach().appendTo(containerChunk_1);
