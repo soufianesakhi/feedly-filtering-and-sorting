@@ -1231,14 +1231,9 @@ var ArticleManager = (function () {
                 removeContent(articlesContainer.find("h4"));
                 var chunks = articlesContainer.find(ext.articlesChunkSelector);
                 var containerChunk_1 = chunks.first();
-                var appendH4 = containerChunk_1
-                    .children()
-                    .first()
-                    .is("h4");
+                var h4Headings = containerChunk_1.find("h4").detach();
                 containerChunk_1.empty();
-                if (appendH4) {
-                    containerChunk_1.append("<h4>");
-                }
+                h4Headings.prependTo(containerChunk_1);
                 var appendArticle = function (article) {
                     var container = article.getContainer();
                     container.detach().appendTo(containerChunk_1);
@@ -2001,7 +1996,6 @@ var FeedlyPage = (function () {
                 .after(feedButtonsContainer);
             onClickCapture(openCurrentFeedArticlesBtn, function (event) {
                 event.stopPropagation();
-                debugger;
                 var articlesToOpen = getSortedVisibleArticles();
                 if (articlesToOpen.length == 0) {
                     return;

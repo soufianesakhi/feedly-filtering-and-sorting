@@ -170,7 +170,6 @@ export class FeedlyPage {
         .after(feedButtonsContainer);
       onClickCapture(openCurrentFeedArticlesBtn, (event: MouseEvent) => {
         event.stopPropagation();
-        debugger;
         let articlesToOpen = getSortedVisibleArticles();
         if (articlesToOpen.length == 0) {
           return;

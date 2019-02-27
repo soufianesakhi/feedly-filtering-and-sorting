@@ -252,14 +252,9 @@ export class ArticleManager {
         removeContent(articlesContainer.find("h4"));
         let chunks = articlesContainer.find(ext.articlesChunkSelector);
         let containerChunk = chunks.first();
-        let appendH4 = containerChunk
-          .children()
-          .first()
-          .is("h4");
+        let h4Headings = containerChunk.find("h4").detach();
         containerChunk.empty();
-        if (appendH4) {
-          containerChunk.append("<h4>");
-        }
+        h4Headings.prependTo(containerChunk);
         let appendArticle = (article: Article) => {
           const container = article.getContainer();
           container.detach().appendTo(containerChunk);
