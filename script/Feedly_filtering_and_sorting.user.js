@@ -242,7 +242,7 @@ function injectToWindow(functionNames) {
                 .toString()
                 .replace(/^function/, "function " + functionNames[i]) + "\n";
     }
-    injectScriptText(srcTxt, "window-" + Date.now());
+    injectScriptText(srcTxt, "FFnS-" + (functions.length == 1 ? functionNames[0] : "Functions"), true);
 }
 function injectClasses() {
     var classes = [];
@@ -263,11 +263,14 @@ function injectClasses() {
                 ";" +
                 "\n}());";
     }
-    injectScriptText(srcTxt, "classes-" + Date.now());
+    injectScriptText(srcTxt, "classes-" + Date.now(), true);
 }
-function injectScriptText(srcTxt, sourceURL) {
+function injectScriptText(srcTxt, sourceURL, evalPermitted) {
     if (sourceURL) {
         srcTxt += "//# sourceURL=" + sourceURL;
+    }
+    if (evalPermitted && typeof InstallTrigger != "undefined") {
+        srcTxt = "eval(`" + srcTxt + "`)";
     }
     var script = document.createElement("script");
     script.type = "text/javascript";
@@ -1914,8 +1917,12 @@ var FeedlyPage = (function () {
             "getKeptUnreadEntryIds",
             "getSortedVisibleArticles"
         ], this.get, this.put, this.getById, this.getStreamPage, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
+        injectToWindow(["overrideLoadingEntries"], this.overrideLoadingEntries);
+        injectToWindow(["overrideSorting"], this.overrideSorting);
+        injectToWindow(["onNewPageObserve"], this.onNewPageObserve);
+        injectToWindow(["onNewArticleObserve"], this.onNewArticleObserve);
         injectClasses(EntryInfos);
-        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideLoadingEntries, this.overrideMarkAsRead, this.overrideSorting, this.onNewPage, this.onNewArticle);
+        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideMarkAsRead);
     }
     FeedlyPage.prototype.update = function (sub) {
         this.updateCheck(sub.isOpenAndMarkAsRead(), ext.openAndMarkAsReadId, ext.openAndMarkAsReadClass);
@@ -1956,6 +1963,10 @@ var FeedlyPage = (function () {
     FeedlyPage.prototype.initWindow = function () {
         window["ext"] = getFFnS("ext");
         NodeCreationObserver.init("observed-page");
+        overrideLoadingEntries();
+        overrideSorting();
+        onNewPageObserve();
+        onNewArticleObserve();
     };
     FeedlyPage.prototype.autoLoad = function () {
         var navigo = window["streets"].service("navigo");
@@ -1971,7 +1982,7 @@ var FeedlyPage = (function () {
             }
         }
     };
-    FeedlyPage.prototype.onNewPage = function () {
+    FeedlyPage.prototype.onNewPageObserve = function () {
         NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
             var streamPage = getStreamPage();
             if (streamPage) {
@@ -1990,6 +2001,7 @@ var FeedlyPage = (function () {
                 .after(feedButtonsContainer);
             onClickCapture(openCurrentFeedArticlesBtn, function (event) {
                 event.stopPropagation();
+                debugger;
                 var articlesToOpen = getSortedVisibleArticles();
                 if (articlesToOpen.length == 0) {
                     return;
@@ -2050,7 +2062,7 @@ var FeedlyPage = (function () {
         }
         return sortedVisibleArticles;
     };
-    FeedlyPage.prototype.onNewArticle = function () {
+    FeedlyPage.prototype.onNewArticleObserve = function () {
         var reader = window["streets"].service("reader");
         var getLink = function (a) {
             return a.find(".title").attr("href");
@@ -2432,9 +2444,12 @@ var FeedlyPage = (function () {
             var _this = this;
             var jumpToNext = function () {
                 if (!/latest\/?$/i.test(document.URL)) {
-                    navigo.getNextURI()
-                        ? _this.feedly.jumpToNext()
-                        : _this.feedly.loadDefaultPage();
+                    if (navigo.getNextURI()) {
+                        _this.feedly.jumpToNext();
+                    }
+                    else {
+                        _this.feedly.loadDefaultPage();
+                    }
                 }
                 else {
                     _this.feedly.jumpToNext();

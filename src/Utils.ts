@@ -185,13 +185,17 @@ export function injectToWindow(
   ...functions: Function[]
 ) {
   var srcTxt = "";
-  for (var i = 0; i < functions.length; i++) {
+  for (let i = 0; i < functions.length; i++) {
     srcTxt +=
       functions[i]
         .toString()
         .replace(/^function/, "function " + functionNames[i]) + "\n";
   }
-  injectScriptText(srcTxt, "window-" + Date.now());
+  injectScriptText(
+    srcTxt,
+    "FFnS-" + (functions.length == 1 ? functionNames[0] : "Functions"),
+    true
+  );
 }
 
 export function injectClasses(...classes: Function[]) {
@@ -209,12 +213,19 @@ export function injectClasses(...classes: Function[]) {
       ";" +
       "\n}());";
   }
-  injectScriptText(srcTxt, "classes-" + Date.now());
+  injectScriptText(srcTxt, "classes-" + Date.now(), true);
 }
 
-export function injectScriptText(srcTxt: string, sourceURL?: string) {
+export function injectScriptText(
+  srcTxt: string,
+  sourceURL?: string,
+  evalPermitted?: boolean
+) {
   if (sourceURL) {
     srcTxt += "//# sourceURL=" + sourceURL;
+  }
+  if (evalPermitted && typeof InstallTrigger != "undefined") {
+    srcTxt = "eval(`" + srcTxt + "`)";
   }
   var script = document.createElement("script");
   script.type = "text/javascript";

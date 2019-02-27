@@ -16,6 +16,10 @@ declare var onClickCapture: (
 declare var fetchMoreEntries: (batchSize: number) => void;
 declare var loadNextBatch: (ev?: MouseEvent) => void;
 declare var getKeptUnreadEntryIds: () => string[];
+declare var overrideLoadingEntries: () => any;
+declare var overrideSorting: () => any;
+declare var onNewPageObserve: () => any;
+declare var onNewArticleObserve: () => any;
 
 export class FeedlyPage {
   hiddingInfoClass = "FFnS_Hiding_Info";
@@ -44,15 +48,15 @@ export class FeedlyPage {
       this.getKeptUnreadEntryIds,
       this.getSortedVisibleArticles
     );
+    injectToWindow(["overrideLoadingEntries"], this.overrideLoadingEntries);
+    injectToWindow(["overrideSorting"], this.overrideSorting);
+    injectToWindow(["onNewPageObserve"], this.onNewPageObserve);
+    injectToWindow(["onNewArticleObserve"], this.onNewArticleObserve);
     injectClasses(EntryInfos);
     executeWindow(
       "Feedly-Page-FFnS.js",
       this.initWindow,
-      this.overrideLoadingEntries,
-      this.overrideMarkAsRead,
-      this.overrideSorting,
-      this.onNewPage,
-      this.onNewArticle
+      this.overrideMarkAsRead
     );
   }
 
@@ -120,6 +124,10 @@ export class FeedlyPage {
   initWindow() {
     window["ext"] = getFFnS("ext");
     NodeCreationObserver.init("observed-page");
+    overrideLoadingEntries();
+    overrideSorting();
+    onNewPageObserve();
+    onNewArticleObserve();
   }
 
   autoLoad() {
@@ -138,7 +146,7 @@ export class FeedlyPage {
     }
   }
 
-  onNewPage() {
+  onNewPageObserve() {
     NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, () => {
       var streamPage = getStreamPage();
       if (streamPage) {
@@ -162,6 +170,7 @@ export class FeedlyPage {
         .after(feedButtonsContainer);
       onClickCapture(openCurrentFeedArticlesBtn, (event: MouseEvent) => {
         event.stopPropagation();
+        debugger;
         let articlesToOpen = getSortedVisibleArticles();
         if (articlesToOpen.length == 0) {
           return;
@@ -226,7 +235,7 @@ export class FeedlyPage {
     return sortedVisibleArticles;
   }
 
-  onNewArticle() {
+  onNewArticleObserve() {
     var reader = window["streets"].service("reader");
     var getLink = (a: JQuery) => {
       return a.find(".title").attr("href");
@@ -658,9 +667,11 @@ export class FeedlyPage {
     prototype.markAsRead = function(lastEntryObject) {
       let jumpToNext = () => {
         if (!/latest\/?$/i.test(document.URL)) {
-          navigo.getNextURI()
-            ? this.feedly.jumpToNext()
-            : this.feedly.loadDefaultPage();
+          if (navigo.getNextURI()) {
+            this.feedly.jumpToNext();
+          } else {
+            this.feedly.loadDefaultPage();
+          }
         } else {
           this.feedly.jumpToNext();
         }
