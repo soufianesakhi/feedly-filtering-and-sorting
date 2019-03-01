@@ -128,6 +128,16 @@ export class FeedlyPage {
     overrideSorting();
     onNewPageObserve();
     onNewArticleObserve();
+    let removeChild = Node.prototype.removeChild;
+    Node.prototype.removeChild = function() {
+      try {
+        return removeChild.apply(this, arguments);
+      } catch (e) {
+        if (e.name !== "NotFoundError") {
+          console.log(e);
+        }
+      }
+    };
   }
 
   autoLoad() {

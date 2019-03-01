@@ -1962,6 +1962,17 @@ var FeedlyPage = (function () {
         overrideSorting();
         onNewPageObserve();
         onNewArticleObserve();
+        var removeChild = Node.prototype.removeChild;
+        Node.prototype.removeChild = function () {
+            try {
+                return removeChild.apply(this, arguments);
+            }
+            catch (e) {
+                if (e.name !== "NotFoundError") {
+                    console.log(e);
+                }
+            }
+        };
     };
     FeedlyPage.prototype.autoLoad = function () {
         var navigo = window["streets"].service("navigo");
