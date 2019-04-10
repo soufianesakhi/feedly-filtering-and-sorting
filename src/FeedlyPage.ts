@@ -524,7 +524,6 @@ export class FeedlyPage {
     var loadByBatchText = "Mark batch as read and load next batch";
     var navigo = window["streets"].service("navigo");
     var reader = window["streets"].service("reader");
-    var streamId = reader.listSubscriptions()[0].id;
     var autoLoadAllArticleDefaultBatchSize = 1000;
 
     var isAutoLoad: () => boolean = () => {
@@ -542,12 +541,7 @@ export class FeedlyPage {
       }
     };
 
-    let streamObj = reader.lookupStream(streamId, {
-      unreadOnly: true,
-      featured: 0,
-      sort: "newest",
-      batchSize: 40
-    });
+    let streamObj = getStreamPage().stream;
     var prototype = Object.getPrototypeOf(streamObj);
     var setBatchSize: Function = prototype.setBatchSize;
     prototype.setBatchSize = function(customSize?: number) {

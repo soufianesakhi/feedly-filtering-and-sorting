@@ -2315,7 +2315,6 @@ var FeedlyPage = (function () {
         var loadByBatchText = "Mark batch as read and load next batch";
         var navigo = window["streets"].service("navigo");
         var reader = window["streets"].service("reader");
-        var streamId = reader.listSubscriptions()[0].id;
         var autoLoadAllArticleDefaultBatchSize = 1000;
         var isAutoLoad = function () {
             try {
@@ -2330,12 +2329,7 @@ var FeedlyPage = (function () {
                 return false;
             }
         };
-        var streamObj = reader.lookupStream(streamId, {
-            unreadOnly: true,
-            featured: 0,
-            sort: "newest",
-            batchSize: 40
-        });
+        var streamObj = getStreamPage().stream;
         var prototype = Object.getPrototypeOf(streamObj);
         var setBatchSize = prototype.setBatchSize;
         prototype.setBatchSize = function (customSize) {
