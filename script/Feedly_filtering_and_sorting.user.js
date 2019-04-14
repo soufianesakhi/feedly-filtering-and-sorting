@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.13.5
+// @version     3.13.6
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2933,7 +2933,7 @@ var UIManager = (function () {
             $(clone)
                 .empty()
                 .removeAttr("class")
-                .removeAttr("title")
+                .attr("title", "Feedly filtering and sorting")
                 .addClass("ShowSettingsBtn");
             $(element).after(clone);
             $(clone).click(function () {
