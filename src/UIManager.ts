@@ -481,7 +481,7 @@ export class UIManager {
         $(clone)
           .empty()
           .removeAttr("class")
-          .removeAttr("title")
+          .attr("title", "Feedly filtering and sorting")
           .addClass("ShowSettingsBtn");
         $(element).after(clone);
         $(clone).click(function() {
