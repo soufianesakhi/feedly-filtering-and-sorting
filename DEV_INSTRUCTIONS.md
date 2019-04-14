@@ -1,4 +1,4 @@
-Install NodeJS & NPM (https://nodejs.org/en/download).
+Install NodeJS (version 10) & NPM (https://nodejs.org/en/download).
 
 ```
 npm install
@@ -11,4 +11,7 @@ grunt
 
 To automatically build on source code change:
 grunt watch
+
 ```
+
+Code formatter: [Prettier](https://prettier.io/)
