@@ -2939,7 +2939,7 @@ var UIManager = (function () {
             $(clone).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
             });
-        });
+        }, true);
     };
     UIManager.prototype.registerSettings = function () {
         var _this = this;

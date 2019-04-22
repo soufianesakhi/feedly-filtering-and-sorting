@@ -487,7 +487,8 @@ export class UIManager {
         $(clone).click(function() {
           $id(this_.settingsDivContainerId).toggle();
         });
-      }
+      },
+      true
     );
   }
 
