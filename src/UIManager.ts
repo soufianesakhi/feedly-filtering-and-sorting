@@ -254,6 +254,17 @@ export class UIManager {
     this.htmlSubscriptionManager.update();
     setTimeout(() => {
       this.refreshFilteringAndSorting();
+
+      if (
+        this.subscription.isSortingEnabled &&
+        (this.subscription.getSortingType() == SortingType.PopularityAsc ||
+          this.subscription.getSortingType() == SortingType.PopularityDesc)
+      ) {
+        setTimeout(() => {
+          console.log("forced pop sort");
+          this.articleManager.sortArticles(true);
+        }, 4000);
+      }
     }, 500);
     getFilteringTypes().forEach(type => {
       this.prepareFilteringList(type);

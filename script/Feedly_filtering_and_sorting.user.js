@@ -2734,6 +2734,14 @@ var UIManager = (function () {
         this.htmlSubscriptionManager.update();
         setTimeout(function () {
             _this.refreshFilteringAndSorting();
+            if (_this.subscription.isSortingEnabled &&
+                (_this.subscription.getSortingType() == SortingType.PopularityAsc ||
+                    _this.subscription.getSortingType() == SortingType.PopularityDesc)) {
+                setTimeout(function () {
+                    console.log("forced pop sort");
+                    _this.articleManager.sortArticles(true);
+                }, 4000);
+            }
         }, 500);
         getFilteringTypes().forEach(function (type) {
             _this.prepareFilteringList(type);
