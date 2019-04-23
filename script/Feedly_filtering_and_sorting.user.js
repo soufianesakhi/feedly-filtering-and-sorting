@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.13.7
+// @version     3.13.8
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -29,7 +29,7 @@ var ext = {
     moveUpIconLink: "",
     moveDownIconLink: "",
     urlPrefixPattern: "https?://[^/]+/i/",
-    settingsBtnPredecessorSelector: ".icon-toolbar-refresh-secondary, .button-refresh",
+    settingsBtnPredecessorSelector: ".icon-toolbar-refresh-secondary:not(.update-available), .button-refresh",
     articlesContainerSelector: ".list-entries",
     articlesChunkSelector: ".EntryList__chunk",
     containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
@@ -2947,7 +2947,7 @@ var UIManager = (function () {
             $(clone).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
             });
-        }, true);
+        });
     };
     UIManager.prototype.registerSettings = function () {
         var _this = this;
