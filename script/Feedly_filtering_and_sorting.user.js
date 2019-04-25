@@ -29,7 +29,7 @@ var ext = {
     moveUpIconLink: "",
     moveDownIconLink: "",
     urlPrefixPattern: "https?://[^/]+/i/",
-    settingsBtnPredecessorSelector: ".icon-toolbar-refresh-secondary:not(.update-available), .button-refresh",
+    settingsBtnPredecessorSelector: ".mark-as-read-button-group",
     articlesContainerSelector: ".list-entries",
     articlesChunkSelector: ".EntryList__chunk",
     containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
@@ -2936,7 +2936,8 @@ var UIManager = (function () {
     };
     UIManager.prototype.initShowSettingsBtns = function () {
         var this_ = this;
-        NodeCreationObserver.onCreation(ext.settingsBtnPredecessorSelector, function (element) {
+        NodeCreationObserver.onCreation(ext.settingsBtnPredecessorSelector, function (prevElement) {
+            var element = $(prevElement).next("button");
             var clone = $(element).clone();
             $(clone)
                 .empty()

@@ -7,8 +7,7 @@ var ext = {
 
   urlPrefixPattern: "https?://[^/]+/i/",
 
-  settingsBtnPredecessorSelector:
-    ".icon-toolbar-refresh-secondary:not(.update-available), .button-refresh",
+  settingsBtnPredecessorSelector: ".mark-as-read-button-group",
   articlesContainerSelector: ".list-entries",
   articlesChunkSelector: ".EntryList__chunk",
   containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
