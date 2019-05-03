@@ -256,14 +256,17 @@ export class UIManager {
       this.refreshFilteringAndSorting();
 
       if (
-        this.subscription.isSortingEnabled &&
-        (this.subscription.getSortingType() == SortingType.PopularityAsc ||
-          this.subscription.getSortingType() == SortingType.PopularityDesc)
+        (this.subscription.isSortingEnabled &&
+          this.subscription.getSortingType() == SortingType.PopularityAsc) ||
+        this.subscription.getSortingType() == SortingType.PopularityDesc
       ) {
-        setTimeout(() => {
-          console.log("forced pop sort");
-          this.articleManager.sortArticles(true);
-        }, 4000);
+        let maxCheck = 10;
+        const handle = setInterval(() => {
+          if (maxCheck-- === 0) {
+            return clearInterval(handle);
+          }
+          this.articleManager.checkPopularityAndSort();
+        }, 3000);
       }
     }, 500);
     getFilteringTypes().forEach(type => {
