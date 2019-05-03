@@ -492,16 +492,9 @@ export class Article {
       .toLowerCase();
 
     // Popularity
-    var popularityStr = this.article
-      .find(ext.popularitySelector)
-      .text()
-      .trim();
-    popularityStr = popularityStr.replace("+", "");
-    if (popularityStr.indexOf("K") > -1) {
-      popularityStr = popularityStr.replace("K", "");
-      popularityStr += "000";
-    }
-    this.popularity = Number(popularityStr);
+    this.popularity = parsePopularity(
+      this.article.find(ext.popularitySelector).text()
+    );
 
     // Source
     var source = this.article.find(ext.articleSourceSelector);
@@ -585,4 +578,13 @@ export class Article {
   setColor(color: string) {
     this.article.css("background-color", color);
   }
+}
+
+function parsePopularity(popularityStr: String) {
+  popularityStr = popularityStr.trim().replace("+", "");
+  if (popularityStr.indexOf("K") > -1) {
+    popularityStr = popularityStr.replace("K", "");
+    popularityStr += "000";
+  }
+  return Number(popularityStr);
 }
