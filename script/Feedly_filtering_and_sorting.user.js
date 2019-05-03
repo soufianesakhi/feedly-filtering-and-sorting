@@ -1134,6 +1134,40 @@ var ArticleManager = (function () {
             }
         }
     };
+    ArticleManager.prototype.checkPopularityAndSort = function () {
+        var popularityArr = [];
+        var hotPopularityArr = [];
+        $(ext.articleSelector + ":visible").each(function (i, article) {
+            var engagement = $(article).find(ext.popularitySelector);
+            var popularity = parsePopularity($(engagement).text());
+            if ($(engagement).is(".hot, .onfire")) {
+                hotPopularityArr.push(popularity);
+            }
+            else {
+                popularityArr.push(popularity);
+            }
+        });
+        var sorted = this.checkPopularitySorted(hotPopularityArr);
+        sorted = this.checkPopularitySorted(popularityArr);
+        if (!sorted) {
+            console.log("Sorting by popularity after check");
+            this.sortArticles(true);
+        }
+    };
+    ArticleManager.prototype.checkPopularitySorted = function (popularityArr) {
+        var sorted = true;
+        var sortedCheck = this.getCurrentSub().getSortingType() == SortingType.PopularityDesc
+            ? function (i) {
+                return popularityArr[i] >= popularityArr[i + 1];
+            }
+            : function (i) {
+                return popularityArr[i] <= popularityArr[i + 1];
+            };
+        for (var i = 0; i < popularityArr.length - 1 && sorted; i++) {
+            sorted = sortedCheck(i);
+        }
+        return sorted;
+    };
     ArticleManager.prototype.applyColoringRules = function (article) {
         var sub = this.getCurrentSub();
         var rules = sub.getColoringRules();
@@ -1434,16 +1468,7 @@ var Article = (function () {
             .trim()
             .toLowerCase();
         // Popularity
-        var popularityStr = this.article
-            .find(ext.popularitySelector)
-            .text()
-            .trim();
-        popularityStr = popularityStr.replace("+", "");
-        if (popularityStr.indexOf("K") > -1) {
-            popularityStr = popularityStr.replace("K", "");
-            popularityStr += "000";
-        }
-        this.popularity = Number(popularityStr);
+        this.popularity = parsePopularity(this.article.find(ext.popularitySelector).text());
         // Source
         var source = this.article.find(ext.articleSourceSelector);
         if (source != null) {
@@ -1509,6 +1534,14 @@ var Article = (function () {
     };
     return Article;
 }());
+function parsePopularity(popularityStr) {
+    popularityStr = popularityStr.trim().replace("+", "");
+    if (popularityStr.indexOf("K") > -1) {
+        popularityStr = popularityStr.replace("K", "");
+        popularityStr += "000";
+    }
+    return Number(popularityStr);
+}
 
 var DuplicateChecker = (function () {
     function DuplicateChecker(articleManager) {
@@ -2734,13 +2767,16 @@ var UIManager = (function () {
         this.htmlSubscriptionManager.update();
         setTimeout(function () {
             _this.refreshFilteringAndSorting();
-            if (_this.subscription.isSortingEnabled &&
-                (_this.subscription.getSortingType() == SortingType.PopularityAsc ||
-                    _this.subscription.getSortingType() == SortingType.PopularityDesc)) {
-                setTimeout(function () {
-                    console.log("forced pop sort");
-                    _this.articleManager.sortArticles(true);
-                }, 4000);
+            if ((_this.subscription.isSortingEnabled &&
+                _this.subscription.getSortingType() == SortingType.PopularityAsc) ||
+                _this.subscription.getSortingType() == SortingType.PopularityDesc) {
+                var maxCheck_1 = 10;
+                var handle_1 = setInterval(function () {
+                    if (maxCheck_1-- === 0) {
+                        return clearInterval(handle_1);
+                    }
+                    _this.articleManager.checkPopularityAndSort();
+                }, 3000);
             }
         }, 500);
         getFilteringTypes().forEach(function (type) {
