@@ -1746,7 +1746,9 @@ var CrossArticleManager = (function () {
         return thresholdDay;
     };
     CrossArticleManager.prototype.setAndCleanDays = function (crossArticleDays) {
-        this.daysArray = crossArticleDays.slice(0);
+        this.daysArray = crossArticleDays.slice(0).filter(function (val) {
+            return !isNaN(val);
+        });
         var thresholdDay = this.getThresholdDay();
         crossArticleDays
             .filter(function (day) { return day < thresholdDay; })
@@ -1822,7 +1824,11 @@ var CrossArticleManager = (function () {
         this.localStorage.put(this.DAYS_ARRAY_KEY, this.daysArray);
     };
     CrossArticleManager.prototype.formatDay = function (day) {
-        return new Date(day).toLocaleDateString();
+        var str = new Date(day).toLocaleDateString();
+        if (str === "Invalid Date") {
+            debugger;
+        }
+        return str;
     };
     return CrossArticleManager;
 }());

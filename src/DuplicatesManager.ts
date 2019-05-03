@@ -231,7 +231,9 @@ class CrossArticleManager {
   }
 
   private setAndCleanDays(crossArticleDays: number[]) {
-    this.daysArray = crossArticleDays.slice(0);
+    this.daysArray = crossArticleDays.slice(0).filter(val => {
+      return !isNaN(val);
+    });
     let thresholdDay = this.getThresholdDay();
     crossArticleDays
       .filter(day => day < thresholdDay)
@@ -317,6 +319,10 @@ class CrossArticleManager {
   }
 
   private formatDay(day: number) {
-    return new Date(day).toLocaleDateString();
+    const str = new Date(day).toLocaleDateString();
+    if (str === "Invalid Date") {
+      debugger;
+    }
+    return str;
   }
 }
