@@ -152,6 +152,43 @@ export class ArticleManager {
     }
   }
 
+  checkPopularityAndSort() {
+    const popularityArr = [];
+    const hotPopularityArr = [];
+    $(ext.articleSelector + ":visible").each((i, article) => {
+      let engagement = $(article).find(ext.popularitySelector);
+      const popularity = parsePopularity($(engagement).text());
+      if ($(engagement).is(".hot, .onfire")) {
+        hotPopularityArr.push(popularity);
+      } else {
+        popularityArr.push(popularity);
+      }
+    });
+
+    let sorted = this.checkPopularitySorted(hotPopularityArr);
+    sorted = this.checkPopularitySorted(popularityArr);
+    if (!sorted) {
+      console.log(`Sorting by popularity after check`);
+      this.sortArticles(true);
+    }
+  }
+
+  private checkPopularitySorted(popularityArr: number[]) {
+    let sorted = true;
+    const sortedCheck =
+      this.getCurrentSub().getSortingType() == SortingType.PopularityDesc
+        ? (i: number) => {
+            return popularityArr[i] >= popularityArr[i + 1];
+          }
+        : (i: number) => {
+            return popularityArr[i] <= popularityArr[i + 1];
+          };
+    for (var i = 0; i < popularityArr.length - 1 && sorted; i++) {
+      sorted = sortedCheck(i);
+    }
+    return sorted;
+  }
+
   applyColoringRules(article: Article) {
     let sub = this.getCurrentSub();
     let rules = sub.getColoringRules();
