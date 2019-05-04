@@ -319,10 +319,6 @@ class CrossArticleManager {
   }
 
   private formatDay(day: number) {
-    const str = new Date(day).toLocaleDateString();
-    if (str === "Invalid Date") {
-      debugger;
-    }
-    return str;
+    return new Date(day).toLocaleDateString();
   }
 }
