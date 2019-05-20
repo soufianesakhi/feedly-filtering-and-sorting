@@ -1824,11 +1824,7 @@ var CrossArticleManager = (function () {
         this.localStorage.put(this.DAYS_ARRAY_KEY, this.daysArray);
     };
     CrossArticleManager.prototype.formatDay = function (day) {
-        var str = new Date(day).toLocaleDateString();
-        if (str === "Invalid Date") {
-            debugger;
-        }
-        return str;
+        return new Date(day).toLocaleDateString();
     };
     return CrossArticleManager;
 }());
@@ -2191,7 +2187,7 @@ var FeedlyPage = (function () {
                     a.find(".ago").after(e);
                 }
                 else if (articleView) {
-                    a.find(".metadata").append(e);
+                    a.find(".fx.metadata").append(e);
                 }
                 else {
                     $(element).prepend(e);

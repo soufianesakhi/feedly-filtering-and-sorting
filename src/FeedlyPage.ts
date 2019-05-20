@@ -332,7 +332,7 @@ export class FeedlyPage {
           } else if (magazineView) {
             a.find(".ago").after(e);
           } else if (articleView) {
-            a.find(".metadata").append(e);
+            a.find(".fx.metadata").append(e); 
           } else {
             $(element).prepend(e);
           }
