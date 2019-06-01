@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.13.10
+// @version     3.13.11
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -29,7 +29,7 @@ var ext = {
     moveUpIconLink: "",
     moveDownIconLink: "",
     urlPrefixPattern: "https?://[^/]+/i/",
-    settingsBtnPredecessorSelector: ".mark-as-read-button-group",
+    settingsBtnSuccessorSelector: ".button-customize-page",
     articlesContainerSelector: ".list-entries",
     articlesChunkSelector: ".EntryList__chunk",
     containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
@@ -2974,15 +2974,14 @@ var UIManager = (function () {
     };
     UIManager.prototype.initShowSettingsBtns = function () {
         var this_ = this;
-        NodeCreationObserver.onCreation(ext.settingsBtnPredecessorSelector, function (prevElement) {
-            var element = $(prevElement).next("button");
+        NodeCreationObserver.onCreation(ext.settingsBtnSuccessorSelector, function (element) {
             var clone = $(element).clone();
             $(clone)
                 .empty()
                 .removeAttr("class")
                 .attr("title", "Feedly filtering and sorting")
                 .addClass("ShowSettingsBtn");
-            $(element).after(clone);
+            $(element).parent().before(clone);
             $(clone).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
             });

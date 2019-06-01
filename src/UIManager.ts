@@ -3,22 +3,10 @@
 import { ArticleManager } from "./ArticleManager";
 import { AsyncResult } from "./AsyncResult";
 import { DataStore } from "./dao/Storage";
-import {
-  ColoringRuleSource,
-  FilteringType,
-  getFilteringTypeId,
-  getFilteringTypes,
-  HTMLElementType,
-  KeywordMatchingArea,
-  KeywordMatchingMethod,
-  SortingType
-} from "./DataTypes";
+import { ColoringRuleSource, FilteringType, getFilteringTypeId, getFilteringTypes, HTMLElementType, KeywordMatchingArea, KeywordMatchingMethod, SortingType } from "./DataTypes";
 import { FeedlyPage } from "./FeedlyPage";
 import { HTMLGlobalSettings } from "./HTMLGlobalSettings";
-import {
-  HTMLSubscriptionManager,
-  HTMLSubscriptionSetting
-} from "./HTMLSubscription";
+import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
 import { KeywordManager } from "./KeywordManager";
 import { SettingsManager } from "./SettingsManager";
 import { Subscription } from "./Subscription";
@@ -489,16 +477,15 @@ export class UIManager {
   initShowSettingsBtns() {
     var this_ = this;
     NodeCreationObserver.onCreation(
-      ext.settingsBtnPredecessorSelector,
-      prevElement => {
-        const element = $(prevElement).next("button");
+      ext.settingsBtnSuccessorSelector,
+      element => {
         var clone = $(element).clone();
         $(clone)
           .empty()
           .removeAttr("class")
           .attr("title", "Feedly filtering and sorting")
           .addClass("ShowSettingsBtn");
-        $(element).after(clone);
+        $(element).parent().before(clone);
         $(clone).click(function() {
           $id(this_.settingsDivContainerId).toggle();
         });
