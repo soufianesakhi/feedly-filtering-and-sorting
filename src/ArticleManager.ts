@@ -585,7 +585,7 @@ export class Article {
 
   isHot(): boolean {
     var span = this.article.find(ext.popularitySelector);
-    return span.hasClass("hot") || span.hasClass("onfire");
+    return span.hasClass("hot") || span.hasClass("onfire") || span.hasClass("EntryEngagement--hot");
   }
 
   getEntryId(): string {

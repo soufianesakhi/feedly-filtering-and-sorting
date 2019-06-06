@@ -28,7 +28,7 @@ var ext = {
   subscriptionChangeSelector: "header .heading",
   articleTitleAttribute: "data-title",
   articleEntryIdAttribute: "data-entryid",
-  popularitySelector: ".engagement, .nbrRecommendations",
+  popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
   hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
   endOfFeedSelector: ".list-entries h4:contains(End of feed)",
 

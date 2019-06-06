@@ -47,7 +47,7 @@ var ext = {
     subscriptionChangeSelector: "header .heading",
     articleTitleAttribute: "data-title",
     articleEntryIdAttribute: "data-entryid",
-    popularitySelector: ".engagement, .nbrRecommendations",
+    popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
     hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
     endOfFeedSelector: ".list-entries h4:contains(End of feed)",
     keepArticlesUnreadId: "keepArticlesUnread",
@@ -1507,7 +1507,7 @@ var Article = (function () {
     };
     Article.prototype.isHot = function () {
         var span = this.article.find(ext.popularitySelector);
-        return span.hasClass("hot") || span.hasClass("onfire");
+        return span.hasClass("hot") || span.hasClass("onfire") || span.hasClass("EntryEngagement--hot");
     };
     Article.prototype.getEntryId = function () {
         return this.entryId;
