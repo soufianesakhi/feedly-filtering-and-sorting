@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.13.12
+// @version     3.13.13
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2559,7 +2559,7 @@ var FeedlyPage = (function () {
         var reset = prototype.reset;
         prototype.lookupNextEntry = function (a) {
             ensureSortedEntries();
-            return lookupNextEntry.call(this, this, getFFnS(ext.hideAfterReadId) ? true : a);
+            return lookupNextEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
         };
         prototype.lookupPreviousEntry = function (a) {
             ensureSortedEntries();

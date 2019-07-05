@@ -332,7 +332,7 @@ export class FeedlyPage {
           } else if (magazineView) {
             a.find(".ago").after(e);
           } else if (articleView) {
-            a.find(".fx.metadata").append(e); 
+            a.find(".fx.metadata").append(e);
           } else {
             $(element).prepend(e);
           }
@@ -760,7 +760,6 @@ export class FeedlyPage {
     prototype.lookupNextEntry = function(a) {
       ensureSortedEntries();
       return lookupNextEntry.call(
-        this,
         this,
         getFFnS(ext.hideAfterReadId) ? true : a
       );
