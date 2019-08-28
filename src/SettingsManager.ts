@@ -10,7 +10,18 @@ import { exportFile } from "./Utils";
 export class SettingsManager {
   private currentSubscription: Subscription;
   private dao: SubscriptionDAO;
-  private urlPrefixPattern = new RegExp(ext.urlPrefixPattern, "i");
+  private defaultUrlPrefixPattern = new RegExp(
+    ext.defaultUrlPrefixPattern,
+    "i"
+  );
+  private subscriptionUrlPrefixPattern = new RegExp(
+    ext.subscriptionUrlPrefixPattern,
+    "i"
+  );
+  private categoryUrlPrefixPattern = new RegExp(
+    ext.categoryUrlPrefixPattern,
+    "i"
+  );
   private uiManager: UIManager;
   private crossCheckDuplicatesSettings = new CrossCheckDuplicatesSettings();
 
@@ -117,7 +128,12 @@ export class SettingsManager {
   }
 
   getActualSubscriptionURL(): string {
-    return decodeURIComponent(document.URL.replace(this.urlPrefixPattern, ""));
+    return document.URL.replace(
+      this.subscriptionUrlPrefixPattern,
+      "subscription"
+    )
+      .replace(this.categoryUrlPrefixPattern, "")
+      .replace(this.defaultUrlPrefixPattern, "");
   }
 
   isGlobalMode(): boolean {

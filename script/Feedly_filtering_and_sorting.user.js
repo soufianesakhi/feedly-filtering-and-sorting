@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.13.14
+// @version     3.14.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -28,7 +28,9 @@ var ext = {
     closeIconLink: "",
     moveUpIconLink: "",
     moveDownIconLink: "",
-    urlPrefixPattern: "https?://[^/]+/i/",
+    defaultUrlPrefixPattern: "https?://[^/]+/i/",
+    subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
+    categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
     settingsBtnSuccessorSelector: ".button-customize-page",
     articlesContainerSelector: ".list-entries",
     articlesChunkSelector: ".EntryList__chunk",
@@ -888,7 +890,9 @@ var LinkedSubscriptionDTO = (function () {
 
 var SettingsManager = (function () {
     function SettingsManager(uiManager) {
-        this.urlPrefixPattern = new RegExp(ext.urlPrefixPattern, "i");
+        this.defaultUrlPrefixPattern = new RegExp(ext.defaultUrlPrefixPattern, "i");
+        this.subscriptionUrlPrefixPattern = new RegExp(ext.subscriptionUrlPrefixPattern, "i");
+        this.categoryUrlPrefixPattern = new RegExp(ext.categoryUrlPrefixPattern, "i");
         this.crossCheckDuplicatesSettings = new CrossCheckDuplicatesSettings();
         this.dao = new SubscriptionDAO();
         this.uiManager = uiManager;
@@ -981,7 +985,9 @@ var SettingsManager = (function () {
         return this.dao.getAllSubscriptionURLs();
     };
     SettingsManager.prototype.getActualSubscriptionURL = function () {
-        return decodeURIComponent(document.URL.replace(this.urlPrefixPattern, ""));
+        return document.URL.replace(this.subscriptionUrlPrefixPattern, "subscription")
+            .replace(this.categoryUrlPrefixPattern, "")
+            .replace(this.defaultUrlPrefixPattern, "");
     };
     SettingsManager.prototype.isGlobalMode = function () {
         return this.dao.isURLGlobal(this.currentSubscription.getURL());

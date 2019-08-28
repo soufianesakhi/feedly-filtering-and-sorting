@@ -5,7 +5,9 @@ var ext = {
   moveUpIconLink: "",
   moveDownIconLink: "",
 
-  urlPrefixPattern: "https?://[^/]+/i/",
+  defaultUrlPrefixPattern: "https?://[^/]+/i/",
+  subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
+  categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
 
   settingsBtnSuccessorSelector: ".button-customize-page",
   articlesContainerSelector: ".list-entries",
