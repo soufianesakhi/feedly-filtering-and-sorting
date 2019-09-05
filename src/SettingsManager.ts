@@ -128,12 +128,13 @@ export class SettingsManager {
   }
 
   getActualSubscriptionURL(): string {
-    return document.URL.replace(
+    const url = document.URL.replace(
       this.subscriptionUrlPrefixPattern,
       "subscription"
     )
       .replace(this.categoryUrlPrefixPattern, "")
       .replace(this.defaultUrlPrefixPattern, "");
+    return decodeURIComponent(url);
   }
 
   isGlobalMode(): boolean {

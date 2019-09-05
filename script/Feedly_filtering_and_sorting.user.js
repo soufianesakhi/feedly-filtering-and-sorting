@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.14.0
+// @version     3.14.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -985,9 +985,10 @@ var SettingsManager = (function () {
         return this.dao.getAllSubscriptionURLs();
     };
     SettingsManager.prototype.getActualSubscriptionURL = function () {
-        return document.URL.replace(this.subscriptionUrlPrefixPattern, "subscription")
+        var url = document.URL.replace(this.subscriptionUrlPrefixPattern, "subscription")
             .replace(this.categoryUrlPrefixPattern, "")
             .replace(this.defaultUrlPrefixPattern, "");
+        return decodeURIComponent(url);
     };
     SettingsManager.prototype.isGlobalMode = function () {
         return this.dao.isURLGlobal(this.currentSubscription.getURL());
