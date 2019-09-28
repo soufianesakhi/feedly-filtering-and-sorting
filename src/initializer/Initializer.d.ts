@@ -11,6 +11,7 @@ export interface ResourceURLs {
   moveDownIconURL: string;
   openInNewTabURL: string;
   extensionIconURL: string;
+  clearFiltersURL: string;
 }
 
 declare var INITIALIZER: Initializer;

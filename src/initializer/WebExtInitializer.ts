@@ -40,6 +40,7 @@ export class WebExtInitializer implements Initializer {
       moveUpIconURL: this.getURL("images/move-up.png"),
       moveDownIconURL: this.getURL("images/move-down.png"),
       openInNewTabURL: this.getURL("images/open-in-new-tab.png"),
+      clearFiltersURL: this.getURL("images/filter_clear.png"),
       extensionIconURL: this.getURL("icons/128.png")
     };
   }
