@@ -72,6 +72,10 @@ export class Subscription {
     return this.dto.openCurrentFeedArticles;
   }
 
+  isDisplayDisableAllFiltersButton(): boolean {
+    return this.dto.displayDisableAllFiltersButton;
+  }
+
   isOpenCurrentFeedArticlesUnreadOnly(): boolean {
     return this.dto.openCurrentFeedArticlesUnreadOnly;
   }

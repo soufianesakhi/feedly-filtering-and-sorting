@@ -53,8 +53,13 @@ var ext = {
   markAsReadAboveBelowReadId: "MarkAsReadAboveBelowRead",
   sortArticlesId: "isSortArticles",
   markAsReadImmediatelyClass: "FFnS-mark-as-read",
+  buttonsContainerId: "FFnS-buttons-container",
+  containerButtonClass: "FFnS-UI-button",
   openCurrentFeedArticlesId: "isOpenCurrentFeedArticles",
   openCurrentFeedArticlesClass: "open-current-articles-in-new-tab-button",
+  disableAllFiltersButtonId: "isDisableAllFiltersButton",
+  disableAllFiltersEnabled: "isDisableAllFiltersEnabled",
+  disableAllFiltersButtonClass: "disable-all-filters-button",
   openCurrentFeedArticlesUnreadOnlyId: "openCurrentFeedArticlesUnreadOnly",
   markAsReadOnOpenCurrentFeedArticlesId:
     "isMarkAsReadOnOpenCurrentFeedArticles",

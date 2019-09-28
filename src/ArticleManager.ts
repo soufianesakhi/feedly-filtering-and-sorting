@@ -189,6 +189,8 @@ export class ArticleManager {
     return sorted;
   }
 
+  checkDisableAllFilters() {}
+
   applyColoringRules(article: Article) {
     let sub = this.getCurrentSub();
     let rules = sub.getColoringRules();
@@ -243,6 +245,7 @@ export class ArticleManager {
       if (!refresh) {
         this.duplicateChecker.allArticlesChecked();
       }
+      this.checkDisableAllFilters();
     }
   }
 
@@ -334,9 +337,10 @@ export class ArticleManager {
     if (SortingType.SourceNewestReceiveDate == st) {
       let sourceToArticles: { [key: string]: Article[] } = {};
       articles.forEach(a => {
-        let sourceArticles = (sourceToArticles[a.getSource()] ||
-          (sourceToArticles[a.getSource()] = []),
-        sourceToArticles[a.getSource()]);
+        let sourceArticles =
+          (sourceToArticles[a.getSource()] ||
+            (sourceToArticles[a.getSource()] = []),
+          sourceToArticles[a.getSource()]);
         sourceArticles.push(a);
       });
       articles.length = 0;
@@ -585,7 +589,11 @@ export class Article {
 
   isHot(): boolean {
     var span = this.article.find(ext.popularitySelector);
-    return span.hasClass("hot") || span.hasClass("onfire") || span.hasClass("EntryEngagement--hot");
+    return (
+      span.hasClass("hot") ||
+      span.hasClass("onfire") ||
+      span.hasClass("EntryEngagement--hot")
+    );
   }
 
   getEntryId(): string {

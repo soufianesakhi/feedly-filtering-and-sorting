@@ -17,6 +17,7 @@ function initResources() {
   ext.moveDownIconLink = urls.moveDownIconURL;
   templates.styleCSS = bindMarkup(templates.styleCSS, [
     { name: "open-in-new-tab-url", value: urls.openInNewTabURL },
+    { name: "disable-all-filters-url", value: urls.clearFiltersURL },
     { name: "extension-icon", value: urls.extensionIconURL }
   ]);
   injectStyleText(templates.styleCSS);

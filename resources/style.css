@@ -210,15 +210,32 @@ input {
   background-size: 18px 18px;
 }
 
-.fx .open-current-articles-in-new-tab-button {
-  background-image: url("{{open-in-new-tab-url}}");
-  background-size: 18px 18px;
+#FFnS-buttons-container {
+  float: right;
+}
+
+.fx .FFnS-UI-button {
   background-repeat: no-repeat;
   background-color: white;
-  display: block;
+  display: inline;
   margin-left: auto;
   min-width: 10px;
   padding: 10px;
+}
+
+.fx .open-current-articles-in-new-tab-button {
+  background-image: url("{{open-in-new-tab-url}}");
+  background-size: 18px 18px;
+}
+
+.fx .disable-all-filters-button {
+  background-image: url("{{disable-all-filters-url}}");
+  background-size: 20px 20px;
+  opacity: 0.4;
+}
+
+.fx .disable-all-filters-button.enabled {
+  opacity: 1;
 }
 
 .fx .mark-as-read-above-below-button.mark-as-read,

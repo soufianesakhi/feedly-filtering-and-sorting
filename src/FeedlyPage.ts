@@ -76,6 +76,11 @@ export class FeedlyPage {
       ext.openCurrentFeedArticlesId,
       ext.openCurrentFeedArticlesClass
     );
+    this.updateCheck(
+      sub.isDisplayDisableAllFiltersButton(),
+      ext.disableAllFiltersButtonId,
+      ext.disableAllFiltersButtonClass
+    );
     const filteringByReadingTime = sub.getFilteringByReadingTime();
     if (
       sub.getAdvancedControlsReceivedPeriod().keepUnread ||
@@ -169,15 +174,37 @@ export class FeedlyPage {
 
       let openCurrentFeedArticlesBtn = $("<button>", {
         title: "Open all current feed articles in a new tab",
-        class: ext.openCurrentFeedArticlesClass,
+        class:
+          ext.openCurrentFeedArticlesClass + " " + ext.containerButtonClass,
         style: getFFnS(ext.openCurrentFeedArticlesId) ? "" : "display: none",
         type: "button"
       });
-      let feedButtonsContainer = $("<div>");
+      let disableAllFiltersBtn = $("<button>", {
+        class:
+          ext.disableAllFiltersButtonClass + " " + ext.containerButtonClass,
+        style: getFFnS(ext.disableAllFiltersButtonId) ? "" : "display: none",
+        type: "button"
+      });
+      function refreshDisableAllFiltersBtn(enabled: boolean) {
+        disableAllFiltersBtn.attr(
+          "title",
+          `${enabled ? "Restore" : "Disable all"} filters`
+        );
+        if (enabled) {
+          disableAllFiltersBtn.addClass("enabled");
+        } else {
+          disableAllFiltersBtn.removeClass("enabled");
+        }
+      }
+      refreshDisableAllFiltersBtn(getFFnS(ext.disableAllFiltersEnabled));
+
+      let feedButtonsContainer = $(`<div id='${ext.buttonsContainerId}'>`);
       feedButtonsContainer.append(openCurrentFeedArticlesBtn);
+      feedButtonsContainer.append(disableAllFiltersBtn);
       $("header.header")
         .parent()
         .after(feedButtonsContainer);
+
       onClickCapture(openCurrentFeedArticlesBtn, (event: MouseEvent) => {
         event.stopPropagation();
         let articlesToOpen = getSortedVisibleArticles();
@@ -212,6 +239,12 @@ export class FeedlyPage {
               .addClass("read");
           });
         }
+      });
+      onClickCapture(disableAllFiltersBtn, (event: MouseEvent) => {
+        event.stopPropagation();
+        const newEnabled = !getFFnS(ext.disableAllFiltersEnabled);
+        putFFnS(ext.disableAllFiltersEnabled, newEnabled);
+        refreshDisableAllFiltersBtn(newEnabled);
       });
     });
   }
