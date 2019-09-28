@@ -235,8 +235,8 @@ export class UIManager {
 
   refreshFilteringAndSorting() {
     this.page.reset();
-    this.articleManager.refreshArticles();
     this.page.update(this.subscription);
+    this.articleManager.refreshArticles();
   }
 
   updateSubscription(): AsyncResult<any> {

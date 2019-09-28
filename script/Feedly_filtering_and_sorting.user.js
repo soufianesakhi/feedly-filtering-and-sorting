@@ -1185,7 +1185,17 @@ var ArticleManager = (function () {
         }
         return sorted;
     };
-    ArticleManager.prototype.checkDisableAllFilters = function () { };
+    ArticleManager.prototype.checkDisableAllFilters = function () {
+        if (this.page.get(ext.disableAllFiltersButtonId)) {
+            if (this.page.get(ext.disableAllFiltersEnabled, true)) {
+                var containers = $(ext.articleSelector).map(function (i, a) {
+                    return a.closest(".list-entries > .EntryList__chunk > div");
+                });
+                containers.css("display", "");
+                this.page.clearHidingInfo();
+            }
+        }
+    };
     ArticleManager.prototype.applyColoringRules = function (article) {
         var sub = this.getCurrentSub();
         var rules = sub.getColoringRules();
@@ -2071,7 +2081,7 @@ var FeedlyPage = (function () {
                     disableAllFiltersBtn.removeClass("enabled");
                 }
             }
-            refreshDisableAllFiltersBtn(getFFnS(ext.disableAllFiltersEnabled));
+            refreshDisableAllFiltersBtn(getFFnS(ext.disableAllFiltersEnabled, true));
             var feedButtonsContainer = $("<div id='" + ext.buttonsContainerId + "'>");
             feedButtonsContainer.append(openCurrentFeedArticlesBtn);
             feedButtonsContainer.append(disableAllFiltersBtn);
@@ -2115,9 +2125,12 @@ var FeedlyPage = (function () {
             });
             onClickCapture(disableAllFiltersBtn, function (event) {
                 event.stopPropagation();
-                var newEnabled = !getFFnS(ext.disableAllFiltersEnabled);
-                putFFnS(ext.disableAllFiltersEnabled, newEnabled);
+                var newEnabled = !getFFnS(ext.disableAllFiltersEnabled, true);
+                putFFnS(ext.disableAllFiltersEnabled, newEnabled, true);
                 refreshDisableAllFiltersBtn(newEnabled);
+                $(".icon-toolbar-refresh-secondary")
+                    .first()
+                    .click();
             });
         });
     };
@@ -2794,8 +2807,8 @@ var UIManager = (function () {
     };
     UIManager.prototype.refreshFilteringAndSorting = function () {
         this.page.reset();
-        this.articleManager.refreshArticles();
         this.page.update(this.subscription);
+        this.articleManager.refreshArticles();
     };
     UIManager.prototype.updateSubscription = function () {
         var _this = this;

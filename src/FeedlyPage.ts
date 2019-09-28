@@ -196,7 +196,7 @@ export class FeedlyPage {
           disableAllFiltersBtn.removeClass("enabled");
         }
       }
-      refreshDisableAllFiltersBtn(getFFnS(ext.disableAllFiltersEnabled));
+      refreshDisableAllFiltersBtn(getFFnS(ext.disableAllFiltersEnabled, true));
 
       let feedButtonsContainer = $(`<div id='${ext.buttonsContainerId}'>`);
       feedButtonsContainer.append(openCurrentFeedArticlesBtn);
@@ -242,9 +242,12 @@ export class FeedlyPage {
       });
       onClickCapture(disableAllFiltersBtn, (event: MouseEvent) => {
         event.stopPropagation();
-        const newEnabled = !getFFnS(ext.disableAllFiltersEnabled);
-        putFFnS(ext.disableAllFiltersEnabled, newEnabled);
+        const newEnabled = !getFFnS(ext.disableAllFiltersEnabled, true);
+        putFFnS(ext.disableAllFiltersEnabled, newEnabled, true);
         refreshDisableAllFiltersBtn(newEnabled);
+        $(".icon-toolbar-refresh-secondary")
+          .first()
+          .click();
       });
     });
   }

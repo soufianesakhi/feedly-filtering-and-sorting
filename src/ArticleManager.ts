@@ -189,7 +189,17 @@ export class ArticleManager {
     return sorted;
   }
 
-  checkDisableAllFilters() {}
+  checkDisableAllFilters() {
+    if (this.page.get(ext.disableAllFiltersButtonId)) {
+      if (this.page.get(ext.disableAllFiltersEnabled, true)) {
+        let containers = $(ext.articleSelector).map((i, a) =>
+          a.closest(".list-entries > .EntryList__chunk > div")
+        );
+        containers.css("display", "");
+        this.page.clearHidingInfo();
+      }
+    }
+  }
 
   applyColoringRules(article: Article) {
     let sub = this.getCurrentSub();
