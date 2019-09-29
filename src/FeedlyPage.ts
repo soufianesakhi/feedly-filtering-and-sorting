@@ -245,9 +245,7 @@ export class FeedlyPage {
         const newEnabled = !getFFnS(ext.disableAllFiltersEnabled, true);
         putFFnS(ext.disableAllFiltersEnabled, newEnabled, true);
         refreshDisableAllFiltersBtn(newEnabled);
-        $(".icon-toolbar-refresh-secondary")
-          .first()
-          .click();
+        $(`#${ext.forceRefreshArticlesId}`).click();
       });
     });
   }

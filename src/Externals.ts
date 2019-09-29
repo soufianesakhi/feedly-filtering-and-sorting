@@ -63,5 +63,6 @@ var ext = {
   openCurrentFeedArticlesUnreadOnlyId: "openCurrentFeedArticlesUnreadOnly",
   markAsReadOnOpenCurrentFeedArticlesId:
     "isMarkAsReadOnOpenCurrentFeedArticles",
-  maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles"
+  maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles",
+  forceRefreshArticlesId: "forceRefreshArticles"
 };

@@ -645,6 +645,16 @@ export class UIManager {
           .click();
       }, this.subscription.getAutoRefreshTime());
     }
+
+    const forceRefreshArticlesBtn = $("<button>", {
+      id: ext.forceRefreshArticlesId,
+      style: "display: none;"
+    });
+    $("body").append(forceRefreshArticlesBtn);
+    forceRefreshArticlesBtn.click(e => {
+      e.preventDefault();
+      this.articleManager.refreshArticles();
+    });
   }
 
   registerAdditionalSortingType(): string {
