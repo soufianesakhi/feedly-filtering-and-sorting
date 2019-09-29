@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.14.1
+// @version     3.15.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -80,7 +80,8 @@ var ext = {
     disableAllFiltersButtonClass: "disable-all-filters-button",
     openCurrentFeedArticlesUnreadOnlyId: "openCurrentFeedArticlesUnreadOnly",
     markAsReadOnOpenCurrentFeedArticlesId: "isMarkAsReadOnOpenCurrentFeedArticles",
-    maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles"
+    maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles",
+    forceRefreshArticlesId: "forceRefreshArticles"
 };
 
 var templates = {
@@ -2128,9 +2129,7 @@ var FeedlyPage = (function () {
                 var newEnabled = !getFFnS(ext.disableAllFiltersEnabled, true);
                 putFFnS(ext.disableAllFiltersEnabled, newEnabled, true);
                 refreshDisableAllFiltersBtn(newEnabled);
-                $(".icon-toolbar-refresh-secondary")
-                    .first()
-                    .click();
+                $("#" + ext.forceRefreshArticlesId).click();
             });
         });
     };
@@ -3164,6 +3163,15 @@ var UIManager = (function () {
                     .click();
             }, this.subscription.getAutoRefreshTime());
         }
+        var forceRefreshArticlesBtn = $("<button>", {
+            id: ext.forceRefreshArticlesId,
+            style: "display: none;"
+        });
+        $("body").append(forceRefreshArticlesBtn);
+        forceRefreshArticlesBtn.click(function (e) {
+            e.preventDefault();
+            _this.articleManager.refreshArticles();
+        });
     };
     UIManager.prototype.registerAdditionalSortingType = function () {
         var _this = this;
