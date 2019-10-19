@@ -9,7 +9,7 @@ var ext = {
   subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
   categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
 
-  settingsBtnSuccessorSelector: ".button-customize-page",
+  settingsBtnPredecessorSelector: ".icon-toolbar-refresh-secondary",
   articlesContainerSelector: ".list-entries",
   articlesChunkSelector: ".EntryList__chunk",
   containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
