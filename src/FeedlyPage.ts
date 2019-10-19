@@ -9,6 +9,7 @@ declare var putFFnS: (id: string, value: any, persistent?: boolean) => any;
 declare var getById: (id: string) => HTMLElement;
 declare var getSortedVisibleArticles: () => string[];
 declare var getStreamPage: () => any;
+declare var getStreamObj: () => any;
 declare var onClickCapture: (
   element: JQuery,
   callback: (event: MouseEvent) => any
@@ -18,6 +19,7 @@ declare var loadNextBatch: (ev?: MouseEvent) => void;
 declare var getKeptUnreadEntryIds: () => string[];
 declare var overrideLoadingEntries: () => any;
 declare var overrideSorting: () => any;
+declare var overrideNavigation: () => any;
 declare var onNewPageObserve: () => any;
 declare var onNewArticleObserve: () => any;
 
@@ -32,6 +34,7 @@ export class FeedlyPage {
         "putFFnS",
         "getById",
         "getStreamPage",
+        "getStreamObj",
         "onClickCapture",
         "fetchMoreEntries",
         "loadNextBatch",
@@ -42,6 +45,7 @@ export class FeedlyPage {
       this.put,
       this.getById,
       this.getStreamPage,
+      this.getStreamObj,
       this.onClickCapture,
       this.fetchMoreEntries,
       this.loadNextBatch,
@@ -50,6 +54,7 @@ export class FeedlyPage {
     );
     injectToWindow(["overrideLoadingEntries"], this.overrideLoadingEntries);
     injectToWindow(["overrideSorting"], this.overrideSorting);
+    injectToWindow(["overrideNavigation"], this.overrideNavigation);
     injectToWindow(["onNewPageObserve"], this.onNewPageObserve);
     injectToWindow(["onNewArticleObserve"], this.onNewArticleObserve);
     injectClasses(EntryInfos);
@@ -131,6 +136,7 @@ export class FeedlyPage {
     NodeCreationObserver.init("observed-page");
     overrideLoadingEntries();
     overrideSorting();
+    overrideNavigation();
     onNewPageObserve();
     onNewArticleObserve();
     let removeChild = Node.prototype.removeChild;
@@ -159,6 +165,15 @@ export class FeedlyPage {
         return observers[i];
       }
     }
+  }
+
+  getStreamObj(): any {
+    let streamPage = getStreamPage();
+    let streamObj = streamPage.stream;
+    if (!streamObj) {
+      streamObj = streamPage._streams[Object.keys(streamPage._streams)[0]];
+    }
+    return streamObj;
   }
 
   onNewPageObserve() {
@@ -543,11 +558,7 @@ export class FeedlyPage {
   }
 
   overrideLoadingEntries() {
-    let streamPage = getStreamPage();
-    let streamObj = streamPage.stream;
-    if (!streamObj) {
-      streamObj = streamPage._streams[Object.keys(streamPage._streams)[0]];
-    }
+    let streamObj = getStreamObj();
     if (!streamObj) {
       setTimeout(overrideLoadingEntries, 1000);
       return;
@@ -826,6 +837,30 @@ export class FeedlyPage {
         }),
         a
       );
+    };
+  }
+
+  overrideNavigation() {
+    var navigo = window["streets"].service("navigo");
+    var prototype = Object.getPrototypeOf(navigo);
+    const collectionPrefix = "collection/content/";
+    prototype.getNextURI = function() {
+      var e = this.nextURI;
+      if (!e || e === "my") {
+        return collectionPrefix + getStreamObj().streamId;
+      } else if (RegExp("/category/global.all$", "i").test(e)) {
+        try {
+          let categories = JSON.parse(
+            window["streets"]
+              .service("preferences")
+              .getPreference("categoriesOrderingId")
+          );
+          return collectionPrefix + categories[0];
+        } catch (e) {
+          console.log(e);
+        }
+      }
+      return e;
     };
   }
 }
