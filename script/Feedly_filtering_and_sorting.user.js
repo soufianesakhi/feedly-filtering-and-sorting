@@ -31,7 +31,7 @@ var ext = {
     defaultUrlPrefixPattern: "https?://[^/]+/i/",
     subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
     categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
-    settingsBtnSuccessorSelector: ".button-customize-page",
+    settingsBtnPredecessorSelector: ".icon-toolbar-refresh-secondary",
     articlesContainerSelector: ".list-entries",
     articlesChunkSelector: ".EntryList__chunk",
     containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
@@ -1153,20 +1153,24 @@ var ArticleManager = (function () {
         }
     };
     ArticleManager.prototype.checkPopularityAndSort = function () {
-        var popularityArr = [];
-        var hotPopularityArr = [];
-        $(ext.articleSelector + ":visible").each(function (i, article) {
-            var engagement = $(article).find(ext.popularitySelector);
-            var popularity = parsePopularity($(engagement).text());
-            if ($(engagement).is(".hot, .onfire")) {
-                hotPopularityArr.push(popularity);
-            }
-            else {
-                popularityArr.push(popularity);
-            }
+        var _this = this;
+        var sorted = true;
+        $(ext.articlesContainerSelector).each(function (i, articlesContainer) {
+            var popularityArr = [];
+            var hotPopularityArr = [];
+            $(articlesContainer).find(ext.containerArticleSelector + ":visible").each(function (i, article) {
+                var engagement = $(article).find(ext.popularitySelector);
+                var popularity = parsePopularity($(engagement).text());
+                if ($(engagement).is(".hot, .onfire")) {
+                    hotPopularityArr.push(popularity);
+                }
+                else {
+                    popularityArr.push(popularity);
+                }
+            });
+            sorted = sorted && _this.checkPopularitySorted(hotPopularityArr);
+            sorted = sorted && _this.checkPopularitySorted(popularityArr);
         });
-        var sorted = this.checkPopularitySorted(hotPopularityArr);
-        sorted = this.checkPopularitySorted(popularityArr);
         if (!sorted) {
             console.log("Sorting by popularity after check");
             this.sortArticles(true);
@@ -2051,17 +2055,13 @@ var FeedlyPage = (function () {
         var observers = window["streets"].service("navigo").observers;
         for (var i = 0, len = observers.length; i < len; i++) {
             var stream = observers[i].stream;
-            if (stream && stream.streamId) {
+            if ((stream && stream.streamId) || observers[i]._streams) {
                 return observers[i];
             }
         }
     };
     FeedlyPage.prototype.onNewPageObserve = function () {
         NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
-            var streamPage = getStreamPage();
-            if (streamPage) {
-                putFFnS(ext.isNewestFirstId, streamPage.stream._sort === "newest", true);
-            }
             var openCurrentFeedArticlesBtn = $("<button>", {
                 title: "Open all current feed articles in a new tab",
                 class: ext.openCurrentFeedArticlesClass + " " + ext.containerButtonClass,
@@ -2400,6 +2400,16 @@ var FeedlyPage = (function () {
         fetchMoreEntries(getFFnS(ext.batchSizeId, true));
     };
     FeedlyPage.prototype.overrideLoadingEntries = function () {
+        var streamPage = getStreamPage();
+        var streamObj = streamPage.stream;
+        if (!streamObj) {
+            streamObj = streamPage._streams[Object.keys(streamPage._streams)[0]];
+        }
+        if (!streamObj) {
+            setTimeout(overrideLoadingEntries, 1000);
+            return;
+        }
+        putFFnS(ext.isNewestFirstId, streamObj._sort === "newest", true);
         var autoLoadingMessageId = "#FFnS_LoadingMessage";
         var loadNextBatchBtnId = "#FFnS_LoadNextBatchBtn";
         var secondaryMarkAsReadBtnsSelector = ".mark-as-read-button.secondary";
@@ -2416,11 +2426,9 @@ var FeedlyPage = (function () {
                     getFFnS(ext.autoLoadAllArticlesId, true));
             }
             catch (e) {
-                console.log(e);
                 return false;
             }
         };
-        var streamObj = getStreamPage().stream;
         var prototype = Object.getPrototypeOf(streamObj);
         var setBatchSize = prototype.setBatchSize;
         prototype.setBatchSize = function (customSize) {
@@ -3031,7 +3039,7 @@ var UIManager = (function () {
     };
     UIManager.prototype.initShowSettingsBtns = function () {
         var this_ = this;
-        NodeCreationObserver.onCreation(ext.settingsBtnSuccessorSelector, function (element) {
+        NodeCreationObserver.onCreation(ext.settingsBtnPredecessorSelector, function (element) {
             var clone = $(element).clone();
             $(clone)
                 .empty()
@@ -3039,8 +3047,7 @@ var UIManager = (function () {
                 .attr("title", "Feedly filtering and sorting")
                 .addClass("ShowSettingsBtn");
             $(element)
-                .parent()
-                .before(clone);
+                .after(clone);
             $(clone).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
             });

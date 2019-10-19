@@ -155,7 +155,7 @@ export class FeedlyPage {
     var observers = window["streets"].service("navigo").observers;
     for (let i = 0, len = observers.length; i < len; i++) {
       let stream = observers[i].stream;
-      if (stream && stream.streamId) {
+      if ((stream && stream.streamId) || observers[i]._streams) {
         return observers[i];
       }
     }
@@ -163,15 +163,6 @@ export class FeedlyPage {
 
   onNewPageObserve() {
     NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, () => {
-      var streamPage = getStreamPage();
-      if (streamPage) {
-        putFFnS(
-          ext.isNewestFirstId,
-          streamPage.stream._sort === "newest",
-          true
-        );
-      }
-
       let openCurrentFeedArticlesBtn = $("<button>", {
         title: "Open all current feed articles in a new tab",
         class:
@@ -552,6 +543,17 @@ export class FeedlyPage {
   }
 
   overrideLoadingEntries() {
+    let streamPage = getStreamPage();
+    let streamObj = streamPage.stream;
+    if (!streamObj) {
+      streamObj = streamPage._streams[Object.keys(streamPage._streams)[0]];
+    }
+    if (!streamObj) {
+      setTimeout(overrideLoadingEntries, 1000);
+      return;
+    }
+    putFFnS(ext.isNewestFirstId, streamObj._sort === "newest", true);
+
     var autoLoadingMessageId = "#FFnS_LoadingMessage";
     var loadNextBatchBtnId = "#FFnS_LoadNextBatchBtn";
     var secondaryMarkAsReadBtnsSelector = ".mark-as-read-button.secondary";
@@ -570,12 +572,10 @@ export class FeedlyPage {
           getFFnS(ext.autoLoadAllArticlesId, true)
         );
       } catch (e) {
-        console.log(e);
         return false;
       }
     };
 
-    let streamObj = getStreamPage().stream;
     var prototype = Object.getPrototypeOf(streamObj);
     var setBatchSize: Function = prototype.setBatchSize;
     prototype.setBatchSize = function(customSize?: number) {
