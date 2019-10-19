@@ -153,20 +153,23 @@ export class ArticleManager {
   }
 
   checkPopularityAndSort() {
-    const popularityArr = [];
-    const hotPopularityArr = [];
-    $(ext.articleSelector + ":visible").each((i, article) => {
-      let engagement = $(article).find(ext.popularitySelector);
-      const popularity = parsePopularity($(engagement).text());
-      if ($(engagement).is(".hot, .onfire")) {
-        hotPopularityArr.push(popularity);
-      } else {
-        popularityArr.push(popularity);
-      }
+    let sorted = true;
+    
+    $(ext.articlesContainerSelector).each((i, articlesContainer) => {
+      const popularityArr = [];
+      const hotPopularityArr = [];
+      $(articlesContainer).find(ext.containerArticleSelector + ":visible").each((i, article) => {
+        let engagement = $(article).find(ext.popularitySelector);
+        const popularity = parsePopularity($(engagement).text());
+        if ($(engagement).is(".hot, .onfire")) {
+          hotPopularityArr.push(popularity);
+        } else {
+          popularityArr.push(popularity);
+        }
+      });
+      sorted = sorted && this.checkPopularitySorted(hotPopularityArr);
+      sorted = sorted && this.checkPopularitySorted(popularityArr);
     });
-
-    let sorted = this.checkPopularitySorted(hotPopularityArr);
-    sorted = this.checkPopularitySorted(popularityArr);
     if (!sorted) {
       console.log(`Sorting by popularity after check`);
       this.sortArticles(true);
