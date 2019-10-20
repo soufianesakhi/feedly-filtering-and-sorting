@@ -15,6 +15,7 @@ export class ArticleManager {
   page: FeedlyPage;
   articlesToMarkAsRead: Article[] = [];
   duplicateChecker: DuplicateChecker;
+  darkMode = this.isDarkMode();
 
   constructor(
     settingsManager: SettingsManager,
@@ -46,6 +47,7 @@ export class ArticleManager {
   }
 
   refreshColoring() {
+    this.darkMode = this.isDarkMode();
     $(ext.articleSelector).each((i, e) => {
       this.applyColoringRules(new Article(e));
     });
@@ -154,19 +156,21 @@ export class ArticleManager {
 
   checkPopularityAndSort() {
     let sorted = true;
-    
+
     $(ext.articlesContainerSelector).each((i, articlesContainer) => {
       const popularityArr = [];
       const hotPopularityArr = [];
-      $(articlesContainer).find(ext.containerArticleSelector + ":visible").each((i, article) => {
-        let engagement = $(article).find(ext.popularitySelector);
-        const popularity = parsePopularity($(engagement).text());
-        if ($(engagement).is(".hot, .onfire")) {
-          hotPopularityArr.push(popularity);
-        } else {
-          popularityArr.push(popularity);
-        }
-      });
+      $(articlesContainer)
+        .find(ext.containerArticleSelector + ":visible")
+        .each((i, article) => {
+          let engagement = $(article).find(ext.popularitySelector);
+          const popularity = parsePopularity($(engagement).text());
+          if ($(engagement).is(".hot, .onfire")) {
+            hotPopularityArr.push(popularity);
+          } else {
+            popularityArr.push(popularity);
+          }
+        });
       sorted = sorted && this.checkPopularitySorted(hotPopularityArr);
       sorted = sorted && this.checkPopularitySorted(popularityArr);
     });
@@ -245,9 +249,12 @@ export class ArticleManager {
     for (var i = 0; i < id.length; i++) {
       x += id.charCodeAt(i);
     }
-    let h = ((x % 36) + 1) * 1;
-    let s = 30 + ((x % 5) + 1) * 10;
-    return "hsl(" + h + ", " + s + "%, 80%)";
+    let h = (x % 360) + 1;
+    return "hsl(" + h + ", 100%, " + (this.darkMode ? "20%)" : "80%)");
+  }
+
+  isDarkMode(): boolean {
+    return $("body").hasClass("theme--dark");
   }
 
   checkLastAddedArticle(refresh?: boolean) {

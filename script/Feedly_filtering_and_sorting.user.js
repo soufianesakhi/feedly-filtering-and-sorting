@@ -1038,6 +1038,7 @@ var CrossCheckDuplicatesSettings = (function () {
 var ArticleManager = (function () {
     function ArticleManager(settingsManager, keywordManager, page) {
         this.articlesToMarkAsRead = [];
+        this.darkMode = this.isDarkMode();
         this.settingsManager = settingsManager;
         this.keywordManager = keywordManager;
         this.articleSorterFactory = new ArticleSorterFactory();
@@ -1062,6 +1063,7 @@ var ArticleManager = (function () {
     };
     ArticleManager.prototype.refreshColoring = function () {
         var _this = this;
+        this.darkMode = this.isDarkMode();
         $(ext.articleSelector).each(function (i, e) {
             _this.applyColoringRules(new Article(e));
         });
@@ -1158,7 +1160,9 @@ var ArticleManager = (function () {
         $(ext.articlesContainerSelector).each(function (i, articlesContainer) {
             var popularityArr = [];
             var hotPopularityArr = [];
-            $(articlesContainer).find(ext.containerArticleSelector + ":visible").each(function (i, article) {
+            $(articlesContainer)
+                .find(ext.containerArticleSelector + ":visible")
+                .each(function (i, article) {
                 var engagement = $(article).find(ext.popularitySelector);
                 var popularity = parsePopularity($(engagement).text());
                 if ($(engagement).is(".hot, .onfire")) {
@@ -1238,9 +1242,11 @@ var ArticleManager = (function () {
         for (var i = 0; i < id.length; i++) {
             x += id.charCodeAt(i);
         }
-        var h = ((x % 36) + 1) * 1;
-        var s = 30 + ((x % 5) + 1) * 10;
-        return "hsl(" + h + ", " + s + "%, 80%)";
+        var h = (x % 360) + 1;
+        return "hsl(" + h + ", 100%, " + (this.darkMode ? "20%)" : "80%)");
+    };
+    ArticleManager.prototype.isDarkMode = function () {
+        return $("body").hasClass("theme--dark");
     };
     ArticleManager.prototype.checkLastAddedArticle = function (refresh) {
         var allArticlesChecked = $(ext.uncheckedArticlesSelector).length == 0;
@@ -3075,8 +3081,7 @@ var UIManager = (function () {
                 .removeAttr("class")
                 .attr("title", "Feedly filtering and sorting")
                 .addClass("ShowSettingsBtn");
-            $(element)
-                .after(clone);
+            $(element).after(clone);
             $(clone).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
             });
@@ -3207,6 +3212,9 @@ var UIManager = (function () {
         forceRefreshArticlesBtn.click(function (e) {
             e.preventDefault();
             _this.articleManager.refreshArticles();
+        });
+        onClick($("button[title='Day Mode']"), function () {
+            setTimeout(function () { return _this.articleManager.refreshColoring(); }, 100);
         });
     };
     UIManager.prototype.registerAdditionalSortingType = function () {
