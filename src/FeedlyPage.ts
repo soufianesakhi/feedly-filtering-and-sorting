@@ -846,9 +846,11 @@ export class FeedlyPage {
     const collectionPrefix = "collection/content/";
     prototype.getNextURI = function() {
       var e = this.nextURI;
-      if (!e || e === "my") {
-        return collectionPrefix + getStreamObj().streamId;
-      } else if (RegExp("/category/global.all$", "i").test(e)) {
+      if (
+        !e ||
+        (e.endsWith("/category/global.all") &&
+          e.endsWith(getStreamObj().streamId))
+      ) {
         try {
           let categories = JSON.parse(
             window["streets"]
