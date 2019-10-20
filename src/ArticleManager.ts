@@ -6,7 +6,7 @@ import { FeedlyPage } from "./FeedlyPage";
 import { KeywordManager } from "./KeywordManager";
 import { SettingsManager } from "./SettingsManager";
 import { Subscription } from "./Subscription";
-import { removeContent } from "./Utils";
+import { hexToRgb, isLight, removeContent, shadeColor } from "./Utils";
 
 export class ArticleManager {
   settingsManager: SettingsManager;
@@ -233,12 +233,20 @@ export class ArticleManager {
           keywords,
           rule.matchingMethod
         );
-        let color = article.setColor(match ? "#" + rule.color : "");
+        article.setColor(match ? this.correctDarkness("#" + rule.color) : "");
         if (match) {
           return;
         }
       }
     }
+  }
+
+  correctDarkness(hexColor: string) {
+    const rgb = hexToRgb(hexColor);
+    if (isLight(rgb) && this.darkMode) {
+      return shadeColor(rgb, -80);
+    }
+    return hexColor;
   }
 
   generateColor(id: string): string {

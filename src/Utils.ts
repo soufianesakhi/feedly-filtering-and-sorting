@@ -278,3 +278,28 @@ export function removeContent(elements: JQuery) {
     $(element).empty();
   });
 }
+
+export function hexToRgb(hexColor: string) {
+  const rgb = parseInt(hexColor.substring(1), 16);
+  const r = (rgb >> 16) & 0xff;
+  const g = (rgb >> 8) & 0xff;
+  const b = (rgb >> 0) & 0xff;
+  return [r, g, b];
+}
+
+export function isLight(rgb: number[]) {
+  const luma = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]; // per ITU-R BT.709
+  return luma > 128;
+}
+
+export function shadeColor(rgb: number[], percent) {
+  let R = (rgb[0] * (100 + percent)) / 100;
+  let G = (rgb[1] * (100 + percent)) / 100;
+  let B = (rgb[2] * (100 + percent)) / 100;
+
+  R = R < 255 ? R : 255;
+  G = G < 255 ? G : 255;
+  B = B < 255 ? B : 255;
+
+  return `rgb(${R}, ${G}, ${B})`;
+}

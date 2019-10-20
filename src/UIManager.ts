@@ -654,7 +654,7 @@ export class UIManager {
       this.articleManager.refreshArticles();
     });
 
-    onClick($("button[title='Day Mode']"), () => {
+    onClick($("button[title='Day Mode'], button[title='Dark Mode']"), () => {
       setTimeout(() => this.articleManager.refreshColoring(), 100);
     });
   }
