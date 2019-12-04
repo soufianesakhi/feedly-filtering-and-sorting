@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.16.1
+// @version     3.16.2
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2252,12 +2252,8 @@ var FeedlyPage = (function () {
                 }
             };
         };
-        NodeCreationObserver.onCreation(ext.articleSelector + ", .condensed-tools .button-dropdown", function (element) {
-            var notDropdown = !$(element).hasClass("button-dropdown");
+        NodeCreationObserver.onCreation(ext.articleSelector, function (element) {
             var a = $(element).closest(ext.articleSelector);
-            if (notDropdown == a.hasClass("u0")) {
-                return;
-            }
             var entryId = a.attr(ext.articleEntryIdAttribute);
             var e = reader.lookupEntry(entryId);
             var entryInfos = $("<span>", {
@@ -2275,7 +2271,7 @@ var FeedlyPage = (function () {
                 attributes.style = getFFnS(id) ? "" : "display: none";
                 attributes.class += " mark-as-read";
                 if (titleView) {
-                    attributes.class += " condensed-toolbar-icon icon";
+                    attributes.class += " button-icon-only-micro icon";
                 }
                 var e = $("<button>", attributes);
                 if (cardsView) {
@@ -2290,7 +2286,7 @@ var FeedlyPage = (function () {
                     a.find(".fx.metadata").append(e);
                 }
                 else {
-                    $(element).prepend(e);
+                    a.find(".CondensedToolbar .button-dropdown").prepend(e);
                 }
                 return e;
             };

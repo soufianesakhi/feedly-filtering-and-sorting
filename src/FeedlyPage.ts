@@ -333,122 +333,115 @@ export class FeedlyPage {
       };
     };
 
-    NodeCreationObserver.onCreation(
-      ext.articleSelector + ", .condensed-tools .button-dropdown",
-      element => {
-        var notDropdown = !$(element).hasClass("button-dropdown");
-        var a = $(element).closest(ext.articleSelector);
-        if (notDropdown == a.hasClass("u0")) {
-          return;
-        }
+    NodeCreationObserver.onCreation(ext.articleSelector, element => {
+      var a = $(element).closest(ext.articleSelector);
 
-        var entryId = a.attr(ext.articleEntryIdAttribute);
+      var entryId = a.attr(ext.articleEntryIdAttribute);
 
-        var e = reader.lookupEntry(entryId);
-        var entryInfos = $("<span>", {
-          class: ext.entryInfosJsonClass,
-          style: "display: none"
-        });
-        entryInfos.text(JSON.stringify(new EntryInfos(e.jsonInfo)));
-        a.append(entryInfos);
+      var e = reader.lookupEntry(entryId);
+      var entryInfos = $("<span>", {
+        class: ext.entryInfosJsonClass,
+        style: "display: none"
+      });
+      entryInfos.text(JSON.stringify(new EntryInfos(e.jsonInfo)));
+      a.append(entryInfos);
 
-        var cardsView = a.hasClass("u5");
-        var magazineView = a.hasClass("u4");
-        var titleView = a.hasClass("u0");
-        var articleView = a.hasClass(ext.articleViewClass);
-        var addButton = (id: string, attributes) => {
-          attributes.type = "button";
-          attributes.style = getFFnS(id) ? "" : "display: none";
-          attributes.class += " mark-as-read";
-          if (titleView) {
-            attributes.class += " condensed-toolbar-icon icon";
-          }
-
-          var e = $("<button>", attributes);
-          if (cardsView) {
-            a.find(".mark-as-read")
-              .last()
-              .before(e);
-          } else if (magazineView) {
-            a.find(".ago").after(e);
-          } else if (articleView) {
-            a.find(".fx.metadata").append(e);
-          } else {
-            $(element).prepend(e);
-          }
-          return e;
-        };
-        var markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
-          class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
-          title:
-            "Mark articles below" +
-            (cardsView ? " and on the right" : "") +
-            " as read/unread"
-        });
-        var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
-          class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
-          title:
-            "Mark articles above" +
-            (cardsView ? " and on the left" : "") +
-            " as read/unread"
-        });
-        var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
-          class: ext.openAndMarkAsReadClass,
-          title: "Open in a new window/tab and mark as read"
-        });
-
-        if (articleView) {
-          markAsReadBelowElement.detach().insertAfter(markAsReadAboveElement);
-        } else if (magazineView) {
-          markAsReadAboveElement.detach().insertAfter(markAsReadBelowElement);
-        }
-
-        var link = getLink(a);
-        let openAndMarkAsRead = (event: MouseEvent) => {
-          event.stopPropagation();
-          window.open(link, link);
-          reader.askMarkEntryAsRead(entryId);
-          if (articleView) {
-            $(a)
-              .closest(ext.articleViewEntryContainerSelector)
-              .removeClass("unread")
-              .addClass("read");
-          }
-        };
-        onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
-
-        let visualElement;
-        if (cardsView) {
-          visualElement = a.find(".visual-container");
-        } else if (magazineView) {
-          visualElement = a.find(".visual");
-        }
-        if (visualElement) {
-          onClickCapture(visualElement, e => {
-            if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
-              openAndMarkAsRead(e);
-            }
-          });
-        }
+      var cardsView = a.hasClass("u5");
+      var magazineView = a.hasClass("u4");
+      var titleView = a.hasClass("u0");
+      var articleView = a.hasClass(ext.articleViewClass);
+      var addButton = (id: string, attributes) => {
+        attributes.type = "button";
+        attributes.style = getFFnS(id) ? "" : "display: none";
+        attributes.class += " mark-as-read";
         if (titleView) {
-          onClickCapture(a.find(".content"), e => {
-            if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
-              e.stopPropagation();
-              reader.askMarkEntryAsRead(entryId);
-            }
-          });
+          attributes.class += " button-icon-only-micro icon";
         }
 
-        onClickCapture(
-          markAsReadBelowElement,
-          getMarkAsReadAboveBelowCallback(entryId, false)
-        );
-        onClickCapture(
-          markAsReadAboveElement,
-          getMarkAsReadAboveBelowCallback(entryId, true)
-        );
+        var e = $("<button>", attributes);
+        if (cardsView) {
+          a.find(".mark-as-read")
+            .last()
+            .before(e);
+        } else if (magazineView) {
+          a.find(".ago").after(e);
+        } else if (articleView) {
+          a.find(".fx.metadata").append(e);
+        } else {
+          a.find(".CondensedToolbar .button-dropdown").prepend(e);
+        }
+        return e;
+      };
+      var markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
+        class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
+        title:
+          "Mark articles below" +
+          (cardsView ? " and on the right" : "") +
+          " as read/unread"
+      });
+      var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
+        class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
+        title:
+          "Mark articles above" +
+          (cardsView ? " and on the left" : "") +
+          " as read/unread"
+      });
+      var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
+        class: ext.openAndMarkAsReadClass,
+        title: "Open in a new window/tab and mark as read"
+      });
+
+      if (articleView) {
+        markAsReadBelowElement.detach().insertAfter(markAsReadAboveElement);
+      } else if (magazineView) {
+        markAsReadAboveElement.detach().insertAfter(markAsReadBelowElement);
       }
-    );
+
+      var link = getLink(a);
+      let openAndMarkAsRead = (event: MouseEvent) => {
+        event.stopPropagation();
+        window.open(link, link);
+        reader.askMarkEntryAsRead(entryId);
+        if (articleView) {
+          $(a)
+            .closest(ext.articleViewEntryContainerSelector)
+            .removeClass("unread")
+            .addClass("read");
+        }
+      };
+      onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
+
+      let visualElement;
+      if (cardsView) {
+        visualElement = a.find(".visual-container");
+      } else if (magazineView) {
+        visualElement = a.find(".visual");
+      }
+      if (visualElement) {
+        onClickCapture(visualElement, e => {
+          if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
+            openAndMarkAsRead(e);
+          }
+        });
+      }
+      if (titleView) {
+        onClickCapture(a.find(".content"), e => {
+          if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
+            e.stopPropagation();
+            reader.askMarkEntryAsRead(entryId);
+          }
+        });
+      }
+
+      onClickCapture(
+        markAsReadBelowElement,
+        getMarkAsReadAboveBelowCallback(entryId, false)
+      );
+      onClickCapture(
+        markAsReadAboveElement,
+        getMarkAsReadAboveBelowCallback(entryId, true)
+      );
+    });
   }
 
   reset() {
