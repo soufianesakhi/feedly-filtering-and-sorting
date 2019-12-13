@@ -3237,7 +3237,7 @@ var UIManager = (function () {
             e.preventDefault();
             _this.articleManager.refreshArticles();
         });
-        onClick($("button[title='Day Mode'], button[title='Dark Mode']"), function () {
+        onClick($(".icon-fx-light-mode-md-black, .icon-fx-dark-mode-md-black"), function () {
             setTimeout(function () { return _this.articleManager.refreshColoring(); }, 100);
         });
     };

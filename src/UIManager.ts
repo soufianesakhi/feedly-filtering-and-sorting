@@ -658,9 +658,12 @@ export class UIManager {
       this.articleManager.refreshArticles();
     });
 
-    onClick($("button[title='Day Mode'], button[title='Dark Mode']"), () => {
-      setTimeout(() => this.articleManager.refreshColoring(), 100);
-    });
+    onClick(
+      $(".icon-fx-light-mode-md-black, .icon-fx-dark-mode-md-black"),
+      () => {
+        setTimeout(() => this.articleManager.refreshColoring(), 100);
+      }
+    );
   }
 
   registerAdditionalSortingType(): string {
