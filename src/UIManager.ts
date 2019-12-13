@@ -425,7 +425,7 @@ export class UIManager {
       { name: "filetringKeywordsId", value: ids.filetringKeywordsId },
       {
         name: "FilteringKeywordMatchingArea",
-        value: this.getKeywordMatchingSelectHTML("", true, type)
+        value: this.getKeywordMatchingSelectHTML("filtering", true, type)
       }
     ]);
     return filteringListHTML;
@@ -434,7 +434,8 @@ export class UIManager {
   getKeywordMatchingSelectHTML(
     attributes: string,
     includeDefaultOption: boolean,
-    type?: FilteringType
+    type?: FilteringType,
+    selectId?: string
   ): string {
     var defaultOption = includeDefaultOption
       ? bindMarkup(templates.emptyOptionHTML, [
@@ -442,7 +443,10 @@ export class UIManager {
         ])
       : "";
     var filteringListHTML = bindMarkup(templates.keywordMatchingSelectHTML, [
-      { name: "Id", value: this.getKeywordMatchingSelectId(true, type) },
+      {
+        name: "Id",
+        value: selectId || this.getKeywordMatchingSelectId(true, type)
+      },
       { name: "attributes", value: attributes },
       { name: "defaultOption", value: defaultOption },
       { name: "selectFirst", value: includeDefaultOption ? "" : "selected" },
@@ -606,7 +610,7 @@ export class UIManager {
 
     var useDefaultMatchingAreas = $id("FFnS_AlwaysUseDefaultMatchingAreas");
     function toggleFilteringKeywordMatchingSelects() {
-      var selects = $(".FFnS_keywordMatchingSelect:not([multiple])");
+      var selects = $(".FFnS_keywordMatchingSelect[filtering]");
       if (isChecked($(useDefaultMatchingAreas))) {
         selects.hide();
       } else {
@@ -690,6 +694,15 @@ export class UIManager {
         value: this.getKeywordMatchingMethod(
           false,
           ids.id + "_KeywordMatchingMethod"
+        )
+      },
+      {
+        name: "KeywordMatchingArea",
+        value: this.getKeywordMatchingSelectHTML(
+          "required",
+          false,
+          null,
+          ids.id + "_KeywordMatchingArea"
         )
       },
       { name: "plusIconLink", value: ext.plusIconLink },
