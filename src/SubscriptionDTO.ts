@@ -72,5 +72,6 @@ export class ColoringRule {
   color = "FFFF00";
   highlightAllTitle = true;
   matchingMethod = KeywordMatchingMethod.Simple;
+  matchingArea = KeywordMatchingArea.Title;
   specificKeywords: string[] = [];
 }

@@ -575,6 +575,7 @@ var ColoringRule = (function () {
         this.color = "FFFF00";
         this.highlightAllTitle = true;
         this.matchingMethod = KeywordMatchingMethod.Simple;
+        this.matchingArea = KeywordMatchingArea.Title;
         this.specificKeywords = [];
     }
     return ColoringRule;
@@ -3286,11 +3287,13 @@ var UIManager = (function () {
         setChecked(ids.highlightId, cr.highlightAllTitle);
         $id(ids.sourceId).val(cr.source);
         $id(ids.matchingMethodId).val(cr.matchingMethod);
+        $id(ids.matchingAreaId).val(cr.matchingArea);
         this.refreshColoringRuleSpecificKeywords(cr, ids);
         var refreshVisibility = function () {
             $id(ids.keywordGroupId).css("display", cr.source == ColoringRuleSource.SpecificKeywords ? "" : "none");
             var sourceTitle = cr.source == ColoringRuleSource.SourceTitle;
             $id(ids.matchingMethodContainerId).css("display", sourceTitle ? "none" : "");
+            $id(ids.matchingAreaContainerId).css("display", sourceTitle ? "none" : "");
             $id(ids.optionsSpanId).css("display", sourceTitle ? "none" : "");
             $id(ids.sourceTitleInfosId).css("display", sourceTitle ? "" : "none");
         };
@@ -3329,6 +3332,9 @@ var UIManager = (function () {
         });
         onChange(ids.matchingMethodId, function () {
             cr.matchingMethod = Number($(this).val());
+        });
+        onChange(ids.matchingAreaId, function () {
+            cr.matchingArea = Number($(this).val());
         });
         onChange(ids.colorId, function () {
             var str = $(this).val();
@@ -3602,6 +3608,8 @@ var ColoringRuleHTMLIds = (function () {
         this.matchingMethodId = id + " .FFnS_KeywordMatchingMethod";
         this.matchingMethodContainerId =
             id + " .FFnS_ColoringRule_MatchingMethodGroup";
+        this.matchingAreaId = id + " .FFnS_keywordMatchingSelect";
+        this.matchingAreaContainerId = id + " .FFnS_ColoringRule_MatchingAreaGroup";
         this.keywordInputId = id + " .FFnS_ColoringRule_KeywordInput";
         this.addBtnId = id + " .FFnS_ColoringRule_AddKeyword";
         this.eraseBtnId = id + " .FFnS_ColoringRule_EraseKeywords";

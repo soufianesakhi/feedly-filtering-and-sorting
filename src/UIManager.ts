@@ -716,6 +716,7 @@ export class UIManager {
     setChecked(ids.highlightId, cr.highlightAllTitle);
     $id(ids.sourceId).val(cr.source);
     $id(ids.matchingMethodId).val(cr.matchingMethod);
+    $id(ids.matchingAreaId).val(cr.matchingArea);
     this.refreshColoringRuleSpecificKeywords(cr, ids);
     let refreshVisibility = () => {
       $id(ids.keywordGroupId).css(
@@ -724,6 +725,10 @@ export class UIManager {
       );
       let sourceTitle = cr.source == ColoringRuleSource.SourceTitle;
       $id(ids.matchingMethodContainerId).css(
+        "display",
+        sourceTitle ? "none" : ""
+      );
+      $id(ids.matchingAreaContainerId).css(
         "display",
         sourceTitle ? "none" : ""
       );
@@ -771,6 +776,9 @@ export class UIManager {
     });
     onChange(ids.matchingMethodId, function() {
       cr.matchingMethod = Number($(this).val());
+    });
+    onChange(ids.matchingAreaId, function() {
+      cr.matchingArea = Number($(this).val());
     });
     onChange(
       ids.colorId,
@@ -1095,6 +1103,8 @@ class ColoringRuleHTMLIds {
   sourceId: string;
   matchingMethodId: string;
   matchingMethodContainerId: string;
+  matchingAreaId: string;
+  matchingAreaContainerId: string;
   keywordInputId: string;
   addBtnId: string;
   eraseBtnId: string;
@@ -1114,6 +1124,8 @@ class ColoringRuleHTMLIds {
     this.matchingMethodId = id + " .FFnS_KeywordMatchingMethod";
     this.matchingMethodContainerId =
       id + " .FFnS_ColoringRule_MatchingMethodGroup";
+    this.matchingAreaId = id + " .FFnS_keywordMatchingSelect";
+    this.matchingAreaContainerId = id + " .FFnS_ColoringRule_MatchingAreaGroup";
     this.keywordInputId = id + " .FFnS_ColoringRule_KeywordInput";
     this.addBtnId = id + " .FFnS_ColoringRule_AddKeyword";
     this.eraseBtnId = id + " .FFnS_ColoringRule_EraseKeywords";
