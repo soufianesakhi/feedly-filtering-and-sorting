@@ -231,7 +231,8 @@ export class ArticleManager {
         let match = this.keywordManager.matchSpecficKeywords(
           article,
           keywords,
-          rule.matchingMethod
+          rule.matchingMethod,
+          rule.matchingArea
         );
         article.setColor(match ? this.correctDarkness("#" + rule.color) : "");
         if (match) {

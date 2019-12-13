@@ -25,15 +25,16 @@ export class KeywordManager {
   matchSpecficKeywords(
     article: Article,
     keywords: string[],
-    method: KeywordMatchingMethod
+    method: KeywordMatchingMethod,
+    area: KeywordMatchingArea
   ): boolean {
-    var matcher = this.matcherFactory.getMatcherByMethod(method);
+    var matcher = this.matcherFactory.getMatcher(area, method);
     for (var i = 0; i < keywords.length; i++) {
       let keyword = keywords[i];
       if (keyword.indexOf(this.areaPrefix) == 0) {
         keyword = this.splitKeywordArea(keyword)[1];
       }
-      if (matcher(article.title, keyword)) {
+      if (matcher.match(article, keyword)) {
         return true;
       }
     }
@@ -141,10 +142,6 @@ class KeywordMatcherFactory {
     ) => {
       return this.comparerByMethod[method](a.author, k);
     };
-  }
-
-  getMatcherByMethod(method: KeywordMatchingMethod) {
-    return this.comparerByMethod[method];
   }
 
   getMatchers(sub: Subscription): KeywordMatcher[] {

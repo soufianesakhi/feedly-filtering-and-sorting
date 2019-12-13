@@ -1247,7 +1247,7 @@ var ArticleManager = (function () {
                 article.setColor(this.generateColor(article.getSource()));
             }
             else {
-                var match = this.keywordManager.matchSpecficKeywords(article, keywords, rule.matchingMethod);
+                var match = this.keywordManager.matchSpecficKeywords(article, keywords, rule.matchingMethod, rule.matchingArea);
                 article.setColor(match ? this.correctDarkness("#" + rule.color) : "");
                 if (match) {
                     return;
@@ -1909,14 +1909,14 @@ var KeywordManager = (function () {
     KeywordManager.prototype.insertArea = function (keyword, area) {
         return (this.areaPrefix + KeywordMatchingArea[area] + this.separator + keyword);
     };
-    KeywordManager.prototype.matchSpecficKeywords = function (article, keywords, method) {
-        var matcher = this.matcherFactory.getMatcherByMethod(method);
+    KeywordManager.prototype.matchSpecficKeywords = function (article, keywords, method, area) {
+        var matcher = this.matcherFactory.getMatcher(area, method);
         for (var i = 0; i < keywords.length; i++) {
             var keyword = keywords[i];
             if (keyword.indexOf(this.areaPrefix) == 0) {
                 keyword = this.splitKeywordArea(keyword)[1];
             }
-            if (matcher(article.title, keyword)) {
+            if (matcher.match(article, keyword)) {
                 return true;
             }
         }
@@ -1981,9 +1981,6 @@ var KeywordMatcherFactory = (function () {
             return _this.comparerByMethod[method](a.author, k);
         };
     }
-    KeywordMatcherFactory.prototype.getMatcherByMethod = function (method) {
-        return this.comparerByMethod[method];
-    };
     KeywordMatcherFactory.prototype.getMatchers = function (sub) {
         var _this = this;
         var method = sub.getKeywordMatchingMethod();
