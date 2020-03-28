@@ -3,7 +3,7 @@
 // @namespace   https://github.com/soufianesakhi/feedly-filtering-and-sorting
 // @description Enhance the feedly website with advanced filtering, sorting and more
 // @author      Soufiane Sakhi
-// @copyright   2016-2018, Soufiane Sakhi
+// @copyright   2016-2020, Soufiane Sakhi
 // @license     MIT; https://opensource.org/licenses/MIT
 // @homepageURL https://github.com/soufianesakhi/feedly-filtering-and-sorting
 // @supportURL  https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues
