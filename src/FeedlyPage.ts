@@ -609,9 +609,10 @@ export class FeedlyPage {
           let firstLoadByBatch = false;
           if (navigo.initAutoLoad) {
             navigo.initAutoLoad = false;
-            window.removeEventListener(
+            const streamPage = getStreamPage();
+            streamPage._scrollTarget.removeEventListener(
               "scroll",
-              getStreamPage()._throttledCheckMoreEntriesNeeded
+              streamPage._throttledCheckMoreEntriesNeeded
             );
             firstLoadByBatch = isLoadByBatch;
           }

@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.17.0
+// @version     3.17.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2490,7 +2490,8 @@ var FeedlyPage = (function () {
                     var firstLoadByBatch_1 = false;
                     if (navigo.initAutoLoad) {
                         navigo.initAutoLoad = false;
-                        window.removeEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded);
+                        var streamPage = getStreamPage();
+                        streamPage._scrollTarget.removeEventListener("scroll", streamPage._throttledCheckMoreEntriesNeeded);
                         firstLoadByBatch_1 = isLoadByBatch;
                     }
                     var isBatchLoading = true;
