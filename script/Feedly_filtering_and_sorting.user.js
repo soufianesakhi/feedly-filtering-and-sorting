@@ -3,7 +3,7 @@
 // @namespace   https://github.com/soufianesakhi/feedly-filtering-and-sorting
 // @description Enhance the feedly website with advanced filtering, sorting and more
 // @author      Soufiane Sakhi
-// @copyright   2016-2018, Soufiane Sakhi
+// @copyright   2016-2020, Soufiane Sakhi
 // @license     MIT; https://opensource.org/licenses/MIT
 // @homepageURL https://github.com/soufianesakhi/feedly-filtering-and-sorting
 // @supportURL  https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues
@@ -2479,80 +2479,85 @@ var FeedlyPage = (function () {
         var navigoPrototype = Object.getPrototypeOf(navigo);
         var setEntries = navigoPrototype.setEntries;
         navigoPrototype.setEntries = function (entries) {
-            if (entries.length > 0) {
-                putFFnS(ext.sortArticlesId, true);
-            }
-            if (entries.length > 0 &&
-                entries[entries.length - 1].jsonInfo.unread &&
-                isAutoLoad()) {
-                var isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
-                var firstLoadByBatch_1 = false;
-                if (navigo.initAutoLoad) {
-                    navigo.initAutoLoad = false;
-                    window.removeEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded);
-                    firstLoadByBatch_1 = isLoadByBatch;
+            try {
+                if (entries.length > 0) {
+                    putFFnS(ext.sortArticlesId, true);
                 }
-                var isBatchLoading = true;
-                var autoLoadAllArticleBatchSize_1 = autoLoadAllArticleDefaultBatchSize;
-                if (isLoadByBatch) {
-                    var batchSize = getFFnS(ext.batchSizeId, true);
-                    autoLoadAllArticleBatchSize_1 = batchSize;
-                    if (entries.length >= batchSize) {
-                        isBatchLoading = false;
+                if (entries.length > 0 &&
+                    entries[entries.length - 1].jsonInfo.unread &&
+                    isAutoLoad()) {
+                    var isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
+                    var firstLoadByBatch_1 = false;
+                    if (navigo.initAutoLoad) {
+                        navigo.initAutoLoad = false;
+                        window.removeEventListener("scroll", getStreamPage()._throttledCheckMoreEntriesNeeded);
+                        firstLoadByBatch_1 = isLoadByBatch;
                     }
-                }
-                var stream = getStreamPage().stream;
-                var hasAllEntries = stream.state.hasAllEntries;
-                if (!hasAllEntries &&
-                    !stream.askingMoreEntries &&
-                    !stream.state.isLoadingEntries &&
-                    isBatchLoading &&
-                    $(loadNextBatchBtnId).length == 0) {
-                    stream.askingMoreEntries = true;
-                    setTimeout(function () {
-                        var batchSize = autoLoadAllArticleBatchSize_1;
-                        if (firstLoadByBatch_1) {
-                            batchSize = batchSize - entries.length;
-                        }
-                        fetchMoreEntries(batchSize);
-                    }, 100);
-                }
-                else if (hasAllEntries || !isBatchLoading) {
-                    $(autoLoadingMessageId).remove();
-                    if (hasAllEntries) {
-                        console.log("End auto load all articles at: " + new Date().toTimeString());
-                        if (isLoadByBatch) {
-                            $(loadNextBatchBtnId).remove();
+                    var isBatchLoading = true;
+                    var autoLoadAllArticleBatchSize_1 = autoLoadAllArticleDefaultBatchSize;
+                    if (isLoadByBatch) {
+                        var batchSize = getFFnS(ext.batchSizeId, true);
+                        autoLoadAllArticleBatchSize_1 = batchSize;
+                        if (entries.length >= batchSize) {
+                            isBatchLoading = false;
                         }
                     }
-                    else if (isLoadByBatch && $(loadNextBatchBtnId).length == 0) {
-                        $(ext.articlesContainerSelector)
-                            .last()
-                            .after($("<button>", {
-                            id: loadNextBatchBtnId.substring(1),
-                            class: "full-width secondary",
-                            type: "button",
-                            style: "margin-top: 1%;",
-                            text: loadByBatchText
-                        }));
-                        onClickCapture($(loadNextBatchBtnId), loadNextBatch);
+                    var stream = getStreamPage().stream;
+                    var hasAllEntries = stream.state.hasAllEntries;
+                    if (!hasAllEntries &&
+                        !stream.askingMoreEntries &&
+                        !stream.state.isLoadingEntries &&
+                        isBatchLoading &&
+                        $(loadNextBatchBtnId).length == 0) {
+                        stream.askingMoreEntries = true;
+                        setTimeout(function () {
+                            var batchSize = autoLoadAllArticleBatchSize_1;
+                            if (firstLoadByBatch_1) {
+                                batchSize = batchSize - entries.length;
+                            }
+                            fetchMoreEntries(batchSize);
+                        }, 100);
+                    }
+                    else if (hasAllEntries || !isBatchLoading) {
+                        $(autoLoadingMessageId).remove();
+                        if (hasAllEntries) {
+                            console.log("End auto load all articles at: " + new Date().toTimeString());
+                            if (isLoadByBatch) {
+                                $(loadNextBatchBtnId).remove();
+                            }
+                        }
+                        else if (isLoadByBatch && $(loadNextBatchBtnId).length == 0) {
+                            $(ext.articlesContainerSelector)
+                                .last()
+                                .after($("<button>", {
+                                id: loadNextBatchBtnId.substring(1),
+                                class: "full-width secondary",
+                                type: "button",
+                                style: "margin-top: 1%;",
+                                text: loadByBatchText
+                            }));
+                            onClickCapture($(loadNextBatchBtnId), loadNextBatch);
+                        }
                     }
                 }
+                setTimeout(function () {
+                    var markAsReadEntries = $(ext.articleSelector + "." + ext.markAsReadImmediatelyClass);
+                    if (markAsReadEntries.length == 0) {
+                        return;
+                    }
+                    var ids = $.map(markAsReadEntries.toArray(), function (e) {
+                        return $(e).attr(ext.articleEntryIdAttribute);
+                    });
+                    reader.askMarkEntriesAsRead(ids, {});
+                    markAsReadEntries
+                        .removeClass(ext.markAsReadImmediatelyClass)
+                        .removeClass("unread")
+                        .addClass("read");
+                }, 1000);
             }
-            setTimeout(function () {
-                var markAsReadEntries = $(ext.articleSelector + "." + ext.markAsReadImmediatelyClass);
-                if (markAsReadEntries.length == 0) {
-                    return;
-                }
-                var ids = $.map(markAsReadEntries.toArray(), function (e) {
-                    return $(e).attr(ext.articleEntryIdAttribute);
-                });
-                reader.askMarkEntriesAsRead(ids, {});
-                markAsReadEntries
-                    .removeClass(ext.markAsReadImmediatelyClass)
-                    .removeClass("unread")
-                    .addClass("read");
-            }, 1000);
+            catch (e) {
+                console.log(e);
+            }
             return setEntries.apply(this, arguments);
         };
         NodeCreationObserver.onCreation(ext.loadingMessageSelector, function (e) {
@@ -2664,7 +2669,12 @@ var FeedlyPage = (function () {
             return lookupPreviousEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
         };
         prototype.getEntries = function () {
-            ensureSortedEntries();
+            try {
+                ensureSortedEntries();
+            }
+            catch (e) {
+                console.log(e);
+            }
             return getEntries.apply(this, arguments);
         };
         prototype.setEntries = function () {

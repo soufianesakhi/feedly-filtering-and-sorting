@@ -596,92 +596,96 @@ export class FeedlyPage {
     var navigoPrototype = Object.getPrototypeOf(navigo);
     var setEntries = navigoPrototype.setEntries;
     navigoPrototype.setEntries = function(entries: any[]) {
-      if (entries.length > 0) {
-        putFFnS(ext.sortArticlesId, true);
-      }
-      if (
-        entries.length > 0 &&
-        entries[entries.length - 1].jsonInfo.unread &&
-        isAutoLoad()
-      ) {
-        let isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
-        let firstLoadByBatch = false;
-        if (navigo.initAutoLoad) {
-          navigo.initAutoLoad = false;
-          window.removeEventListener(
-            "scroll",
-            getStreamPage()._throttledCheckMoreEntriesNeeded
-          );
-          firstLoadByBatch = isLoadByBatch;
+      try {
+        if (entries.length > 0) {
+          putFFnS(ext.sortArticlesId, true);
         }
-        let isBatchLoading = true;
-        let autoLoadAllArticleBatchSize = autoLoadAllArticleDefaultBatchSize;
-        if (isLoadByBatch) {
-          let batchSize = getFFnS(ext.batchSizeId, true);
-          autoLoadAllArticleBatchSize = batchSize;
-          if (entries.length >= batchSize) {
-            isBatchLoading = false;
-          }
-        }
-
-        var stream = getStreamPage().stream;
-        var hasAllEntries = stream.state.hasAllEntries;
         if (
-          !hasAllEntries &&
-          !stream.askingMoreEntries &&
-          !stream.state.isLoadingEntries &&
-          isBatchLoading &&
-          $(loadNextBatchBtnId).length == 0
+          entries.length > 0 &&
+          entries[entries.length - 1].jsonInfo.unread &&
+          isAutoLoad()
         ) {
-          stream.askingMoreEntries = true;
-          setTimeout(() => {
-            let batchSize = autoLoadAllArticleBatchSize;
-            if (firstLoadByBatch) {
-              batchSize = batchSize - entries.length;
-            }
-            fetchMoreEntries(batchSize);
-          }, 100);
-        } else if (hasAllEntries || !isBatchLoading) {
-          $(autoLoadingMessageId).remove();
-          if (hasAllEntries) {
-            console.log(
-              "End auto load all articles at: " + new Date().toTimeString()
+          let isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
+          let firstLoadByBatch = false;
+          if (navigo.initAutoLoad) {
+            navigo.initAutoLoad = false;
+            window.removeEventListener(
+              "scroll",
+              getStreamPage()._throttledCheckMoreEntriesNeeded
             );
-            if (isLoadByBatch) {
-              $(loadNextBatchBtnId).remove();
+            firstLoadByBatch = isLoadByBatch;
+          }
+          let isBatchLoading = true;
+          let autoLoadAllArticleBatchSize = autoLoadAllArticleDefaultBatchSize;
+          if (isLoadByBatch) {
+            let batchSize = getFFnS(ext.batchSizeId, true);
+            autoLoadAllArticleBatchSize = batchSize;
+            if (entries.length >= batchSize) {
+              isBatchLoading = false;
             }
-          } else if (isLoadByBatch && $(loadNextBatchBtnId).length == 0) {
-            $(ext.articlesContainerSelector)
-              .last()
-              .after(
-                $("<button>", {
-                  id: loadNextBatchBtnId.substring(1),
-                  class: "full-width secondary",
-                  type: "button",
-                  style: "margin-top: 1%;",
-                  text: loadByBatchText
-                })
+          }
+
+          var stream = getStreamPage().stream;
+          var hasAllEntries = stream.state.hasAllEntries;
+          if (
+            !hasAllEntries &&
+            !stream.askingMoreEntries &&
+            !stream.state.isLoadingEntries &&
+            isBatchLoading &&
+            $(loadNextBatchBtnId).length == 0
+          ) {
+            stream.askingMoreEntries = true;
+            setTimeout(() => {
+              let batchSize = autoLoadAllArticleBatchSize;
+              if (firstLoadByBatch) {
+                batchSize = batchSize - entries.length;
+              }
+              fetchMoreEntries(batchSize);
+            }, 100);
+          } else if (hasAllEntries || !isBatchLoading) {
+            $(autoLoadingMessageId).remove();
+            if (hasAllEntries) {
+              console.log(
+                "End auto load all articles at: " + new Date().toTimeString()
               );
-            onClickCapture($(loadNextBatchBtnId), loadNextBatch);
+              if (isLoadByBatch) {
+                $(loadNextBatchBtnId).remove();
+              }
+            } else if (isLoadByBatch && $(loadNextBatchBtnId).length == 0) {
+              $(ext.articlesContainerSelector)
+                .last()
+                .after(
+                  $("<button>", {
+                    id: loadNextBatchBtnId.substring(1),
+                    class: "full-width secondary",
+                    type: "button",
+                    style: "margin-top: 1%;",
+                    text: loadByBatchText
+                  })
+                );
+              onClickCapture($(loadNextBatchBtnId), loadNextBatch);
+            }
           }
         }
+        setTimeout(() => {
+          let markAsReadEntries = $(
+            ext.articleSelector + "." + ext.markAsReadImmediatelyClass
+          );
+          if (markAsReadEntries.length == 0) {
+            return;
+          }
+          let ids = $.map<Element, string>(markAsReadEntries.toArray(), e =>
+            $(e).attr(ext.articleEntryIdAttribute)
+          );
+          reader.askMarkEntriesAsRead(ids, {});
+          markAsReadEntries
+            .removeClass(ext.markAsReadImmediatelyClass)
+            .removeClass("unread")
+            .addClass("read");
+        }, 1000);
+      } catch (e) {
+        console.log(e);
       }
-      setTimeout(() => {
-        let markAsReadEntries = $(
-          ext.articleSelector + "." + ext.markAsReadImmediatelyClass
-        );
-        if (markAsReadEntries.length == 0) {
-          return;
-        }
-        let ids = $.map<Element, string>(markAsReadEntries.toArray(), e =>
-          $(e).attr(ext.articleEntryIdAttribute)
-        );
-        reader.askMarkEntriesAsRead(ids, {});
-        markAsReadEntries
-          .removeClass(ext.markAsReadImmediatelyClass)
-          .removeClass("unread")
-          .addClass("read");
-      }, 1000);
       return setEntries.apply(this, arguments);
     };
 
@@ -810,7 +814,11 @@ export class FeedlyPage {
       );
     };
     prototype.getEntries = function() {
-      ensureSortedEntries();
+      try {
+        ensureSortedEntries();
+      } catch(e) {
+        console.log(e);
+      }
       return getEntries.apply(this, arguments);
     };
     prototype.setEntries = function() {
