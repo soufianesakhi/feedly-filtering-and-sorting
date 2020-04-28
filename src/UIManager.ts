@@ -484,6 +484,9 @@ export class UIManager {
     NodeCreationObserver.onCreation(
       ext.settingsBtnPredecessorSelector,
       element => {
+        if ($(element).parent().find(".ShowSettingsBtn").length > 0) {
+          return;
+        }
         var clone = $(element).clone();
         $(clone)
           .empty()

@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.17.1
+// @version     3.17.2
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -3140,6 +3140,9 @@ var UIManager = (function () {
     UIManager.prototype.initShowSettingsBtns = function () {
         var this_ = this;
         NodeCreationObserver.onCreation(ext.settingsBtnPredecessorSelector, function (element) {
+            if ($(element).parent().find(".ShowSettingsBtn").length > 0) {
+                return;
+            }
             var clone = $(element).clone();
             $(clone)
                 .empty()
