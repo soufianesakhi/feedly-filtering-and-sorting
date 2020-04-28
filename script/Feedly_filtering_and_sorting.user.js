@@ -35,9 +35,10 @@ var ext = {
     articlesContainerSelector: ".list-entries",
     articlesChunkSelector: ".EntryList__chunk",
     containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
-    articleSelector: ".list-entries [data-entryid][data-title]:not([gap-article])",
-    unreadArticlesCountSelector: ".list-entries .entry.unread:not([gap-article]), .list-entries .unread.u100",
-    uncheckedArticlesSelector: ".list-entries [data-entryid][data-title]:not([checked-FFnS])",
+    articleSelector: ".entry[data-title]:not([gap-article]), .inlineFrame:not(.selected) [data-title]",
+    unreadArticlesCountSelector: ".list-entries .entry.unread:not([gap-article]), .list-entries .inlineFrame.unread",
+    uncheckedArticlesSelector: ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame:not(.selected) [data-title]:not([checked-FFnS])",
+    markAsReadImmediatelySelector: ".list-entries .FFnS-mark-as-read",
     readArticleClass: "read",
     articleViewClass: "u100Entry",
     articleViewEntryContainerSelector: ".u100",
@@ -2069,12 +2070,41 @@ var FeedlyPage = (function () {
         onNewPageObserve();
         onNewArticleObserve();
         var removeChild = Node.prototype.removeChild;
-        Node.prototype.removeChild = function () {
+        Node.prototype.removeChild = function (child) {
             try {
                 return removeChild.apply(this, arguments);
             }
             catch (e) {
-                if (e.name !== "NotFoundError") {
+                if ($(this).hasClass("EntryList__chunk")) {
+                    $(child).remove();
+                }
+                else {
+                    if (e.name !== "NotFoundError") {
+                        console.log(e);
+                    }
+                }
+            }
+        };
+        var insertBefore = Node.prototype.insertBefore;
+        Node.prototype.insertBefore = function (node, siblingNode) {
+            try {
+                return insertBefore.apply(this, arguments);
+            }
+            catch (e) {
+                if ($(this).hasClass("EntryList__chunk")) {
+                    try {
+                        var id = node["id"].replace("_main", "");
+                        var sortedIds = getSortedVisibleArticles();
+                        var nextId = sortedIds[sortedIds.indexOf(id) + 1];
+                        var nextElement = $("[data-entryid='" + nextId + "'")[0];
+                        if (nextElement) {
+                            return $(nextElement).before(node);
+                        }
+                    }
+                    catch (e) { }
+                    siblingNode.parentNode.insertBefore(node, siblingNode);
+                }
+                else {
                     console.log(e);
                 }
             }
@@ -2542,7 +2572,7 @@ var FeedlyPage = (function () {
                     }
                 }
                 setTimeout(function () {
-                    var markAsReadEntries = $(ext.articleSelector + "." + ext.markAsReadImmediatelyClass);
+                    var markAsReadEntries = $(ext.markAsReadImmediatelySelector);
                     if (markAsReadEntries.length == 0) {
                         return;
                     }

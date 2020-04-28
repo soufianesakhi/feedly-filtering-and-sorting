@@ -140,11 +140,36 @@ export class FeedlyPage {
     onNewPageObserve();
     onNewArticleObserve();
     let removeChild = Node.prototype.removeChild;
-    Node.prototype.removeChild = function() {
+    Node.prototype.removeChild = function(child) {
       try {
         return removeChild.apply(this, arguments);
       } catch (e) {
-        if (e.name !== "NotFoundError") {
+        if ($(this).hasClass("EntryList__chunk")) {
+          $(child).remove();
+        } else {
+          if (e.name !== "NotFoundError") {
+            console.log(e);
+          }
+        }
+      }
+    };
+    const insertBefore = Node.prototype.insertBefore;
+    Node.prototype.insertBefore = function(node, siblingNode) {
+      try {
+        return insertBefore.apply(this, arguments);
+      } catch (e) {
+        if ($(this).hasClass("EntryList__chunk")) {
+          try {
+            const id = node["id"].replace("_main", "");
+            const sortedIds = getSortedVisibleArticles();
+            const nextId = sortedIds[sortedIds.indexOf(id) + 1];
+            const nextElement = $("[data-entryid='" + nextId + "'")[0];
+            if (nextElement) {
+              return $(nextElement).before(node as any);
+            }
+          } catch(e) {}
+          siblingNode.parentNode.insertBefore(node, siblingNode);
+        } else {
           console.log(e);
         }
       }
@@ -668,10 +693,8 @@ export class FeedlyPage {
             }
           }
         }
-        setTimeout(() => {
-          let markAsReadEntries = $(
-            ext.articleSelector + "." + ext.markAsReadImmediatelyClass
-          );
+        setTimeout(() => { 
+          let markAsReadEntries = $(ext.markAsReadImmediatelySelector);
           if (markAsReadEntries.length == 0) {
             return;
           }

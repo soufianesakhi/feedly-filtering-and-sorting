@@ -14,11 +14,12 @@ var ext = {
   articlesChunkSelector: ".EntryList__chunk",
   containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
   articleSelector:
-    ".list-entries [data-entryid][data-title]:not([gap-article])",
+    ".entry[data-title]:not([gap-article]), .inlineFrame:not(.selected) [data-title]",
   unreadArticlesCountSelector:
-    ".list-entries .entry.unread:not([gap-article]), .list-entries .unread.u100",
+    ".list-entries .entry.unread:not([gap-article]), .list-entries .inlineFrame.unread",
   uncheckedArticlesSelector:
-    ".list-entries [data-entryid][data-title]:not([checked-FFnS])",
+    ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame:not(.selected) [data-title]:not([checked-FFnS])",
+  markAsReadImmediatelySelector: ".list-entries .FFnS-mark-as-read",
   readArticleClass: "read",
   articleViewClass: "u100Entry",
   articleViewEntryContainerSelector: ".u100",
