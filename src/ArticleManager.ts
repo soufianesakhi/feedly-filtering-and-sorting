@@ -161,7 +161,7 @@ export class ArticleManager {
       const popularityArr = [];
       const hotPopularityArr = [];
       $(articlesContainer)
-        .find(ext.containerArticleSelector + ":visible")
+        .find(ext.articleDataSelector + ":visible")
         .each((i, article) => {
           let engagement = $(article).find(ext.popularitySelector);
           const popularity = parsePopularity($(engagement).text());
@@ -200,7 +200,7 @@ export class ArticleManager {
     if (this.page.get(ext.disableAllFiltersButtonId)) {
       if (this.page.get(ext.disableAllFiltersEnabled, true)) {
         let containers = $(ext.articleSelector).map((i, a) =>
-          a.closest(".list-entries > .EntryList__chunk > div")
+          a.closest(ext.articleFrameSelector)
         );
         containers.css("display", "");
         this.page.clearHidingInfo();
@@ -290,7 +290,7 @@ export class ArticleManager {
       let visibleArticles: Article[] = [];
       let hiddenArticles: Article[] = [];
       let articlesContainer = $(c);
-      articlesContainer.find(ext.containerArticleSelector).each((i, e) => {
+      articlesContainer.find(ext.articleDataSelector).each((i, e) => {
         let a = new Article(e);
         if (a.isVisible()) {
           visibleArticles.push(a);
@@ -575,9 +575,7 @@ export class Article {
     // URL
     this.url = this.article.find(".title").attr("href");
 
-    this.container = this.article.closest(
-      ".list-entries > .EntryList__chunk > div"
-    );
+    this.container = this.article.closest(ext.articleFrameSelector);
   }
 
   addClass(c) {

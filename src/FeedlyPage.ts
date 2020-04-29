@@ -140,11 +140,11 @@ export class FeedlyPage {
     onNewPageObserve();
     onNewArticleObserve();
     let removeChild = Node.prototype.removeChild;
-    Node.prototype.removeChild = function(child) {
+    Node.prototype.removeChild = function (child) {
       try {
         return removeChild.apply(this, arguments);
       } catch (e) {
-        if ($(this).hasClass("EntryList__chunk")) {
+        if ($(this).hasClass(ext.articlesChunkClass)) {
           $(child).remove();
         } else {
           if (e.name !== "NotFoundError") {
@@ -154,24 +154,50 @@ export class FeedlyPage {
       }
     };
     const insertBefore = Node.prototype.insertBefore;
-    Node.prototype.insertBefore = function(node, siblingNode) {
+    const appendChild = Node.prototype.appendChild;
+    function insertArticleNode(node: Node, sibling?: Node) {
       try {
-        return insertBefore.apply(this, arguments);
-      } catch (e) {
-        if ($(this).hasClass("EntryList__chunk")) {
-          try {
-            const id = node["id"].replace("_main", "");
-            const sortedIds = getSortedVisibleArticles();
-            const nextId = sortedIds[sortedIds.indexOf(id) + 1];
-            const nextElement = $("[data-entryid='" + nextId + "'")[0];
-            if (nextElement) {
-              return $(nextElement).before(node as any);
-            }
-          } catch(e) {}
-          siblingNode.parentNode.insertBefore(node, siblingNode);
-        } else {
-          console.log(e);
+        const id = node["id"].replace("_main", "");
+        const sortedIds = getSortedVisibleArticles();
+        let nextIndex = sortedIds.indexOf(id) + 1;
+        if (nextIndex == sortedIds.length) {
+          nextIndex = nextIndex - 2;
+        } else if (nextIndex == 0) {
+          nextIndex = sortedIds.length - 1;
         }
+        const nextId = sortedIds[nextIndex];
+        const nextElement = $("[data-entryid='" + nextId + "'")[0];
+        if (nextElement) {
+          sibling = $(nextElement).closest(ext.articleFrameSelector)[0];
+        }
+      }
+      catch (e) { }
+      if (sibling) {
+        return insertBefore.call(sibling.parentNode, node, sibling);
+      } else {
+        return appendChild.call(this, node);
+      }
+    }
+    Node.prototype.insertBefore = function (node, siblingNode) {
+      try {
+        if ($(this).hasClass(ext.articlesChunkClass)) {
+          return insertArticleNode(node, siblingNode);
+        } else {
+          return insertBefore.apply(this, arguments);
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    };
+    Node.prototype.appendChild = function (child) {
+      try {
+        if ($(this).hasClass(ext.articlesChunkClass)) {
+          return insertArticleNode(child);
+        } else {
+          return appendChild.apply(this, arguments);
+        }
+      } catch (e) {
+        console.log(e);
       }
     };
   }
@@ -634,13 +660,13 @@ export class FeedlyPage {
           let firstLoadByBatch = false;
           if (navigo.initAutoLoad) {
             navigo.initAutoLoad = false;
-            const streamPage = getStreamPage();
-            streamPage._scrollTarget.removeEventListener(
-              "scroll",
-              streamPage._throttledCheckMoreEntriesNeeded
-            );
             firstLoadByBatch = isLoadByBatch;
           }
+          const streamPage = getStreamPage();
+          streamPage._scrollTarget.removeEventListener(
+            "scroll",
+            streamPage._throttledCheckMoreEntriesNeeded
+          );
           let isBatchLoading = true;
           let autoLoadAllArticleBatchSize = autoLoadAllArticleDefaultBatchSize;
           if (isLoadByBatch) {

@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.17.2
+// @version     3.17.4
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -33,8 +33,10 @@ var ext = {
     categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
     settingsBtnPredecessorSelector: ".icon-toolbar-refresh-secondary",
     articlesContainerSelector: ".list-entries",
+    articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
-    containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
+    articleDataSelector: " [data-entryid][data-title]:not([gap-article])",
+    articleFrameSelector: ".list-entries > .EntryList__chunk > div",
     articleSelector: ".entry[data-title]:not([gap-article]), .inlineFrame:not(.selected) [data-title]",
     unreadArticlesCountSelector: ".list-entries .entry.unread:not([gap-article]), .list-entries .inlineFrame.unread",
     uncheckedArticlesSelector: ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame:not(.selected) [data-title]:not([checked-FFnS])",
@@ -1183,7 +1185,7 @@ var ArticleManager = (function () {
             var popularityArr = [];
             var hotPopularityArr = [];
             $(articlesContainer)
-                .find(ext.containerArticleSelector + ":visible")
+                .find(ext.articleDataSelector + ":visible")
                 .each(function (i, article) {
                 var engagement = $(article).find(ext.popularitySelector);
                 var popularity = parsePopularity($(engagement).text());
@@ -1220,7 +1222,7 @@ var ArticleManager = (function () {
         if (this.page.get(ext.disableAllFiltersButtonId)) {
             if (this.page.get(ext.disableAllFiltersEnabled, true)) {
                 var containers = $(ext.articleSelector).map(function (i, a) {
-                    return a.closest(".list-entries > .EntryList__chunk > div");
+                    return a.closest(ext.articleFrameSelector);
                 });
                 containers.css("display", "");
                 this.page.clearHidingInfo();
@@ -1301,7 +1303,7 @@ var ArticleManager = (function () {
             var visibleArticles = [];
             var hiddenArticles = [];
             var articlesContainer = $(c);
-            articlesContainer.find(ext.containerArticleSelector).each(function (i, e) {
+            articlesContainer.find(ext.articleDataSelector).each(function (i, e) {
                 var a = new Article(e);
                 if (a.isVisible()) {
                     visibleArticles.push(a);
@@ -1545,7 +1547,7 @@ var Article = (function () {
         }
         // URL
         this.url = this.article.find(".title").attr("href");
-        this.container = this.article.closest(".list-entries > .EntryList__chunk > div");
+        this.container = this.article.closest(ext.articleFrameSelector);
     }
     Article.prototype.addClass = function (c) {
         return this.article.addClass(c);
@@ -2075,7 +2077,7 @@ var FeedlyPage = (function () {
                 return removeChild.apply(this, arguments);
             }
             catch (e) {
-                if ($(this).hasClass("EntryList__chunk")) {
+                if ($(this).hasClass(ext.articlesChunkClass)) {
                     $(child).remove();
                 }
                 else {
@@ -2086,27 +2088,56 @@ var FeedlyPage = (function () {
             }
         };
         var insertBefore = Node.prototype.insertBefore;
+        var appendChild = Node.prototype.appendChild;
+        function insertArticleNode(node, sibling) {
+            try {
+                var id = node["id"].replace("_main", "");
+                var sortedIds = getSortedVisibleArticles();
+                var nextIndex = sortedIds.indexOf(id) + 1;
+                if (nextIndex == sortedIds.length) {
+                    nextIndex = nextIndex - 2;
+                }
+                else if (nextIndex == 0) {
+                    nextIndex = sortedIds.length - 1;
+                }
+                var nextId = sortedIds[nextIndex];
+                var nextElement = $("[data-entryid='" + nextId + "'")[0];
+                if (nextElement) {
+                    sibling = $(nextElement).closest(ext.articleFrameSelector)[0];
+                }
+            }
+            catch (e) { }
+            if (sibling) {
+                return insertBefore.call(sibling.parentNode, node, sibling);
+            }
+            else {
+                return appendChild.call(this, node);
+            }
+        }
         Node.prototype.insertBefore = function (node, siblingNode) {
             try {
-                return insertBefore.apply(this, arguments);
-            }
-            catch (e) {
-                if ($(this).hasClass("EntryList__chunk")) {
-                    try {
-                        var id = node["id"].replace("_main", "");
-                        var sortedIds = getSortedVisibleArticles();
-                        var nextId = sortedIds[sortedIds.indexOf(id) + 1];
-                        var nextElement = $("[data-entryid='" + nextId + "'")[0];
-                        if (nextElement) {
-                            return $(nextElement).before(node);
-                        }
-                    }
-                    catch (e) { }
-                    siblingNode.parentNode.insertBefore(node, siblingNode);
+                if ($(this).hasClass(ext.articlesChunkClass)) {
+                    return insertArticleNode(node, siblingNode);
                 }
                 else {
-                    console.log(e);
+                    return insertBefore.apply(this, arguments);
                 }
+            }
+            catch (e) {
+                console.log(e);
+            }
+        };
+        Node.prototype.appendChild = function (child) {
+            try {
+                if ($(this).hasClass(ext.articlesChunkClass)) {
+                    return insertArticleNode(child);
+                }
+                else {
+                    return appendChild.apply(this, arguments);
+                }
+            }
+            catch (e) {
+                console.log(e);
             }
         };
     };
@@ -2520,10 +2551,10 @@ var FeedlyPage = (function () {
                     var firstLoadByBatch_1 = false;
                     if (navigo.initAutoLoad) {
                         navigo.initAutoLoad = false;
-                        var streamPage = getStreamPage();
-                        streamPage._scrollTarget.removeEventListener("scroll", streamPage._throttledCheckMoreEntriesNeeded);
                         firstLoadByBatch_1 = isLoadByBatch;
                     }
+                    var streamPage = getStreamPage();
+                    streamPage._scrollTarget.removeEventListener("scroll", streamPage._throttledCheckMoreEntriesNeeded);
                     var isBatchLoading = true;
                     var autoLoadAllArticleBatchSize_1 = autoLoadAllArticleDefaultBatchSize;
                     if (isLoadByBatch) {
@@ -3539,10 +3570,6 @@ var UIManager = (function () {
     UIManager.prototype.addArticle = function (article) {
         var _this = this;
         try {
-            this.checkReadArticles(article);
-            if (this.containsReadArticles) {
-                return;
-            }
             this.articleManager.addArticle(article);
             var articleObserver = new MutationObserver(function (mr, observer) {
                 var readClassElement = !$(article).hasClass(ext.articleViewClass)
@@ -3575,14 +3602,6 @@ var UIManager = (function () {
         }
         else {
             $(section).remove();
-        }
-    };
-    UIManager.prototype.checkReadArticles = function (article) {
-        if (!this.containsReadArticles) {
-            this.containsReadArticles = $(article).hasClass(ext.readArticleClass);
-            if (this.containsReadArticles) {
-                this.articleManager.resetArticles();
-            }
         }
     };
     UIManager.prototype.importFromOtherSub = function () {

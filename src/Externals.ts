@@ -11,8 +11,10 @@ var ext = {
 
   settingsBtnPredecessorSelector: ".icon-toolbar-refresh-secondary",
   articlesContainerSelector: ".list-entries",
+  articlesChunkClass: "EntryList__chunk",
   articlesChunkSelector: ".EntryList__chunk",
-  containerArticleSelector: " [data-entryid][data-title]:not([gap-article])",
+  articleDataSelector: " [data-entryid][data-title]:not([gap-article])",
+  articleFrameSelector: ".list-entries > .EntryList__chunk > div",
   articleSelector:
     ".entry[data-title]:not([gap-article]), .inlineFrame:not(.selected) [data-title]",
   unreadArticlesCountSelector:

@@ -972,10 +972,6 @@ export class UIManager {
 
   addArticle(article: Element) {
     try {
-      this.checkReadArticles(article);
-      if (this.containsReadArticles) {
-        return;
-      }
       this.articleManager.addArticle(article);
       var articleObserver = new MutationObserver((mr, observer) => {
         let readClassElement = !$(article).hasClass(ext.articleViewClass)
@@ -1008,15 +1004,6 @@ export class UIManager {
         .text(" ");
     } else {
       $(section).remove();
-    }
-  }
-
-  checkReadArticles(article: Element) {
-    if (!this.containsReadArticles) {
-      this.containsReadArticles = $(article).hasClass(ext.readArticleClass);
-      if (this.containsReadArticles) {
-        this.articleManager.resetArticles();
-      }
     }
   }
 
