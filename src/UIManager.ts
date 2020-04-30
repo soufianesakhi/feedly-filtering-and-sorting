@@ -973,28 +973,33 @@ export class UIManager {
   addArticle(article: Element) {
     try {
       this.articleManager.addArticle(article);
-      var articleObserver = new MutationObserver((mr, observer) => {
-        let readClassElement = !$(article).hasClass(ext.articleViewClass)
-          ? $(article)
-          : $(article).closest(ext.articleViewEntryContainerSelector);
-        if (
-          readClassElement.hasClass(ext.readArticleClass) &&
-          !$(article).hasClass("inlineFrame")
-        ) {
-          if (this.subscription.isHideAfterRead()) {
-            if (this.subscription.isReplaceHiddenWithGap()) {
-              $(article).attr("gap-article", "true");
-            } else {
-              $(article).remove();
-            }
-          }
-          observer.disconnect();
-        }
-      });
+      const callback = this.readArticlesMutationCallback(article);
+      var articleObserver = new MutationObserver(callback);
       articleObserver.observe(article, { attributes: true });
+      callback([], articleObserver);
     } catch (err) {
       console.log(err);
     }
+  }
+
+  private readArticlesMutationCallback(article: Element): MutationCallback {
+    return (mr, observer) => {
+      let readClassElement = !$(article).hasClass(ext.articleViewClass)
+        ? $(article)
+        : $(article).closest(ext.articleViewEntryContainerSelector);
+      if (readClassElement.hasClass(ext.readArticleClass) &&
+        !$(article).hasClass("inlineFrame")) {
+        if (this.subscription.isHideAfterRead()) {
+          if (this.subscription.isReplaceHiddenWithGap()) {
+            $(article).attr("gap-article", "true");
+          }
+          else {
+            $(article).remove();
+          }
+        }
+        observer.disconnect();
+      }
+    };
   }
 
   addSection(section: Element) {

@@ -3568,31 +3568,36 @@ var UIManager = (function () {
         this.refreshFilteringAndSorting();
     };
     UIManager.prototype.addArticle = function (article) {
-        var _this = this;
         try {
             this.articleManager.addArticle(article);
-            var articleObserver = new MutationObserver(function (mr, observer) {
-                var readClassElement = !$(article).hasClass(ext.articleViewClass)
-                    ? $(article)
-                    : $(article).closest(ext.articleViewEntryContainerSelector);
-                if (readClassElement.hasClass(ext.readArticleClass) &&
-                    !$(article).hasClass("inlineFrame")) {
-                    if (_this.subscription.isHideAfterRead()) {
-                        if (_this.subscription.isReplaceHiddenWithGap()) {
-                            $(article).attr("gap-article", "true");
-                        }
-                        else {
-                            $(article).remove();
-                        }
-                    }
-                    observer.disconnect();
-                }
-            });
+            var callback = this.readArticlesMutationCallback(article);
+            var articleObserver = new MutationObserver(callback);
             articleObserver.observe(article, { attributes: true });
+            callback([], articleObserver);
         }
         catch (err) {
             console.log(err);
         }
+    };
+    UIManager.prototype.readArticlesMutationCallback = function (article) {
+        var _this = this;
+        return function (mr, observer) {
+            var readClassElement = !$(article).hasClass(ext.articleViewClass)
+                ? $(article)
+                : $(article).closest(ext.articleViewEntryContainerSelector);
+            if (readClassElement.hasClass(ext.readArticleClass) &&
+                !$(article).hasClass("inlineFrame")) {
+                if (_this.subscription.isHideAfterRead()) {
+                    if (_this.subscription.isReplaceHiddenWithGap()) {
+                        $(article).attr("gap-article", "true");
+                    }
+                    else {
+                        $(article).remove();
+                    }
+                }
+                observer.disconnect();
+            }
+        };
     };
     UIManager.prototype.addSection = function (section) {
         if (section.id === "section0") {
