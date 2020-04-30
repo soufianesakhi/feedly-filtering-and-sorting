@@ -2089,7 +2089,7 @@ var FeedlyPage = (function () {
         };
         var insertBefore = Node.prototype.insertBefore;
         var appendChild = Node.prototype.appendChild;
-        function insertArticleNode(node, sibling) {
+        function insertArticleNode(parent, node, sibling) {
             try {
                 var id = node["id"].replace("_main", "");
                 var sortedIds = getSortedVisibleArticles();
@@ -2111,13 +2111,13 @@ var FeedlyPage = (function () {
                 return insertBefore.call(sibling.parentNode, node, sibling);
             }
             else {
-                return appendChild.call(this, node);
+                return appendChild.call(parent, node);
             }
         }
         Node.prototype.insertBefore = function (node, siblingNode) {
             try {
                 if ($(this).hasClass(ext.articlesChunkClass)) {
-                    return insertArticleNode(node, siblingNode);
+                    return insertArticleNode(this, node, siblingNode);
                 }
                 else {
                     return insertBefore.apply(this, arguments);
@@ -2130,7 +2130,7 @@ var FeedlyPage = (function () {
         Node.prototype.appendChild = function (child) {
             try {
                 if ($(this).hasClass(ext.articlesChunkClass)) {
-                    return insertArticleNode(child);
+                    return insertArticleNode(this, child);
                 }
                 else {
                     return appendChild.apply(this, arguments);
