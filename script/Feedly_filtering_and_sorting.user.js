@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.17.6
+// @version     3.17.7
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2091,15 +2091,13 @@ var FeedlyPage = (function () {
         var appendChild = Node.prototype.appendChild;
         function insertArticleNode(parent, node, sibling) {
             try {
-                var id = node["id"].replace("_main", "");
+                var mainEntrySuffix = "_main";
+                var id = node["id"].replace(mainEntrySuffix, "");
                 var sortedIds = getSortedVisibleArticles();
                 var nextIndex = sortedIds.indexOf(id) + 1;
                 if (nextIndex > 0 && nextIndex < sortedIds.length) {
                     var nextId = sortedIds[nextIndex];
-                    var nextElement = $("[data-entryid='" + nextId + "'")[0];
-                    if (nextElement) {
-                        sibling = $(nextElement).closest(ext.articleFrameSelector)[0];
-                    }
+                    sibling = document.getElementById(nextId + mainEntrySuffix);
                 }
                 else {
                     sibling = null;

@@ -157,15 +157,13 @@ export class FeedlyPage {
     const appendChild = Node.prototype.appendChild;
     function insertArticleNode(parent: Node, node: Node, sibling?: Node) {
       try {
-        const id = node["id"].replace("_main", "");
+        const mainEntrySuffix = "_main";
+        const id = node["id"].replace(mainEntrySuffix, "");
         const sortedIds = getSortedVisibleArticles();
         let nextIndex = sortedIds.indexOf(id) + 1;
         if (nextIndex > 0 && nextIndex < sortedIds.length) {
           const nextId = sortedIds[nextIndex];
-          const nextElement = $("[data-entryid='" + nextId + "'")[0];
-          if (nextElement) {
-            sibling = $(nextElement).closest(ext.articleFrameSelector)[0];
-          }
+          sibling = document.getElementById(nextId + mainEntrySuffix);
         } else {
           sibling = null;
         }
