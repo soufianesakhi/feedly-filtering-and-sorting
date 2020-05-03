@@ -39,7 +39,7 @@ export class FeedlyPage {
         "fetchMoreEntries",
         "loadNextBatch",
         "getKeptUnreadEntryIds",
-        "getSortedVisibleArticles"
+        "getSortedVisibleArticles",
       ],
       this.get,
       this.put,
@@ -160,18 +160,16 @@ export class FeedlyPage {
         const id = node["id"].replace("_main", "");
         const sortedIds = getSortedVisibleArticles();
         let nextIndex = sortedIds.indexOf(id) + 1;
-        if (nextIndex == sortedIds.length) {
-          nextIndex = nextIndex - 2;
-        } else if (nextIndex == 0) {
-          nextIndex = sortedIds.length - 1;
+        if (nextIndex > 0 && nextIndex < sortedIds.length) {
+          const nextId = sortedIds[nextIndex];
+          const nextElement = $("[data-entryid='" + nextId + "'")[0];
+          if (nextElement) {
+            sibling = $(nextElement).closest(ext.articleFrameSelector)[0];
+          }
+        } else {
+          sibling = null;
         }
-        const nextId = sortedIds[nextIndex];
-        const nextElement = $("[data-entryid='" + nextId + "'")[0];
-        if (nextElement) {
-          sibling = $(nextElement).closest(ext.articleFrameSelector)[0];
-        }
-      }
-      catch (e) { }
+      } catch (e) {}
       if (sibling) {
         return insertBefore.call(sibling.parentNode, node, sibling);
       } else {
@@ -234,13 +232,13 @@ export class FeedlyPage {
         class:
           ext.openCurrentFeedArticlesClass + " " + ext.containerButtonClass,
         style: getFFnS(ext.openCurrentFeedArticlesId) ? "" : "display: none",
-        type: "button"
+        type: "button",
       });
       let disableAllFiltersBtn = $("<button>", {
         class:
           ext.disableAllFiltersButtonClass + " " + ext.containerButtonClass,
         style: getFFnS(ext.disableAllFiltersButtonId) ? "" : "display: none",
-        type: "button"
+        type: "button",
       });
       function refreshDisableAllFiltersBtn(enabled: boolean) {
         disableAllFiltersBtn.attr(
@@ -258,9 +256,7 @@ export class FeedlyPage {
       let feedButtonsContainer = $(`<div id='${ext.buttonsContainerId}'>`);
       feedButtonsContainer.append(openCurrentFeedArticlesBtn);
       feedButtonsContainer.append(disableAllFiltersBtn);
-      $("header.header")
-        .parent()
-        .after(feedButtonsContainer);
+      $("header.header").parent().after(feedButtonsContainer);
 
       onClickCapture(openCurrentFeedArticlesBtn, (event: MouseEvent) => {
         event.stopPropagation();
@@ -269,7 +265,7 @@ export class FeedlyPage {
           return;
         }
         if (getFFnS(ext.openCurrentFeedArticlesUnreadOnlyId)) {
-          articlesToOpen = articlesToOpen.filter(id => {
+          articlesToOpen = articlesToOpen.filter((id) => {
             return $(getById(id)).hasClass("unread");
           });
         }
@@ -280,20 +276,16 @@ export class FeedlyPage {
           }
         }
         articlesToOpen
-          .map(id => getById(id))
-          .forEach(a => {
-            let link = $(a)
-              .find(".title")
-              .attr("href");
+          .map((id) => getById(id))
+          .forEach((a) => {
+            let link = $(a).find(".title").attr("href");
             window.open(link, link);
           });
         if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
           let reader = window["streets"].service("reader");
-          articlesToOpen.forEach(entryId => {
+          articlesToOpen.forEach((entryId) => {
             reader.askMarkEntryAsRead(entryId);
-            $(getById(entryId))
-              .removeClass("unread")
-              .addClass("read");
+            $(getById(entryId)).removeClass("unread").addClass("read");
           });
         }
       });
@@ -315,10 +307,10 @@ export class FeedlyPage {
     var navigo = window["streets"].service("navigo");
     let entries: any[] = navigo.originalEntries || navigo.getEntries();
     let keptUnreadEntryIds = entries
-      .filter(e => {
+      .filter((e) => {
         return e.wasKeptUnread();
       })
-      .map<string>(e => {
+      .map<string>((e) => {
         return e.id;
       });
     return keptUnreadEntryIds;
@@ -347,7 +339,7 @@ export class FeedlyPage {
         var markAsRead = getFFnS(ext.markAsReadAboveBelowReadId);
         if (markAsRead) {
           let keptUnreadEntryIds = getKeptUnreadEntryIds();
-          sortedVisibleArticles = sortedVisibleArticles.filter(id => {
+          sortedVisibleArticles = sortedVisibleArticles.filter((id) => {
             return keptUnreadEntryIds.indexOf(id) < 0;
           });
         }
@@ -384,7 +376,7 @@ export class FeedlyPage {
       };
     };
 
-    NodeCreationObserver.onCreation(ext.articleSelector, element => {
+    NodeCreationObserver.onCreation(ext.articleSelector, (element) => {
       var a = $(element).closest(ext.articleSelector);
 
       var entryId = a.attr(ext.articleEntryIdAttribute);
@@ -392,7 +384,7 @@ export class FeedlyPage {
       var e = reader.lookupEntry(entryId);
       var entryInfos = $("<span>", {
         class: ext.entryInfosJsonClass,
-        style: "display: none"
+        style: "display: none",
       });
       entryInfos.text(JSON.stringify(new EntryInfos(e.jsonInfo)));
       a.append(entryInfos);
@@ -411,9 +403,7 @@ export class FeedlyPage {
 
         var e = $("<button>", attributes);
         if (cardsView) {
-          a.find(".mark-as-read")
-            .last()
-            .before(e);
+          a.find(".mark-as-read").last().before(e);
         } else if (magazineView) {
           a.find(".ago").after(e);
         } else if (articleView) {
@@ -428,18 +418,18 @@ export class FeedlyPage {
         title:
           "Mark articles below" +
           (cardsView ? " and on the right" : "") +
-          " as read/unread"
+          " as read/unread",
       });
       var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
         class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
         title:
           "Mark articles above" +
           (cardsView ? " and on the left" : "") +
-          " as read/unread"
+          " as read/unread",
       });
       var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
         class: ext.openAndMarkAsReadClass,
-        title: "Open in a new window/tab and mark as read"
+        title: "Open in a new window/tab and mark as read",
       });
 
       if (articleView) {
@@ -469,14 +459,14 @@ export class FeedlyPage {
         visualElement = a.find(".visual");
       }
       if (visualElement) {
-        onClickCapture(visualElement, e => {
+        onClickCapture(visualElement, (e) => {
           if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
             openAndMarkAsRead(e);
           }
         });
       }
       if (titleView) {
-        onClickCapture(a.find(".content"), e => {
+        onClickCapture(a.find(".content"), (e) => {
           if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
             e.stopPropagation();
             reader.askMarkEntryAsRead(entryId);
@@ -557,7 +547,7 @@ export class FeedlyPage {
           $("<div>", {
             id: autoLoadingMessageId,
             class: "message loading",
-            text: "Auto loading all articles"
+            text: "Auto loading all articles",
           })
         );
     }
@@ -585,12 +575,12 @@ export class FeedlyPage {
         .sort((a, b) => {
           return a.jsonInfo.crawled - b.jsonInfo.crawled;
         })
-        .map<string>(e => {
+        .map<string>((e) => {
           return e.id;
         });
     }
     let keptUnreadEntryIds = getKeptUnreadEntryIds();
-    markAsReadEntryIds = markAsReadEntryIds.filter(id => {
+    markAsReadEntryIds = markAsReadEntryIds.filter((id) => {
       return keptUnreadEntryIds.indexOf(id) < 0;
     });
     reader.askMarkEntriesAsRead(markAsReadEntryIds, {});
@@ -633,7 +623,7 @@ export class FeedlyPage {
 
     var prototype = Object.getPrototypeOf(streamObj);
     var setBatchSize: Function = prototype.setBatchSize;
-    prototype.setBatchSize = function(customSize?: number) {
+    prototype.setBatchSize = function (customSize?: number) {
       if (this._batchSize == customSize) {
         return;
       }
@@ -646,7 +636,7 @@ export class FeedlyPage {
 
     var navigoPrototype = Object.getPrototypeOf(navigo);
     var setEntries = navigoPrototype.setEntries;
-    navigoPrototype.setEntries = function(entries: any[]) {
+    navigoPrototype.setEntries = function (entries: any[]) {
       try {
         if (entries.length > 0) {
           putFFnS(ext.sortArticlesId, true);
@@ -712,19 +702,19 @@ export class FeedlyPage {
                     class: "full-width secondary",
                     type: "button",
                     style: "margin-top: 1%;",
-                    text: loadByBatchText
+                    text: loadByBatchText,
                   })
                 );
               onClickCapture($(loadNextBatchBtnId), loadNextBatch);
             }
           }
         }
-        setTimeout(() => { 
+        setTimeout(() => {
           let markAsReadEntries = $(ext.markAsReadImmediatelySelector);
           if (markAsReadEntries.length == 0) {
             return;
           }
-          let ids = $.map<Element, string>(markAsReadEntries.toArray(), e =>
+          let ids = $.map<Element, string>(markAsReadEntries.toArray(), (e) =>
             $(e).attr(ext.articleEntryIdAttribute)
           );
           reader.askMarkEntriesAsRead(ids, {});
@@ -739,13 +729,13 @@ export class FeedlyPage {
       return setEntries.apply(this, arguments);
     };
 
-    NodeCreationObserver.onCreation(ext.loadingMessageSelector, e => {
+    NodeCreationObserver.onCreation(ext.loadingMessageSelector, (e) => {
       if ($(autoLoadingMessageId).length == 1) {
         $(e).hide();
       }
     });
 
-    NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, e => {
+    NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, (e) => {
       if (getFFnS(ext.loadByBatchEnabledId, true)) {
         $(secondaryMarkAsReadBtnsSelector).attr("title", loadByBatchText);
       }
@@ -759,7 +749,7 @@ export class FeedlyPage {
 
     var prototype = pagesPkg.ReactPage.prototype;
     var markAsRead: Function = prototype.markAsRead;
-    prototype.markAsRead = function(lastEntryObject) {
+    prototype.markAsRead = function (lastEntryObject) {
       let jumpToNext = () => {
         if (!/latest\/?$/i.test(document.URL)) {
           if (navigo.getNextURI()) {
@@ -784,7 +774,7 @@ export class FeedlyPage {
         var idsToMarkAsRead: string[] = getFFnS(ext.articlesToMarkAsReadId);
         if (idsToMarkAsRead) {
           let keptUnreadEntryIds = getKeptUnreadEntryIds();
-          idsToMarkAsRead = idsToMarkAsRead.filter(id => {
+          idsToMarkAsRead = idsToMarkAsRead.filter((id) => {
             return keptUnreadEntryIds.indexOf(id) < 0;
           });
           console.log(
@@ -849,41 +839,41 @@ export class FeedlyPage {
     var setEntries = prototype.setEntries;
     var reset = prototype.reset;
 
-    prototype.lookupNextEntry = function(a) {
+    prototype.lookupNextEntry = function (a) {
       ensureSortedEntries();
       return lookupNextEntry.call(
         this,
         getFFnS(ext.hideAfterReadId) ? true : a
       );
     };
-    prototype.lookupPreviousEntry = function(a) {
+    prototype.lookupPreviousEntry = function (a) {
       ensureSortedEntries();
       return lookupPreviousEntry.call(
         this,
         getFFnS(ext.hideAfterReadId) ? true : a
       );
     };
-    prototype.getEntries = function() {
+    prototype.getEntries = function () {
       try {
         ensureSortedEntries();
-      } catch(e) {
+      } catch (e) {
         console.log(e);
       }
       return getEntries.apply(this, arguments);
     };
-    prototype.setEntries = function() {
+    prototype.setEntries = function () {
       navigo.originalEntries = null;
       return setEntries.apply(this, arguments);
     };
-    prototype.reset = function() {
+    prototype.reset = function () {
       navigo.originalEntries = null;
       return reset.apply(this, arguments);
     };
-    prototype.listEntryIds = function() {
+    prototype.listEntryIds = function () {
       var a = [];
       var entries: any[] = navigo.originalEntries || navigo.entries;
       return (
-        entries.forEach(function(b) {
+        entries.forEach(function (b) {
           a.push(b.getId());
         }),
         a
@@ -895,7 +885,7 @@ export class FeedlyPage {
     var navigo = window["streets"].service("navigo");
     var prototype = Object.getPrototypeOf(navigo);
     const collectionPrefix = "collection/content/";
-    prototype.getNextURI = function() {
+    prototype.getNextURI = function () {
       var e = this.nextURI;
       if (
         !e ||

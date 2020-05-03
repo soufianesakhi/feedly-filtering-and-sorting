@@ -2016,7 +2016,7 @@ var FeedlyPage = (function () {
             "fetchMoreEntries",
             "loadNextBatch",
             "getKeptUnreadEntryIds",
-            "getSortedVisibleArticles"
+            "getSortedVisibleArticles",
         ], this.get, this.put, this.getById, this.getStreamPage, this.getStreamObj, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
         injectToWindow(["overrideLoadingEntries"], this.overrideLoadingEntries);
         injectToWindow(["overrideSorting"], this.overrideSorting);
@@ -2094,16 +2094,15 @@ var FeedlyPage = (function () {
                 var id = node["id"].replace("_main", "");
                 var sortedIds = getSortedVisibleArticles();
                 var nextIndex = sortedIds.indexOf(id) + 1;
-                if (nextIndex == sortedIds.length) {
-                    nextIndex = nextIndex - 2;
+                if (nextIndex > 0 && nextIndex < sortedIds.length) {
+                    var nextId = sortedIds[nextIndex];
+                    var nextElement = $("[data-entryid='" + nextId + "'")[0];
+                    if (nextElement) {
+                        sibling = $(nextElement).closest(ext.articleFrameSelector)[0];
+                    }
                 }
-                else if (nextIndex == 0) {
-                    nextIndex = sortedIds.length - 1;
-                }
-                var nextId = sortedIds[nextIndex];
-                var nextElement = $("[data-entryid='" + nextId + "'")[0];
-                if (nextElement) {
-                    sibling = $(nextElement).closest(ext.articleFrameSelector)[0];
+                else {
+                    sibling = null;
                 }
             }
             catch (e) { }
@@ -2169,12 +2168,12 @@ var FeedlyPage = (function () {
                 title: "Open all current feed articles in a new tab",
                 class: ext.openCurrentFeedArticlesClass + " " + ext.containerButtonClass,
                 style: getFFnS(ext.openCurrentFeedArticlesId) ? "" : "display: none",
-                type: "button"
+                type: "button",
             });
             var disableAllFiltersBtn = $("<button>", {
                 class: ext.disableAllFiltersButtonClass + " " + ext.containerButtonClass,
                 style: getFFnS(ext.disableAllFiltersButtonId) ? "" : "display: none",
-                type: "button"
+                type: "button",
             });
             function refreshDisableAllFiltersBtn(enabled) {
                 disableAllFiltersBtn.attr("title", (enabled ? "Restore" : "Disable all") + " filters");
@@ -2189,9 +2188,7 @@ var FeedlyPage = (function () {
             var feedButtonsContainer = $("<div id='" + ext.buttonsContainerId + "'>");
             feedButtonsContainer.append(openCurrentFeedArticlesBtn);
             feedButtonsContainer.append(disableAllFiltersBtn);
-            $("header.header")
-                .parent()
-                .after(feedButtonsContainer);
+            $("header.header").parent().after(feedButtonsContainer);
             onClickCapture(openCurrentFeedArticlesBtn, function (event) {
                 event.stopPropagation();
                 var articlesToOpen = getSortedVisibleArticles();
@@ -2212,18 +2209,14 @@ var FeedlyPage = (function () {
                 articlesToOpen
                     .map(function (id) { return getById(id); })
                     .forEach(function (a) {
-                    var link = $(a)
-                        .find(".title")
-                        .attr("href");
+                    var link = $(a).find(".title").attr("href");
                     window.open(link, link);
                 });
                 if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
                     var reader_1 = window["streets"].service("reader");
                     articlesToOpen.forEach(function (entryId) {
                         reader_1.askMarkEntryAsRead(entryId);
-                        $(getById(entryId))
-                            .removeClass("unread")
-                            .addClass("read");
+                        $(getById(entryId)).removeClass("unread").addClass("read");
                     });
                 }
             });
@@ -2317,7 +2310,7 @@ var FeedlyPage = (function () {
             var e = reader.lookupEntry(entryId);
             var entryInfos = $("<span>", {
                 class: ext.entryInfosJsonClass,
-                style: "display: none"
+                style: "display: none",
             });
             entryInfos.text(JSON.stringify(new EntryInfos(e.jsonInfo)));
             a.append(entryInfos);
@@ -2334,9 +2327,7 @@ var FeedlyPage = (function () {
                 }
                 var e = $("<button>", attributes);
                 if (cardsView) {
-                    a.find(".mark-as-read")
-                        .last()
-                        .before(e);
+                    a.find(".mark-as-read").last().before(e);
                 }
                 else if (magazineView) {
                     a.find(".ago").after(e);
@@ -2353,17 +2344,17 @@ var FeedlyPage = (function () {
                 class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
                 title: "Mark articles below" +
                     (cardsView ? " and on the right" : "") +
-                    " as read/unread"
+                    " as read/unread",
             });
             var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
                 class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
                 title: "Mark articles above" +
                     (cardsView ? " and on the left" : "") +
-                    " as read/unread"
+                    " as read/unread",
             });
             var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
                 class: ext.openAndMarkAsReadClass,
-                title: "Open in a new window/tab and mark as read"
+                title: "Open in a new window/tab and mark as read",
             });
             if (articleView) {
                 markAsReadBelowElement.detach().insertAfter(markAsReadAboveElement);
@@ -2458,7 +2449,7 @@ var FeedlyPage = (function () {
                 .before($("<div>", {
                 id: autoLoadingMessageId,
                 class: "message loading",
-                text: "Auto loading all articles"
+                text: "Auto loading all articles",
             }));
         }
         stream.setBatchSize(batchSize);
@@ -2596,7 +2587,7 @@ var FeedlyPage = (function () {
                                 class: "full-width secondary",
                                 type: "button",
                                 style: "margin-top: 1%;",
-                                text: loadByBatchText
+                                text: loadByBatchText,
                             }));
                             onClickCapture($(loadNextBatchBtnId), loadNextBatch);
                         }
