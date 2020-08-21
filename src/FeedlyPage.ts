@@ -396,7 +396,7 @@ export class FeedlyPage {
         attributes.style = getFFnS(id) ? "" : "display: none";
         attributes.class += " mark-as-read";
         if (titleView) {
-          attributes.class += " button-icon-only-micro icon";
+          attributes.class += " CondensedToolbar__icon";
         }
 
         var e = $("<button>", attributes);
@@ -407,7 +407,7 @@ export class FeedlyPage {
         } else if (articleView) {
           a.find(".fx.metadata").append(e);
         } else {
-          a.find(".CondensedToolbar .button-dropdown").prepend(e);
+          a.find(".CondensedToolbar .fx.tag-button").prepend(e);
         }
         return e;
       };

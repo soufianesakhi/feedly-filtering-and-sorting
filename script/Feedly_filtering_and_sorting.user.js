@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.17.8
+// @version     3.17.9
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2321,7 +2321,7 @@ var FeedlyPage = (function () {
                 attributes.style = getFFnS(id) ? "" : "display: none";
                 attributes.class += " mark-as-read";
                 if (titleView) {
-                    attributes.class += " button-icon-only-micro icon";
+                    attributes.class += " CondensedToolbar__icon";
                 }
                 var e = $("<button>", attributes);
                 if (cardsView) {
@@ -2334,7 +2334,7 @@ var FeedlyPage = (function () {
                     a.find(".fx.metadata").append(e);
                 }
                 else {
-                    a.find(".CondensedToolbar .button-dropdown").prepend(e);
+                    a.find(".CondensedToolbar .fx.tag-button").prepend(e);
                 }
                 return e;
             };
