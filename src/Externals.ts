@@ -30,7 +30,7 @@ var ext = {
   publishAgeSpanSelector: ".ago, .metadata [title^=published]",
   publishAgeTimestampAttr: "title",
   articleSourceSelector: ".source, .sourceTitle",
-  subscriptionChangeSelector: "header .heading",
+  subscriptionChangeSelector: "#header-title",
   articleTitleAttribute: "data-title",
   articleEntryIdAttribute: "data-entryid",
   popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
