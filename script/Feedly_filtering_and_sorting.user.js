@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.17.10
+// @version     3.17.11
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1546,7 +1546,7 @@ var Article = (function () {
             this.source = source.text().trim();
         }
         // URL
-        this.url = this.article.find(".title").attr("href");
+        this.url = this.article.find(".entry__title").attr("href");
         this.container = this.article.closest(ext.articleFrameSelector);
     }
     Article.prototype.addClass = function (c) {
@@ -1636,6 +1636,9 @@ var DuplicateChecker = (function () {
             var url = article.getUrl();
             var title = article.getTitle();
             var duplicate = true;
+            if (!url || !title) {
+                duplicate = false;
+            }
             if (!this.checkDuplicate(article, this.url2Article[url])) {
                 this.url2Article[url] = article;
                 if (!this.checkDuplicate(article, this.title2Article[title])) {

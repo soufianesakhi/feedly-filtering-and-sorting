@@ -30,6 +30,9 @@ export class DuplicateChecker {
       let url = article.getUrl();
       let title = article.getTitle();
       let duplicate = true;
+      if (!url || !title) {
+        duplicate = false;
+      }
       if (!this.checkDuplicate(article, this.url2Article[url])) {
         this.url2Article[url] = article;
         if (!this.checkDuplicate(article, this.title2Article[title])) {
