@@ -328,7 +328,7 @@ export class FeedlyPage {
   onNewArticleObserve() {
     var reader = window["streets"].service("reader");
     var getLink = (a: JQuery) => {
-      return a.find(".title").attr("href");
+      return a.find(ext.articleUrlAnchorSelector).attr("href");
     };
     var getMarkAsReadAboveBelowCallback = (entryId: string, above: boolean) => {
       return (event: MouseEvent) => {

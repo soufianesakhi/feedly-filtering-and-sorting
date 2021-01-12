@@ -573,7 +573,7 @@ export class Article {
     }
 
     // URL
-    this.url = this.article.find(".entry__title").attr("href");
+    this.url = this.article.find(ext.articleUrlAnchorSelector).attr("href");
 
     this.container = this.article.closest(ext.articleFrameSelector);
   }

@@ -36,6 +36,7 @@ var ext = {
   popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
   hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
   endOfFeedSelector: ".list-entries h4:contains(End of feed)",
+  articleUrlAnchorSelector: ".entry__title",
 
   keepArticlesUnreadId: "keepArticlesUnread",
   articlesToMarkAsReadId: "articlesToMarkAsRead",

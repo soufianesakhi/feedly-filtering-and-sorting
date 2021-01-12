@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.17.11
+// @version     3.17.12
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -55,6 +55,7 @@ var ext = {
     popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
     hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
     endOfFeedSelector: ".list-entries h4:contains(End of feed)",
+    articleUrlAnchorSelector: ".entry__title",
     keepArticlesUnreadId: "keepArticlesUnread",
     articlesToMarkAsReadId: "articlesToMarkAsRead",
     sortedVisibleArticlesId: "sortedVisibleArticles",
@@ -1546,7 +1547,7 @@ var Article = (function () {
             this.source = source.text().trim();
         }
         // URL
-        this.url = this.article.find(".entry__title").attr("href");
+        this.url = this.article.find(ext.articleUrlAnchorSelector).attr("href");
         this.container = this.article.closest(ext.articleFrameSelector);
     }
     Article.prototype.addClass = function (c) {
@@ -2258,7 +2259,7 @@ var FeedlyPage = (function () {
     FeedlyPage.prototype.onNewArticleObserve = function () {
         var reader = window["streets"].service("reader");
         var getLink = function (a) {
-            return a.find(".title").attr("href");
+            return a.find(ext.articleUrlAnchorSelector).attr("href");
         };
         var getMarkAsReadAboveBelowCallback = function (entryId, above) {
             return function (event) {
