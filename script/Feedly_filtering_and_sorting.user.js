@@ -42,9 +42,11 @@ var ext = {
     uncheckedArticlesSelector: ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame .u100Entry:not([checked-FFnS])",
     markAsReadImmediatelySelector: ".list-entries .FFnS-mark-as-read",
     unreadArticleClass: "entry--unread",
-    readArticleClass: "read",
+    readArticleClass: "entry--read",
     articleViewClass: "u100Entry",
     articleViewIdContainerClass: "inlineFrame",
+    articleViewTitleSelector: ".entry__title",
+    articleViewReadTitleClass: "entry__title--read",
     articleViewReadSelector: "entry__title--read",
     articleViewEntryContainerSelector: ".u100",
     loadingMessageSelector: ".list-entries .message.loading",
@@ -2223,7 +2225,13 @@ var FeedlyPage = (function () {
                     var reader_1 = window["streets"].service("reader");
                     articlesToOpen.forEach(function (entryId) {
                         reader_1.askMarkEntryAsRead(entryId);
-                        $(getById(entryId)).removeClass("unread").addClass("read");
+                        var a = $(getById(entryId));
+                        if (a.hasClass(ext.articleViewIdContainerClass)) {
+                            a.find(ext.articleViewTitleSelector).addClass(ext.articleViewReadTitleClass);
+                        }
+                        else {
+                            a.removeClass(ext.unreadArticleClass).addClass(ext.readArticleClass);
+                        }
                     });
                 }
             });
@@ -2611,8 +2619,15 @@ var FeedlyPage = (function () {
                     reader.askMarkEntriesAsRead(ids, {});
                     markAsReadEntries
                         .removeClass(ext.markAsReadImmediatelyClass)
-                        .removeClass("unread")
-                        .addClass("read");
+                        .each(function (_, e) {
+                        var a = $(e);
+                        if (a.hasClass(ext.articleViewIdContainerClass)) {
+                            a.find(ext.articleViewTitleSelector).addClass(ext.articleViewReadTitleClass);
+                        }
+                        else {
+                            a.removeClass(ext.unreadArticleClass).addClass(ext.readArticleClass);
+                        }
+                    });
                 }, 1000);
             }
             catch (e) {

@@ -285,7 +285,12 @@ export class FeedlyPage {
           let reader = window["streets"].service("reader");
           articlesToOpen.forEach((entryId) => {
             reader.askMarkEntryAsRead(entryId);
-            $(getById(entryId)).removeClass("unread").addClass("read");
+            const a = $(getById(entryId));
+            if (a.hasClass(ext.articleViewIdContainerClass)) {
+              a.find(ext.articleViewTitleSelector).addClass(ext.articleViewReadTitleClass);
+            } else {
+              a.removeClass(ext.unreadArticleClass).addClass(ext.readArticleClass);
+            }
           });
         }
       });
@@ -720,8 +725,14 @@ export class FeedlyPage {
           reader.askMarkEntriesAsRead(ids, {});
           markAsReadEntries
             .removeClass(ext.markAsReadImmediatelyClass)
-            .removeClass("unread")
-            .addClass("read");
+            .each((_, e) => {
+              const a = $(e);
+              if (a.hasClass(ext.articleViewIdContainerClass)) {
+                a.find(ext.articleViewTitleSelector).addClass(ext.articleViewReadTitleClass);
+              } else {
+                a.removeClass(ext.unreadArticleClass).addClass(ext.readArticleClass);
+              }
+            })
         }, 1000);
       } catch (e) {
         console.log(e);
