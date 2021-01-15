@@ -16,11 +16,11 @@ var ext = {
   articleDataSelector: " [data-entryid][data-title]:not([gap-article])",
   articleFrameSelector: ".list-entries > .EntryList__chunk > div",
   articleSelector:
-    ".entry[data-title]:not([gap-article]), .inlineFrame [data-title]",
+    ".entry[data-title]:not([gap-article]), .inlineFrame .u100Entry",
   unreadArticlesCountSelector:
     ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
   uncheckedArticlesSelector:
-    ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame [data-title]:not([checked-FFnS])",
+    ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame .u100Entry:not([checked-FFnS])",
   markAsReadImmediatelySelector: ".list-entries .FFnS-mark-as-read",
   readArticleClass: "read",
   articleViewClass: "u100Entry",
