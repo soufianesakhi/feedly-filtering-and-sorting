@@ -264,7 +264,9 @@ export class FeedlyPage {
         }
         if (getFFnS(ext.openCurrentFeedArticlesUnreadOnlyId)) {
           articlesToOpen = articlesToOpen.filter((id) => {
-            return $(getById(id)).hasClass("unread");
+            const a = $(getById(id));
+            return a.hasClass(ext.unreadArticleClass) || 
+              (a.hasClass(ext.articleViewIdContainerClass) && a.find(ext.articleViewReadSelector).length === 0);
           });
         }
         let max = getFFnS(ext.maxOpenCurrentFeedArticlesId);
@@ -276,7 +278,7 @@ export class FeedlyPage {
         articlesToOpen
           .map((id) => getById(id))
           .forEach((a) => {
-            let link = $(a).find(".title").attr("href");
+            let link = $(a).find(ext.articleUrlAnchorSelector).attr("href");
             window.open(link, link);
           });
         if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {

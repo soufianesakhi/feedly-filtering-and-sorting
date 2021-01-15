@@ -22,8 +22,11 @@ var ext = {
   uncheckedArticlesSelector:
     ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame .u100Entry:not([checked-FFnS])",
   markAsReadImmediatelySelector: ".list-entries .FFnS-mark-as-read",
+  unreadArticleClass: "entry--unread",
   readArticleClass: "read",
   articleViewClass: "u100Entry",
+  articleViewIdContainerClass: "inlineFrame",
+  articleViewReadSelector: "entry__title--read",
   articleViewEntryContainerSelector: ".u100",
   loadingMessageSelector: ".list-entries .message.loading",
   sectionSelector: "#timeline > .section",

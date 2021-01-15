@@ -41,8 +41,11 @@ var ext = {
     unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
     uncheckedArticlesSelector: ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame .u100Entry:not([checked-FFnS])",
     markAsReadImmediatelySelector: ".list-entries .FFnS-mark-as-read",
+    unreadArticleClass: "entry--unread",
     readArticleClass: "read",
     articleViewClass: "u100Entry",
+    articleViewIdContainerClass: "inlineFrame",
+    articleViewReadSelector: "entry__title--read",
     articleViewEntryContainerSelector: ".u100",
     loadingMessageSelector: ".list-entries .message.loading",
     sectionSelector: "#timeline > .section",
@@ -2199,7 +2202,9 @@ var FeedlyPage = (function () {
                 }
                 if (getFFnS(ext.openCurrentFeedArticlesUnreadOnlyId)) {
                     articlesToOpen = articlesToOpen.filter(function (id) {
-                        return $(getById(id)).hasClass("unread");
+                        var a = $(getById(id));
+                        return a.hasClass(ext.unreadArticleClass) ||
+                            (a.hasClass(ext.articleViewIdContainerClass) && a.find(ext.articleViewReadSelector).length === 0);
                     });
                 }
                 var max = getFFnS(ext.maxOpenCurrentFeedArticlesId);
@@ -2211,7 +2216,7 @@ var FeedlyPage = (function () {
                 articlesToOpen
                     .map(function (id) { return getById(id); })
                     .forEach(function (a) {
-                    var link = $(a).find(".title").attr("href");
+                    var link = $(a).find(ext.articleUrlAnchorSelector).attr("href");
                     window.open(link, link);
                 });
                 if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
