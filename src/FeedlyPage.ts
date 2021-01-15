@@ -449,10 +449,7 @@ export class FeedlyPage {
         window.open(link, link);
         reader.askMarkEntryAsRead(entryId);
         if (articleView) {
-          $(a)
-            .closest(ext.articleViewEntryContainerSelector)
-            .removeClass("unread")
-            .addClass("read");
+          $(a).find(ext.articleViewTitleSelector).addClass(ext.articleViewReadTitleClass);
         }
       };
       onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
