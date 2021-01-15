@@ -1190,7 +1190,7 @@ var ArticleManager = (function () {
                 .each(function (i, article) {
                 var engagement = $(article).find(ext.popularitySelector);
                 var popularity = parsePopularity($(engagement).text());
-                if ($(engagement).is(".hot, .onfire")) {
+                if ($(engagement).is(".EntryEngagement--hot, .hot, .onfire")) {
                     hotPopularityArr.push(popularity);
                 }
                 else {

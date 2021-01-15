@@ -165,7 +165,7 @@ export class ArticleManager {
         .each((i, article) => {
           let engagement = $(article).find(ext.popularitySelector);
           const popularity = parsePopularity($(engagement).text());
-          if ($(engagement).is(".hot, .onfire")) {
+          if ($(engagement).is(".EntryEngagement--hot, .hot, .onfire")) {
             hotPopularityArr.push(popularity);
           } else {
             popularityArr.push(popularity);
