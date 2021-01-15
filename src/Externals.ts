@@ -18,7 +18,7 @@ var ext = {
   articleSelector:
     ".entry[data-title]:not([gap-article]), .inlineFrame [data-title]",
   unreadArticlesCountSelector:
-    ".list-entries .entry.unread:not([gap-article]), .list-entries .inlineFrame.unread",
+    ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
   uncheckedArticlesSelector:
     ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame [data-title]:not([checked-FFnS])",
   markAsReadImmediatelySelector: ".list-entries .FFnS-mark-as-read",
