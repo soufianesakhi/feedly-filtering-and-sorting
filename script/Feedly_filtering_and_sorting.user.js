@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.18.0
+// @version     3.18.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -36,7 +36,7 @@ var ext = {
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
     articleDataSelector: " [data-entryid][data-title]:not([gap-article])",
-    articleFrameSelector: ".list-entries > .EntryList__chunk > div",
+    articleFrameSelector: ".list-entries > .EntryList__chunk > article",
     articleSelector: ".entry[data-title]:not([gap-article]), .inlineFrame .u100Entry",
     unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
     uncheckedArticlesSelector: ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame .u100Entry:not([checked-FFnS])",

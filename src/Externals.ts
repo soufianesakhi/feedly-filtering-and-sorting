@@ -14,7 +14,7 @@ var ext = {
   articlesChunkClass: "EntryList__chunk",
   articlesChunkSelector: ".EntryList__chunk",
   articleDataSelector: " [data-entryid][data-title]:not([gap-article])",
-  articleFrameSelector: ".list-entries > .EntryList__chunk > div",
+  articleFrameSelector: ".list-entries > .EntryList__chunk > article",
   articleSelector:
     ".entry[data-title]:not([gap-article]), .inlineFrame .u100Entry",
   unreadArticlesCountSelector:
