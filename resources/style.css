@@ -206,14 +206,30 @@ input {
   margin-right: 0px;
 }
 
+.fx button.mark-as-read {
+  opacity: 0.8;
+}
+
+.fx button.mark-as-read:hover {
+  opacity: 1;
+}
+
+.fx .u100 .mark-as-read-above-below-button.mark-as-read:hover,
+.fx .u100 .open-in-new-tab-button.mark-as-read:hover {
+    background-color: #efefef;
+}
+
 .theme--dark .open-in-new-tab-button, .theme--dark .mark-as-read-above-below-button {
   filter: contrast(0%);
 }
 
-.fx .open-in-new-tab-button.mark-as-read,
-.fx .entry.u0 .open-in-new-tab-button.condensed-toolbar-icon {
+.fx .open-in-new-tab-button.mark-as-read {
   background-image: url("{{open-in-new-tab-url}}");
-  background-size: 18px 18px;
+  background-size: 20px 20px;
+}
+
+.fx .entry.u5 .open-in-new-tab-button.mark-as-read {
+  background-size: 24px 24px;
 }
 
 #FFnS-buttons-container {
@@ -226,6 +242,14 @@ input {
   margin-left: auto;
   min-width: 10px;
   padding: 10px;
+}
+
+.FFnS-UI-button {
+  opacity: 0.8;
+}
+
+.FFnS-UI-button:hover {
+  opacity: 1;
 }
 
 .theme--dark .FFnS-UI-button {
@@ -250,15 +274,19 @@ input {
 .fx .mark-as-read-above-below-button.mark-as-read,
 .fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon,
 .fx .entry.u5 .mark-as-read-above-below-button {
+  background-size: 20px 20px;
   width: 24px;
   height: 24px;
 }
 
 .fx .u100 .mark-as-read-above-below-button.mark-as-read,
 .fx .u100 .open-in-new-tab-button.mark-as-read {
-  margin-left: 20px;
+  margin-left: .5rem;
+  padding: 24px;
+  background-position: center;
   width: 24px;
   height: 24px;
+  opacity: 0.54;
 }
 
 .fx button.mark-above-as-read.mark-as-read {
@@ -269,17 +297,18 @@ input {
   background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICA8PDxERERUVFRoaGhwcHB4eHigoKCoqKiwsLC4uLjAwMDExMTIyMjMzMzk5OTo6Oj09PUhISElJSUtLS01NTVFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbG5ubnJycnR0dHV1dXh4eHp6ent7e3x8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACY/twoAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAAxElEQVQoU3WQhxKCMBBEF7D3gg27Inbl/3/uvLtkQNrOJLvZNxcKqEIVYFQO9q3yiaXDWwmYIua9CCbYixWAD189DxbompADAWo2ZcEJyTkDYmBjYxYAfZsUPCKb6/BsYuEC2BdpAx8NKuwY6H0DYK6VEchl8CaaA/zrUoGODMa0tXOJ+ORxd+A1I3qap7iBgpBLliuVI2M1vBRQQ8FVAH9K1EQogddN+p729OV4kCCAOnwSF92xVjcFcFb/kwGroVoqoh+q2r44+TStvAAAAABJRU5ErkJggg==);
 }
 
+.fx button.mark-as-read {
+  min-width: unset;
+  min-height: unset;
+}
+
+.fx .entry.u4 .mark-as-read:first-of-type {
+  margin-left: .7rem;
+}
+
 .fx .entry.u5 .open-in-new-tab-button,
 .fx .entry.u5 .mark-as-read-above-below-button {
   filter: brightness(0) invert(1);
-}
-
-.fx .entry.u5 .open-in-new-tab-button {
-  margin-right: 4px;
-  margin-top: 4px;
-  background-size: 32px 32px;
-  width: 32px;
-  height: 32px;
 }
 
 .ShowSettingsBtn:hover {
@@ -323,4 +352,8 @@ input {
 
 .FFnS_ColoringRule div {
   margin-top: 1%;
+}
+
+.list-entries {
+  margin-top: 1rem;
 }

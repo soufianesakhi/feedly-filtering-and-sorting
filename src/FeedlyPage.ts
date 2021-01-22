@@ -403,16 +403,16 @@ export class FeedlyPage {
         attributes.style = getFFnS(id) ? "" : "display: none";
         attributes.class += " mark-as-read";
         if (titleView) {
-          attributes.class += " CondensedToolbar__icon";
+          attributes.class += " CondensedToolbar__button";
         }
 
         var e = $("<button>", attributes);
         if (cardsView) {
-          a.find(".mark-as-read").last().before(e);
+          a.find(".EntryMarkAsReadButton").last().before(e);
         } else if (magazineView) {
           a.find(".ago").after(e);
         } else if (articleView) {
-          a.find(".fx.metadata").append(e);
+          a.find(".headerInfo-links.left").append(e);
         } else {
           a.find(".CondensedToolbar .fx.tag-button").prepend(e);
         }
