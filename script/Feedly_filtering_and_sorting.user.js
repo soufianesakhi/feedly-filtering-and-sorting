@@ -36,7 +36,7 @@ var ext = {
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
     articleDataSelector: " [data-entryid][data-title]:not([gap-article])",
-    articleFrameSelector: ".list-entries > .EntryList__chunk > article",
+    articleFrameSelector: ".list-entries > .EntryList__chunk > article, .list-entries > .EntryList__chunk > div",
     articleSelector: ".entry[data-title]:not([gap-article]), .inlineFrame .u100Entry",
     unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
     uncheckedArticlesSelector: ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame .u100Entry:not([checked-FFnS])",
