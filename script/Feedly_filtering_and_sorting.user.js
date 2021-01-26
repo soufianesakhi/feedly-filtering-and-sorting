@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.18.2
+// @version     3.18.3
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -53,7 +53,7 @@ var ext = {
     sectionSelector: "#timeline > .section",
     publishAgeSpanSelector: ".ago, .metadata [title^=published]",
     publishAgeTimestampAttr: "title",
-    articleSourceSelector: ".source, .sourceTitle",
+    articleSourceSelector: ".entry__source",
     subscriptionChangeSelector: "#header-title",
     articleTitleAttribute: "data-title",
     articleEntryIdAttribute: "data-entryid",

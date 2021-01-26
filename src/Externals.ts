@@ -34,7 +34,7 @@ var ext = {
   sectionSelector: "#timeline > .section",
   publishAgeSpanSelector: ".ago, .metadata [title^=published]",
   publishAgeTimestampAttr: "title",
-  articleSourceSelector: ".source, .sourceTitle",
+  articleSourceSelector: ".entry__source",
   subscriptionChangeSelector: "#header-title",
   articleTitleAttribute: "data-title",
   articleEntryIdAttribute: "data-entryid",
