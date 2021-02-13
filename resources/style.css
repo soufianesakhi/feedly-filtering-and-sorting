@@ -214,8 +214,8 @@ input {
   opacity: 1;
 }
 
-.fx .u100 .mark-as-read-above-below-button.mark-as-read:hover,
-.fx .u100 .open-in-new-tab-button.mark-as-read:hover {
+.fx .u100Entry .mark-as-read-above-below-button.mark-as-read:hover,
+.fx .u100Entry .open-in-new-tab-button.mark-as-read:hover {
     background-color: #efefef;
 }
 
@@ -279,8 +279,8 @@ input {
   height: 24px;
 }
 
-.fx .u100 .mark-as-read-above-below-button.mark-as-read,
-.fx .u100 .open-in-new-tab-button.mark-as-read {
+.fx .u100Entry .mark-as-read-above-below-button.mark-as-read,
+.fx .u100Entry .open-in-new-tab-button.mark-as-read {
   margin-left: .5rem;
   padding: 24px;
   background-position: center;

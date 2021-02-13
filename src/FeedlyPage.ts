@@ -404,7 +404,7 @@ export class FeedlyPage {
       } else if (magazineView) {
         a.find(".ago").after(buttonContainer);
       } else if (articleView) {
-        a.find(".headerInfo-links.left").append(buttonContainer);
+        a.find(".headerInfo > :first-child").append(buttonContainer);
       } else {
         a.find(".CondensedToolbar .fx.tag-button").prepend(buttonContainer);
       }
