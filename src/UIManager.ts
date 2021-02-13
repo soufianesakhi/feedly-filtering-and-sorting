@@ -374,12 +374,29 @@ export class UIManager {
         .not(tab)
         .css("display", "none");
       $(tab).show();
+      focusKeywordsInput();
     });
     $("#" + tabsContentContainerId + " > div")
       .first()
       .show();
+    
+    $(document).keyup((event) => {
+      this.checkKeywordsInputEnter(event);
+    });
   }
 
+  checkKeywordsInputEnter(event: JQueryKeyEventObject) {
+    if (event.key !== "Enter") {
+      return;
+    }
+    keywordInputs.forEach(e => {
+      const { input, type } = e;
+      if ($(input).is(":focus")) {
+        this.addKeyword($(input), type);
+      }
+    });
+  }
+  
   getSortingSelectHTML(id: string): string {
     return bindMarkup(templates.sortingSelectHTML, [
       { name: "Id", value: id },
@@ -496,6 +513,7 @@ export class UIManager {
         $(element).after(clone);
         $(clone).click(function() {
           $id(this_.settingsDivContainerId).toggle();
+          focusKeywordsInput();
         });
       }
     );
@@ -896,16 +914,7 @@ export class UIManager {
     // Add button
     $id(this.getHTMLId(ids.plusBtnId)).click(() => {
       var input = $id(this.getHTMLId(ids.inputId));
-      var keyword = input.val();
-      if (keyword != null && keyword !== "") {
-        var area = $id(this.getKeywordMatchingSelectId(true, type)).val();
-        if (area.length > 0) {
-          keyword = this.keywordManager.insertArea(keyword, area);
-        }
-        this.subscription.addKeyword(keyword, type);
-        this.updateFilteringList(type);
-        input.val("");
-      }
+      this.addKeyword(input, type);
     });
 
     // Erase all button
@@ -917,6 +926,19 @@ export class UIManager {
     });
 
     this.setUpKeywordButtonsEvents(type);
+  }
+
+  private addKeyword(input: JQuery, type: FilteringType) {
+    var keyword = input.val();
+    if (keyword != null && keyword !== "") {
+      var area = $id(this.getKeywordMatchingSelectId(true, type)).val();
+      if (area.length > 0) {
+        keyword = this.keywordManager.insertArea(keyword, area);
+      }
+      this.subscription.addKeyword(keyword, type);
+      this.updateFilteringList(type);
+      input.val("");
+    }
   }
 
   private setUpKeywordButtonsEvents(type: FilteringType) {
@@ -1124,4 +1146,15 @@ class ColoringRuleHTMLIds {
     this.moveUpColoringRuleId = id + " .FFnS_MoveUpColoringRule";
     this.moveDownColoringRuleId = id + " .FFnS_MoveDownColoringRule";
   }
+}
+
+const keywordInputs = [
+  { input: "#FFnS_Input_FilteredOut", type: FilteringType.FilteredOut},
+  { input: "#FFnS_Input_RestrictedOn", type: FilteringType.RestrictedOn}
+];
+
+const focusKeywordsInputSelector = keywordInputs.map(e => e.input + ":visible").join(",");
+
+function focusKeywordsInput() {
+  $(focusKeywordsInputSelector).focus().val("");
 }

@@ -3033,6 +3033,7 @@ var UIManager = (function () {
         });
     };
     UIManager.prototype.initSettingsMenu = function () {
+        var _this = this;
         var marginElementClass = this.getHTMLId("margin_element");
         var tabsMenuId = this.getHTMLId("tabs_menu");
         var tabsContentContainerId = this.getHTMLId("tabs_content");
@@ -3081,10 +3082,26 @@ var UIManager = (function () {
                 .not(tab)
                 .css("display", "none");
             $(tab).show();
+            focusKeywordsInput();
         });
         $("#" + tabsContentContainerId + " > div")
             .first()
             .show();
+        $(document).keyup(function (event) {
+            _this.checkKeywordsInputEnter(event);
+        });
+    };
+    UIManager.prototype.checkKeywordsInputEnter = function (event) {
+        var _this = this;
+        if (event.key !== "Enter") {
+            return;
+        }
+        keywordInputs.forEach(function (e) {
+            var input = e.input, type = e.type;
+            if ($(input).is(":focus")) {
+                _this.addKeyword($(input), type);
+            }
+        });
     };
     UIManager.prototype.getSortingSelectHTML = function (id) {
         return bindMarkup(templates.sortingSelectHTML, [
@@ -3189,6 +3206,7 @@ var UIManager = (function () {
             $(element).after(clone);
             $(clone).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
+                focusKeywordsInput();
             });
         });
     };
@@ -3509,16 +3527,7 @@ var UIManager = (function () {
         // Add button
         $id(this.getHTMLId(ids.plusBtnId)).click(function () {
             var input = $id(_this.getHTMLId(ids.inputId));
-            var keyword = input.val();
-            if (keyword != null && keyword !== "") {
-                var area = $id(_this.getKeywordMatchingSelectId(true, type)).val();
-                if (area.length > 0) {
-                    keyword = _this.keywordManager.insertArea(keyword, area);
-                }
-                _this.subscription.addKeyword(keyword, type);
-                _this.updateFilteringList(type);
-                input.val("");
-            }
+            _this.addKeyword(input, type);
         });
         // Erase all button
         $id(this.getHTMLId(ids.eraseBtnId)).click(function () {
@@ -3528,6 +3537,18 @@ var UIManager = (function () {
             }
         });
         this.setUpKeywordButtonsEvents(type);
+    };
+    UIManager.prototype.addKeyword = function (input, type) {
+        var keyword = input.val();
+        if (keyword != null && keyword !== "") {
+            var area = $id(this.getKeywordMatchingSelectId(true, type)).val();
+            if (area.length > 0) {
+                keyword = this.keywordManager.insertArea(keyword, area);
+            }
+            this.subscription.addKeyword(keyword, type);
+            this.updateFilteringList(type);
+            input.val("");
+        }
     };
     UIManager.prototype.setUpKeywordButtonsEvents = function (type) {
         var ids = this.getIds(type);
@@ -3695,6 +3716,14 @@ var ColoringRuleHTMLIds = (function () {
     }
     return ColoringRuleHTMLIds;
 }());
+var keywordInputs = [
+    { input: "#FFnS_Input_FilteredOut", type: FilteringType.FilteredOut },
+    { input: "#FFnS_Input_RestrictedOn", type: FilteringType.RestrictedOn }
+];
+var focusKeywordsInputSelector = keywordInputs.map(function (e) { return e.input + ":visible"; }).join(",");
+function focusKeywordsInput() {
+    $(focusKeywordsInputSelector).focus().val("");
+}
 
 var HTMLSubscriptionManager = (function () {
     function HTMLSubscriptionManager(manager) {
