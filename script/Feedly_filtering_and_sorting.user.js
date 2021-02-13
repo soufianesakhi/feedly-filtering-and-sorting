@@ -2333,6 +2333,19 @@ var FeedlyPage = (function () {
             var magazineView = a.hasClass("u4");
             var titleView = a.hasClass("u0");
             var articleView = a.hasClass(ext.articleViewClass);
+            var buttonContainer = $("<span>");
+            if (cardsView) {
+                a.find(".EntryMarkAsReadButton").last().before(buttonContainer);
+            }
+            else if (magazineView) {
+                a.find(".ago").after(buttonContainer);
+            }
+            else if (articleView) {
+                a.find(".headerInfo-links.left").append(buttonContainer);
+            }
+            else {
+                a.find(".CondensedToolbar .fx.tag-button").prepend(buttonContainer);
+            }
             var addButton = function (id, attributes) {
                 attributes.type = "button";
                 attributes.style = getFFnS(id) ? "" : "display: none";
@@ -2341,42 +2354,25 @@ var FeedlyPage = (function () {
                     attributes.class += " CondensedToolbar__button";
                 }
                 var e = $("<button>", attributes);
-                if (cardsView) {
-                    a.find(".EntryMarkAsReadButton").last().before(e);
-                }
-                else if (magazineView) {
-                    a.find(".ago").after(e);
-                }
-                else if (articleView) {
-                    a.find(".headerInfo-links.left").append(e);
-                }
-                else {
-                    a.find(".CondensedToolbar .fx.tag-button").prepend(e);
-                }
+                buttonContainer.append(e);
                 return e;
             };
-            var markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
-                class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
-                title: "Mark articles below" +
-                    (cardsView ? " and on the right" : "") +
-                    " as read/unread",
-            });
             var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
                 class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
                 title: "Mark articles above" +
                     (cardsView ? " and on the left" : "") +
                     " as read/unread",
             });
+            var markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
+                class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
+                title: "Mark articles below" +
+                    (cardsView ? " and on the right" : "") +
+                    " as read/unread",
+            });
             var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
                 class: ext.openAndMarkAsReadClass,
                 title: "Open in a new window/tab and mark as read",
             });
-            if (articleView) {
-                markAsReadBelowElement.detach().insertAfter(markAsReadAboveElement);
-            }
-            else if (magazineView) {
-                markAsReadAboveElement.detach().insertAfter(markAsReadBelowElement);
-            }
             var link = getLink(a);
             var openAndMarkAsRead = function (event) {
                 event.stopPropagation();
