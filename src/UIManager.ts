@@ -381,7 +381,16 @@ export class UIManager {
       .show();
     
     $(document).keyup((event) => {
+      if(event.key === "Escape") {
+        $id(this.settingsDivContainerId).hide();
+      }
       this.checkKeywordsInputEnter(event);
+    });
+
+    $('#FFnS_settingsDivContainer').click((event) => {
+      if (event.target.id === "FFnS_settingsDivContainer") {
+        $id(this.settingsDivContainerId).hide();
+      }
     });
   }
 

@@ -3088,7 +3088,15 @@ var UIManager = (function () {
             .first()
             .show();
         $(document).keyup(function (event) {
+            if (event.key === "Escape") {
+                $id(_this.settingsDivContainerId).hide();
+            }
             _this.checkKeywordsInputEnter(event);
+        });
+        $('#FFnS_settingsDivContainer').click(function (event) {
+            if (event.target.id === "FFnS_settingsDivContainer") {
+                $id(_this.settingsDivContainerId).hide();
+            }
         });
     };
     UIManager.prototype.checkKeywordsInputEnter = function (event) {
