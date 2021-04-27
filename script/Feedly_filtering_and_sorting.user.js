@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.19.0
+// @version     3.19.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -31,7 +31,7 @@ var ext = {
     defaultUrlPrefixPattern: "https?://[^/]+/i/",
     subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
     categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
-    settingsBtnPredecessorSelector: ".icon-toolbar-refresh-secondary",
+    settingsBtnPredecessorSelector: "button[title='Refresh']",
     articlesContainerSelector: ".list-entries",
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
@@ -90,7 +90,7 @@ var ext = {
     openCurrentFeedArticlesUnreadOnlyId: "openCurrentFeedArticlesUnreadOnly",
     markAsReadOnOpenCurrentFeedArticlesId: "isMarkAsReadOnOpenCurrentFeedArticles",
     maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles",
-    forceRefreshArticlesId: "forceRefreshArticles"
+    forceRefreshArticlesId: "forceRefreshArticles",
 };
 
 var templates = {

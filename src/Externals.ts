@@ -9,12 +9,13 @@ var ext = {
   subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
   categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
 
-  settingsBtnPredecessorSelector: ".icon-toolbar-refresh-secondary",
+  settingsBtnPredecessorSelector: "button[title='Refresh']",
   articlesContainerSelector: ".list-entries",
   articlesChunkClass: "EntryList__chunk",
   articlesChunkSelector: ".EntryList__chunk",
   articleDataSelector: " [data-entryid][data-title]:not([gap-article])",
-  articleFrameSelector: ".list-entries > .EntryList__chunk > article, .list-entries > .EntryList__chunk > div",
+  articleFrameSelector:
+    ".list-entries > .EntryList__chunk > article, .list-entries > .EntryList__chunk > div",
   articleSelector:
     ".entry[data-title]:not([gap-article]), .inlineFrame .u100Entry",
   unreadArticlesCountSelector:
@@ -73,5 +74,5 @@ var ext = {
   markAsReadOnOpenCurrentFeedArticlesId:
     "isMarkAsReadOnOpenCurrentFeedArticles",
   maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles",
-  forceRefreshArticlesId: "forceRefreshArticles"
+  forceRefreshArticlesId: "forceRefreshArticles",
 };
