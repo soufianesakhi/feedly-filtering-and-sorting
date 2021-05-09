@@ -1,18 +1,18 @@
-module.exports = function(grunt) {
+module.exports = function (grunt) {
   var srcFiles = grunt.file.readJSON("tsconfig.json").files;
   var watchedFiles = grunt.file.expand("*.js*", "resources/*").concat(srcFiles);
   var srcReplacements = [];
-  srcFiles.forEach(function(srcFile) {
+  srcFiles.forEach(function (srcFile) {
     var file = srcFile.replace(/.*[\\\/]/g, "").replace(/\..*/g, "");
     srcReplacements.push({
       pattern: new RegExp(file + "_[0-9]+.", "ig"),
-      replacement: ""
+      replacement: "",
     });
   });
   var compile = grunt.file.readJSON("compile.json");
   for (var c in compile) {
     var targetFiles = [];
-    compile[c]["src"].forEach(function(file) {
+    compile[c]["src"].forEach(function (file) {
       targetFiles.push("target/" + file + ".js");
     });
     compile[c]["src"] = targetFiles;
@@ -20,7 +20,7 @@ module.exports = function(grunt) {
 
   var templates = grunt.file.readJSON("templates.json");
   var replacements = [];
-  templates.forEach(template => {
+  templates.forEach((template) => {
     var templateString = grunt.file
       .read(template.file)
       .replace(/\s+/g, " ")
@@ -44,16 +44,16 @@ module.exports = function(grunt) {
         tsconfig: true,
         options: {
           removeComments: false,
-          sourceMap: false
-        }
-      }
+          sourceMap: false,
+        },
+      },
     },
     watch: {
       files: watchedFiles,
       tasks: ["default"],
       options: {
-        interrupt: true
-      }
+        interrupt: true,
+      },
     },
     "string-replace": {
       ts: {
@@ -62,66 +62,70 @@ module.exports = function(grunt) {
             expand: true,
             cwd: "target/",
             src: ["**"],
-            dest: "target/"
-          }
+            dest: "target/",
+          },
         ],
         options: {
           replacements: [
             {
               pattern: /\/\/\/[^\r\n]*[\r\n]+/gi,
-              replacement: ""
+              replacement: "",
             },
             {
               pattern: /[^\r\n]*=\srequire\([^\r\n]*\s*/gi,
-              replacement: ""
+              replacement: "",
             },
             {
               pattern: /\s*exports\.[^=|;]*=[^;{]*;/gi,
-              replacement: ""
+              replacement: "",
+            },
+            {
+              pattern: /.*defineProperty.*__esModule.*[\r\n]+/gi,
+              replacement: "",
             },
             {
               pattern: /= new[^(\.]*\./gi,
-              replacement: "= new "
+              replacement: "= new ",
             },
             {
               pattern: /exports\./g,
-              replacement: "exported."
-            }
-          ].concat(srcReplacements)
-        }
+              replacement: "exported.",
+            },
+          ].concat(srcReplacements),
+        },
       },
       templates: {
         files: [{ src: "target/Templates.js", dest: "target/Templates.js" }],
         options: {
-          replacements: replacements
-        }
+          replacements: replacements,
+        },
       },
       version: {
         files: [
           { src: "resources/Header.js", dest: "target/Header.js" },
-          { src: "resources/manifest.json", dest: "web-ext/manifest.json" }
+          { src: "resources/manifest.json", dest: "web-ext/manifest.json" },
         ],
         options: {
           replacements: [
             {
               pattern: "{{version}}",
-              replacement: "<%= pkg.version %>"
-            }
-          ]
-        }
-      }
+              replacement: "<%= pkg.version %>",
+            },
+          ],
+        },
+      },
     },
     concat: compile,
     copy: {
       deploy: {
         src: "script/<%= pkg.scriptName %>.user.js",
         dest: "<%= deploy.path %>",
-        filter: function(filepath) {
+        filter: function (filepath) {
           var dest = grunt.config("copy.deploy.dest");
           return dest !== "";
-        }
-      }
-    }
+        },
+      },
+    },
   });
 
   grunt.loadNpmTasks("grunt-ts");
@@ -136,6 +140,6 @@ module.exports = function(grunt) {
     "string-replace:templates",
     "string-replace:version",
     "concat",
-    "copy:deploy"
+    "copy:deploy",
   ]);
 };

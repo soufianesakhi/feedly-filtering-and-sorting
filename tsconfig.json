@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "es5",
+    "rootDir": "src",
     "outDir": "target",
     "noImplicitUseStrict": true,
     "watch": true
