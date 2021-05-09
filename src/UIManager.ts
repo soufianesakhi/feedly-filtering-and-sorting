@@ -3,10 +3,22 @@
 import { ArticleManager } from "./ArticleManager";
 import { AsyncResult } from "./AsyncResult";
 import { DataStore } from "./dao/Storage";
-import { ColoringRuleSource, FilteringType, getFilteringTypeId, getFilteringTypes, HTMLElementType, KeywordMatchingArea, KeywordMatchingMethod, SortingType } from "./DataTypes";
+import {
+  ColoringRuleSource,
+  FilteringType,
+  getFilteringTypeId,
+  getFilteringTypes,
+  HTMLElementType,
+  KeywordMatchingArea,
+  KeywordMatchingMethod,
+  SortingType,
+} from "./DataTypes";
 import { FeedlyPage } from "./FeedlyPage";
 import { HTMLGlobalSettings } from "./HTMLGlobalSettings";
-import { HTMLSubscriptionManager, HTMLSubscriptionSetting } from "./HTMLSubscription";
+import {
+  HTMLSubscriptionManager,
+  HTMLSubscriptionSetting,
+} from "./HTMLSubscription";
 import { KeywordManager } from "./KeywordManager";
 import { SettingsManager } from "./SettingsManager";
 import { Subscription } from "./Subscription";
@@ -40,12 +52,12 @@ export class UIManager {
       ids: [
         this.sortingSelectId,
         "KeywordMatchingMethod",
-        this.getKeywordMatchingSelectId(false)
-      ]
+        this.getKeywordMatchingSelectId(false),
+      ],
     },
     {
       type: HTMLElementType.ColorInput,
-      ids: ["HighlightDuplicatesColor"]
+      ids: ["HighlightDuplicatesColor"],
     },
     {
       type: HTMLElementType.CheckBox,
@@ -76,8 +88,8 @@ export class UIManager {
         "MarkAsReadDuplicates",
         "HighlightDuplicates",
         "Enabled_FilteringByReadingTime",
-        "KeepUnread_FilteringByReadingTime"
-      ]
+        "KeepUnread_FilteringByReadingTime",
+      ],
     },
     {
       type: HTMLElementType.NumberInput,
@@ -86,16 +98,16 @@ export class UIManager {
         "AutoRefreshMinutes",
         "MaxOpenCurrentFeedArticles",
         "ThresholdMinutes_FilteringByReadingTime",
-        "WordsPerMinute_FilteringByReadingTime"
-      ]
-    }
+        "WordsPerMinute_FilteringByReadingTime",
+      ],
+    },
   ];
 
   settingsDivContainerId = this.getHTMLId("settingsDivContainer");
   closeBtnId = this.getHTMLId("CloseSettingsBtn");
 
   init() {
-    return new AsyncResult<any>(p => {
+    return new AsyncResult<any>((p) => {
       this.settingsManager = new SettingsManager(this);
       this.keywordManager = new KeywordManager();
       this.page = new FeedlyPage();
@@ -143,10 +155,10 @@ export class UIManager {
           false,
           false
         );
-        this.crossCheckDuplicatesCB.setAdditionalChangeCallback(val =>
+        this.crossCheckDuplicatesCB.setAdditionalChangeCallback((val) =>
           crossCheckSettings.setEnabled(val)
         );
-        this.crossCheckDuplicatesDaysInput.setAdditionalChangeCallback(val =>
+        this.crossCheckDuplicatesDaysInput.setAdditionalChangeCallback((val) =>
           crossCheckSettings.setDays(val)
         );
         this.globalSettings = [
@@ -155,7 +167,7 @@ export class UIManager {
           this.batchSizeInput,
           this.globalSettingsEnabledCB,
           this.crossCheckDuplicatesCB,
-          this.crossCheckDuplicatesDaysInput
+          this.crossCheckDuplicatesDaysInput,
         ];
         this.initGlobalSettings(this.globalSettings.slice(0)).then(() => {
           this.page.initAutoLoad();
@@ -176,7 +188,7 @@ export class UIManager {
     if (settings.length == 1) {
       return settings[0].init();
     } else {
-      return new AsyncResult<any>(p => {
+      return new AsyncResult<any>((p) => {
         settings
           .pop()
           .init()
@@ -191,7 +203,7 @@ export class UIManager {
     if (settings.length == 1) {
       return settings[0].reset();
     } else {
-      return new AsyncResult<any>(p => {
+      return new AsyncResult<any>((p) => {
         settings
           .pop()
           .reset()
@@ -228,11 +240,11 @@ export class UIManager {
   }
 
   updateSubscription(): AsyncResult<any> {
-    return new AsyncResult<any>(p => {
+    return new AsyncResult<any>((p) => {
       var globalSettingsEnabled = this.globalSettingsEnabledCB.getValue();
       this.settingsManager
         .loadSubscription(globalSettingsEnabled, this.forceReloadGlobalSettings)
-        .then(sub => {
+        .then((sub) => {
           this.subscription = sub;
           p.done();
         }, this);
@@ -258,14 +270,14 @@ export class UIManager {
         }, 3000);
       }
     }, 500);
-    getFilteringTypes().forEach(type => {
+    getFilteringTypes().forEach((type) => {
       this.prepareFilteringList(type);
     });
     this.updateSettingsControls();
 
     // Additional sorting types
     $("#FFnS_AdditionalSortingTypes").empty();
-    this.subscription.getAdditionalSortingTypes().forEach(s => {
+    this.subscription.getAdditionalSortingTypes().forEach((s) => {
       var id = this.registerAdditionalSortingType();
       $id(id).val(s);
     });
@@ -318,7 +330,7 @@ export class UIManager {
   initUI() {
     this.initSettingsMenu();
     this.initShowSettingsBtns();
-    this.globalSettings.forEach(globalSetting => {
+    this.globalSettings.forEach((globalSetting) => {
       globalSetting.initUI();
     });
   }
@@ -331,44 +343,39 @@ export class UIManager {
     var settingsHtml = bindMarkup(templates.settingsHTML, [
       {
         name: "SortingSelect",
-        value: this.getSortingSelectHTML(this.getHTMLId(this.sortingSelectId))
+        value: this.getSortingSelectHTML(this.getHTMLId(this.sortingSelectId)),
       },
       {
         name: "FilteringList.Type.FilteredOut",
-        value: this.getFilteringListHTML(FilteringType.FilteredOut)
+        value: this.getFilteringListHTML(FilteringType.FilteredOut),
       },
       {
         name: "FilteringList.Type.RestrictedOn",
-        value: this.getFilteringListHTML(FilteringType.RestrictedOn)
+        value: this.getFilteringListHTML(FilteringType.RestrictedOn),
       },
       {
         name: "ImportMenu.SubscriptionOptions",
-        value: this.getImportOptionsHTML()
+        value: this.getImportOptionsHTML(),
       },
       { name: "closeIconLink", value: ext.closeIconLink },
       { name: "plusIconLink", value: ext.plusIconLink },
       { name: "eraseIconLink", value: ext.eraseIconLink },
       {
         name: "DefaultKeywordMatchingArea",
-        value: this.getKeywordMatchingSelectHTML("multiple required", false)
+        value: this.getKeywordMatchingSelectHTML("multiple required", false),
       },
       {
         name: "KeywordMatchingMethod",
-        value: this.getKeywordMatchingMethod(true)
-      }
+        value: this.getKeywordMatchingMethod(true),
+      },
     ]);
     $("body").prepend(settingsHtml);
 
     // set up tabs
-    $("#" + tabsMenuId + " a").click(function(event) {
+    $("#" + tabsMenuId + " a").click(function (event) {
       event.preventDefault();
-      $(this)
-        .parent()
-        .addClass("current");
-      $(this)
-        .parent()
-        .siblings()
-        .removeClass("current");
+      $(this).parent().addClass("current");
+      $(this).parent().siblings().removeClass("current");
       var tab = $(this).attr("href");
       $("#" + tabsContentContainerId + " > div")
         .not(tab)
@@ -379,15 +386,15 @@ export class UIManager {
     $("#" + tabsContentContainerId + " > div")
       .first()
       .show();
-    
+
     $(document).keyup((event) => {
-      if(event.key === "Escape") {
+      if (event.key === "Escape") {
         $id(this.settingsDivContainerId).hide();
       }
       this.checkKeywordsInputEnter(event);
     });
 
-    $('#FFnS_settingsDivContainer').click((event) => {
+    $("#FFnS_settingsDivContainer").click((event) => {
       if (event.target.id === "FFnS_settingsDivContainer") {
         $id(this.settingsDivContainerId).hide();
       }
@@ -398,14 +405,14 @@ export class UIManager {
     if (event.key !== "Enter") {
       return;
     }
-    keywordInputs.forEach(e => {
+    keywordInputs.forEach((e) => {
       const { input, type } = e;
       if ($(input).is(":focus")) {
         this.addKeyword($(input), type);
       }
     });
   }
-  
+
   getSortingSelectHTML(id: string): string {
     return bindMarkup(templates.sortingSelectHTML, [
       { name: "Id", value: id },
@@ -423,9 +430,9 @@ export class UIManager {
       { name: "SourceDesc", value: SortingType.SourceDesc },
       {
         name: "SourceNewestReceiveDate",
-        value: SortingType.SourceNewestReceiveDate
+        value: SortingType.SourceNewestReceiveDate,
       },
-      { name: "Random", value: SortingType.Random }
+      { name: "Random", value: SortingType.Random },
     ]);
   }
 
@@ -439,8 +446,8 @@ export class UIManager {
       { name: "filetringKeywordsId", value: ids.filetringKeywordsId },
       {
         name: "FilteringKeywordMatchingArea",
-        value: this.getKeywordMatchingSelectHTML("filtering", true, type)
-      }
+        value: this.getKeywordMatchingSelectHTML("filtering", true, type),
+      },
     ]);
     return filteringListHTML;
   }
@@ -453,20 +460,20 @@ export class UIManager {
   ): string {
     var defaultOption = includeDefaultOption
       ? bindMarkup(templates.emptyOptionHTML, [
-          { name: "value", value: "-- area (optional) --" }
+          { name: "value", value: "-- area (optional) --" },
         ])
       : "";
     var filteringListHTML = bindMarkup(templates.keywordMatchingSelectHTML, [
       {
         name: "Id",
-        value: selectId || this.getKeywordMatchingSelectId(true, type)
+        value: selectId || this.getKeywordMatchingSelectId(true, type),
       },
       { name: "attributes", value: attributes },
       { name: "defaultOption", value: defaultOption },
       { name: "selectFirst", value: includeDefaultOption ? "" : "selected" },
       { name: "KeywordMatchingArea.Title", value: KeywordMatchingArea.Title },
       { name: "KeywordMatchingArea.Body", value: KeywordMatchingArea.Body },
-      { name: "KeywordMatchingArea.Author", value: KeywordMatchingArea.Author }
+      { name: "KeywordMatchingArea.Author", value: KeywordMatchingArea.Author },
     ]);
     return filteringListHTML;
   }
@@ -483,23 +490,23 @@ export class UIManager {
       { name: "id", value: id },
       {
         name: "KeywordMatchingMethod.Simple",
-        value: KeywordMatchingMethod.Simple
+        value: KeywordMatchingMethod.Simple,
       },
       { name: "KeywordMatchingMethod.Word", value: KeywordMatchingMethod.Word },
       {
         name: "KeywordMatchingMethod.RegExp",
-        value: KeywordMatchingMethod.RegExp
+        value: KeywordMatchingMethod.RegExp,
       },
-      { name: "size", value: fullSize ? 'size="3"' : "" }
+      { name: "size", value: fullSize ? 'size="3"' : "" },
     ]);
   }
 
   getImportOptionsHTML(): string {
     var optionsHTML = "";
     var urls = this.settingsManager.getAllSubscriptionURLs();
-    urls.forEach(url => {
+    urls.forEach((url) => {
       optionsHTML += bindMarkup(templates.optionHTML, [
-        { name: "value", value: url }
+        { name: "value", value: url },
       ]);
     });
     return optionsHTML;
@@ -509,7 +516,7 @@ export class UIManager {
     var this_ = this;
     NodeCreationObserver.onCreation(
       ext.settingsBtnPredecessorSelector,
-      element => {
+      (element) => {
         if ($(element).parent().find(".ShowSettingsBtn").length > 0) {
           return;
         }
@@ -520,7 +527,7 @@ export class UIManager {
           .attr("title", "Feedly filtering and sorting")
           .addClass("ShowSettingsBtn");
         $(element).after(clone);
-        $(clone).click(function() {
+        $(clone).click(function () {
           $id(this_.settingsDivContainerId).toggle();
           focusKeywordsInput();
         });
@@ -529,13 +536,13 @@ export class UIManager {
   }
 
   registerSettings() {
-    this.htmlSettingsElements.forEach(element => {
+    this.htmlSettingsElements.forEach((element) => {
       this.htmlSubscriptionManager.registerSettings(element.ids, element.type);
     });
     this.htmlSubscriptionManager.registerSettings(
       [
         "Hours_AdvancedControlsReceivedPeriod",
-        "Days_AdvancedControlsReceivedPeriod"
+        "Days_AdvancedControlsReceivedPeriod",
       ],
       HTMLElementType.NumberInput,
       {
@@ -549,7 +556,7 @@ export class UIManager {
           } else {
             $id(subscriptionSetting.htmlId).val(advancedPeriodDays);
           }
-        }
+        },
       }
     );
     this.htmlSubscriptionManager.registerSelectBoxBoolean(
@@ -653,25 +660,21 @@ export class UIManager {
         }, this);
       });
     } else {
-      $id(syncCBId)
-        .closest(".setting_group")
-        .remove();
+      $id(syncCBId).closest(".setting_group").remove();
     }
 
     if (this.subscription.isAutoRefreshEnabled()) {
       setInterval(() => {
-        $(".icon-toolbar-refresh-secondary")
-          .first()
-          .click();
+        window.location.reload();
       }, this.subscription.getAutoRefreshTime());
     }
 
     const forceRefreshArticlesBtn = $("<button>", {
       id: ext.forceRefreshArticlesId,
-      style: "display: none;"
+      style: "display: none;",
     });
     $("body").append(forceRefreshArticlesBtn);
-    forceRefreshArticlesBtn.click(e => {
+    forceRefreshArticlesBtn.click((e) => {
       e.preventDefault();
       this.articleManager.refreshArticles();
     });
@@ -704,18 +707,18 @@ export class UIManager {
       { name: "SourceTitle", value: ColoringRuleSource.SourceTitle },
       {
         name: "RestrictingKeywords",
-        value: ColoringRuleSource.RestrictingKeywords
+        value: ColoringRuleSource.RestrictingKeywords,
       },
       {
         name: "FilteringKeywords",
-        value: ColoringRuleSource.FilteringKeywords
+        value: ColoringRuleSource.FilteringKeywords,
       },
       {
         name: "KeywordMatchingMethod",
         value: this.getKeywordMatchingMethod(
           false,
           ids.id + "_KeywordMatchingMethod"
-        )
+        ),
       },
       {
         name: "KeywordMatchingArea",
@@ -724,12 +727,12 @@ export class UIManager {
           false,
           null,
           ids.id + "_KeywordMatchingArea"
-        )
+        ),
       },
       { name: "plusIconLink", value: ext.plusIconLink },
       { name: "eraseIconLink", value: ext.eraseIconLink },
       { name: "moveUpIconLink", value: ext.moveUpIconLink },
-      { name: "moveDownIconLink", value: ext.moveDownIconLink }
+      { name: "moveDownIconLink", value: ext.moveDownIconLink },
     ]);
     $("#FFnS_ColoringRules").append(html);
 
@@ -789,21 +792,21 @@ export class UIManager {
         $id(id)[0].onchange = callback;
       }
     }
-    onChange(ids.highlightId, function() {
+    onChange(ids.highlightId, function () {
       cr.highlightAllTitle = isChecked($(this));
     });
-    onChange(ids.sourceId, function() {
+    onChange(ids.sourceId, function () {
       cr.source = Number($(this).val());
     });
-    onChange(ids.matchingMethodId, function() {
+    onChange(ids.matchingMethodId, function () {
       cr.matchingMethod = Number($(this).val());
     });
-    onChange(ids.matchingAreaId, function() {
+    onChange(ids.matchingAreaId, function () {
       cr.matchingArea = Number($(this).val());
     });
     onChange(
       ids.colorId,
-      function() {
+      function () {
         let str: string = $(this).val();
         if (str.match(/^\W*([0-9A-F]{3}([0-9A-F]{3})?)\W*$/i)) {
           cr.color = str.toUpperCase();
@@ -882,13 +885,9 @@ export class UIManager {
   }
 
   refreshColoringRuleArrows() {
-    $(".FFnS_MoveUpColoringRule")
-      .not(":first")
-      .show();
+    $(".FFnS_MoveUpColoringRule").not(":first").show();
     $(".FFnS_MoveUpColoringRule:first").hide();
-    $(".FFnS_MoveDownColoringRule")
-      .not(":last")
-      .show();
+    $(".FFnS_MoveDownColoringRule").not(":last").show();
     $(".FFnS_MoveDownColoringRule:last").hide();
   }
 
@@ -904,7 +903,7 @@ export class UIManager {
       var keywordId = this.getKeywordId(ids.id, keyword);
       var keywordHTML = bindMarkup(templates.keywordHTML, [
         { name: "keywordId", value: keywordId },
-        { name: "keyword", value: keyword }
+        { name: "keyword", value: keyword },
       ]);
       html += keywordHTML;
     }
@@ -958,7 +957,7 @@ export class UIManager {
     var t = this;
     for (var i = 0; i < keywordList.length; i++) {
       var keywordId = this.getKeywordId(ids.typeId, keywordList[i]);
-      $id(keywordId).click(function() {
+      $id(keywordId).click(function () {
         var keyword = $(this).text();
         if (confirm("Delete the keyword ?")) {
           t.subscription.removeKeyword(keyword, type);
@@ -983,7 +982,7 @@ export class UIManager {
       var keywordId = this.getKeywordId(ids.typeId, keyword);
       var filteringKeywordHTML = bindMarkup(templates.keywordHTML, [
         { name: "keywordId", value: keywordId },
-        { name: "keyword", value: keyword }
+        { name: "keyword", value: keyword },
       ]);
       filteringKeywordsHTML += filteringKeywordHTML;
     }
@@ -1015,16 +1014,17 @@ export class UIManager {
 
   private readArticlesMutationCallback(article: Element): MutationCallback {
     return (mr, observer) => {
-      let readClassElement = !$(article).hasClass(ext.articleViewClass)
+      let readClassElement = !$(article).hasClass(ext.inlineViewClass)
         ? $(article)
         : $(article).closest(ext.articleViewEntryContainerSelector);
-      if (readClassElement.hasClass(ext.readArticleClass) &&
-        !$(article).hasClass("inlineFrame")) {
+      if (
+        readClassElement.hasClass(ext.readArticleClass) &&
+        !$(article).hasClass(ext.inlineViewClass)
+      ) {
         if (this.subscription.isHideAfterRead()) {
           if (this.subscription.isReplaceHiddenWithGap()) {
             $(article).attr("gap-article", "true");
-          }
-          else {
+          } else {
             $(article).remove();
           }
         }
@@ -1035,9 +1035,7 @@ export class UIManager {
 
   addSection(section: Element) {
     if (section.id === "section0") {
-      $(section)
-        .find("h2")
-        .text(" ");
+      $(section).find("h2").text(" ");
     } else {
       $(section).remove();
     }
@@ -1108,7 +1106,7 @@ export class UIManager {
       inputId: "Input_" + id,
       plusBtnId: "Add_" + id,
       eraseBtnId: "DeleteAll_" + id,
-      filetringKeywordsId: "FiletringKeywords_" + id
+      filetringKeywordsId: "FiletringKeywords_" + id,
     };
   }
 }
@@ -1158,11 +1156,13 @@ class ColoringRuleHTMLIds {
 }
 
 const keywordInputs = [
-  { input: "#FFnS_Input_FilteredOut", type: FilteringType.FilteredOut},
-  { input: "#FFnS_Input_RestrictedOn", type: FilteringType.RestrictedOn}
+  { input: "#FFnS_Input_FilteredOut", type: FilteringType.FilteredOut },
+  { input: "#FFnS_Input_RestrictedOn", type: FilteringType.RestrictedOn },
 ];
 
-const focusKeywordsInputSelector = keywordInputs.map(e => e.input + ":visible").join(",");
+const focusKeywordsInputSelector = keywordInputs
+  .map((e) => e.input + ":visible")
+  .join(",");
 
 function focusKeywordsInput() {
   $(focusKeywordsInputSelector).focus().val("");

@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.20.0
+// @version     3.20.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -43,8 +43,7 @@ var ext = {
     unreadArticleClass: "entry--unread",
     readArticleClass: "entry--read",
     articleTitleSelector: ".entry__title",
-    articleViewClass: "u100Entry",
-    articleViewIdContainerClass: "inlineFrame",
+    inlineViewClass: "inlineFrame",
     articleViewReadTitleClass: "entry__title--read",
     articleViewReadSelector: ".entry__title--read",
     articleViewEntryContainerSelector: ".u100",
@@ -100,7 +99,7 @@ var templates = {
     coloringRuleHTML: "<div id='{{Id}}' class='FFnS_ColoringRule'> <img class='FFnS_RemoveColoringRule FFnS_ColoringRuleManagement' title='Remove the coloring rule' src='{{eraseIconLink}}' /> <img class='FFnS_MoveUpColoringRule FFnS_ColoringRuleManagement' title='Move up the order of the coloring rule' src='{{moveUpIconLink}}' /> <img class='FFnS_MoveDownColoringRule FFnS_ColoringRuleManagement' title='Move down the order of the coloring rule' src='{{moveDownIconLink}}' /> <span>Keyword source: </span> <select class='FFnS_ColoringRule_Source FFnS_input FFnS_select'> <option value='{{SpecificKeywords}}'>Specific keywords</option> <option value='{{RestrictingKeywords}}'>Restricting keywords</option> <option value='{{FilteringKeywords}}'>Filtering keywords</option> <option value='{{SourceTitle}}'>Source title (subscription)</option> </select> <span class='FFnS_ColoringRule_Options'> <span style='display: none'>Highlight all the title</span> <input class='FFnS_HighlightAllTitle' type='checkbox' style='display: none' /> <span class='FFnS_SpecificColorGroup' >Color <input class='FFnS_SpecificColor FFnS_input jscolor' value='{{Color}}' size='10' type='text' /> </span> </span> <span class='FFnS_ColoringRule_SourceTitleInfos' >All the titles from the same source (subscription) will have the same generated color (only applied when viewing categories)</span > <div class='FFnS_ColoringRule_MatchingMethodGroup'> Keyword matching method: {{ KeywordMatchingMethod }} </div> <div class='FFnS_ColoringRule_MatchingAreaGroup'> Keyword matching area: {{ KeywordMatchingArea }} </div> <div class='FFnS_ColoringRule_KeywordsGroup'> <span>Specific keywords: </span> <input class='FFnS_input FFnS_ColoringRule_KeywordInput' size='10' type='text' /> <span class='FFnS_ColoringRule_AddKeyword'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span class='FFnS_ColoringRuleKeywords'></span> <span class='FFnS_ColoringRule_EraseKeywords'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div> </div> ",
     optionHTML: "<option value='{{value}}'>{{value}}</option>",
     emptyOptionHTML: "<option value=''>{{value}}</option>",
-    styleCSS: "#FFnS_settingsDivContainer { display: none; color: #333333; scrollbar-color: auto; background: rgba(0, 0, 0, 0.9); width: 100%; height: 100%; z-index: 999; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 87%; margin-top: 1%; margin-left: 5%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #e0f5ff; padding: 2%; opacity: 1; overflow-y: auto; overflow-x: hidden; } .FFnS_input { font-size: 12px; } #FFnS_tabs_menu { display: block; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #b9e0ed; } #FFnS_tabs_menu li a { padding: 3px; color: #2a687d; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35a5e2; border-radius: 20px; color: #fff; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip-top { bottom: 100%; left: 50%; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn, .FFnS_ColoringRuleManagement { float: right; cursor: pointer; width: 24px; height: 24px; padding: 4px; } #FFnS_Tab_SettingsControls button, #FFnS_Tab_SettingsControls input { margin-top: 1%; font-size: 12px; vertical-align: inherit; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type='number'] { width: 30px; margin-left: 1%; margin-right: 1%; } .MediumNumberInput { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { display: inline-block; white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: bold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 1%; } fieldset select.FFnS_keywordMatchingSelect { margin-left: 0%; margin-right: 1%; vertical-align: middle; } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('{{extension-icon}}'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; background-color: transparent; filter: grayscale(1); font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .FFnS_Hiding_Info { text-align: center; } .fx .open-in-new-tab-button.mark-as-read, .fx .mark-as-read-above-below-button.mark-as-read { background-repeat: no-repeat; margin-right: 0px; } .fx button.mark-as-read { opacity: 0.8; } .fx button.mark-as-read:hover { opacity: 1; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read:hover, .fx .u100Entry .open-in-new-tab-button.mark-as-read:hover { background-color: #efefef; } .theme--dark .open-in-new-tab-button, .theme--dark .mark-as-read-above-below-button { filter: contrast(0%); } .fx .open-in-new-tab-button.mark-as-read { background-image: url('{{open-in-new-tab-url}}'); background-size: 20px 20px; } .fx .entry.u5 .open-in-new-tab-button.mark-as-read { background-size: 24px 24px; } #FFnS-buttons-container { float: right; } .fx .FFnS-UI-button { background-repeat: no-repeat; display: inline; margin-left: auto; min-width: 10px; padding: 10px; } .FFnS-UI-button { opacity: 0.8; } .FFnS-UI-button:hover { opacity: 1; } .theme--dark .FFnS-UI-button { filter: contrast(0%); } .fx .open-current-articles-in-new-tab-button { background-image: url('{{open-in-new-tab-url}}'); background-size: 18px 18px; } .fx .disable-all-filters-button { background-image: url('{{disable-all-filters-url}}'); background-size: 20px 20px; opacity: 0.4; } .fx .disable-all-filters-button.enabled { opacity: 1; } .fx .mark-as-read-above-below-button.mark-as-read, .fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon, .fx .entry.u5 .mark-as-read-above-below-button { background-size: 20px 20px; width: 24px; height: 24px; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read, .fx .u100Entry .open-in-new-tab-button.mark-as-read { margin-left: 0.5rem; padding: 24px; background-position: center; width: 24px; height: 24px; opacity: 0.54; } .fx button.mark-above-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBggICA8PDxERERMTExUVFRgYGBkZGRoaGhwcHB4eHh8fHyAgICYmJicnJygoKCoqKiwsLC4uLi8vLzAwMDExMTIyMjMzMzk5OTo6Oj09PT4+PkREREhISEtLS01NTU5OTlFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbHJycnh4eHp6enx8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhUO7wAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAA1klEQVQoU3WQiVICQQwFGxBUPLgVROQQEBDFA/7/02KSyS6sVXQVyZvXNezWImfIxCx28JCJOvUUnNVlduOOKreejHFJh4s2fRnQsqg8cdBpYklHZ5eF1dJnZctvTG3EHDL0HQ/PeeEmhX/ilYtIRfFOfi6IA8wjFgU0Irn42UWuUomk8AnxIlew9+DwpsL/rwkjrxJIWcWvyAj00x1BNioeZRH3cvRU0W6tv+eoEio+tFTK0QR2v+biKxUZJr6tv0/nHH/itQo/nZAK2Po+IYlJz9cRkT+a78AFAEXS0AAAAABJRU5ErkJggg==); } .fx button.mark-below-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICA8PDxERERUVFRoaGhwcHB4eHigoKCoqKiwsLC4uLjAwMDExMTIyMjMzMzk5OTo6Oj09PUhISElJSUtLS01NTVFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbG5ubnJycnR0dHV1dXh4eHp6ent7e3x8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACY/twoAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAAxElEQVQoU3WQhxKCMBBEF7D3gg27Inbl/3/uvLtkQNrOJLvZNxcKqEIVYFQO9q3yiaXDWwmYIua9CCbYixWAD189DxbompADAWo2ZcEJyTkDYmBjYxYAfZsUPCKb6/BsYuEC2BdpAx8NKuwY6H0DYK6VEchl8CaaA/zrUoGODMa0tXOJ+ORxd+A1I3qap7iBgpBLliuVI2M1vBRQQ8FVAH9K1EQogddN+p729OV4kCCAOnwSF92xVjcFcFb/kwGroVoqoh+q2r44+TStvAAAAABJRU5ErkJggg==); } .fx button.mark-as-read { min-width: unset; min-height: unset; } .fx .entry.u4 .mark-as-read:first-of-type { margin-left: 0.7rem; } .fx .entry.u5 .open-in-new-tab-button, .fx .entry.u5 .mark-as-read-above-below-button { filter: brightness(0) invert(1); } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .theme--dark .ShowSettingsBtn:hover { background-color: rgba(255, 255, 255, 0.15); } #FFnS_Tab_KeywordControls span { vertical-align: top; } #FFnS_Tab_KeywordControls div { margin-top: 2%; } .FFnS_select { vertical-align: middle; } #FFnS_AddSortingType { margin-left: 1%; } .entry[gap-article] { visibility: hidden; } #FFnS_ImportSettings { width: 400px; } .FFnS_ColoringRule { margin-top: 1%; padding: 1%; border: 1px solid #636363; } .FFnS_ColoringRule div { margin-top: 1%; } .list-entries { margin-top: 1rem; } #topHeaderBarFX, #headerBarFX { margin-right: 20px; } "
+    styleCSS: "#FFnS_settingsDivContainer { display: none; color: #333333; scrollbar-color: auto; background: rgba(0, 0, 0, 0.9); width: 100%; height: 100%; z-index: 999; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 87%; margin-top: 1%; margin-left: 5%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #e0f5ff; padding: 2%; opacity: 1; overflow-y: auto; overflow-x: hidden; } .FFnS_input { font-size: 12px; } #FFnS_tabs_menu { display: block; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #b9e0ed; } #FFnS_tabs_menu li a { padding: 3px; color: #2a687d; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35a5e2; border-radius: 20px; color: #fff; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip-top { bottom: 100%; left: 50%; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn, .FFnS_ColoringRuleManagement { float: right; cursor: pointer; width: 24px; height: 24px; padding: 4px; } #FFnS_Tab_SettingsControls button, #FFnS_Tab_SettingsControls input { margin-top: 1%; font-size: 12px; vertical-align: inherit; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type='number'] { width: 30px; margin-left: 1%; margin-right: 1%; } .MediumNumberInput { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { display: inline-block; white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: bold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 1%; } fieldset select.FFnS_keywordMatchingSelect { margin-left: 0%; margin-right: 1%; vertical-align: middle; } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('{{extension-icon}}'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; background-color: transparent; filter: grayscale(1); font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .FFnS_Hiding_Info { text-align: center; } .fx .open-in-new-tab-button.mark-as-read, .fx .mark-as-read-above-below-button.mark-as-read { background-repeat: no-repeat; margin-right: 0px; } .fx button.mark-as-read { opacity: 0.8; } .fx button.mark-as-read:hover { opacity: 1; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read:hover, .fx .u100Entry .open-in-new-tab-button.mark-as-read:hover { background-color: #efefef; } .theme--dark .open-in-new-tab-button, .theme--dark .mark-as-read-above-below-button { filter: contrast(0%); } .fx .open-in-new-tab-button.mark-as-read { background-image: url('{{open-in-new-tab-url}}'); background-size: 20px 20px; } .fx .entry.u5 .open-in-new-tab-button.mark-as-read { background-size: 24px 24px; } #FFnS-buttons-container { float: right; } .fx .FFnS-UI-button { background-repeat: no-repeat; display: inline; margin-left: auto; min-width: 10px; padding: 10px; } .FFnS-UI-button { opacity: 0.8; } .FFnS-UI-button:hover { opacity: 1; } .theme--dark .FFnS-UI-button { filter: contrast(0%); } .fx .open-current-articles-in-new-tab-button { background-image: url('{{open-in-new-tab-url}}'); background-size: 18px 18px; } .fx .disable-all-filters-button { background-image: url('{{disable-all-filters-url}}'); background-size: 20px 20px; opacity: 0.4; } .fx .disable-all-filters-button.enabled { opacity: 1; } .fx .mark-as-read-above-below-button.mark-as-read, .fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon, .fx .entry.u5 .mark-as-read-above-below-button { background-size: 20px 20px; width: 24px; height: 24px; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read, .fx .u100Entry .open-in-new-tab-button.mark-as-read { margin-left: 0.5rem; padding: 24px; background-position: center; width: 24px; height: 24px; opacity: 0.54; } .fx button.mark-above-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBggICA8PDxERERMTExUVFRgYGBkZGRoaGhwcHB4eHh8fHyAgICYmJicnJygoKCoqKiwsLC4uLi8vLzAwMDExMTIyMjMzMzk5OTo6Oj09PT4+PkREREhISEtLS01NTU5OTlFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbHJycnh4eHp6enx8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhUO7wAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAA1klEQVQoU3WQiVICQQwFGxBUPLgVROQQEBDFA/7/02KSyS6sVXQVyZvXNezWImfIxCx28JCJOvUUnNVlduOOKreejHFJh4s2fRnQsqg8cdBpYklHZ5eF1dJnZctvTG3EHDL0HQ/PeeEmhX/ilYtIRfFOfi6IA8wjFgU0Irn42UWuUomk8AnxIlew9+DwpsL/rwkjrxJIWcWvyAj00x1BNioeZRH3cvRU0W6tv+eoEio+tFTK0QR2v+biKxUZJr6tv0/nHH/itQo/nZAK2Po+IYlJz9cRkT+a78AFAEXS0AAAAABJRU5ErkJggg==); } .fx button.mark-below-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICA8PDxERERUVFRoaGhwcHB4eHigoKCoqKiwsLC4uLjAwMDExMTIyMjMzMzk5OTo6Oj09PUhISElJSUtLS01NTVFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbG5ubnJycnR0dHV1dXh4eHp6ent7e3x8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACY/twoAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAAxElEQVQoU3WQhxKCMBBEF7D3gg27Inbl/3/uvLtkQNrOJLvZNxcKqEIVYFQO9q3yiaXDWwmYIua9CCbYixWAD189DxbompADAWo2ZcEJyTkDYmBjYxYAfZsUPCKb6/BsYuEC2BdpAx8NKuwY6H0DYK6VEchl8CaaA/zrUoGODMa0tXOJ+ORxd+A1I3qap7iBgpBLliuVI2M1vBRQQ8FVAH9K1EQogddN+p729OV4kCCAOnwSF92xVjcFcFb/kwGroVoqoh+q2r44+TStvAAAAABJRU5ErkJggg==); } .fx button.mark-as-read { min-width: unset; min-height: unset; } .fx .entry.u4 .mark-as-read:first-of-type { margin-left: 0.7rem; } .fx .entry.u5 .open-in-new-tab-button, .fx .entry.u5 .mark-as-read-above-below-button { filter: brightness(0) invert(1); } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .theme--dark .ShowSettingsBtn:hover { background-color: rgba(255, 255, 255, 0.15); } #FFnS_Tab_KeywordControls span { vertical-align: top; } #FFnS_Tab_KeywordControls div { margin-top: 2%; } .FFnS_select { vertical-align: middle; } #FFnS_AddSortingType { margin-left: 1%; } .entry[gap-article] { visibility: hidden; } #FFnS_ImportSettings { width: 400px; } .FFnS_ColoringRule { margin-top: 1%; padding: 1%; border: 1px solid #636363; } .FFnS_ColoringRule div { margin-top: 1%; } .list-entries { margin-top: 1rem; } #topHeaderBarFX, #headerBarFX { margin-right: 20px; } .list-entries--layout-u5 .EntryList__chunk { display: flex; flex-wrap: wrap; } "
 };
 
 var exported = {};
@@ -1496,9 +1495,9 @@ var Article = /** @class */ (function () {
                 this.publishAge = this.entryInfos.published;
             }
             else {
-                var isArticleView = this.container.find(ext.articleViewClass).length > 0;
+                var isInlineView = this.container.find(ext.inlineViewClass).length > 0;
                 this.body = this.container
-                    .find(isArticleView ? ".content" : ".summary")
+                    .find(isInlineView ? ".content" : ".summary")
                     .text()
                     .toLowerCase();
                 this.author = this.container
@@ -2195,7 +2194,7 @@ var FeedlyPage = /** @class */ (function () {
                     articlesToOpen = articlesToOpen.filter(function (id) {
                         var a = $(getById(id));
                         return (a.hasClass(ext.unreadArticleClass) ||
-                            (a.hasClass(ext.articleViewIdContainerClass) &&
+                            (a.hasClass(ext.inlineViewClass) &&
                                 a.find(ext.articleViewReadSelector).length === 0));
                     });
                 }
@@ -2216,7 +2215,7 @@ var FeedlyPage = /** @class */ (function () {
                     articlesToOpen.forEach(function (entryId) {
                         reader_1.askMarkEntryAsRead(entryId);
                         var a = $(getById(entryId));
-                        if (a.hasClass(ext.articleViewIdContainerClass)) {
+                        if (a.hasClass(ext.inlineViewClass)) {
                             a.find(ext.articleTitleSelector).addClass(ext.articleViewReadTitleClass);
                         }
                         else {
@@ -2299,6 +2298,13 @@ var FeedlyPage = /** @class */ (function () {
                     var id = sortedVisibleArticles[i];
                     if (markAsRead) {
                         reader.askMarkEntryAsRead(id);
+                        var a = $(getById(id));
+                        if (a.hasClass(ext.inlineViewClass)) {
+                            a.find(ext.articleTitleSelector).addClass(ext.articleViewReadTitleClass);
+                        }
+                        else {
+                            a.removeClass(ext.unreadArticleClass).addClass(ext.readArticleClass);
+                        }
                         if (hide) {
                             $(getById(id)).remove();
                         }
@@ -2321,8 +2327,8 @@ var FeedlyPage = /** @class */ (function () {
             a.append(entryInfos);
             var cardsView = a.hasClass("u5");
             var magazineView = a.hasClass("u4");
-            var titleView = a.hasClass("u0");
-            var articleView = a.hasClass(ext.articleViewClass);
+            var inlineView = a.hasClass(ext.inlineViewClass);
+            var titleView = a.hasClass("u0") && !inlineView;
             var buttonContainer = $("<span>");
             if (cardsView) {
                 a.find(".EntryMarkAsReadButton").last().before(buttonContainer);
@@ -2330,8 +2336,10 @@ var FeedlyPage = /** @class */ (function () {
             else if (magazineView) {
                 a.find(".ago").after(buttonContainer);
             }
-            else if (articleView) {
-                a.find(".headerInfo > :first-child").append(buttonContainer);
+            else if (inlineView) {
+                NodeCreationObserver.onCreation("[id^='" + entryId + "'] .headerInfo > :first-child", function (e) {
+                    $(e).append(buttonContainer);
+                });
             }
             else {
                 a.find(".CondensedToolbar .fx.tag-button").prepend(buttonContainer);
@@ -2368,7 +2376,7 @@ var FeedlyPage = /** @class */ (function () {
                 event.stopPropagation();
                 window.open(link, link);
                 reader.askMarkEntryAsRead(entryId);
-                if (articleView) {
+                if (inlineView) {
                     $(a)
                         .find(ext.articleTitleSelector)
                         .addClass(ext.articleViewReadTitleClass);
@@ -2609,7 +2617,7 @@ var FeedlyPage = /** @class */ (function () {
                         .removeClass(ext.markAsReadImmediatelyClass)
                         .each(function (_, e) {
                         var a = $(e);
-                        if (a.hasClass(ext.articleViewIdContainerClass)) {
+                        if (a.hasClass(ext.inlineViewClass)) {
                             a.find(ext.articleTitleSelector).addClass(ext.articleViewReadTitleClass);
                         }
                         else {
@@ -2642,7 +2650,7 @@ var FeedlyPage = /** @class */ (function () {
         prototype.markAsRead = function (lastEntryObject) {
             var _this = this;
             var jumpToNext = function () {
-                if (!/latest\/?$/i.test(document.URL)) {
+                if (document.URL.indexOf("category/global.") < 0) {
                     if (navigo.getNextURI()) {
                         _this.feedly.jumpToNext();
                     }
@@ -2651,7 +2659,7 @@ var FeedlyPage = /** @class */ (function () {
                     }
                 }
                 else {
-                    _this.feedly.jumpToNext();
+                    _this._askRefreshCurrentPage();
                 }
             };
             if (lastEntryObject && lastEntryObject.asOf) {
@@ -2679,7 +2687,6 @@ var FeedlyPage = /** @class */ (function () {
             }
             else {
                 markAsRead.call(this, lastEntryObject);
-                jumpToNext();
             }
         };
     };
@@ -2794,12 +2801,12 @@ var UIManager = /** @class */ (function () {
                 ids: [
                     this.sortingSelectId,
                     "KeywordMatchingMethod",
-                    this.getKeywordMatchingSelectId(false)
-                ]
+                    this.getKeywordMatchingSelectId(false),
+                ],
             },
             {
                 type: HTMLElementType.ColorInput,
-                ids: ["HighlightDuplicatesColor"]
+                ids: ["HighlightDuplicatesColor"],
             },
             {
                 type: HTMLElementType.CheckBox,
@@ -2830,8 +2837,8 @@ var UIManager = /** @class */ (function () {
                     "MarkAsReadDuplicates",
                     "HighlightDuplicates",
                     "Enabled_FilteringByReadingTime",
-                    "KeepUnread_FilteringByReadingTime"
-                ]
+                    "KeepUnread_FilteringByReadingTime",
+                ],
             },
             {
                 type: HTMLElementType.NumberInput,
@@ -2840,9 +2847,9 @@ var UIManager = /** @class */ (function () {
                     "AutoRefreshMinutes",
                     "MaxOpenCurrentFeedArticles",
                     "ThresholdMinutes_FilteringByReadingTime",
-                    "WordsPerMinute_FilteringByReadingTime"
-                ]
-            }
+                    "WordsPerMinute_FilteringByReadingTime",
+                ],
+            },
         ];
         this.settingsDivContainerId = this.getHTMLId("settingsDivContainer");
         this.closeBtnId = this.getHTMLId("CloseSettingsBtn");
@@ -2875,7 +2882,7 @@ var UIManager = /** @class */ (function () {
                     _this.batchSizeInput,
                     _this.globalSettingsEnabledCB,
                     _this.crossCheckDuplicatesCB,
-                    _this.crossCheckDuplicatesDaysInput
+                    _this.crossCheckDuplicatesDaysInput,
                 ];
                 _this.initGlobalSettings(_this.globalSettings.slice(0)).then(function () {
                     _this.page.initAutoLoad();
@@ -3034,43 +3041,38 @@ var UIManager = /** @class */ (function () {
         var settingsHtml = bindMarkup(templates.settingsHTML, [
             {
                 name: "SortingSelect",
-                value: this.getSortingSelectHTML(this.getHTMLId(this.sortingSelectId))
+                value: this.getSortingSelectHTML(this.getHTMLId(this.sortingSelectId)),
             },
             {
                 name: "FilteringList.Type.FilteredOut",
-                value: this.getFilteringListHTML(FilteringType.FilteredOut)
+                value: this.getFilteringListHTML(FilteringType.FilteredOut),
             },
             {
                 name: "FilteringList.Type.RestrictedOn",
-                value: this.getFilteringListHTML(FilteringType.RestrictedOn)
+                value: this.getFilteringListHTML(FilteringType.RestrictedOn),
             },
             {
                 name: "ImportMenu.SubscriptionOptions",
-                value: this.getImportOptionsHTML()
+                value: this.getImportOptionsHTML(),
             },
             { name: "closeIconLink", value: ext.closeIconLink },
             { name: "plusIconLink", value: ext.plusIconLink },
             { name: "eraseIconLink", value: ext.eraseIconLink },
             {
                 name: "DefaultKeywordMatchingArea",
-                value: this.getKeywordMatchingSelectHTML("multiple required", false)
+                value: this.getKeywordMatchingSelectHTML("multiple required", false),
             },
             {
                 name: "KeywordMatchingMethod",
-                value: this.getKeywordMatchingMethod(true)
-            }
+                value: this.getKeywordMatchingMethod(true),
+            },
         ]);
         $("body").prepend(settingsHtml);
         // set up tabs
         $("#" + tabsMenuId + " a").click(function (event) {
             event.preventDefault();
-            $(this)
-                .parent()
-                .addClass("current");
-            $(this)
-                .parent()
-                .siblings()
-                .removeClass("current");
+            $(this).parent().addClass("current");
+            $(this).parent().siblings().removeClass("current");
             var tab = $(this).attr("href");
             $("#" + tabsContentContainerId + " > div")
                 .not(tab)
@@ -3087,7 +3089,7 @@ var UIManager = /** @class */ (function () {
             }
             _this.checkKeywordsInputEnter(event);
         });
-        $('#FFnS_settingsDivContainer').click(function (event) {
+        $("#FFnS_settingsDivContainer").click(function (event) {
             if (event.target.id === "FFnS_settingsDivContainer") {
                 $id(_this.settingsDivContainerId).hide();
             }
@@ -3122,9 +3124,9 @@ var UIManager = /** @class */ (function () {
             { name: "SourceDesc", value: SortingType.SourceDesc },
             {
                 name: "SourceNewestReceiveDate",
-                value: SortingType.SourceNewestReceiveDate
+                value: SortingType.SourceNewestReceiveDate,
             },
-            { name: "Random", value: SortingType.Random }
+            { name: "Random", value: SortingType.Random },
         ]);
     };
     UIManager.prototype.getFilteringListHTML = function (type) {
@@ -3137,28 +3139,28 @@ var UIManager = /** @class */ (function () {
             { name: "filetringKeywordsId", value: ids.filetringKeywordsId },
             {
                 name: "FilteringKeywordMatchingArea",
-                value: this.getKeywordMatchingSelectHTML("filtering", true, type)
-            }
+                value: this.getKeywordMatchingSelectHTML("filtering", true, type),
+            },
         ]);
         return filteringListHTML;
     };
     UIManager.prototype.getKeywordMatchingSelectHTML = function (attributes, includeDefaultOption, type, selectId) {
         var defaultOption = includeDefaultOption
             ? bindMarkup(templates.emptyOptionHTML, [
-                { name: "value", value: "-- area (optional) --" }
+                { name: "value", value: "-- area (optional) --" },
             ])
             : "";
         var filteringListHTML = bindMarkup(templates.keywordMatchingSelectHTML, [
             {
                 name: "Id",
-                value: selectId || this.getKeywordMatchingSelectId(true, type)
+                value: selectId || this.getKeywordMatchingSelectId(true, type),
             },
             { name: "attributes", value: attributes },
             { name: "defaultOption", value: defaultOption },
             { name: "selectFirst", value: includeDefaultOption ? "" : "selected" },
             { name: "KeywordMatchingArea.Title", value: KeywordMatchingArea.Title },
             { name: "KeywordMatchingArea.Body", value: KeywordMatchingArea.Body },
-            { name: "KeywordMatchingArea.Author", value: KeywordMatchingArea.Author }
+            { name: "KeywordMatchingArea.Author", value: KeywordMatchingArea.Author },
         ]);
         return filteringListHTML;
     };
@@ -3173,14 +3175,14 @@ var UIManager = /** @class */ (function () {
             { name: "id", value: id },
             {
                 name: "KeywordMatchingMethod.Simple",
-                value: KeywordMatchingMethod.Simple
+                value: KeywordMatchingMethod.Simple,
             },
             { name: "KeywordMatchingMethod.Word", value: KeywordMatchingMethod.Word },
             {
                 name: "KeywordMatchingMethod.RegExp",
-                value: KeywordMatchingMethod.RegExp
+                value: KeywordMatchingMethod.RegExp,
             },
-            { name: "size", value: fullSize ? 'size="3"' : "" }
+            { name: "size", value: fullSize ? 'size="3"' : "" },
         ]);
     };
     UIManager.prototype.getImportOptionsHTML = function () {
@@ -3188,7 +3190,7 @@ var UIManager = /** @class */ (function () {
         var urls = this.settingsManager.getAllSubscriptionURLs();
         urls.forEach(function (url) {
             optionsHTML += bindMarkup(templates.optionHTML, [
-                { name: "value", value: url }
+                { name: "value", value: url },
             ]);
         });
         return optionsHTML;
@@ -3219,7 +3221,7 @@ var UIManager = /** @class */ (function () {
         });
         this.htmlSubscriptionManager.registerSettings([
             "Hours_AdvancedControlsReceivedPeriod",
-            "Days_AdvancedControlsReceivedPeriod"
+            "Days_AdvancedControlsReceivedPeriod",
         ], HTMLElementType.NumberInput, {
             update: function (subscriptionSetting) {
                 var advancedControlsReceivedPeriod = subscriptionSetting.manager.subscription.getAdvancedControlsReceivedPeriod();
@@ -3232,7 +3234,7 @@ var UIManager = /** @class */ (function () {
                 else {
                     $id(subscriptionSetting.htmlId).val(advancedPeriodDays);
                 }
-            }
+            },
         });
         this.htmlSubscriptionManager.registerSelectBoxBoolean(ext.markAsReadAboveBelowReadId, function (subscription) {
             return subscription.isMarkAsReadAboveBelowRead();
@@ -3318,20 +3320,16 @@ var UIManager = /** @class */ (function () {
             });
         }
         else {
-            $id(syncCBId)
-                .closest(".setting_group")
-                .remove();
+            $id(syncCBId).closest(".setting_group").remove();
         }
         if (this.subscription.isAutoRefreshEnabled()) {
             setInterval(function () {
-                $(".icon-toolbar-refresh-secondary")
-                    .first()
-                    .click();
+                window.location.reload();
             }, this.subscription.getAutoRefreshTime());
         }
         var forceRefreshArticlesBtn = $("<button>", {
             id: ext.forceRefreshArticlesId,
-            style: "display: none;"
+            style: "display: none;",
         });
         $("body").append(forceRefreshArticlesBtn);
         forceRefreshArticlesBtn.click(function (e) {
@@ -3361,24 +3359,24 @@ var UIManager = /** @class */ (function () {
             { name: "SourceTitle", value: ColoringRuleSource.SourceTitle },
             {
                 name: "RestrictingKeywords",
-                value: ColoringRuleSource.RestrictingKeywords
+                value: ColoringRuleSource.RestrictingKeywords,
             },
             {
                 name: "FilteringKeywords",
-                value: ColoringRuleSource.FilteringKeywords
+                value: ColoringRuleSource.FilteringKeywords,
             },
             {
                 name: "KeywordMatchingMethod",
-                value: this.getKeywordMatchingMethod(false, ids.id + "_KeywordMatchingMethod")
+                value: this.getKeywordMatchingMethod(false, ids.id + "_KeywordMatchingMethod"),
             },
             {
                 name: "KeywordMatchingArea",
-                value: this.getKeywordMatchingSelectHTML("required", false, null, ids.id + "_KeywordMatchingArea")
+                value: this.getKeywordMatchingSelectHTML("required", false, null, ids.id + "_KeywordMatchingArea"),
             },
             { name: "plusIconLink", value: ext.plusIconLink },
             { name: "eraseIconLink", value: ext.eraseIconLink },
             { name: "moveUpIconLink", value: ext.moveUpIconLink },
-            { name: "moveDownIconLink", value: ext.moveDownIconLink }
+            { name: "moveDownIconLink", value: ext.moveDownIconLink },
         ]);
         $("#FFnS_ColoringRules").append(html);
         // set current values
@@ -3496,13 +3494,9 @@ var UIManager = /** @class */ (function () {
         onClick($id(ids.moveDownColoringRuleId), getMoveColoringRuleCallback(false));
     };
     UIManager.prototype.refreshColoringRuleArrows = function () {
-        $(".FFnS_MoveUpColoringRule")
-            .not(":first")
-            .show();
+        $(".FFnS_MoveUpColoringRule").not(":first").show();
         $(".FFnS_MoveUpColoringRule:first").hide();
-        $(".FFnS_MoveDownColoringRule")
-            .not(":last")
-            .show();
+        $(".FFnS_MoveDownColoringRule").not(":last").show();
         $(".FFnS_MoveDownColoringRule:last").hide();
     };
     UIManager.prototype.refreshColoringRuleSpecificKeywords = function (cr, ids) {
@@ -3513,7 +3507,7 @@ var UIManager = /** @class */ (function () {
             var keywordId = this.getKeywordId(ids.id, keyword);
             var keywordHTML = bindMarkup(templates.keywordHTML, [
                 { name: "keywordId", value: keywordId },
-                { name: "keyword", value: keyword }
+                { name: "keyword", value: keyword },
             ]);
             html += keywordHTML;
         }
@@ -3581,7 +3575,7 @@ var UIManager = /** @class */ (function () {
             var keywordId = this.getKeywordId(ids.typeId, keyword);
             var filteringKeywordHTML = bindMarkup(templates.keywordHTML, [
                 { name: "keywordId", value: keywordId },
-                { name: "keyword", value: keyword }
+                { name: "keyword", value: keyword },
             ]);
             filteringKeywordsHTML += filteringKeywordHTML;
         }
@@ -3611,11 +3605,11 @@ var UIManager = /** @class */ (function () {
     UIManager.prototype.readArticlesMutationCallback = function (article) {
         var _this = this;
         return function (mr, observer) {
-            var readClassElement = !$(article).hasClass(ext.articleViewClass)
+            var readClassElement = !$(article).hasClass(ext.inlineViewClass)
                 ? $(article)
                 : $(article).closest(ext.articleViewEntryContainerSelector);
             if (readClassElement.hasClass(ext.readArticleClass) &&
-                !$(article).hasClass("inlineFrame")) {
+                !$(article).hasClass(ext.inlineViewClass)) {
                 if (_this.subscription.isHideAfterRead()) {
                     if (_this.subscription.isReplaceHiddenWithGap()) {
                         $(article).attr("gap-article", "true");
@@ -3630,9 +3624,7 @@ var UIManager = /** @class */ (function () {
     };
     UIManager.prototype.addSection = function (section) {
         if (section.id === "section0") {
-            $(section)
-                .find("h2")
-                .text(" ");
+            $(section).find("h2").text(" ");
         }
         else {
             $(section).remove();
@@ -3688,7 +3680,7 @@ var UIManager = /** @class */ (function () {
             inputId: "Input_" + id,
             plusBtnId: "Add_" + id,
             eraseBtnId: "DeleteAll_" + id,
-            filetringKeywordsId: "FiletringKeywords_" + id
+            filetringKeywordsId: "FiletringKeywords_" + id,
         };
     };
     return UIManager;
@@ -3720,9 +3712,11 @@ var ColoringRuleHTMLIds = /** @class */ (function () {
 }());
 var keywordInputs = [
     { input: "#FFnS_Input_FilteredOut", type: FilteringType.FilteredOut },
-    { input: "#FFnS_Input_RestrictedOn", type: FilteringType.RestrictedOn }
+    { input: "#FFnS_Input_RestrictedOn", type: FilteringType.RestrictedOn },
 ];
-var focusKeywordsInputSelector = keywordInputs.map(function (e) { return e.input + ":visible"; }).join(",");
+var focusKeywordsInputSelector = keywordInputs
+    .map(function (e) { return e.input + ":visible"; })
+    .join(",");
 function focusKeywordsInput() {
     $(focusKeywordsInputSelector).focus().val("");
 }

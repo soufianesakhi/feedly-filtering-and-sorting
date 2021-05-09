@@ -283,7 +283,7 @@ export class FeedlyPage {
             const a = $(getById(id));
             return (
               a.hasClass(ext.unreadArticleClass) ||
-              (a.hasClass(ext.articleViewIdContainerClass) &&
+              (a.hasClass(ext.inlineViewClass) &&
                 a.find(ext.articleViewReadSelector).length === 0)
             );
           });
@@ -305,7 +305,7 @@ export class FeedlyPage {
           articlesToOpen.forEach((entryId) => {
             reader.askMarkEntryAsRead(entryId);
             const a = $(getById(entryId));
-            if (a.hasClass(ext.articleViewIdContainerClass)) {
+            if (a.hasClass(ext.inlineViewClass)) {
               a.find(ext.articleTitleSelector).addClass(
                 ext.articleViewReadTitleClass
               );
@@ -394,6 +394,16 @@ export class FeedlyPage {
           var id = sortedVisibleArticles[i];
           if (markAsRead) {
             reader.askMarkEntryAsRead(id);
+            const a = $(getById(id));
+            if (a.hasClass(ext.inlineViewClass)) {
+              a.find(ext.articleTitleSelector).addClass(
+                ext.articleViewReadTitleClass
+              );
+            } else {
+              a.removeClass(ext.unreadArticleClass).addClass(
+                ext.readArticleClass
+              );
+            }
             if (hide) {
               $(getById(id)).remove();
             }
@@ -419,15 +429,20 @@ export class FeedlyPage {
 
       var cardsView = a.hasClass("u5");
       var magazineView = a.hasClass("u4");
-      var titleView = a.hasClass("u0");
-      var articleView = a.hasClass(ext.articleViewClass);
+      var inlineView = a.hasClass(ext.inlineViewClass);
+      var titleView = a.hasClass("u0") && !inlineView;
       var buttonContainer = $("<span>");
       if (cardsView) {
         a.find(".EntryMarkAsReadButton").last().before(buttonContainer);
       } else if (magazineView) {
         a.find(".ago").after(buttonContainer);
-      } else if (articleView) {
-        a.find(".headerInfo > :first-child").append(buttonContainer);
+      } else if (inlineView) {
+        NodeCreationObserver.onCreation(
+          `[id^='${entryId}'] .headerInfo > :first-child`,
+          (e) => {
+            $(e).append(buttonContainer);
+          }
+        );
       } else {
         a.find(".CondensedToolbar .fx.tag-button").prepend(buttonContainer);
       }
@@ -466,7 +481,7 @@ export class FeedlyPage {
         event.stopPropagation();
         window.open(link, link);
         reader.askMarkEntryAsRead(entryId);
-        if (articleView) {
+        if (inlineView) {
           $(a)
             .find(ext.articleTitleSelector)
             .addClass(ext.articleViewReadTitleClass);
@@ -748,7 +763,7 @@ export class FeedlyPage {
             .removeClass(ext.markAsReadImmediatelyClass)
             .each((_, e) => {
               const a = $(e);
-              if (a.hasClass(ext.articleViewIdContainerClass)) {
+              if (a.hasClass(ext.inlineViewClass)) {
                 a.find(ext.articleTitleSelector).addClass(
                   ext.articleViewReadTitleClass
                 );
@@ -786,14 +801,14 @@ export class FeedlyPage {
     var markAsRead: Function = prototype.markAsRead;
     prototype.markAsRead = function (lastEntryObject) {
       let jumpToNext = () => {
-        if (!/latest\/?$/i.test(document.URL)) {
+        if (document.URL.indexOf("category/global.") < 0) {
           if (navigo.getNextURI()) {
             this.feedly.jumpToNext();
           } else {
             this.feedly.loadDefaultPage();
           }
         } else {
-          this.feedly.jumpToNext();
+          this._askRefreshCurrentPage();
         }
       };
       if (lastEntryObject && lastEntryObject.asOf) {
@@ -822,7 +837,6 @@ export class FeedlyPage {
         jumpToNext();
       } else {
         markAsRead.call(this, lastEntryObject);
-        jumpToNext();
       }
     };
   }

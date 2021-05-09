@@ -512,10 +512,9 @@ export class Article {
         this.receivedAge = this.entryInfos.received;
         this.publishAge = this.entryInfos.published;
       } else {
-        let isArticleView =
-          this.container.find(ext.articleViewClass).length > 0;
+        let isInlineView = this.container.find(ext.inlineViewClass).length > 0;
         this.body = this.container
-          .find(isArticleView ? ".content" : ".summary")
+          .find(isInlineView ? ".content" : ".summary")
           .text()
           .toLowerCase();
         this.author = this.container
