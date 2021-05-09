@@ -57,10 +57,6 @@ export class ArticleManager {
     return this.settingsManager.getCurrentSubscription();
   }
 
-  getCurrentUnreadCount() {
-    return $(ext.articleSelector).length;
-  }
-
   addArticle(a: Element, skipCheck?: boolean) {
     var article = new Article(a);
     this.filterAndRestrict(article);
@@ -161,7 +157,7 @@ export class ArticleManager {
       const popularityArr = [];
       const hotPopularityArr = [];
       $(articlesContainer)
-        .find(ext.articleDataSelector + ":visible")
+        .find(ext.articleSelector + ":visible")
         .each((i, article) => {
           let engagement = $(article).find(ext.popularitySelector);
           const popularity = parsePopularity($(engagement).text());
@@ -199,10 +195,7 @@ export class ArticleManager {
   checkDisableAllFilters() {
     if (this.page.get(ext.disableAllFiltersButtonId)) {
       if (this.page.get(ext.disableAllFiltersEnabled, true)) {
-        let containers = $(ext.articleSelector).map((i, a) =>
-          a.closest(ext.articleFrameSelector)
-        );
-        containers.css("display", "");
+        $(ext.articleSelector).css("display", "");
         this.page.clearHidingInfo();
       }
     }
@@ -267,7 +260,8 @@ export class ArticleManager {
   }
 
   checkLastAddedArticle(refresh?: boolean) {
-    const allArticlesChecked = $(ext.uncheckedArticlesSelector).length == 0;
+    const allArticlesChecked =
+      $(ext.articleSelector + ext.uncheckedArticlesSelector).length == 0;
     if (allArticlesChecked) {
       this.prepareMarkAsRead();
       this.page.refreshHidingInfo();
@@ -290,7 +284,7 @@ export class ArticleManager {
       let visibleArticles: Article[] = [];
       let hiddenArticles: Article[] = [];
       let articlesContainer = $(c);
-      articlesContainer.find(ext.articleDataSelector).each((i, e) => {
+      articlesContainer.find(ext.articleSelector).each((i, e) => {
         let a = new Article(e);
         if (a.isVisible()) {
           visibleArticles.push(a);
@@ -301,7 +295,7 @@ export class ArticleManager {
       if (sub.isPinHotToTop()) {
         var hotArticles: Article[] = [];
         var normalArticles: Article[] = [];
-        visibleArticles.forEach(article => {
+        visibleArticles.forEach((article) => {
           if (article.isHot()) {
             hotArticles.push(article);
           } else {
@@ -318,12 +312,10 @@ export class ArticleManager {
       if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
         console.log("Sorting articles at " + new Date().toTimeString());
         endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
-        removeContent(articlesContainer.find("h4"));
         let chunks = articlesContainer.find(ext.articlesChunkSelector);
+        removeContent(chunks.find(".Heading"));
         let containerChunk = chunks.first();
-        let h4Headings = containerChunk.find("h4").detach();
         containerChunk.empty();
-        h4Headings.prependTo(containerChunk);
         let appendArticle = (article: Article) => {
           const container = article.getContainer();
           container.detach().appendTo(containerChunk);
@@ -331,23 +323,21 @@ export class ArticleManager {
         visibleArticles.forEach(appendArticle);
         hiddenArticles.forEach(appendArticle);
       }
-      sortedVisibleEntryIds.push(...visibleArticles.map(a => a.getEntryId()));
+      sortedVisibleEntryIds.push(...visibleArticles.map((a) => a.getEntryId()));
     });
 
     let lastContainer = $(ext.articlesContainerSelector).last();
-    if (endOfFeed) {
+    if (endOfFeed.length > 0) {
       lastContainer.append(endOfFeed);
     } else {
-      $(ext.endOfFeedSelector)
-        .detach()
-        .appendTo(lastContainer);
+      $(ext.endOfFeedSelector).detach().appendTo(lastContainer);
     }
     this.page.put(ext.sortedVisibleArticlesId, sortedVisibleEntryIds);
   }
 
   prepareMarkAsRead() {
     if (this.articlesToMarkAsRead.length > 0) {
-      var ids = this.articlesToMarkAsRead.map<string>(article => {
+      var ids = this.articlesToMarkAsRead.map<string>((article) => {
         return article.getEntryId();
       });
       this.page.put(ext.articlesToMarkAsReadId, ids);
@@ -365,7 +355,7 @@ export class ArticleManager {
 
     if (SortingType.SourceNewestReceiveDate == st) {
       let sourceToArticles: { [key: string]: Article[] } = {};
-      articles.forEach(a => {
+      articles.forEach((a) => {
         let sourceArticles =
           (sourceToArticles[a.getSource()] ||
             (sourceToArticles[a.getSource()] = []),
@@ -496,8 +486,6 @@ export class EntryInfos {
 }
 
 export class Article {
-  private checkedAttr = "checked-FFnS";
-  private article: JQuery;
   private container: JQuery;
   private entryId: string;
   title: string;
@@ -510,10 +498,10 @@ export class Article {
   private url: string;
   private entryInfos: EntryInfos;
 
-  constructor(article: Element) {
-    this.article = $(article);
-    this.entryId = this.article.attr(ext.articleEntryIdAttribute);
-    var infosElement = this.article.find("." + ext.entryInfosJsonClass);
+  constructor(articleContainer: Element) {
+    this.container = $(articleContainer);
+    this.entryId = this.container.attr("id").replace(/_main$/, "");
+    var infosElement = this.container.find("." + ext.entryInfosJsonClass);
     if (infosElement.length > 0) {
       this.entryInfos = JSON.parse(infosElement.text());
       if (this.entryInfos) {
@@ -524,27 +512,19 @@ export class Article {
         this.receivedAge = this.entryInfos.received;
         this.publishAge = this.entryInfos.published;
       } else {
-        let isArticleView = $(article).hasClass(ext.articleViewClass);
-        this.body = this.article
+        let isArticleView =
+          this.container.find(ext.articleViewClass).length > 0;
+        this.body = this.container
           .find(isArticleView ? ".content" : ".summary")
           .text()
           .toLowerCase();
-        this.author = (isArticleView
-          ? (() => {
-              let metadata = $(article)
-                .find(".metadata")
-                .text()
-                .trim()
-                .replace(/\s\s+/gi, "\n")
-                .split("\n");
-              return metadata[3] === "/" ? metadata[2] : metadata[3];
-            })()
-          : this.article.find(".authors").text()
-        )
+        this.author = this.container
+          .find(".authors")
+          .text()
           .replace("by", "")
           .trim()
           .toLowerCase();
-        var ageStr = this.article
+        var ageStr = this.container
           .find(ext.publishAgeSpanSelector)
           .attr(ext.publishAgeTimestampAttr);
         var ageSplit = ageStr.split("--");
@@ -556,30 +536,29 @@ export class Article {
     }
 
     // Title
-    this.title = this.article
-      .attr(ext.articleTitleAttribute)
+    this.title = this.container
+      .find(ext.articleTitleSelector)
+      .text()
       .trim()
       .toLowerCase();
 
     // Popularity
     this.popularity = parsePopularity(
-      this.article.find(ext.popularitySelector).text()
+      this.container.find(ext.popularitySelector).text()
     );
 
     // Source
-    var source = this.article.find(ext.articleSourceSelector);
+    var source = this.container.find(ext.articleSourceSelector);
     if (source != null) {
       this.source = source.text().trim();
     }
 
     // URL
-    this.url = this.article.find(ext.articleUrlAnchorSelector).attr("href");
-
-    this.container = this.article.closest(ext.articleFrameSelector);
+    this.url = this.container.find(ext.articleUrlAnchorSelector).attr("href");
   }
 
   addClass(c) {
-    return this.article.addClass(c);
+    return this.container.addClass(c);
   }
 
   getTitle(): string {
@@ -615,7 +594,7 @@ export class Article {
   }
 
   isHot(): boolean {
-    var span = this.article.find(ext.popularitySelector);
+    var span = this.container.find(ext.popularitySelector);
     return (
       span.hasClass("hot") ||
       span.hasClass("onfire") ||
@@ -644,11 +623,11 @@ export class Article {
   }
 
   checked() {
-    this.article.attr(this.checkedAttr, "");
+    this.container.attr(ext.checkedArticlesAttribute, "");
   }
 
   setColor(color: string) {
-    this.article.css("background-color", color);
+    this.container.css("background-color", color);
   }
 }
 

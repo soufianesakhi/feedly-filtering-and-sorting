@@ -7,6 +7,8 @@ import { executeWindow, injectClasses, injectToWindow } from "./Utils";
 declare var getFFnS: (id: string, persistent?: boolean) => any;
 declare var putFFnS: (id: string, value: any, persistent?: boolean) => any;
 declare var getById: (id: string) => HTMLElement;
+declare var getArticleId: (a: JQuery) => string;
+declare var getReactPage: () => any;
 declare var getSortedVisibleArticles: () => string[];
 declare var getStreamPage: () => any;
 declare var getStreamObj: () => any;
@@ -33,6 +35,8 @@ export class FeedlyPage {
         "getFFnS",
         "putFFnS",
         "getById",
+        "getArticleId",
+        "getReactPage",
         "getStreamPage",
         "getStreamObj",
         "onClickCapture",
@@ -44,6 +48,8 @@ export class FeedlyPage {
       this.get,
       this.put,
       this.getById,
+      this.getArticleId,
+      this.getReactPage,
       this.getStreamPage,
       this.getStreamObj,
       this.onClickCapture,
@@ -214,6 +220,16 @@ export class FeedlyPage {
     }
   }
 
+  getReactPage(): any {
+    var observers = window["streets"].service("feedly").observers;
+    for (let i = 0, len = observers.length; i < len; i++) {
+      const prototype = Object.getPrototypeOf(observers[i]);
+      if (prototype.markAsRead) {
+        return observers[i];
+      }
+    }
+  }
+
   getStreamObj(): any {
     let streamPage = getStreamPage();
     let streamObj = streamPage.stream;
@@ -265,8 +281,11 @@ export class FeedlyPage {
         if (getFFnS(ext.openCurrentFeedArticlesUnreadOnlyId)) {
           articlesToOpen = articlesToOpen.filter((id) => {
             const a = $(getById(id));
-            return a.hasClass(ext.unreadArticleClass) || 
-              (a.hasClass(ext.articleViewIdContainerClass) && a.find(ext.articleViewReadSelector).length === 0);
+            return (
+              a.hasClass(ext.unreadArticleClass) ||
+              (a.hasClass(ext.articleViewIdContainerClass) &&
+                a.find(ext.articleViewReadSelector).length === 0)
+            );
           });
         }
         let max = getFFnS(ext.maxOpenCurrentFeedArticlesId);
@@ -287,9 +306,13 @@ export class FeedlyPage {
             reader.askMarkEntryAsRead(entryId);
             const a = $(getById(entryId));
             if (a.hasClass(ext.articleViewIdContainerClass)) {
-              a.find(ext.articleViewTitleSelector).addClass(ext.articleViewReadTitleClass);
+              a.find(ext.articleTitleSelector).addClass(
+                ext.articleViewReadTitleClass
+              );
             } else {
-              a.removeClass(ext.unreadArticleClass).addClass(ext.readArticleClass);
+              a.removeClass(ext.unreadArticleClass).addClass(
+                ext.readArticleClass
+              );
             }
           });
         }
@@ -326,7 +349,7 @@ export class FeedlyPage {
     if (!sortedVisibleArticles) {
       sortedVisibleArticles = [];
       $(ext.articleSelector).each((i, a) => {
-        sortedVisibleArticles.push($(a).attr(ext.articleEntryIdAttribute));
+        sortedVisibleArticles.push(getArticleId($(a)));
       });
     }
     return sortedVisibleArticles;
@@ -382,9 +405,9 @@ export class FeedlyPage {
     };
 
     NodeCreationObserver.onCreation(ext.articleSelector, (element) => {
-      var a = $(element).closest(ext.articleSelector);
+      var a = $(element);
 
-      var entryId = a.attr(ext.articleEntryIdAttribute);
+      var entryId = getArticleId(a);
 
       var e = reader.lookupEntry(entryId);
       var entryInfos = $("<span>", {
@@ -444,7 +467,9 @@ export class FeedlyPage {
         window.open(link, link);
         reader.askMarkEntryAsRead(entryId);
         if (articleView) {
-          $(a).find(ext.articleViewTitleSelector).addClass(ext.articleViewReadTitleClass);
+          $(a)
+            .find(ext.articleTitleSelector)
+            .addClass(ext.articleViewReadTitleClass);
         }
       };
       onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
@@ -532,6 +557,10 @@ export class FeedlyPage {
 
   getById(id: string): HTMLElement {
     return document.getElementById(id + "_main");
+  }
+
+  getArticleId(a: JQuery) {
+    return a.attr("id").replace(/_main$/, "");
   }
 
   fetchMoreEntries(batchSize: number) {
@@ -712,7 +741,7 @@ export class FeedlyPage {
             return;
           }
           let ids = $.map<Element, string>(markAsReadEntries.toArray(), (e) =>
-            $(e).attr(ext.articleEntryIdAttribute)
+            getArticleId($(e))
           );
           reader.askMarkEntriesAsRead(ids, {});
           markAsReadEntries
@@ -720,11 +749,15 @@ export class FeedlyPage {
             .each((_, e) => {
               const a = $(e);
               if (a.hasClass(ext.articleViewIdContainerClass)) {
-                a.find(ext.articleViewTitleSelector).addClass(ext.articleViewReadTitleClass);
+                a.find(ext.articleTitleSelector).addClass(
+                  ext.articleViewReadTitleClass
+                );
               } else {
-                a.removeClass(ext.unreadArticleClass).addClass(ext.readArticleClass);
+                a.removeClass(ext.unreadArticleClass).addClass(
+                  ext.readArticleClass
+                );
               }
-            })
+            });
         }, 1000);
       } catch (e) {
         console.log(e);
@@ -748,9 +781,8 @@ export class FeedlyPage {
   overrideMarkAsRead() {
     var reader = window["streets"].service("reader");
     var navigo = window["streets"].service("navigo");
-    var pagesPkg = window["devhd"].pkg("pages");
 
-    var prototype = pagesPkg.ReactPage.prototype;
+    var prototype = Object.getPrototypeOf(getReactPage());
     var markAsRead: Function = prototype.markAsRead;
     prototype.markAsRead = function (lastEntryObject) {
       let jumpToNext = () => {

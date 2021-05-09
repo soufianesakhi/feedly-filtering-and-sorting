@@ -18,12 +18,12 @@ function initResources() {
   templates.styleCSS = bindMarkup(templates.styleCSS, [
     { name: "open-in-new-tab-url", value: urls.openInNewTabURL },
     { name: "disable-all-filters-url", value: urls.clearFiltersURL },
-    { name: "extension-icon", value: urls.extensionIconURL }
+    { name: "extension-icon", value: urls.extensionIconURL },
   ]);
   injectStyleText(templates.styleCSS);
 }
 
-$(document).ready(function() {
+$(document).ready(function () {
   try {
     initResources();
     var uiManager = new UIManager();
@@ -31,7 +31,7 @@ $(document).ready(function() {
 
     NodeCreationObserver.onCreation(
       ext.subscriptionChangeSelector,
-      function() {
+      function () {
         console.log("Feedly page fully loaded");
         uiManager.init().then(() => {
           NodeCreationObserver.onCreation(

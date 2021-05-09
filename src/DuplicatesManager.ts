@@ -145,10 +145,10 @@ class CrossArticleManager {
   checkDuplicate(a: Article) {
     const id = a.getEntryId();
     const checkedNotDuplicate = this.daysArray.some(
-      day => this.crossIds[day].indexOf(id) > -1
+      (day) => this.crossIds[day].indexOf(id) > -1
     );
     if (!checkedNotDuplicate) {
-      let found = this.daysArray.some(day => {
+      let found = this.daysArray.some((day) => {
         return (
           this.crossUrls[day].indexOf(a.getUrl()) > -1 ||
           this.crossTitles[day].indexOf(a.getTitle()) > -1
@@ -167,11 +167,11 @@ class CrossArticleManager {
   }
 
   private init() {
-    return new AsyncResult<any>(p => {
+    return new AsyncResult<any>((p) => {
       this.localStorage = DataStore.getLocalStorage();
       this.localStorage
         .getAsync<number[]>(this.DAYS_ARRAY_KEY, [])
-        .then(result => {
+        .then((result) => {
           console.log(
             "[Duplicates cross checking] Loading the stored days ..."
           );
@@ -234,12 +234,12 @@ class CrossArticleManager {
   }
 
   private setAndCleanDays(crossArticleDays: number[]) {
-    this.daysArray = crossArticleDays.slice(0).filter(val => {
+    this.daysArray = crossArticleDays.slice(0).filter((val) => {
       return !isNaN(val);
     });
     let thresholdDay = this.getThresholdDay();
     crossArticleDays
-      .filter(day => day < thresholdDay)
+      .filter((day) => day < thresholdDay)
       .forEach(this.cleanDay, this);
   }
 
@@ -256,7 +256,7 @@ class CrossArticleManager {
     if (days.length == 1) {
       return this.loadDay(days[0]);
     } else {
-      return new AsyncResult<any>(p => {
+      return new AsyncResult<any>((p) => {
         this.loadDay(days.pop()).then(() => {
           this.loadDays(days).chain(p);
         }, this);
@@ -265,18 +265,18 @@ class CrossArticleManager {
   }
 
   private loadDay(day: number) {
-    return new AsyncResult<any>(p => {
+    return new AsyncResult<any>((p) => {
       this.localStorage
         .getAsync<string[]>(this.getIdsKey(day), [])
-        .then(result => {
+        .then((result) => {
           this.crossIds[day] = result;
           this.localStorage
             .getAsync<string[]>(this.getUrlsKey(day), [])
-            .then(result => {
+            .then((result) => {
               this.crossUrls[day] = result;
               this.localStorage
                 .getAsync<string[]>(this.getTitlesKey(day), [])
-                .then(result => {
+                .then((result) => {
                   this.crossTitles[day] = result;
                   console.log(
                     "[Duplicates cross checking] Loaded successfully the day: " +

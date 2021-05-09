@@ -216,10 +216,11 @@ input {
 
 .fx .u100Entry .mark-as-read-above-below-button.mark-as-read:hover,
 .fx .u100Entry .open-in-new-tab-button.mark-as-read:hover {
-    background-color: #efefef;
+  background-color: #efefef;
 }
 
-.theme--dark .open-in-new-tab-button, .theme--dark .mark-as-read-above-below-button {
+.theme--dark .open-in-new-tab-button,
+.theme--dark .mark-as-read-above-below-button {
   filter: contrast(0%);
 }
 
@@ -281,7 +282,7 @@ input {
 
 .fx .u100Entry .mark-as-read-above-below-button.mark-as-read,
 .fx .u100Entry .open-in-new-tab-button.mark-as-read {
-  margin-left: .5rem;
+  margin-left: 0.5rem;
   padding: 24px;
   background-position: center;
   width: 24px;
@@ -303,7 +304,7 @@ input {
 }
 
 .fx .entry.u4 .mark-as-read:first-of-type {
-  margin-left: .7rem;
+  margin-left: 0.7rem;
 }
 
 .fx .entry.u5 .open-in-new-tab-button,
@@ -356,4 +357,9 @@ input {
 
 .list-entries {
   margin-top: 1rem;
+}
+
+#topHeaderBarFX,
+#headerBarFX {
+  margin-right: 20px;
 }

@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.19.1
+// @version     3.20.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -35,19 +35,18 @@ var ext = {
     articlesContainerSelector: ".list-entries",
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
-    articleDataSelector: " [data-entryid][data-title]:not([gap-article])",
-    articleFrameSelector: ".list-entries > .EntryList__chunk > article, .list-entries > .EntryList__chunk > div",
-    articleSelector: ".entry[data-title]:not([gap-article]), .inlineFrame .u100Entry",
+    articleSelector: ".EntryList__chunk > [id]",
     unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
-    uncheckedArticlesSelector: ".entry[data-title]:not([gap-article]):not([checked-FFnS]), .inlineFrame .u100Entry:not([checked-FFnS])",
+    uncheckedArticlesSelector: ":not([checked-FFnS])",
+    checkedArticlesAttribute: "checked-FFnS",
     markAsReadImmediatelySelector: ".list-entries .FFnS-mark-as-read",
     unreadArticleClass: "entry--unread",
     readArticleClass: "entry--read",
+    articleTitleSelector: ".entry__title",
     articleViewClass: "u100Entry",
     articleViewIdContainerClass: "inlineFrame",
-    articleViewTitleSelector: ".entry__title",
     articleViewReadTitleClass: "entry__title--read",
-    articleViewReadSelector: "entry__title--read",
+    articleViewReadSelector: ".entry__title--read",
     articleViewEntryContainerSelector: ".u100",
     loadingMessageSelector: ".list-entries .message.loading",
     sectionSelector: "#timeline > .section",
@@ -55,8 +54,6 @@ var ext = {
     publishAgeTimestampAttr: "title",
     articleSourceSelector: ".entry__source",
     subscriptionChangeSelector: "#header-title",
-    articleTitleAttribute: "data-title",
-    articleEntryIdAttribute: "data-entryid",
     popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
     hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
     endOfFeedSelector: ".list-entries h4:contains(End of feed)",
@@ -103,7 +100,7 @@ var templates = {
     coloringRuleHTML: "<div id='{{Id}}' class='FFnS_ColoringRule'> <img class='FFnS_RemoveColoringRule FFnS_ColoringRuleManagement' title='Remove the coloring rule' src='{{eraseIconLink}}' /> <img class='FFnS_MoveUpColoringRule FFnS_ColoringRuleManagement' title='Move up the order of the coloring rule' src='{{moveUpIconLink}}' /> <img class='FFnS_MoveDownColoringRule FFnS_ColoringRuleManagement' title='Move down the order of the coloring rule' src='{{moveDownIconLink}}' /> <span>Keyword source: </span> <select class='FFnS_ColoringRule_Source FFnS_input FFnS_select'> <option value='{{SpecificKeywords}}'>Specific keywords</option> <option value='{{RestrictingKeywords}}'>Restricting keywords</option> <option value='{{FilteringKeywords}}'>Filtering keywords</option> <option value='{{SourceTitle}}'>Source title (subscription)</option> </select> <span class='FFnS_ColoringRule_Options'> <span style='display: none'>Highlight all the title</span> <input class='FFnS_HighlightAllTitle' type='checkbox' style='display: none' /> <span class='FFnS_SpecificColorGroup' >Color <input class='FFnS_SpecificColor FFnS_input jscolor' value='{{Color}}' size='10' type='text' /> </span> </span> <span class='FFnS_ColoringRule_SourceTitleInfos' >All the titles from the same source (subscription) will have the same generated color (only applied when viewing categories)</span > <div class='FFnS_ColoringRule_MatchingMethodGroup'> Keyword matching method: {{ KeywordMatchingMethod }} </div> <div class='FFnS_ColoringRule_MatchingAreaGroup'> Keyword matching area: {{ KeywordMatchingArea }} </div> <div class='FFnS_ColoringRule_KeywordsGroup'> <span>Specific keywords: </span> <input class='FFnS_input FFnS_ColoringRule_KeywordInput' size='10' type='text' /> <span class='FFnS_ColoringRule_AddKeyword'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span class='FFnS_ColoringRuleKeywords'></span> <span class='FFnS_ColoringRule_EraseKeywords'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div> </div> ",
     optionHTML: "<option value='{{value}}'>{{value}}</option>",
     emptyOptionHTML: "<option value=''>{{value}}</option>",
-    styleCSS: "#FFnS_settingsDivContainer { display: none; color: #333333; scrollbar-color: auto; background: rgba(0, 0, 0, 0.9); width: 100%; height: 100%; z-index: 999; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 87%; margin-top: 1%; margin-left: 5%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #e0f5ff; padding: 2%; opacity: 1; overflow-y: auto; overflow-x: hidden; } .FFnS_input { font-size: 12px; } #FFnS_tabs_menu { display: block; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #b9e0ed; } #FFnS_tabs_menu li a { padding: 3px; color: #2a687d; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35a5e2; border-radius: 20px; color: #fff; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip-top { bottom: 100%; left: 50%; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn, .FFnS_ColoringRuleManagement { float: right; cursor: pointer; width: 24px; height: 24px; padding: 4px; } #FFnS_Tab_SettingsControls button, #FFnS_Tab_SettingsControls input { margin-top: 1%; font-size: 12px; vertical-align: inherit; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type='number'] { width: 30px; margin-left: 1%; margin-right: 1%; } .MediumNumberInput { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { display: inline-block; white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: bold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 1%; } fieldset select.FFnS_keywordMatchingSelect { margin-left: 0%; margin-right: 1%; vertical-align: middle; } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('{{extension-icon}}'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; background-color: transparent; filter: grayscale(1); font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .FFnS_Hiding_Info { text-align: center; } .fx .open-in-new-tab-button.mark-as-read, .fx .mark-as-read-above-below-button.mark-as-read { background-repeat: no-repeat; margin-right: 0px; } .fx button.mark-as-read { opacity: 0.8; } .fx button.mark-as-read:hover { opacity: 1; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read:hover, .fx .u100Entry .open-in-new-tab-button.mark-as-read:hover { background-color: #efefef; } .theme--dark .open-in-new-tab-button, .theme--dark .mark-as-read-above-below-button { filter: contrast(0%); } .fx .open-in-new-tab-button.mark-as-read { background-image: url('{{open-in-new-tab-url}}'); background-size: 20px 20px; } .fx .entry.u5 .open-in-new-tab-button.mark-as-read { background-size: 24px 24px; } #FFnS-buttons-container { float: right; } .fx .FFnS-UI-button { background-repeat: no-repeat; display: inline; margin-left: auto; min-width: 10px; padding: 10px; } .FFnS-UI-button { opacity: 0.8; } .FFnS-UI-button:hover { opacity: 1; } .theme--dark .FFnS-UI-button { filter: contrast(0%); } .fx .open-current-articles-in-new-tab-button { background-image: url('{{open-in-new-tab-url}}'); background-size: 18px 18px; } .fx .disable-all-filters-button { background-image: url('{{disable-all-filters-url}}'); background-size: 20px 20px; opacity: 0.4; } .fx .disable-all-filters-button.enabled { opacity: 1; } .fx .mark-as-read-above-below-button.mark-as-read, .fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon, .fx .entry.u5 .mark-as-read-above-below-button { background-size: 20px 20px; width: 24px; height: 24px; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read, .fx .u100Entry .open-in-new-tab-button.mark-as-read { margin-left: .5rem; padding: 24px; background-position: center; width: 24px; height: 24px; opacity: 0.54; } .fx button.mark-above-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBggICA8PDxERERMTExUVFRgYGBkZGRoaGhwcHB4eHh8fHyAgICYmJicnJygoKCoqKiwsLC4uLi8vLzAwMDExMTIyMjMzMzk5OTo6Oj09PT4+PkREREhISEtLS01NTU5OTlFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbHJycnh4eHp6enx8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhUO7wAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAA1klEQVQoU3WQiVICQQwFGxBUPLgVROQQEBDFA/7/02KSyS6sVXQVyZvXNezWImfIxCx28JCJOvUUnNVlduOOKreejHFJh4s2fRnQsqg8cdBpYklHZ5eF1dJnZctvTG3EHDL0HQ/PeeEmhX/ilYtIRfFOfi6IA8wjFgU0Irn42UWuUomk8AnxIlew9+DwpsL/rwkjrxJIWcWvyAj00x1BNioeZRH3cvRU0W6tv+eoEio+tFTK0QR2v+biKxUZJr6tv0/nHH/itQo/nZAK2Po+IYlJz9cRkT+a78AFAEXS0AAAAABJRU5ErkJggg==); } .fx button.mark-below-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICA8PDxERERUVFRoaGhwcHB4eHigoKCoqKiwsLC4uLjAwMDExMTIyMjMzMzk5OTo6Oj09PUhISElJSUtLS01NTVFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbG5ubnJycnR0dHV1dXh4eHp6ent7e3x8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACY/twoAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAAxElEQVQoU3WQhxKCMBBEF7D3gg27Inbl/3/uvLtkQNrOJLvZNxcKqEIVYFQO9q3yiaXDWwmYIua9CCbYixWAD189DxbompADAWo2ZcEJyTkDYmBjYxYAfZsUPCKb6/BsYuEC2BdpAx8NKuwY6H0DYK6VEchl8CaaA/zrUoGODMa0tXOJ+ORxd+A1I3qap7iBgpBLliuVI2M1vBRQQ8FVAH9K1EQogddN+p729OV4kCCAOnwSF92xVjcFcFb/kwGroVoqoh+q2r44+TStvAAAAABJRU5ErkJggg==); } .fx button.mark-as-read { min-width: unset; min-height: unset; } .fx .entry.u4 .mark-as-read:first-of-type { margin-left: .7rem; } .fx .entry.u5 .open-in-new-tab-button, .fx .entry.u5 .mark-as-read-above-below-button { filter: brightness(0) invert(1); } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .theme--dark .ShowSettingsBtn:hover { background-color: rgba(255, 255, 255, 0.15); } #FFnS_Tab_KeywordControls span { vertical-align: top; } #FFnS_Tab_KeywordControls div { margin-top: 2%; } .FFnS_select { vertical-align: middle; } #FFnS_AddSortingType { margin-left: 1%; } .entry[gap-article] { visibility: hidden; } #FFnS_ImportSettings { width: 400px; } .FFnS_ColoringRule { margin-top: 1%; padding: 1%; border: 1px solid #636363; } .FFnS_ColoringRule div { margin-top: 1%; } .list-entries { margin-top: 1rem; }"
+    styleCSS: "#FFnS_settingsDivContainer { display: none; color: #333333; scrollbar-color: auto; background: rgba(0, 0, 0, 0.9); width: 100%; height: 100%; z-index: 999; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 87%; margin-top: 1%; margin-left: 5%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #e0f5ff; padding: 2%; opacity: 1; overflow-y: auto; overflow-x: hidden; } .FFnS_input { font-size: 12px; } #FFnS_tabs_menu { display: block; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #b9e0ed; } #FFnS_tabs_menu li a { padding: 3px; color: #2a687d; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35a5e2; border-radius: 20px; color: #fff; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip-top { bottom: 100%; left: 50%; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn, .FFnS_ColoringRuleManagement { float: right; cursor: pointer; width: 24px; height: 24px; padding: 4px; } #FFnS_Tab_SettingsControls button, #FFnS_Tab_SettingsControls input { margin-top: 1%; font-size: 12px; vertical-align: inherit; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type='number'] { width: 30px; margin-left: 1%; margin-right: 1%; } .MediumNumberInput { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { display: inline-block; white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: bold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 1%; } fieldset select.FFnS_keywordMatchingSelect { margin-left: 0%; margin-right: 1%; vertical-align: middle; } input { vertical-align: middle; } .ShowSettingsBtn { background-image: url('{{extension-icon}}'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; background-color: transparent; filter: grayscale(1); font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .FFnS_Hiding_Info { text-align: center; } .fx .open-in-new-tab-button.mark-as-read, .fx .mark-as-read-above-below-button.mark-as-read { background-repeat: no-repeat; margin-right: 0px; } .fx button.mark-as-read { opacity: 0.8; } .fx button.mark-as-read:hover { opacity: 1; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read:hover, .fx .u100Entry .open-in-new-tab-button.mark-as-read:hover { background-color: #efefef; } .theme--dark .open-in-new-tab-button, .theme--dark .mark-as-read-above-below-button { filter: contrast(0%); } .fx .open-in-new-tab-button.mark-as-read { background-image: url('{{open-in-new-tab-url}}'); background-size: 20px 20px; } .fx .entry.u5 .open-in-new-tab-button.mark-as-read { background-size: 24px 24px; } #FFnS-buttons-container { float: right; } .fx .FFnS-UI-button { background-repeat: no-repeat; display: inline; margin-left: auto; min-width: 10px; padding: 10px; } .FFnS-UI-button { opacity: 0.8; } .FFnS-UI-button:hover { opacity: 1; } .theme--dark .FFnS-UI-button { filter: contrast(0%); } .fx .open-current-articles-in-new-tab-button { background-image: url('{{open-in-new-tab-url}}'); background-size: 18px 18px; } .fx .disable-all-filters-button { background-image: url('{{disable-all-filters-url}}'); background-size: 20px 20px; opacity: 0.4; } .fx .disable-all-filters-button.enabled { opacity: 1; } .fx .mark-as-read-above-below-button.mark-as-read, .fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon, .fx .entry.u5 .mark-as-read-above-below-button { background-size: 20px 20px; width: 24px; height: 24px; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read, .fx .u100Entry .open-in-new-tab-button.mark-as-read { margin-left: 0.5rem; padding: 24px; background-position: center; width: 24px; height: 24px; opacity: 0.54; } .fx button.mark-above-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBggICA8PDxERERMTExUVFRgYGBkZGRoaGhwcHB4eHh8fHyAgICYmJicnJygoKCoqKiwsLC4uLi8vLzAwMDExMTIyMjMzMzk5OTo6Oj09PT4+PkREREhISEtLS01NTU5OTlFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbHJycnh4eHp6enx8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhUO7wAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAA1klEQVQoU3WQiVICQQwFGxBUPLgVROQQEBDFA/7/02KSyS6sVXQVyZvXNezWImfIxCx28JCJOvUUnNVlduOOKreejHFJh4s2fRnQsqg8cdBpYklHZ5eF1dJnZctvTG3EHDL0HQ/PeeEmhX/ilYtIRfFOfi6IA8wjFgU0Irn42UWuUomk8AnxIlew9+DwpsL/rwkjrxJIWcWvyAj00x1BNioeZRH3cvRU0W6tv+eoEio+tFTK0QR2v+biKxUZJr6tv0/nHH/itQo/nZAK2Po+IYlJz9cRkT+a78AFAEXS0AAAAABJRU5ErkJggg==); } .fx button.mark-below-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICA8PDxERERUVFRoaGhwcHB4eHigoKCoqKiwsLC4uLjAwMDExMTIyMjMzMzk5OTo6Oj09PUhISElJSUtLS01NTVFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbG5ubnJycnR0dHV1dXh4eHp6ent7e3x8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACY/twoAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAAxElEQVQoU3WQhxKCMBBEF7D3gg27Inbl/3/uvLtkQNrOJLvZNxcKqEIVYFQO9q3yiaXDWwmYIua9CCbYixWAD189DxbompADAWo2ZcEJyTkDYmBjYxYAfZsUPCKb6/BsYuEC2BdpAx8NKuwY6H0DYK6VEchl8CaaA/zrUoGODMa0tXOJ+ORxd+A1I3qap7iBgpBLliuVI2M1vBRQQ8FVAH9K1EQogddN+p729OV4kCCAOnwSF92xVjcFcFb/kwGroVoqoh+q2r44+TStvAAAAABJRU5ErkJggg==); } .fx button.mark-as-read { min-width: unset; min-height: unset; } .fx .entry.u4 .mark-as-read:first-of-type { margin-left: 0.7rem; } .fx .entry.u5 .open-in-new-tab-button, .fx .entry.u5 .mark-as-read-above-below-button { filter: brightness(0) invert(1); } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .theme--dark .ShowSettingsBtn:hover { background-color: rgba(255, 255, 255, 0.15); } #FFnS_Tab_KeywordControls span { vertical-align: top; } #FFnS_Tab_KeywordControls div { margin-top: 2%; } .FFnS_select { vertical-align: middle; } #FFnS_AddSortingType { margin-left: 1%; } .entry[gap-article] { visibility: hidden; } #FFnS_ImportSettings { width: 400px; } .FFnS_ColoringRule { margin-top: 1%; padding: 1%; border: 1px solid #636363; } .FFnS_ColoringRule div { margin-top: 1%; } .list-entries { margin-top: 1rem; } #topHeaderBarFX, #headerBarFX { margin-right: 20px; } "
 };
 
 var exported = {};
@@ -409,7 +406,7 @@ function getFilteringTypeId(type) {
     return FilteringType[type];
 }
 
-var AsyncResult = (function () {
+var AsyncResult = /** @class */ (function () {
     function AsyncResult(task, taskThisArg) {
         this.task = task;
         this.taskThisArg = taskThisArg;
@@ -448,7 +445,7 @@ var AsyncResult = (function () {
     return AsyncResult;
 }());
 
-var UserScriptInitializer = (function () {
+var UserScriptInitializer = /** @class */ (function () {
     function UserScriptInitializer() {
     }
     UserScriptInitializer.prototype.loadScript = function (name) {
@@ -470,7 +467,7 @@ var UserScriptInitializer = (function () {
 }());
 var INITIALIZER = new UserScriptInitializer();
 
-var UserScriptStorage = (function () {
+var UserScriptStorage = /** @class */ (function () {
     function UserScriptStorage() {
     }
     UserScriptStorage.prototype.getAsync = function (id, defaultValue) {
@@ -514,7 +511,7 @@ var UserScriptStorage = (function () {
 }());
 var DataStore = new UserScriptStorage();
 
-var SubscriptionDTO = (function () {
+var SubscriptionDTO = /** @class */ (function () {
     function SubscriptionDTO(url) {
         var _this = this;
         this.filteringEnabled = false;
@@ -557,7 +554,7 @@ var SubscriptionDTO = (function () {
     }
     return SubscriptionDTO;
 }());
-var AdvancedControlsReceivedPeriod = (function () {
+var AdvancedControlsReceivedPeriod = /** @class */ (function () {
     function AdvancedControlsReceivedPeriod() {
         this.maxHours = 6;
         this.keepUnread = false;
@@ -568,7 +565,7 @@ var AdvancedControlsReceivedPeriod = (function () {
     }
     return AdvancedControlsReceivedPeriod;
 }());
-var FilteringByReadingTime = (function () {
+var FilteringByReadingTime = /** @class */ (function () {
     function FilteringByReadingTime() {
         this.enabled = false;
         this.filterLong = true;
@@ -578,7 +575,7 @@ var FilteringByReadingTime = (function () {
     }
     return FilteringByReadingTime;
 }());
-var ColoringRule = (function () {
+var ColoringRule = /** @class */ (function () {
     function ColoringRule() {
         this.source = ColoringRuleSource.SpecificKeywords;
         this.color = "FFFF00";
@@ -590,7 +587,7 @@ var ColoringRule = (function () {
     return ColoringRule;
 }());
 
-var Subscription = (function () {
+var Subscription = /** @class */ (function () {
     function Subscription(dao, dto) {
         this.dao = dao;
         if (dto) {
@@ -757,7 +754,7 @@ var Subscription = (function () {
     return Subscription;
 }());
 
-var SubscriptionDAO = (function () {
+var SubscriptionDAO = /** @class */ (function () {
     function SubscriptionDAO() {
         this.SUBSCRIPTION_ID_PREFIX = "subscription_";
         this.GLOBAL_SETTINGS_SUBSCRIPTION_URL = "---global settings---";
@@ -922,14 +919,14 @@ var SubscriptionDAO = (function () {
     };
     return SubscriptionDAO;
 }());
-var LinkedSubscriptionDTO = (function () {
+var LinkedSubscriptionDTO = /** @class */ (function () {
     function LinkedSubscriptionDTO(linkedUrl) {
         this.linkedUrl = linkedUrl;
     }
     return LinkedSubscriptionDTO;
 }());
 
-var SettingsManager = (function () {
+var SettingsManager = /** @class */ (function () {
     function SettingsManager(uiManager) {
         this.defaultUrlPrefixPattern = new RegExp(ext.defaultUrlPrefixPattern, "i");
         this.subscriptionUrlPrefixPattern = new RegExp(ext.subscriptionUrlPrefixPattern, "i");
@@ -1042,7 +1039,7 @@ var SettingsManager = (function () {
     };
     return SettingsManager;
 }());
-var CrossCheckDuplicatesSettings = (function () {
+var CrossCheckDuplicatesSettings = /** @class */ (function () {
     function CrossCheckDuplicatesSettings() {
     }
     CrossCheckDuplicatesSettings.prototype.setChangeCallback = function (fun) {
@@ -1065,7 +1062,7 @@ var CrossCheckDuplicatesSettings = (function () {
     return CrossCheckDuplicatesSettings;
 }());
 
-var ArticleManager = (function () {
+var ArticleManager = /** @class */ (function () {
     function ArticleManager(settingsManager, keywordManager, page) {
         this.articlesToMarkAsRead = [];
         this.darkMode = this.isDarkMode();
@@ -1100,9 +1097,6 @@ var ArticleManager = (function () {
     };
     ArticleManager.prototype.getCurrentSub = function () {
         return this.settingsManager.getCurrentSubscription();
-    };
-    ArticleManager.prototype.getCurrentUnreadCount = function () {
-        return $(ext.articleSelector).length;
     };
     ArticleManager.prototype.addArticle = function (a, skipCheck) {
         var article = new Article(a);
@@ -1191,7 +1185,7 @@ var ArticleManager = (function () {
             var popularityArr = [];
             var hotPopularityArr = [];
             $(articlesContainer)
-                .find(ext.articleDataSelector + ":visible")
+                .find(ext.articleSelector + ":visible")
                 .each(function (i, article) {
                 var engagement = $(article).find(ext.popularitySelector);
                 var popularity = parsePopularity($(engagement).text());
@@ -1227,10 +1221,7 @@ var ArticleManager = (function () {
     ArticleManager.prototype.checkDisableAllFilters = function () {
         if (this.page.get(ext.disableAllFiltersButtonId)) {
             if (this.page.get(ext.disableAllFiltersEnabled, true)) {
-                var containers = $(ext.articleSelector).map(function (i, a) {
-                    return a.closest(ext.articleFrameSelector);
-                });
-                containers.css("display", "");
+                $(ext.articleSelector).css("display", "");
                 this.page.clearHidingInfo();
             }
         }
@@ -1286,7 +1277,7 @@ var ArticleManager = (function () {
         return $("body").hasClass("theme--dark");
     };
     ArticleManager.prototype.checkLastAddedArticle = function (refresh) {
-        var allArticlesChecked = $(ext.uncheckedArticlesSelector).length == 0;
+        var allArticlesChecked = $(ext.articleSelector + ext.uncheckedArticlesSelector).length == 0;
         if (allArticlesChecked) {
             this.prepareMarkAsRead();
             this.page.refreshHidingInfo();
@@ -1309,7 +1300,7 @@ var ArticleManager = (function () {
             var visibleArticles = [];
             var hiddenArticles = [];
             var articlesContainer = $(c);
-            articlesContainer.find(ext.articleDataSelector).each(function (i, e) {
+            articlesContainer.find(ext.articleSelector).each(function (i, e) {
                 var a = new Article(e);
                 if (a.isVisible()) {
                     visibleArticles.push(a);
@@ -1339,12 +1330,10 @@ var ArticleManager = (function () {
             if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
                 console.log("Sorting articles at " + new Date().toTimeString());
                 endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
-                removeContent(articlesContainer.find("h4"));
                 var chunks = articlesContainer.find(ext.articlesChunkSelector);
+                removeContent(chunks.find(".Heading"));
                 var containerChunk_1 = chunks.first();
-                var h4Headings = containerChunk_1.find("h4").detach();
                 containerChunk_1.empty();
-                h4Headings.prependTo(containerChunk_1);
                 var appendArticle = function (article) {
                     var container = article.getContainer();
                     container.detach().appendTo(containerChunk_1);
@@ -1355,13 +1344,11 @@ var ArticleManager = (function () {
             sortedVisibleEntryIds.push.apply(sortedVisibleEntryIds, visibleArticles.map(function (a) { return a.getEntryId(); }));
         });
         var lastContainer = $(ext.articlesContainerSelector).last();
-        if (endOfFeed) {
+        if (endOfFeed.length > 0) {
             lastContainer.append(endOfFeed);
         }
         else {
-            $(ext.endOfFeedSelector)
-                .detach()
-                .appendTo(lastContainer);
+            $(ext.endOfFeedSelector).detach().appendTo(lastContainer);
         }
         this.page.put(ext.sortedVisibleArticlesId, sortedVisibleEntryIds);
     };
@@ -1400,7 +1387,7 @@ var ArticleManager = (function () {
     };
     return ArticleManager;
 }());
-var ArticleSorterFactory = (function () {
+var ArticleSorterFactory = /** @class */ (function () {
     function ArticleSorterFactory() {
         this.sorterByType = {};
         function titleSorter(isAscending) {
@@ -1482,7 +1469,7 @@ var ArticleSorterFactory = (function () {
     };
     return ArticleSorterFactory;
 }());
-var EntryInfos = (function () {
+var EntryInfos = /** @class */ (function () {
     function EntryInfos(jsonInfos) {
         var bodyInfos = jsonInfos.content ? jsonInfos.content : jsonInfos.summary;
         this.body = bodyInfos ? bodyInfos.content : "";
@@ -1493,12 +1480,11 @@ var EntryInfos = (function () {
     }
     return EntryInfos;
 }());
-var Article = (function () {
-    function Article(article) {
-        this.checkedAttr = "checked-FFnS";
-        this.article = $(article);
-        this.entryId = this.article.attr(ext.articleEntryIdAttribute);
-        var infosElement = this.article.find("." + ext.entryInfosJsonClass);
+var Article = /** @class */ (function () {
+    function Article(articleContainer) {
+        this.container = $(articleContainer);
+        this.entryId = this.container.attr("id").replace(/_main$/, "");
+        var infosElement = this.container.find("." + ext.entryInfosJsonClass);
         if (infosElement.length > 0) {
             this.entryInfos = JSON.parse(infosElement.text());
             if (this.entryInfos) {
@@ -1510,26 +1496,18 @@ var Article = (function () {
                 this.publishAge = this.entryInfos.published;
             }
             else {
-                var isArticleView = $(article).hasClass(ext.articleViewClass);
-                this.body = this.article
+                var isArticleView = this.container.find(ext.articleViewClass).length > 0;
+                this.body = this.container
                     .find(isArticleView ? ".content" : ".summary")
                     .text()
                     .toLowerCase();
-                this.author = (isArticleView
-                    ? (function () {
-                        var metadata = $(article)
-                            .find(".metadata")
-                            .text()
-                            .trim()
-                            .replace(/\s\s+/gi, "\n")
-                            .split("\n");
-                        return metadata[3] === "/" ? metadata[2] : metadata[3];
-                    })()
-                    : this.article.find(".authors").text())
+                this.author = this.container
+                    .find(".authors")
+                    .text()
                     .replace("by", "")
                     .trim()
                     .toLowerCase();
-                var ageStr = this.article
+                var ageStr = this.container
                     .find(ext.publishAgeSpanSelector)
                     .attr(ext.publishAgeTimestampAttr);
                 var ageSplit = ageStr.split("--");
@@ -1540,23 +1518,23 @@ var Article = (function () {
             }
         }
         // Title
-        this.title = this.article
-            .attr(ext.articleTitleAttribute)
+        this.title = this.container
+            .find(ext.articleTitleSelector)
+            .text()
             .trim()
             .toLowerCase();
         // Popularity
-        this.popularity = parsePopularity(this.article.find(ext.popularitySelector).text());
+        this.popularity = parsePopularity(this.container.find(ext.popularitySelector).text());
         // Source
-        var source = this.article.find(ext.articleSourceSelector);
+        var source = this.container.find(ext.articleSourceSelector);
         if (source != null) {
             this.source = source.text().trim();
         }
         // URL
-        this.url = this.article.find(ext.articleUrlAnchorSelector).attr("href");
-        this.container = this.article.closest(ext.articleFrameSelector);
+        this.url = this.container.find(ext.articleUrlAnchorSelector).attr("href");
     }
     Article.prototype.addClass = function (c) {
-        return this.article.addClass(c);
+        return this.container.addClass(c);
     };
     Article.prototype.getTitle = function () {
         return this.title;
@@ -1583,7 +1561,7 @@ var Article = (function () {
         return new Date(this.publishAge);
     };
     Article.prototype.isHot = function () {
-        var span = this.article.find(ext.popularitySelector);
+        var span = this.container.find(ext.popularitySelector);
         return (span.hasClass("hot") ||
             span.hasClass("onfire") ||
             span.hasClass("EntryEngagement--hot"));
@@ -1606,10 +1584,10 @@ var Article = (function () {
         return !(this.container.css("display") === "none");
     };
     Article.prototype.checked = function () {
-        this.article.attr(this.checkedAttr, "");
+        this.container.attr(ext.checkedArticlesAttribute, "");
     };
     Article.prototype.setColor = function (color) {
-        this.article.css("background-color", color);
+        this.container.css("background-color", color);
     };
     return Article;
 }());
@@ -1622,7 +1600,7 @@ function parsePopularity(popularityStr) {
     return Number(popularityStr);
 }
 
-var DuplicateChecker = (function () {
+var DuplicateChecker = /** @class */ (function () {
     function DuplicateChecker(articleManager) {
         this.articleManager = articleManager;
         this.url2Article = {};
@@ -1684,7 +1662,7 @@ var DuplicateChecker = (function () {
     };
     return DuplicateChecker;
 }());
-var CrossArticleManager = (function () {
+var CrossArticleManager = /** @class */ (function () {
     function CrossArticleManager(articleManager, duplicateChecker) {
         var _this = this;
         this.duplicateChecker = duplicateChecker;
@@ -1911,7 +1889,7 @@ var CrossArticleManager = (function () {
     return CrossArticleManager;
 }());
 
-var KeywordManager = (function () {
+var KeywordManager = /** @class */ (function () {
     function KeywordManager() {
         this.separator = "#";
         this.areaPrefix = "#Area#";
@@ -1969,7 +1947,7 @@ var KeywordManager = (function () {
     };
     return KeywordManager;
 }());
-var KeywordMatcherFactory = (function () {
+var KeywordMatcherFactory = /** @class */ (function () {
     function KeywordMatcherFactory() {
         var _this = this;
         this.matcherByType = {};
@@ -2011,7 +1989,7 @@ var KeywordMatcherFactory = (function () {
     return KeywordMatcherFactory;
 }());
 
-var FeedlyPage = (function () {
+var FeedlyPage = /** @class */ (function () {
     function FeedlyPage() {
         this.hiddingInfoClass = "FFnS_Hiding_Info";
         this.put("ext", ext);
@@ -2019,6 +1997,8 @@ var FeedlyPage = (function () {
             "getFFnS",
             "putFFnS",
             "getById",
+            "getArticleId",
+            "getReactPage",
             "getStreamPage",
             "getStreamObj",
             "onClickCapture",
@@ -2026,7 +2006,7 @@ var FeedlyPage = (function () {
             "loadNextBatch",
             "getKeptUnreadEntryIds",
             "getSortedVisibleArticles",
-        ], this.get, this.put, this.getById, this.getStreamPage, this.getStreamObj, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
+        ], this.get, this.put, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
         injectToWindow(["overrideLoadingEntries"], this.overrideLoadingEntries);
         injectToWindow(["overrideSorting"], this.overrideSorting);
         injectToWindow(["overrideNavigation"], this.overrideNavigation);
@@ -2161,6 +2141,15 @@ var FeedlyPage = (function () {
             }
         }
     };
+    FeedlyPage.prototype.getReactPage = function () {
+        var observers = window["streets"].service("feedly").observers;
+        for (var i = 0, len = observers.length; i < len; i++) {
+            var prototype = Object.getPrototypeOf(observers[i]);
+            if (prototype.markAsRead) {
+                return observers[i];
+            }
+        }
+    };
     FeedlyPage.prototype.getStreamObj = function () {
         var streamPage = getStreamPage();
         var streamObj = streamPage.stream;
@@ -2205,8 +2194,9 @@ var FeedlyPage = (function () {
                 if (getFFnS(ext.openCurrentFeedArticlesUnreadOnlyId)) {
                     articlesToOpen = articlesToOpen.filter(function (id) {
                         var a = $(getById(id));
-                        return a.hasClass(ext.unreadArticleClass) ||
-                            (a.hasClass(ext.articleViewIdContainerClass) && a.find(ext.articleViewReadSelector).length === 0);
+                        return (a.hasClass(ext.unreadArticleClass) ||
+                            (a.hasClass(ext.articleViewIdContainerClass) &&
+                                a.find(ext.articleViewReadSelector).length === 0));
                     });
                 }
                 var max = getFFnS(ext.maxOpenCurrentFeedArticlesId);
@@ -2227,7 +2217,7 @@ var FeedlyPage = (function () {
                         reader_1.askMarkEntryAsRead(entryId);
                         var a = $(getById(entryId));
                         if (a.hasClass(ext.articleViewIdContainerClass)) {
-                            a.find(ext.articleViewTitleSelector).addClass(ext.articleViewReadTitleClass);
+                            a.find(ext.articleTitleSelector).addClass(ext.articleViewReadTitleClass);
                         }
                         else {
                             a.removeClass(ext.unreadArticleClass).addClass(ext.readArticleClass);
@@ -2264,7 +2254,7 @@ var FeedlyPage = (function () {
         if (!sortedVisibleArticles) {
             sortedVisibleArticles = [];
             $(ext.articleSelector).each(function (i, a) {
-                sortedVisibleArticles.push($(a).attr(ext.articleEntryIdAttribute));
+                sortedVisibleArticles.push(getArticleId($(a)));
             });
         }
         return sortedVisibleArticles;
@@ -2320,8 +2310,8 @@ var FeedlyPage = (function () {
             };
         };
         NodeCreationObserver.onCreation(ext.articleSelector, function (element) {
-            var a = $(element).closest(ext.articleSelector);
-            var entryId = a.attr(ext.articleEntryIdAttribute);
+            var a = $(element);
+            var entryId = getArticleId(a);
             var e = reader.lookupEntry(entryId);
             var entryInfos = $("<span>", {
                 class: ext.entryInfosJsonClass,
@@ -2379,7 +2369,9 @@ var FeedlyPage = (function () {
                 window.open(link, link);
                 reader.askMarkEntryAsRead(entryId);
                 if (articleView) {
-                    $(a).find(ext.articleViewTitleSelector).addClass(ext.articleViewReadTitleClass);
+                    $(a)
+                        .find(ext.articleTitleSelector)
+                        .addClass(ext.articleViewReadTitleClass);
                 }
             };
             onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
@@ -2447,6 +2439,9 @@ var FeedlyPage = (function () {
     };
     FeedlyPage.prototype.getById = function (id) {
         return document.getElementById(id + "_main");
+    };
+    FeedlyPage.prototype.getArticleId = function (a) {
+        return a.attr("id").replace(/_main$/, "");
     };
     FeedlyPage.prototype.fetchMoreEntries = function (batchSize) {
         var autoLoadingMessageId = "FFnS_LoadingMessage";
@@ -2607,7 +2602,7 @@ var FeedlyPage = (function () {
                         return;
                     }
                     var ids = $.map(markAsReadEntries.toArray(), function (e) {
-                        return $(e).attr(ext.articleEntryIdAttribute);
+                        return getArticleId($(e));
                     });
                     reader.askMarkEntriesAsRead(ids, {});
                     markAsReadEntries
@@ -2615,7 +2610,7 @@ var FeedlyPage = (function () {
                         .each(function (_, e) {
                         var a = $(e);
                         if (a.hasClass(ext.articleViewIdContainerClass)) {
-                            a.find(ext.articleViewTitleSelector).addClass(ext.articleViewReadTitleClass);
+                            a.find(ext.articleTitleSelector).addClass(ext.articleViewReadTitleClass);
                         }
                         else {
                             a.removeClass(ext.unreadArticleClass).addClass(ext.readArticleClass);
@@ -2642,8 +2637,7 @@ var FeedlyPage = (function () {
     FeedlyPage.prototype.overrideMarkAsRead = function () {
         var reader = window["streets"].service("reader");
         var navigo = window["streets"].service("navigo");
-        var pagesPkg = window["devhd"].pkg("pages");
-        var prototype = pagesPkg.ReactPage.prototype;
+        var prototype = Object.getPrototypeOf(getReactPage());
         var markAsRead = prototype.markAsRead;
         prototype.markAsRead = function (lastEntryObject) {
             var _this = this;
@@ -2787,7 +2781,7 @@ var FeedlyPage = (function () {
     return FeedlyPage;
 }());
 
-var UIManager = (function () {
+var UIManager = /** @class */ (function () {
     function UIManager() {
         this.containsReadArticles = false;
         this.forceReloadGlobalSettings = false;
@@ -3699,7 +3693,7 @@ var UIManager = (function () {
     };
     return UIManager;
 }());
-var ColoringRuleHTMLIds = (function () {
+var ColoringRuleHTMLIds = /** @class */ (function () {
     function ColoringRuleHTMLIds(id) {
         this.id = id;
         this.highlightId = id + " .FFnS_HighlightAllTitle";
@@ -3733,7 +3727,7 @@ function focusKeywordsInput() {
     $(focusKeywordsInputSelector).focus().val("");
 }
 
-var HTMLSubscriptionManager = (function () {
+var HTMLSubscriptionManager = /** @class */ (function () {
     function HTMLSubscriptionManager(manager) {
         var _this = this;
         this.subscriptionSettings = [];
@@ -3844,7 +3838,7 @@ var HTMLSubscriptionManager = (function () {
     };
     return HTMLSubscriptionManager;
 }());
-var HTMLSubscriptionSetting = (function () {
+var HTMLSubscriptionSetting = /** @class */ (function () {
     function HTMLSubscriptionSetting(manager, id, config, subscriptionSettingConfig) {
         this.manager = manager;
         this.id = id;
@@ -3871,7 +3865,7 @@ var HTMLSubscriptionSetting = (function () {
     return HTMLSubscriptionSetting;
 }());
 
-var HTMLGlobalSettings = (function () {
+var HTMLGlobalSettings = /** @class */ (function () {
     function HTMLGlobalSettings(id, defaultValue, uiManager, fullRefreshOnChange, sessionStore) {
         if (fullRefreshOnChange === void 0) { fullRefreshOnChange = false; }
         if (sessionStore === void 0) { sessionStore = true; }
@@ -3985,7 +3979,7 @@ function initResources() {
     templates.styleCSS = bindMarkup(templates.styleCSS, [
         { name: "open-in-new-tab-url", value: urls.openInNewTabURL },
         { name: "disable-all-filters-url", value: urls.clearFiltersURL },
-        { name: "extension-icon", value: urls.extensionIconURL }
+        { name: "extension-icon", value: urls.extensionIconURL },
     ]);
     injectStyleText(templates.styleCSS);
 }
