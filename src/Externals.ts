@@ -13,10 +13,11 @@ var ext = {
   articlesContainerSelector: ".list-entries",
   articlesChunkClass: "EntryList__chunk",
   articlesChunkSelector: ".EntryList__chunk",
-  articleSelector: ".EntryList__chunk > [id]",
+  articleSelector:
+    ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame)",
   unreadArticlesCountSelector:
     ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
-  uncheckedArticlesSelector: ":not([checked-FFnS])",
+  uncheckedArticlesSelector: ":not([gap-article]):not([checked-FFnS])",
   checkedArticlesAttribute: "checked-FFnS",
   markAsReadImmediatelySelector: ".list-entries .FFnS-mark-as-read",
   unreadArticleClass: "entry--unread",
@@ -34,7 +35,6 @@ var ext = {
   subscriptionChangeSelector: "#header-title",
   popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
   hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
-  endOfFeedSelector: ".list-entries h4:contains(End of feed)",
   articleUrlAnchorSelector: ".entry__title",
 
   keepArticlesUnreadId: "keepArticlesUnread",

@@ -311,7 +311,6 @@ export class ArticleManager {
 
       if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
         console.log("Sorting articles at " + new Date().toTimeString());
-        endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
         let chunks = articlesContainer.find(ext.articlesChunkSelector);
         removeContent(chunks.find(".Heading"));
         let containerChunk = chunks.first();
@@ -326,12 +325,6 @@ export class ArticleManager {
       sortedVisibleEntryIds.push(...visibleArticles.map((a) => a.getEntryId()));
     });
 
-    let lastContainer = $(ext.articlesContainerSelector).last();
-    if (endOfFeed.length > 0) {
-      lastContainer.append(endOfFeed);
-    } else {
-      $(ext.endOfFeedSelector).detach().appendTo(lastContainer);
-    }
     this.page.put(ext.sortedVisibleArticlesId, sortedVisibleEntryIds);
   }
 

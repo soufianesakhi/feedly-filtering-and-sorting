@@ -441,7 +441,8 @@ export class FeedlyPage {
           `[id^='${entryId}'] .headerInfo > :first-child`,
           (e) => {
             $(e).append(buttonContainer);
-          }
+          },
+          true
         );
       } else {
         a.find(".CondensedToolbar .fx.tag-button").prepend(buttonContainer);

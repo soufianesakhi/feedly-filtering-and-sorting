@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.20.1
+// @version     3.20.2
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -35,9 +35,9 @@ var ext = {
     articlesContainerSelector: ".list-entries",
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
-    articleSelector: ".EntryList__chunk > [id]",
+    articleSelector: ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame)",
     unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
-    uncheckedArticlesSelector: ":not([checked-FFnS])",
+    uncheckedArticlesSelector: ":not([gap-article]):not([checked-FFnS])",
     checkedArticlesAttribute: "checked-FFnS",
     markAsReadImmediatelySelector: ".list-entries .FFnS-mark-as-read",
     unreadArticleClass: "entry--unread",
@@ -55,7 +55,6 @@ var ext = {
     subscriptionChangeSelector: "#header-title",
     popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
     hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
-    endOfFeedSelector: ".list-entries h4:contains(End of feed)",
     articleUrlAnchorSelector: ".entry__title",
     keepArticlesUnreadId: "keepArticlesUnread",
     articlesToMarkAsReadId: "articlesToMarkAsRead",
@@ -1328,7 +1327,6 @@ var ArticleManager = /** @class */ (function () {
             }
             if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
                 console.log("Sorting articles at " + new Date().toTimeString());
-                endOfFeed || (endOfFeed = $(ext.endOfFeedSelector).detach());
                 var chunks = articlesContainer.find(ext.articlesChunkSelector);
                 removeContent(chunks.find(".Heading"));
                 var containerChunk_1 = chunks.first();
@@ -1342,13 +1340,6 @@ var ArticleManager = /** @class */ (function () {
             }
             sortedVisibleEntryIds.push.apply(sortedVisibleEntryIds, visibleArticles.map(function (a) { return a.getEntryId(); }));
         });
-        var lastContainer = $(ext.articlesContainerSelector).last();
-        if (endOfFeed.length > 0) {
-            lastContainer.append(endOfFeed);
-        }
-        else {
-            $(ext.endOfFeedSelector).detach().appendTo(lastContainer);
-        }
         this.page.put(ext.sortedVisibleArticlesId, sortedVisibleEntryIds);
     };
     ArticleManager.prototype.prepareMarkAsRead = function () {
@@ -2339,7 +2330,7 @@ var FeedlyPage = /** @class */ (function () {
             else if (inlineView) {
                 NodeCreationObserver.onCreation("[id^='" + entryId + "'] .headerInfo > :first-child", function (e) {
                     $(e).append(buttonContainer);
-                });
+                }, true);
             }
             else {
                 a.find(".CondensedToolbar .fx.tag-button").prepend(buttonContainer);
