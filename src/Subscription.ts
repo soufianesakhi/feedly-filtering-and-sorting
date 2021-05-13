@@ -124,6 +124,10 @@ export class Subscription {
     return this.dto.keywordMatchingMethod;
   }
 
+  isDisablePageOverrides(): boolean {
+    return this.dto.disablePageOverrides;
+  }
+
   isAutoRefreshEnabled(): boolean {
     return this.dto.autoRefreshEnabled;
   }

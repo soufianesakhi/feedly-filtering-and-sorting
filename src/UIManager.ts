@@ -23,7 +23,14 @@ import { KeywordManager } from "./KeywordManager";
 import { SettingsManager } from "./SettingsManager";
 import { Subscription } from "./Subscription";
 import { ColoringRule } from "./SubscriptionDTO";
-import { $id, bindMarkup, isChecked, onClick, setChecked } from "./Utils";
+import {
+  $id,
+  bindMarkup,
+  currentPageNotSupported,
+  isChecked,
+  onClick,
+  setChecked,
+} from "./Utils";
 
 export class UIManager {
   page: FeedlyPage;
@@ -89,6 +96,7 @@ export class UIManager {
         "HighlightDuplicates",
         "Enabled_FilteringByReadingTime",
         "KeepUnread_FilteringByReadingTime",
+        "DisablePageOverrides",
       ],
     },
     {
@@ -140,7 +148,8 @@ export class UIManager {
           200,
           this
         );
-        const crossCheckSettings = this.settingsManager.getCrossCheckDuplicatesSettings();
+        const crossCheckSettings =
+          this.settingsManager.getCrossCheckDuplicatesSettings();
         this.crossCheckDuplicatesCB = new HTMLGlobalSettings<boolean>(
           "CrossCheckDuplicates",
           false,
@@ -174,7 +183,7 @@ export class UIManager {
           this.updateSubscription().then(() => {
             this.initUI();
             this.registerSettings();
-            this.updateMenu();
+            this.postUpdate();
             this.initSettingsCallbacks();
             this.postInit();
             p.done();
@@ -215,11 +224,43 @@ export class UIManager {
   }
 
   updatePage() {
+    if (currentPageNotSupported()) {
+      return;
+    }
     try {
       this.resetPage();
-      this.updateSubscription().then(this.updateMenu, this);
+      this.updateSubscription().then(this.postUpdate, this);
     } catch (err) {
       console.log(err);
+    }
+  }
+
+  postUpdate() {
+    if (currentPageNotSupported()) {
+      return;
+    }
+    this.updateMenu();
+    setTimeout(() => {
+      this.refreshFilteringAndSorting();
+
+      if (
+        (this.subscription.isSortingEnabled &&
+          this.subscription.getSortingType() == SortingType.PopularityAsc) ||
+        this.subscription.getSortingType() == SortingType.PopularityDesc
+      ) {
+        let maxCheck = 10;
+        const handle = setInterval(() => {
+          if (maxCheck-- === 0) {
+            return clearInterval(handle);
+          }
+          this.articleManager.checkPopularityAndSort();
+        }, 3000);
+      }
+    }, 500);
+    if (this.subscription.isAutoRefreshEnabled()) {
+      setInterval(() => {
+        window.location.reload();
+      }, this.subscription.getAutoRefreshTime());
     }
   }
 
@@ -241,6 +282,10 @@ export class UIManager {
 
   updateSubscription(): AsyncResult<any> {
     return new AsyncResult<any>((p) => {
+      if (currentPageNotSupported()) {
+        p.done();
+        return;
+      }
       var globalSettingsEnabled = this.globalSettingsEnabledCB.getValue();
       this.settingsManager
         .loadSubscription(globalSettingsEnabled, this.forceReloadGlobalSettings)
@@ -253,23 +298,6 @@ export class UIManager {
 
   updateMenu() {
     this.htmlSubscriptionManager.update();
-    setTimeout(() => {
-      this.refreshFilteringAndSorting();
-
-      if (
-        (this.subscription.isSortingEnabled &&
-          this.subscription.getSortingType() == SortingType.PopularityAsc) ||
-        this.subscription.getSortingType() == SortingType.PopularityDesc
-      ) {
-        let maxCheck = 10;
-        const handle = setInterval(() => {
-          if (maxCheck-- === 0) {
-            return clearInterval(handle);
-          }
-          this.articleManager.checkPopularityAndSort();
-        }, 3000);
-      }
-    }, 500);
     getFilteringTypes().forEach((type) => {
       this.prepareFilteringList(type);
     });
@@ -290,6 +318,7 @@ export class UIManager {
     this.refreshColoringRuleArrows();
 
     this.updateSettingsModeTitle();
+    this.updateFilteringKeywordMatchingSelects();
   }
 
   updateSettingsModeTitle() {
@@ -517,7 +546,10 @@ export class UIManager {
     NodeCreationObserver.onCreation(
       ext.settingsBtnPredecessorSelector,
       (element) => {
-        if ($(element).parent().find(".ShowSettingsBtn").length > 0) {
+        if (
+          currentPageNotSupported() ||
+          $(element).parent().find(".ShowSettingsBtn").length > 0
+        ) {
           return;
         }
         var clone = $(element).clone();
@@ -547,7 +579,8 @@ export class UIManager {
       HTMLElementType.NumberInput,
       {
         update: (subscriptionSetting: HTMLSubscriptionSetting) => {
-          var advancedControlsReceivedPeriod = subscriptionSetting.manager.subscription.getAdvancedControlsReceivedPeriod();
+          var advancedControlsReceivedPeriod =
+            subscriptionSetting.manager.subscription.getAdvancedControlsReceivedPeriod();
           var maxHours = advancedControlsReceivedPeriod.maxHours;
           var advancedPeriodHours = maxHours % 24;
           var advancedPeriodDays = Math.floor(maxHours / 24);
@@ -633,17 +666,18 @@ export class UIManager {
 
     this.setUpFilteringListEvents();
 
-    var useDefaultMatchingAreas = $id("FFnS_AlwaysUseDefaultMatchingAreas");
-    function toggleFilteringKeywordMatchingSelects() {
-      var selects = $(".FFnS_keywordMatchingSelect[filtering]");
-      if (isChecked($(useDefaultMatchingAreas))) {
-        selects.hide();
-      } else {
-        selects.show();
-      }
+    $id("FFnS_AlwaysUseDefaultMatchingAreas").change(
+      this.updateFilteringKeywordMatchingSelects
+    );
+  }
+
+  updateFilteringKeywordMatchingSelects() {
+    var selects = $(".FFnS_keywordMatchingSelect[filtering]");
+    if (isChecked($($id("FFnS_AlwaysUseDefaultMatchingAreas")))) {
+      selects.hide();
+    } else {
+      selects.show();
     }
-    toggleFilteringKeywordMatchingSelects();
-    useDefaultMatchingAreas.change(toggleFilteringKeywordMatchingSelects);
   }
 
   postInit() {
@@ -661,12 +695,6 @@ export class UIManager {
       });
     } else {
       $id(syncCBId).closest(".setting_group").remove();
-    }
-
-    if (this.subscription.isAutoRefreshEnabled()) {
-      setInterval(() => {
-        window.location.reload();
-      }, this.subscription.getAutoRefreshTime());
     }
 
     const forceRefreshArticlesBtn = $("<button>", {
@@ -917,7 +945,6 @@ export class UIManager {
 
   private setUpFilteringListManagementEvents(type: FilteringType) {
     var ids = this.getIds(type);
-    var keywordList = this.subscription.getFilteringList(type);
 
     // Add button
     $id(this.getHTMLId(ids.plusBtnId)).click(() => {
@@ -932,8 +959,6 @@ export class UIManager {
         this.updateFilteringList(type);
       }
     });
-
-    this.setUpKeywordButtonsEvents(type);
   }
 
   private addKeyword(input: JQuery, type: FilteringType) {
@@ -1001,6 +1026,9 @@ export class UIManager {
   }
 
   addArticle(article: Element) {
+    if (currentPageNotSupported()) {
+      return;
+    }
     try {
       this.articleManager.addArticle(article);
       const callback = this.readArticlesMutationCallback(article);
@@ -1034,6 +1062,9 @@ export class UIManager {
   }
 
   addSection(section: Element) {
+    if (currentPageNotSupported()) {
+      return;
+    }
     if (section.id === "section0") {
       $(section).find("h2").text(" ");
     } else {

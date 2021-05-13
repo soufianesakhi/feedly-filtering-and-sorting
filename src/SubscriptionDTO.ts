@@ -34,6 +34,7 @@ export class SubscriptionDTO {
   alwaysUseDefaultMatchingAreas = true;
   keywordMatchingMethod: KeywordMatchingMethod = KeywordMatchingMethod.Simple;
   coloringRules: ColoringRule[] = [];
+  disablePageOverrides = false;
   autoRefreshEnabled = false;
   autoRefreshMinutes = 60;
   hideDuplicates = false;

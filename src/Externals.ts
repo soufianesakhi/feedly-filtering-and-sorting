@@ -5,6 +5,8 @@ var ext = {
   moveUpIconLink: "",
   moveDownIconLink: "",
 
+  supportedURLsPattern:
+    "^https?://[^/]+/i/(?:subscription|collection/content/user)/.*$",
   defaultUrlPrefixPattern: "https?://[^/]+/i/",
   subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
   categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
@@ -68,4 +70,5 @@ var ext = {
     "isMarkAsReadOnOpenCurrentFeedArticles",
   maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles",
   forceRefreshArticlesId: "forceRefreshArticles",
+  disablePageOverridesId: "disablePageOverrides",
 };

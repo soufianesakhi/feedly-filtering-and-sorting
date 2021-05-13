@@ -1,5 +1,11 @@
 var exported = {};
 
+const pageSupportedRegexp = new RegExp(ext.supportedURLsPattern, "i");
+
+export function currentPageNotSupported(): boolean {
+  return !pageSupportedRegexp.test(document.URL);
+}
+
 export function $id(id) {
   return $("#" + id);
 }
@@ -9,7 +15,7 @@ export function onClick(
   handler: (eventObject: JQueryEventObject) => any,
   thisArg?
 ) {
-  jq.click(eventObject => {
+  jq.click((eventObject) => {
     try {
       handler.apply(thisArg, eventObject);
     } catch (e) {
@@ -24,7 +30,7 @@ interface MarkupBinding {
 }
 
 export function bindMarkup(html: string, bindings: MarkupBinding[]): string {
-  bindings.forEach(binding => {
+  bindings.forEach((binding) => {
     html = html.replace(
       new RegExp("{{[ ]*" + binding.name + "[ ]*}}", "g"),
       "" + binding.value
@@ -36,7 +42,7 @@ export function bindMarkup(html: string, bindings: MarkupBinding[]): string {
 export function callbackBindedTo(
   thisArg: any
 ): (callback: (...args: any[]) => any) => any {
-  return function(callback: () => any) {
+  return function (callback: () => any) {
     return callback.bind(this);
   }.bind(thisArg);
 }
@@ -81,19 +87,19 @@ export function registerAccessors(
       var setterName = "set" + accessorName;
       (() => {
         var callbackField = field;
-        var getFinalObj = function(callbackSrcObj) {
+        var getFinalObj = function (callbackSrcObj) {
           return fieldObjectName == null
             ? callbackSrcObj
             : callbackSrcObj[fieldObjectName];
         };
         if (targetPrototype[getterName] == null) {
-          targetPrototype[getterName] = function() {
+          targetPrototype[getterName] = function () {
             var finalObj = getFinalObj(this[srcFieldName]);
             return finalObj[callbackField];
           };
         }
         if (targetPrototype[setterName] == null) {
-          targetPrototype[setterName] = function(value) {
+          targetPrototype[setterName] = function (value) {
             var callbackSrcObj = this[srcFieldName];
             var finalObj = getFinalObj(callbackSrcObj);
             finalObj[callbackField] = value;
@@ -141,7 +147,7 @@ export function deepClone<T>(
             var arrayType = typeof array[0];
             if (arrayType === "object") {
               let cloneArray = [] as any;
-              array.forEach(element => {
+              array.forEach((element) => {
                 cloneArray.push(
                   deepClone(
                     element,
@@ -245,7 +251,7 @@ export function exportFile(content: string, filename?: string) {
   var downloadLink = document.createElement("a");
   downloadLink.download = filename ? filename : "export.json";
   downloadLink.href = textToSaveAsURL;
-  downloadLink.onclick = function() {
+  downloadLink.onclick = function () {
     $(downloadLink).remove();
   };
   downloadLink.style.display = "none";
@@ -269,10 +275,10 @@ export function pushIfAbsent<T>(array: T[], value: T): boolean {
 
 export function removeContent(elements: JQuery) {
   elements.each((i, element) => {
-    var attributes = $.map(element.attributes, function(item) {
+    var attributes = $.map(element.attributes, function (item) {
       return item.name;
     });
-    $.each(attributes, function(i, item) {
+    $.each(attributes, function (i, item) {
       $(element).removeAttr(item);
     });
     $(element).empty();

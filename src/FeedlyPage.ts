@@ -12,6 +12,7 @@ declare var getReactPage: () => any;
 declare var getSortedVisibleArticles: () => string[];
 declare var getStreamPage: () => any;
 declare var getStreamObj: () => any;
+declare var disableOverrides: () => boolean;
 declare var onClickCapture: (
   element: JQuery,
   callback: (event: MouseEvent) => any
@@ -40,6 +41,7 @@ export class FeedlyPage {
         "getStreamPage",
         "getStreamObj",
         "onClickCapture",
+        "disableOverrides",
         "fetchMoreEntries",
         "loadNextBatch",
         "getKeptUnreadEntryIds",
@@ -53,6 +55,7 @@ export class FeedlyPage {
       this.getStreamPage,
       this.getStreamObj,
       this.onClickCapture,
+      this.disableOverrides,
       this.fetchMoreEntries,
       this.loadNextBatch,
       this.getKeptUnreadEntryIds,
@@ -120,6 +123,7 @@ export class FeedlyPage {
       ext.markAsReadOnOpenCurrentFeedArticlesId,
       sub.isMarkAsReadOnOpenCurrentFeedArticles()
     );
+    this.put(ext.disablePageOverridesId, sub.isDisablePageOverrides());
   }
 
   updateCheck(enabled: boolean, id: string, className: string) {
@@ -241,6 +245,9 @@ export class FeedlyPage {
 
   onNewPageObserve() {
     NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, () => {
+      if (disableOverrides()) {
+        return;
+      }
       let openCurrentFeedArticlesBtn = $("<button>", {
         title: "Open all current feed articles in a new tab",
         class:
@@ -325,6 +332,13 @@ export class FeedlyPage {
         $(`#${ext.forceRefreshArticlesId}`).click();
       });
     });
+  }
+
+  disableOverrides(): boolean {
+    let disable = getFFnS(ext.disablePageOverridesId);
+    disable =
+      disable || !new RegExp(ext.supportedURLsPattern, "i").test(document.URL);
+    return disable;
   }
 
   onClickCapture(element: JQuery, callback: (event: MouseEvent) => any): void {
@@ -415,6 +429,9 @@ export class FeedlyPage {
     };
 
     NodeCreationObserver.onCreation(ext.articleSelector, (element) => {
+      if (disableOverrides()) {
+        return;
+      }
       var a = $(element);
 
       var entryId = getArticleId(a);
@@ -666,6 +683,9 @@ export class FeedlyPage {
     var prototype = Object.getPrototypeOf(streamObj);
     var setBatchSize: Function = prototype.setBatchSize;
     prototype.setBatchSize = function (customSize?: number) {
+      if (disableOverrides()) {
+        return setBatchSize.apply(this, arguments);
+      }
       if (this._batchSize == customSize) {
         return;
       }
@@ -679,6 +699,9 @@ export class FeedlyPage {
     var navigoPrototype = Object.getPrototypeOf(navigo);
     var setEntries = navigoPrototype.setEntries;
     navigoPrototype.setEntries = function (entries: any[]) {
+      if (disableOverrides()) {
+        return setEntries.apply(this, arguments);
+      }
       try {
         if (entries.length > 0) {
           putFFnS(ext.sortArticlesId, true);
@@ -782,12 +805,18 @@ export class FeedlyPage {
     };
 
     NodeCreationObserver.onCreation(ext.loadingMessageSelector, (e) => {
+      if (disableOverrides()) {
+        return;
+      }
       if ($(autoLoadingMessageId).length == 1) {
         $(e).hide();
       }
     });
 
     NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, (e) => {
+      if (disableOverrides()) {
+        return;
+      }
       if (getFFnS(ext.loadByBatchEnabledId, true)) {
         $(secondaryMarkAsReadBtnsSelector).attr("title", loadByBatchText);
       }
@@ -801,6 +830,9 @@ export class FeedlyPage {
     var prototype = Object.getPrototypeOf(getReactPage());
     var markAsRead: Function = prototype.markAsRead;
     prototype.markAsRead = function (lastEntryObject) {
+      if (disableOverrides()) {
+        return markAsRead.apply(this, arguments);
+      }
       let jumpToNext = () => {
         if (document.URL.indexOf("category/global.") < 0) {
           if (navigo.getNextURI()) {
@@ -890,6 +922,9 @@ export class FeedlyPage {
     var reset = prototype.reset;
 
     prototype.lookupNextEntry = function (a) {
+      if (disableOverrides()) {
+        return lookupNextEntry.apply(this, arguments);
+      }
       ensureSortedEntries();
       return lookupNextEntry.call(
         this,
@@ -897,6 +932,9 @@ export class FeedlyPage {
       );
     };
     prototype.lookupPreviousEntry = function (a) {
+      if (disableOverrides()) {
+        return lookupPreviousEntry.apply(this, arguments);
+      }
       ensureSortedEntries();
       return lookupPreviousEntry.call(
         this,
@@ -904,6 +942,9 @@ export class FeedlyPage {
       );
     };
     prototype.getEntries = function () {
+      if (disableOverrides()) {
+        return getEntries.apply(this, arguments);
+      }
       try {
         ensureSortedEntries();
       } catch (e) {
@@ -912,6 +953,9 @@ export class FeedlyPage {
       return getEntries.apply(this, arguments);
     };
     prototype.setEntries = function () {
+      if (disableOverrides()) {
+        return setEntries.apply(this, arguments);
+      }
       navigo.originalEntries = null;
       return setEntries.apply(this, arguments);
     };
@@ -919,7 +963,11 @@ export class FeedlyPage {
       navigo.originalEntries = null;
       return reset.apply(this, arguments);
     };
+    const listEntryIds = prototype.listEntryIds;
     prototype.listEntryIds = function () {
+      if (disableOverrides()) {
+        return listEntryIds.apply(this, arguments);
+      }
       var a = [];
       var entries: any[] = navigo.originalEntries || navigo.entries;
       return (
@@ -935,7 +983,11 @@ export class FeedlyPage {
     var navigo = window["streets"].service("navigo");
     var prototype = Object.getPrototypeOf(navigo);
     const collectionPrefix = "collection/content/";
+    const getNextURI = prototype.getNextURI;
     prototype.getNextURI = function () {
+      if (disableOverrides()) {
+        return getNextURI.apply(this, arguments);
+      }
       var e = this.nextURI;
       if (
         !e ||

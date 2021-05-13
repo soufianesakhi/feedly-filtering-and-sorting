@@ -28,6 +28,7 @@ var ext = {
     closeIconLink: "",
     moveUpIconLink: "",
     moveDownIconLink: "",
+    supportedURLsPattern: "^https?://[^/]+/i/(?:subscription|collection/content/user)/.*$",
     defaultUrlPrefixPattern: "https?://[^/]+/i/",
     subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
     categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
@@ -86,10 +87,11 @@ var ext = {
     markAsReadOnOpenCurrentFeedArticlesId: "isMarkAsReadOnOpenCurrentFeedArticles",
     maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles",
     forceRefreshArticlesId: "forceRefreshArticles",
+    disablePageOverridesId: "disablePageOverrides",
 };
 
 var templates = {
-    settingsHTML: "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' /> <fieldset> <legend>General settings</legend> <div class='setting_group'> <span>Auto load all unread articles</span> <input id='FFnS_autoLoadAllArticles' type='checkbox' /> </div> <div class='setting_group'> <span>Load articles by batch</span> <input id='FFnS_loadByBatchEnabled' type='checkbox' /> <span>Batch size</span> <input id='FFnS_batchSize' class='FFnS_input MediumNumberInput' type='number' min='50' max='1000' step='50' /> </div> <div class='setting_group'> <span class='tooltip' >Always use global settings <span class='tooltiptext' >Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span > </span> <input id='FFnS_globalSettingsEnabled' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Sync settings <span class='tooltiptext' >The settings will be synced by the browser, and be available across all instances of that browser that the user is logged into (e.g. via Chrome sync, or Firefox sync), across different devices.</span > </span> <input id='FFnS_syncSettingsEnabled' type='checkbox' /> </div> </fieldset> <fieldset> <legend><span id='FFnS_settings_mode_title'></span></legend> <div class='setting_group'> <span class='tooltip' >Filtering enabled <span class='tooltiptext' >Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span > </span> <input id='FFnS_FilteringEnabled' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext' >Show only articles that contain at least one of the restricting keywords (not applied if empty)</span > </span> <input id='FFnS_RestrictingEnabled' type='checkbox' /> </div> <div class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> </div> {{ SortingSelect }} <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li><a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a></li> <li><a href='#FFnS_Tab_KeywordControls'>Keyword controls</a></li> <li><a href='#FFnS_Tab_UIControls'>UI controls</a></li> <li><a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a></li> <li><a href='#FFnS_Tab_SettingsControls'>Settings controls</a></li> </ul> <div id='FFnS_tabs_content'> {{ FilteringList.Type.FilteredOut }} {{ FilteringList.Type.RestrictedOn }} <div id='FFnS_Tab_KeywordControls' class='FFnS_Tab_Menu'> <p> The following settings are applied to the filtering and restricting </p> <fieldset> <legend>Matching area (domain)</legend> <div> <span>Search for keywords in the entry's: </span> {{ DefaultKeywordMatchingArea }} <span> (Multiple values can be selected)</span> </div> <div> <span>Always use these matching areas</span> <input id='FFnS_AlwaysUseDefaultMatchingAreas' type='checkbox' /> <span> (the area select boxes in the filtering and restricting will be invisible when this option is checked)</span > </div> </fieldset> <fieldset> <legend>Matching method</legend> <span>The keywords are treated as : </span> {{ KeywordMatchingMethod }} </fieldset> </div> <div id='FFnS_Tab_UIControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Custom buttons</legend> <div> <span >Add a button to open articles in a new window/tab and mark them as read</span > <input id='FFnS_OpenAndMarkAsRead' type='checkbox' /> </div> <div> <span >Open articles in a new window/tab and mark them as read when clicking the visual image (Cards &amp; Magazine view)</span > <input id='FFnS_VisualOpenAndMarkAsRead' type='checkbox' /> </div> <div> <span >Open articles in a new window/tab and mark them as read when clicking the title (Title view)</span > <input id='FFnS_TitleOpenAndMarkAsRead' type='checkbox' /> </div> <div> <span>Add buttons to mark articles above/below as</span> <select id='FFnS_MarkAsReadAboveBelowRead' class='FFnS_input'> <option value='true' selected>read</option> <option value='false'>unread</option> </select> <input id='FFnS_MarkAsReadAboveBelow' type='checkbox' /> <span> (Also hide using the same buttons when marking as read</span > <input id='FFnS_HideWhenMarkAboveBelow' type='checkbox' /> <span>)</span> </div> <div> <span >Add button to open all current feed articles in a new tab</span > <input id='FFnS_OpenCurrentFeedArticles' type='checkbox' /> <span> unread only</span> <input id='FFnS_OpenCurrentFeedArticlesUnreadOnly' type='checkbox' /> <span class='tooltip'> maximum articles to open <span class='tooltiptext' >If set to 0, all the articles will be opened</span > </span> <input id='FFnS_MaxOpenCurrentFeedArticles' class='FFnS_input MediumNumberInput' type='number' min='0' step='1' /> <span> mark as read</span> <input id='FFnS_MarkAsReadOnOpenCurrentFeedArticles' type='checkbox' /> </div> <div> <span >Add button to quickly disable all filters</span > <input id='FFnS_DisplayDisableAllFiltersButton' type='checkbox' /> </div> </fieldset> <fieldset> <legend> <span class='tooltip' >Coloring rules to highlight titles <span class='tooltiptext' >For each article, only the first matching coloring rule is applied by following their order. You can move up/down the coloring rules to change this order.</span > </span> </legend> <span id='FFnS_AddColoringRule'> <img src='{{plusIconLink}}' class='FFnS_icon' title='Add a new coloring rule' /> </span> <span id='FFnS_EraseColoringRules'> <img src='{{eraseIconLink}}' class='FFnS_icon' title='Remove all the coloring rules' /> </span> <span id='FFnS_ColoringRules'></span> </fieldset> </div> <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently received articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles received (crawled) less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23' /> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' /> <span>days</span> <span>ago should be:</span> </div> <div class='setting_group'> <span class='tooltip' >Kept unread if unread <span class='tooltiptext' >Only the articles that were not marked as read (manually or on scroll) will be kept unread. Please note that by enabling this option, only the loaded articles will be marked as read.</span > </span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> <div class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> <div class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input MediumNumberInput' type='number' min='0' step='100' /> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox' /> <span class='tooltip' >Marked as read if hot or popular <span class='tooltiptext' >Mark as read the articles made visible if hot or with popularity superior to the defined value</span > </span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> </fieldset> <fieldset> <legend>Reading time</legend> <div class='setting_group'> <span>Enable filtering of articles with reading time </span> <select id='FFnS_FilterLong_FilteringByReadingTime' class='FFnS_input' > <option value='true' selected>superior</option> <option value='false'>inferior</option> </select> <span>to </span> <input id='FFnS_ThresholdMinutes_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1' /> <span>minutes: </span> <input id='FFnS_Enabled_FilteringByReadingTime' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Keep unread <span class='tooltiptext' >When this option is enabled, the filtered articles will be kept unread</span > </span> <input id='FFnS_KeepUnread_FilteringByReadingTime' type='checkbox' /> <span class='tooltip' >Reading speed : <span class='tooltiptext' >The average words read per minute</span > </span> <input id='FFnS_WordsPerMinute_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1' /> </div> </fieldset> <fieldset> <legend> Additional sorting levels (applied when two entries have equal sorting) </legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> <fieldset> <legend>Duplicates filtering</legend> <div class='setting_group'> <span class='tooltip' >Hide duplicates <span class='tooltiptext tooltip-top' >The duplicate articles will be hidden based on the url and the title. For each duplicate article group, only the most recently published one will be kept.</span > </span> <input id='FFnS_HideDuplicates' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Mark as read <span class='tooltiptext tooltip-top' >The duplicate articles will be marked as read (based on the same rules of the 'Hide duplicates' option).</span > </span> <input id='FFnS_MarkAsReadDuplicates' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Highlight<span class='tooltiptext tooltip-top'> Apply a color to the newer duplicate articles</span ></span > <input id='FFnS_HighlightDuplicates' type='checkbox' /> <input id='FFnS_HighlightDuplicatesColor' class='FFnS_input jscolor' size='10' type='text' /> </div> <div class='setting_group'> <span class='tooltip' >Enable cross checking with persistence up to: <span class='tooltiptext tooltip-top' >The duplicates will be checked across all subscriptions and categories against current articles and stored articles. The url and title of all articles published less then the configured days will be stored locally (sync not supported).</span > </span> <input id='FFnS_CrossCheckDuplicatesDays' class='FFnS_input MediumNumberInput' type='number' min='0' /> <span> days </span> <input id='FFnS_CrossCheckDuplicates' type='checkbox' /> </div> </fieldset> <fieldset> <legend>Misc</legend> <div class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox' /> </div> <div class='setting_group'> <span>Hide articles after reading them</span> <input id='FFnS_HideAfterRead' type='checkbox' /> <span class='tooltip' >Replace with gap <span class='tooltiptext tooltip-top' >Replace the hidden article with a gap with same dimensions.</span > </span> <input id='FFnS_ReplaceHiddenWithGap' type='checkbox' /> </div> <div class='setting_group'> <span>Mark as read filtered articles</span> <input id='FFnS_MarkAsReadFiltered' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Auto refresh <span class='tooltiptext tooltip-top' >The articles will be reloaded periodically following the configured minutes</span > </span> <input id='FFnS_AutoRefreshEnabled' type='checkbox' /> <input id='FFnS_AutoRefreshMinutes' class='FFnS_input MediumNumberInput' type='number' min='1' /> <span>(minutes)</span> </div> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Import/export all settings from/to file</legend> <div class='setting_group'> <span>Import settings </span> <input id='FFnS_ImportSettings' type='file' /> </div> <button id='FFnS_ExportSettings'>Export settings</button> </fieldset> <fieldset> <legend>Subscription management</legend> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input' > {{ ImportMenu.SubscriptionOptions }} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'> Import settings from selected subscription </button> <button id='FFnS_SettingsControls_DeleteSub'> Delete selected subscription </button> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'> Link current subscription to selected subscription </button> </fieldset> </div> </div> </fieldset> </div> </div> ",
+    settingsHTML: "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' /> <fieldset> <legend>General settings</legend> <div class='setting_group'> <span>Auto load all unread articles</span> <input id='FFnS_autoLoadAllArticles' type='checkbox' /> </div> <div class='setting_group'> <span>Load articles by batch</span> <input id='FFnS_loadByBatchEnabled' type='checkbox' /> <span>Batch size</span> <input id='FFnS_batchSize' class='FFnS_input MediumNumberInput' type='number' min='50' max='1000' step='50' /> </div> <div class='setting_group'> <span class='tooltip' >Always use global settings <span class='tooltiptext' >Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span > </span> <input id='FFnS_globalSettingsEnabled' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Sync settings <span class='tooltiptext' >The settings will be synced by the browser, and be available across all instances of that browser that the user is logged into (e.g. via Chrome sync, or Firefox sync), across different devices.</span > </span> <input id='FFnS_syncSettingsEnabled' type='checkbox' /> </div> </fieldset> <fieldset> <legend><span id='FFnS_settings_mode_title'></span></legend> <div class='setting_group'> <span class='tooltip' >Filtering enabled <span class='tooltiptext' >Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span > </span> <input id='FFnS_FilteringEnabled' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext' >Show only articles that contain at least one of the restricting keywords (not applied if empty)</span > </span> <input id='FFnS_RestrictingEnabled' type='checkbox' /> </div> <div class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> </div> {{ SortingSelect }} <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li><a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a></li> <li><a href='#FFnS_Tab_KeywordControls'>Keyword controls</a></li> <li><a href='#FFnS_Tab_UIControls'>UI controls</a></li> <li><a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a></li> <li><a href='#FFnS_Tab_SettingsControls'>Settings controls</a></li> </ul> <div id='FFnS_tabs_content'> {{ FilteringList.Type.FilteredOut }} {{ FilteringList.Type.RestrictedOn }} <div id='FFnS_Tab_KeywordControls' class='FFnS_Tab_Menu'> <p> The following settings are applied to the filtering and restricting </p> <fieldset> <legend>Matching area (domain)</legend> <div> <span>Search for keywords in the entry's: </span> {{ DefaultKeywordMatchingArea }} <span> (Multiple values can be selected)</span> </div> <div> <span>Always use these matching areas</span> <input id='FFnS_AlwaysUseDefaultMatchingAreas' type='checkbox' /> <span> (the area select boxes in the filtering and restricting will be invisible when this option is checked)</span > </div> </fieldset> <fieldset> <legend>Matching method</legend> <span>The keywords are treated as : </span> {{ KeywordMatchingMethod }} </fieldset> </div> <div id='FFnS_Tab_UIControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Custom buttons</legend> <div> <span >Add a button to open articles in a new window/tab and mark them as read</span > <input id='FFnS_OpenAndMarkAsRead' type='checkbox' /> </div> <div> <span >Open articles in a new window/tab and mark them as read when clicking the visual image (Cards &amp; Magazine view)</span > <input id='FFnS_VisualOpenAndMarkAsRead' type='checkbox' /> </div> <div> <span >Open articles in a new window/tab and mark them as read when clicking the title (Title view)</span > <input id='FFnS_TitleOpenAndMarkAsRead' type='checkbox' /> </div> <div> <span>Add buttons to mark articles above/below as</span> <select id='FFnS_MarkAsReadAboveBelowRead' class='FFnS_input'> <option value='true' selected>read</option> <option value='false'>unread</option> </select> <input id='FFnS_MarkAsReadAboveBelow' type='checkbox' /> <span> (Also hide using the same buttons when marking as read</span > <input id='FFnS_HideWhenMarkAboveBelow' type='checkbox' /> <span>)</span> </div> <div> <span >Add button to open all current feed articles in a new tab</span > <input id='FFnS_OpenCurrentFeedArticles' type='checkbox' /> <span> unread only</span> <input id='FFnS_OpenCurrentFeedArticlesUnreadOnly' type='checkbox' /> <span class='tooltip'> maximum articles to open <span class='tooltiptext' >If set to 0, all the articles will be opened</span > </span> <input id='FFnS_MaxOpenCurrentFeedArticles' class='FFnS_input MediumNumberInput' type='number' min='0' step='1' /> <span> mark as read</span> <input id='FFnS_MarkAsReadOnOpenCurrentFeedArticles' type='checkbox' /> </div> <div> <span >Add button to quickly disable all filters</span > <input id='FFnS_DisplayDisableAllFiltersButton' type='checkbox' /> </div> </fieldset> <fieldset> <legend> <span class='tooltip' >Coloring rules to highlight titles <span class='tooltiptext' >For each article, only the first matching coloring rule is applied by following their order. You can move up/down the coloring rules to change this order.</span > </span> </legend> <span id='FFnS_AddColoringRule'> <img src='{{plusIconLink}}' class='FFnS_icon' title='Add a new coloring rule' /> </span> <span id='FFnS_EraseColoringRules'> <img src='{{eraseIconLink}}' class='FFnS_icon' title='Remove all the coloring rules' /> </span> <span id='FFnS_ColoringRules'></span> </fieldset> </div> <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently received articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles received (crawled) less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23' /> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' /> <span>days</span> <span>ago should be:</span> </div> <div class='setting_group'> <span class='tooltip' >Kept unread if unread <span class='tooltiptext' >Only the articles that were not marked as read (manually or on scroll) will be kept unread. Please note that by enabling this option, only the loaded articles will be marked as read.</span > </span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> <div class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> <div class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input MediumNumberInput' type='number' min='0' step='100' /> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox' /> <span class='tooltip' >Marked as read if hot or popular <span class='tooltiptext' >Mark as read the articles made visible if hot or with popularity superior to the defined value</span > </span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> </fieldset> <fieldset> <legend>Reading time</legend> <div class='setting_group'> <span>Enable filtering of articles with reading time </span> <select id='FFnS_FilterLong_FilteringByReadingTime' class='FFnS_input' > <option value='true' selected>superior</option> <option value='false'>inferior</option> </select> <span>to </span> <input id='FFnS_ThresholdMinutes_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1' /> <span>minutes: </span> <input id='FFnS_Enabled_FilteringByReadingTime' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Keep unread <span class='tooltiptext' >When this option is enabled, the filtered articles will be kept unread</span > </span> <input id='FFnS_KeepUnread_FilteringByReadingTime' type='checkbox' /> <span class='tooltip' >Reading speed : <span class='tooltiptext' >The average words read per minute</span > </span> <input id='FFnS_WordsPerMinute_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1' /> </div> </fieldset> <fieldset> <legend> Additional sorting levels (applied when two entries have equal sorting) </legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> <fieldset> <legend>Duplicates filtering</legend> <div class='setting_group'> <span class='tooltip' >Hide duplicates <span class='tooltiptext tooltip-top' >The duplicate articles will be hidden based on the url and the title. For each duplicate article group, only the most recently published one will be kept.</span > </span> <input id='FFnS_HideDuplicates' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Mark as read <span class='tooltiptext tooltip-top' >The duplicate articles will be marked as read (based on the same rules of the 'Hide duplicates' option).</span > </span> <input id='FFnS_MarkAsReadDuplicates' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Highlight<span class='tooltiptext tooltip-top'> Apply a color to the newer duplicate articles</span ></span > <input id='FFnS_HighlightDuplicates' type='checkbox' /> <input id='FFnS_HighlightDuplicatesColor' class='FFnS_input jscolor' size='10' type='text' /> </div> <div class='setting_group'> <span class='tooltip' >Enable cross checking with persistence up to: <span class='tooltiptext tooltip-top' >The duplicates will be checked across all subscriptions and categories against current articles and stored articles. The url and title of all articles published less then the configured days will be stored locally (sync not supported).</span > </span> <input id='FFnS_CrossCheckDuplicatesDays' class='FFnS_input MediumNumberInput' type='number' min='0' /> <span> days </span> <input id='FFnS_CrossCheckDuplicates' type='checkbox' /> </div> </fieldset> <fieldset> <legend>Misc</legend> <div class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox' /> </div> <div class='setting_group'> <span>Hide articles after reading them</span> <input id='FFnS_HideAfterRead' type='checkbox' /> <span class='tooltip' >Replace with gap <span class='tooltiptext tooltip-top' >Replace the hidden article with a gap with same dimensions.</span > </span> <input id='FFnS_ReplaceHiddenWithGap' type='checkbox' /> </div> <div class='setting_group'> <span>Mark as read filtered articles</span> <input id='FFnS_MarkAsReadFiltered' type='checkbox' /> </div> <div class='setting_group'> <span>Disable page overrides</span> <input id='FFnS_DisablePageOverrides' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Auto refresh <span class='tooltiptext tooltip-top' >The articles will be reloaded periodically following the configured minutes</span > </span> <input id='FFnS_AutoRefreshEnabled' type='checkbox' /> <input id='FFnS_AutoRefreshMinutes' class='FFnS_input MediumNumberInput' type='number' min='1' /> <span>(minutes)</span> </div> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Import/export all settings from/to file</legend> <div class='setting_group'> <span>Import settings </span> <input id='FFnS_ImportSettings' type='file' /> </div> <button id='FFnS_ExportSettings'>Export settings</button> </fieldset> <fieldset> <legend>Subscription management</legend> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input' > {{ ImportMenu.SubscriptionOptions }} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'> Import settings from selected subscription </button> <button id='FFnS_SettingsControls_DeleteSub'> Delete selected subscription </button> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'> Link current subscription to selected subscription </button> </fieldset> </div> </div> </fieldset> </div> </div> ",
     filteringListHTML: "<div id='{{FilteringTypeTabId}}' class='FFnS_Tab_Menu'> {{ FilteringKeywordMatchingArea }} <input id='{{inputId}}' class='FFnS_input' size='10' type='text' /> <span id='{{plusBtnId}}'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='{{filetringKeywordsId}}'></span> <span id='{{eraseBtnId}}'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div> ",
     keywordHTML: '<button id="{{keywordId}}" type="button" class="FFnS_keyword">{{keyword}}</button>',
     sortingSelectHTML: "<select id='{{Id}}' class='FFnS_input FFnS_select'> <option value='{{PopularityDesc}}' >Sort by popularity (highest to lowest)</option > <option value='{{PopularityAsc}}' >Sort by popularity (lowest to highest)</option > <option value='{{TitleAsc}}'>Sort by title (a -&gt; z)</option> <option value='{{TitleDesc}}'>Sort by title (z -&gt; a)</option> <option value='{{ReceivedDateNewFirst}}' >Sort by received date (new first)</option > <option value='{{ReceivedDateOldFirst}}' >Sort by received date (old first)</option > <option value='{{PublishDateNewFirst}}' >Sort by publish date (new first)</option > <option value='{{PublishDateOldFirst}}' >Sort by publish date (old first)</option > <option value='{{PublishDayNewFirst}}' >Sort by publish day (new first)</option > <option value='{{PublishDayOldFirst}}' >Sort by publish day (old first)</option > <option value='{{SourceAsc}}'>Sort by source title (a -&gt; z)</option> <option value='{{SourceDesc}}'>Sort by source title (z -&gt; a)</option> <option value='{{SourceNewestReceiveDate}}' >Sort by source title (newest received first)</option > <option value='{{Random}}'>Random sort</option> </select> ",
@@ -102,6 +104,10 @@ var templates = {
 };
 
 var exported = {};
+var pageSupportedRegexp = new RegExp(ext.supportedURLsPattern, "i");
+function currentPageNotSupported() {
+    return !pageSupportedRegexp.test(document.URL);
+}
 function $id(id) {
     return $("#" + id);
 }
@@ -538,6 +544,7 @@ var SubscriptionDTO = /** @class */ (function () {
         this.alwaysUseDefaultMatchingAreas = true;
         this.keywordMatchingMethod = KeywordMatchingMethod.Simple;
         this.coloringRules = [];
+        this.disablePageOverrides = false;
         this.autoRefreshEnabled = false;
         this.autoRefreshMinutes = 60;
         this.hideDuplicates = false;
@@ -666,6 +673,9 @@ var Subscription = /** @class */ (function () {
     };
     Subscription.prototype.getKeywordMatchingMethod = function () {
         return this.dto.keywordMatchingMethod;
+    };
+    Subscription.prototype.isDisablePageOverrides = function () {
+        return this.dto.disablePageOverrides;
     };
     Subscription.prototype.isAutoRefreshEnabled = function () {
         return this.dto.autoRefreshEnabled;
@@ -1992,11 +2002,12 @@ var FeedlyPage = /** @class */ (function () {
             "getStreamPage",
             "getStreamObj",
             "onClickCapture",
+            "disableOverrides",
             "fetchMoreEntries",
             "loadNextBatch",
             "getKeptUnreadEntryIds",
             "getSortedVisibleArticles",
-        ], this.get, this.put, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.onClickCapture, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
+        ], this.get, this.put, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
         injectToWindow(["overrideLoadingEntries"], this.overrideLoadingEntries);
         injectToWindow(["overrideSorting"], this.overrideSorting);
         injectToWindow(["overrideNavigation"], this.overrideNavigation);
@@ -2027,6 +2038,7 @@ var FeedlyPage = /** @class */ (function () {
         this.put(ext.openCurrentFeedArticlesUnreadOnlyId, sub.isOpenCurrentFeedArticlesUnreadOnly());
         this.put(ext.maxOpenCurrentFeedArticlesId, sub.getMaxOpenCurrentFeedArticles());
         this.put(ext.markAsReadOnOpenCurrentFeedArticlesId, sub.isMarkAsReadOnOpenCurrentFeedArticles());
+        this.put(ext.disablePageOverridesId, sub.isDisablePageOverrides());
     };
     FeedlyPage.prototype.updateCheck = function (enabled, id, className) {
         if (enabled) {
@@ -2150,6 +2162,9 @@ var FeedlyPage = /** @class */ (function () {
     };
     FeedlyPage.prototype.onNewPageObserve = function () {
         NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
+            if (disableOverrides()) {
+                return;
+            }
             var openCurrentFeedArticlesBtn = $("<button>", {
                 title: "Open all current feed articles in a new tab",
                 class: ext.openCurrentFeedArticlesClass + " " + ext.containerButtonClass,
@@ -2223,6 +2238,12 @@ var FeedlyPage = /** @class */ (function () {
                 $("#" + ext.forceRefreshArticlesId).click();
             });
         });
+    };
+    FeedlyPage.prototype.disableOverrides = function () {
+        var disable = getFFnS(ext.disablePageOverridesId);
+        disable =
+            disable || !new RegExp(ext.supportedURLsPattern, "i").test(document.URL);
+        return disable;
     };
     FeedlyPage.prototype.onClickCapture = function (element, callback) {
         element.get(0).addEventListener("click", callback, true);
@@ -2307,6 +2328,9 @@ var FeedlyPage = /** @class */ (function () {
             };
         };
         NodeCreationObserver.onCreation(ext.articleSelector, function (element) {
+            if (disableOverrides()) {
+                return;
+            }
             var a = $(element);
             var entryId = getArticleId(a);
             var e = reader.lookupEntry(entryId);
@@ -2520,6 +2544,9 @@ var FeedlyPage = /** @class */ (function () {
         var prototype = Object.getPrototypeOf(streamObj);
         var setBatchSize = prototype.setBatchSize;
         prototype.setBatchSize = function (customSize) {
+            if (disableOverrides()) {
+                return setBatchSize.apply(this, arguments);
+            }
             if (this._batchSize == customSize) {
                 return;
             }
@@ -2533,6 +2560,9 @@ var FeedlyPage = /** @class */ (function () {
         var navigoPrototype = Object.getPrototypeOf(navigo);
         var setEntries = navigoPrototype.setEntries;
         navigoPrototype.setEntries = function (entries) {
+            if (disableOverrides()) {
+                return setEntries.apply(this, arguments);
+            }
             try {
                 if (entries.length > 0) {
                     putFFnS(ext.sortArticlesId, true);
@@ -2623,11 +2653,17 @@ var FeedlyPage = /** @class */ (function () {
             return setEntries.apply(this, arguments);
         };
         NodeCreationObserver.onCreation(ext.loadingMessageSelector, function (e) {
+            if (disableOverrides()) {
+                return;
+            }
             if ($(autoLoadingMessageId).length == 1) {
                 $(e).hide();
             }
         });
         NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, function (e) {
+            if (disableOverrides()) {
+                return;
+            }
             if (getFFnS(ext.loadByBatchEnabledId, true)) {
                 $(secondaryMarkAsReadBtnsSelector).attr("title", loadByBatchText);
             }
@@ -2640,6 +2676,9 @@ var FeedlyPage = /** @class */ (function () {
         var markAsRead = prototype.markAsRead;
         prototype.markAsRead = function (lastEntryObject) {
             var _this = this;
+            if (disableOverrides()) {
+                return markAsRead.apply(this, arguments);
+            }
             var jumpToNext = function () {
                 if (document.URL.indexOf("category/global.") < 0) {
                     if (navigo.getNextURI()) {
@@ -2721,14 +2760,23 @@ var FeedlyPage = /** @class */ (function () {
         var setEntries = prototype.setEntries;
         var reset = prototype.reset;
         prototype.lookupNextEntry = function (a) {
+            if (disableOverrides()) {
+                return lookupNextEntry.apply(this, arguments);
+            }
             ensureSortedEntries();
             return lookupNextEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
         };
         prototype.lookupPreviousEntry = function (a) {
+            if (disableOverrides()) {
+                return lookupPreviousEntry.apply(this, arguments);
+            }
             ensureSortedEntries();
             return lookupPreviousEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
         };
         prototype.getEntries = function () {
+            if (disableOverrides()) {
+                return getEntries.apply(this, arguments);
+            }
             try {
                 ensureSortedEntries();
             }
@@ -2738,6 +2786,9 @@ var FeedlyPage = /** @class */ (function () {
             return getEntries.apply(this, arguments);
         };
         prototype.setEntries = function () {
+            if (disableOverrides()) {
+                return setEntries.apply(this, arguments);
+            }
             navigo.originalEntries = null;
             return setEntries.apply(this, arguments);
         };
@@ -2745,7 +2796,11 @@ var FeedlyPage = /** @class */ (function () {
             navigo.originalEntries = null;
             return reset.apply(this, arguments);
         };
+        var listEntryIds = prototype.listEntryIds;
         prototype.listEntryIds = function () {
+            if (disableOverrides()) {
+                return listEntryIds.apply(this, arguments);
+            }
             var a = [];
             var entries = navigo.originalEntries || navigo.entries;
             return (entries.forEach(function (b) {
@@ -2758,7 +2813,11 @@ var FeedlyPage = /** @class */ (function () {
         var navigo = window["streets"].service("navigo");
         var prototype = Object.getPrototypeOf(navigo);
         var collectionPrefix = "collection/content/";
+        var getNextURI = prototype.getNextURI;
         prototype.getNextURI = function () {
+            if (disableOverrides()) {
+                return getNextURI.apply(this, arguments);
+            }
             var e = this.nextURI;
             if (!e ||
                 (e.endsWith("/category/global.all") &&
@@ -2829,6 +2888,7 @@ var UIManager = /** @class */ (function () {
                     "HighlightDuplicates",
                     "Enabled_FilteringByReadingTime",
                     "KeepUnread_FilteringByReadingTime",
+                    "DisablePageOverrides",
                 ],
             },
             {
@@ -2880,7 +2940,7 @@ var UIManager = /** @class */ (function () {
                     _this.updateSubscription().then(function () {
                         _this.initUI();
                         _this.registerSettings();
-                        _this.updateMenu();
+                        _this.postUpdate();
                         _this.initSettingsCallbacks();
                         _this.postInit();
                         p.done();
@@ -2922,12 +2982,41 @@ var UIManager = /** @class */ (function () {
         }
     };
     UIManager.prototype.updatePage = function () {
+        if (currentPageNotSupported()) {
+            return;
+        }
         try {
             this.resetPage();
-            this.updateSubscription().then(this.updateMenu, this);
+            this.updateSubscription().then(this.postUpdate, this);
         }
         catch (err) {
             console.log(err);
+        }
+    };
+    UIManager.prototype.postUpdate = function () {
+        var _this = this;
+        if (currentPageNotSupported()) {
+            return;
+        }
+        this.updateMenu();
+        setTimeout(function () {
+            _this.refreshFilteringAndSorting();
+            if ((_this.subscription.isSortingEnabled &&
+                _this.subscription.getSortingType() == SortingType.PopularityAsc) ||
+                _this.subscription.getSortingType() == SortingType.PopularityDesc) {
+                var maxCheck_1 = 10;
+                var handle_1 = setInterval(function () {
+                    if (maxCheck_1-- === 0) {
+                        return clearInterval(handle_1);
+                    }
+                    _this.articleManager.checkPopularityAndSort();
+                }, 3000);
+            }
+        }, 500);
+        if (this.subscription.isAutoRefreshEnabled()) {
+            setInterval(function () {
+                window.location.reload();
+            }, this.subscription.getAutoRefreshTime());
         }
     };
     UIManager.prototype.resetPage = function () {
@@ -2946,6 +3035,10 @@ var UIManager = /** @class */ (function () {
     UIManager.prototype.updateSubscription = function () {
         var _this = this;
         return new AsyncResult(function (p) {
+            if (currentPageNotSupported()) {
+                p.done();
+                return;
+            }
             var globalSettingsEnabled = _this.globalSettingsEnabledCB.getValue();
             _this.settingsManager
                 .loadSubscription(globalSettingsEnabled, _this.forceReloadGlobalSettings)
@@ -2958,20 +3051,6 @@ var UIManager = /** @class */ (function () {
     UIManager.prototype.updateMenu = function () {
         var _this = this;
         this.htmlSubscriptionManager.update();
-        setTimeout(function () {
-            _this.refreshFilteringAndSorting();
-            if ((_this.subscription.isSortingEnabled &&
-                _this.subscription.getSortingType() == SortingType.PopularityAsc) ||
-                _this.subscription.getSortingType() == SortingType.PopularityDesc) {
-                var maxCheck_1 = 10;
-                var handle_1 = setInterval(function () {
-                    if (maxCheck_1-- === 0) {
-                        return clearInterval(handle_1);
-                    }
-                    _this.articleManager.checkPopularityAndSort();
-                }, 3000);
-            }
-        }, 500);
         getFilteringTypes().forEach(function (type) {
             _this.prepareFilteringList(type);
         });
@@ -2989,6 +3068,7 @@ var UIManager = /** @class */ (function () {
             .forEach(this.registerColoringRule, this);
         this.refreshColoringRuleArrows();
         this.updateSettingsModeTitle();
+        this.updateFilteringKeywordMatchingSelects();
     };
     UIManager.prototype.updateSettingsModeTitle = function () {
         var title = this.globalSettingsEnabledCB.getValue()
@@ -3189,7 +3269,8 @@ var UIManager = /** @class */ (function () {
     UIManager.prototype.initShowSettingsBtns = function () {
         var this_ = this;
         NodeCreationObserver.onCreation(ext.settingsBtnPredecessorSelector, function (element) {
-            if ($(element).parent().find(".ShowSettingsBtn").length > 0) {
+            if (currentPageNotSupported() ||
+                $(element).parent().find(".ShowSettingsBtn").length > 0) {
                 return;
             }
             var clone = $(element).clone();
@@ -3282,18 +3363,16 @@ var UIManager = /** @class */ (function () {
             _this.articleManager.refreshColoring();
         });
         this.setUpFilteringListEvents();
-        var useDefaultMatchingAreas = $id("FFnS_AlwaysUseDefaultMatchingAreas");
-        function toggleFilteringKeywordMatchingSelects() {
-            var selects = $(".FFnS_keywordMatchingSelect[filtering]");
-            if (isChecked($(useDefaultMatchingAreas))) {
-                selects.hide();
-            }
-            else {
-                selects.show();
-            }
+        $id("FFnS_AlwaysUseDefaultMatchingAreas").change(this.updateFilteringKeywordMatchingSelects);
+    };
+    UIManager.prototype.updateFilteringKeywordMatchingSelects = function () {
+        var selects = $(".FFnS_keywordMatchingSelect[filtering]");
+        if (isChecked($($id("FFnS_AlwaysUseDefaultMatchingAreas")))) {
+            selects.hide();
         }
-        toggleFilteringKeywordMatchingSelects();
-        useDefaultMatchingAreas.change(toggleFilteringKeywordMatchingSelects);
+        else {
+            selects.show();
+        }
     };
     UIManager.prototype.postInit = function () {
         var _this = this;
@@ -3312,11 +3391,6 @@ var UIManager = /** @class */ (function () {
         }
         else {
             $id(syncCBId).closest(".setting_group").remove();
-        }
-        if (this.subscription.isAutoRefreshEnabled()) {
-            setInterval(function () {
-                window.location.reload();
-            }, this.subscription.getAutoRefreshTime());
         }
         var forceRefreshArticlesBtn = $("<button>", {
             id: ext.forceRefreshArticlesId,
@@ -3510,7 +3584,6 @@ var UIManager = /** @class */ (function () {
     UIManager.prototype.setUpFilteringListManagementEvents = function (type) {
         var _this = this;
         var ids = this.getIds(type);
-        var keywordList = this.subscription.getFilteringList(type);
         // Add button
         $id(this.getHTMLId(ids.plusBtnId)).click(function () {
             var input = $id(_this.getHTMLId(ids.inputId));
@@ -3523,7 +3596,6 @@ var UIManager = /** @class */ (function () {
                 _this.updateFilteringList(type);
             }
         });
-        this.setUpKeywordButtonsEvents(type);
     };
     UIManager.prototype.addKeyword = function (input, type) {
         var keyword = input.val();
@@ -3582,6 +3654,9 @@ var UIManager = /** @class */ (function () {
         this.refreshFilteringAndSorting();
     };
     UIManager.prototype.addArticle = function (article) {
+        if (currentPageNotSupported()) {
+            return;
+        }
         try {
             this.articleManager.addArticle(article);
             var callback = this.readArticlesMutationCallback(article);
@@ -3614,6 +3689,9 @@ var UIManager = /** @class */ (function () {
         };
     };
     UIManager.prototype.addSection = function (section) {
+        if (currentPageNotSupported()) {
+            return;
+        }
         if (section.id === "section0") {
             $(section).find("h2").text(" ");
         }
