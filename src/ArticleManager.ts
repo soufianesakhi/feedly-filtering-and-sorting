@@ -421,25 +421,20 @@ class ArticleSorterFactory {
     this.sorterByType[SortingType.TitleAsc] = titleSorter(true);
     this.sorterByType[SortingType.PopularityDesc] = popularitySorter(false);
     this.sorterByType[SortingType.PopularityAsc] = popularitySorter(true);
-    this.sorterByType[SortingType.ReceivedDateNewFirst] = receivedDateSorter(
-      true
-    );
-    this.sorterByType[SortingType.ReceivedDateOldFirst] = receivedDateSorter(
-      false
-    );
-    this.sorterByType[SortingType.PublishDateNewFirst] = publishDateSorter(
-      true
-    );
-    this.sorterByType[SortingType.PublishDateOldFirst] = publishDateSorter(
-      false
-    );
+    this.sorterByType[SortingType.ReceivedDateNewFirst] =
+      receivedDateSorter(true);
+    this.sorterByType[SortingType.ReceivedDateOldFirst] =
+      receivedDateSorter(false);
+    this.sorterByType[SortingType.PublishDateNewFirst] =
+      publishDateSorter(true);
+    this.sorterByType[SortingType.PublishDateOldFirst] =
+      publishDateSorter(false);
     this.sorterByType[SortingType.PublishDayNewFirst] = publishDaySorter(true);
     this.sorterByType[SortingType.PublishDayOldFirst] = publishDaySorter(false);
     this.sorterByType[SortingType.SourceAsc] = sourceSorter(true);
     this.sorterByType[SortingType.SourceDesc] = sourceSorter(false);
-    this.sorterByType[SortingType.SourceNewestReceiveDate] = receivedDateSorter(
-      true
-    );
+    this.sorterByType[SortingType.SourceNewestReceiveDate] =
+      receivedDateSorter(true);
     this.sorterByType[SortingType.Random] = () => {
       return Math.random() - 0.5;
     };
@@ -600,6 +595,8 @@ export class Article {
 
   setVisible(visible?: boolean) {
     if (visible != null && !visible) {
+      const parent = this.container.parent();
+      this.container.detach().appendTo(parent);
       this.container.css("display", "none");
     } else {
       this.container.css("display", "");

@@ -363,8 +363,3 @@ input {
 #headerBarFX {
   margin-right: 20px;
 }
-
-.list-entries--layout-u5 .EntryList__chunk {
-  display: flex;
-  flex-wrap: wrap;
-}
