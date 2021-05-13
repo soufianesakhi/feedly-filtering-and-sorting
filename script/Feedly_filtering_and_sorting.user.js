@@ -59,7 +59,6 @@ var ext = {
     articleUrlAnchorSelector: ".entry__title",
     keepArticlesUnreadId: "keepArticlesUnread",
     articlesToMarkAsReadId: "articlesToMarkAsRead",
-    sortedVisibleArticlesId: "sortedVisibleArticles",
     openAndMarkAsReadId: "isOpenAndMarkAsRead",
     openAndMarkAsReadClass: "open-in-new-tab-button",
     visualOpenAndMarkAsReadId: "isVisualOpenAndMarkAsRead",
@@ -1350,7 +1349,6 @@ var ArticleManager = /** @class */ (function () {
             }
             sortedVisibleEntryIds.push.apply(sortedVisibleEntryIds, visibleArticles.map(function (a) { return a.getEntryId(); }));
         });
-        this.page.put(ext.sortedVisibleArticlesId, sortedVisibleEntryIds);
     };
     ArticleManager.prototype.prepareMarkAsRead = function () {
         if (this.articlesToMarkAsRead.length > 0) {
@@ -2268,13 +2266,10 @@ var FeedlyPage = /** @class */ (function () {
         return keptUnreadEntryIds;
     };
     FeedlyPage.prototype.getSortedVisibleArticles = function () {
-        var sortedVisibleArticles = getFFnS(ext.sortedVisibleArticlesId);
-        if (!sortedVisibleArticles) {
-            sortedVisibleArticles = [];
-            $(ext.articleSelector).each(function (i, a) {
-                sortedVisibleArticles.push(getArticleId($(a)));
-            });
-        }
+        var sortedVisibleArticles = [];
+        $(ext.articleSelector + ":visible").each(function (i, a) {
+            sortedVisibleArticles.push(getArticleId($(a)));
+        });
         return sortedVisibleArticles;
     };
     FeedlyPage.prototype.onNewArticleObserve = function () {
@@ -2737,7 +2732,7 @@ var FeedlyPage = /** @class */ (function () {
             var entries = navigo.entries;
             var originalEntries = navigo.originalEntries || entries;
             navigo.originalEntries = originalEntries;
-            var sortedVisibleArticles = getFFnS(ext.sortedVisibleArticlesId);
+            var sortedVisibleArticles = getSortedVisibleArticles();
             if (!sortedVisibleArticles) {
                 navigo.entries = originalEntries;
                 navigo.originalEntries = null;

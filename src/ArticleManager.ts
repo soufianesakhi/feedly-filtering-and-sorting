@@ -324,8 +324,6 @@ export class ArticleManager {
       }
       sortedVisibleEntryIds.push(...visibleArticles.map((a) => a.getEntryId()));
     });
-
-    this.page.put(ext.sortedVisibleArticlesId, sortedVisibleEntryIds);
   }
 
   prepareMarkAsRead() {

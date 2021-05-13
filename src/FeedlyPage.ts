@@ -359,13 +359,10 @@ export class FeedlyPage {
   }
 
   getSortedVisibleArticles(): string[] {
-    var sortedVisibleArticles: string[] = getFFnS(ext.sortedVisibleArticlesId);
-    if (!sortedVisibleArticles) {
-      sortedVisibleArticles = [];
-      $(ext.articleSelector).each((i, a) => {
-        sortedVisibleArticles.push(getArticleId($(a)));
-      });
-    }
+    var sortedVisibleArticles: string[] = [];
+    $(ext.articleSelector + ":visible").each((i, a) => {
+      sortedVisibleArticles.push(getArticleId($(a)));
+    });
     return sortedVisibleArticles;
   }
 
@@ -884,9 +881,7 @@ export class FeedlyPage {
       var entries: any[] = navigo.entries;
       var originalEntries: any[] = navigo.originalEntries || entries;
       navigo.originalEntries = originalEntries;
-      var sortedVisibleArticles: String[] = getFFnS(
-        ext.sortedVisibleArticlesId
-      );
+      var sortedVisibleArticles: String[] = getSortedVisibleArticles();
       if (!sortedVisibleArticles) {
         navigo.entries = originalEntries;
         navigo.originalEntries = null;
