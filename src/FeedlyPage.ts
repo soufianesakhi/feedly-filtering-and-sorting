@@ -425,7 +425,7 @@ export class FeedlyPage {
       };
     };
 
-    NodeCreationObserver.onCreation(ext.articleSelector, (element) => {
+    NodeCreationObserver.onCreation(ext.articleAndInlineSelector, (element) => {
       if (disableOverrides()) {
         return;
       }

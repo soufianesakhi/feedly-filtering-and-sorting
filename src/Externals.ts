@@ -17,6 +17,7 @@ var ext = {
   articlesChunkSelector: ".EntryList__chunk",
   articleSelector:
     ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame)",
+  articleAndInlineSelector: ".EntryList__chunk > [id]:not([gap-article])",
   unreadArticlesCountSelector:
     ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
   uncheckedArticlesSelector: ":not([gap-article]):not([checked-FFnS])",

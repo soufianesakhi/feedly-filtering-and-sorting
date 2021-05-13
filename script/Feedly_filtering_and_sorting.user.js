@@ -37,6 +37,7 @@ var ext = {
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
     articleSelector: ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame)",
+    articleAndInlineSelector: ".EntryList__chunk > [id]:not([gap-article])",
     unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
     uncheckedArticlesSelector: ":not([gap-article]):not([checked-FFnS])",
     checkedArticlesAttribute: "checked-FFnS",
@@ -2329,7 +2330,7 @@ var FeedlyPage = /** @class */ (function () {
                 }
             };
         };
-        NodeCreationObserver.onCreation(ext.articleSelector, function (element) {
+        NodeCreationObserver.onCreation(ext.articleAndInlineSelector, function (element) {
             if (disableOverrides()) {
                 return;
             }
