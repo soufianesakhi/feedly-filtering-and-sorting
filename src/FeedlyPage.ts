@@ -1006,11 +1006,7 @@ export class FeedlyPage {
         return getNextURI.apply(this, arguments);
       }
       var e = this.nextURI;
-      if (
-        !e ||
-        (e.endsWith("/category/global.all") &&
-          e.endsWith(getStreamObj().streamId))
-      ) {
+      if (!e) {
         try {
           let categories = JSON.parse(
             getService("preferences").getPreference("categoriesOrderingId")
