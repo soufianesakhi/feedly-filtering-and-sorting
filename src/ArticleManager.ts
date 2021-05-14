@@ -150,48 +150,6 @@ export class ArticleManager {
     }
   }
 
-  checkPopularityAndSort() {
-    let sorted = true;
-
-    $(ext.articlesContainerSelector).each((i, articlesContainer) => {
-      const popularityArr = [];
-      const hotPopularityArr = [];
-      $(articlesContainer)
-        .find(ext.articleSelector + ":visible")
-        .each((i, article) => {
-          let engagement = $(article).find(ext.popularitySelector);
-          const popularity = parsePopularity($(engagement).text());
-          if ($(engagement).is(".EntryEngagement--hot, .hot, .onfire")) {
-            hotPopularityArr.push(popularity);
-          } else {
-            popularityArr.push(popularity);
-          }
-        });
-      sorted = sorted && this.checkPopularitySorted(hotPopularityArr);
-      sorted = sorted && this.checkPopularitySorted(popularityArr);
-    });
-    if (!sorted) {
-      console.log(`Sorting by popularity after check`);
-      this.sortArticles(true);
-    }
-  }
-
-  private checkPopularitySorted(popularityArr: number[]) {
-    let sorted = true;
-    const sortedCheck =
-      this.getCurrentSub().getSortingType() == SortingType.PopularityDesc
-        ? (i: number) => {
-            return popularityArr[i] >= popularityArr[i + 1];
-          }
-        : (i: number) => {
-            return popularityArr[i] <= popularityArr[i + 1];
-          };
-    for (var i = 0; i < popularityArr.length - 1 && sorted; i++) {
-      sorted = sortedCheck(i);
-    }
-    return sorted;
-  }
-
   checkDisableAllFilters() {
     if (this.page.get(ext.disableAllFiltersButtonId)) {
       if (this.page.get(ext.disableAllFiltersEnabled, true)) {
@@ -261,7 +219,7 @@ export class ArticleManager {
 
   checkLastAddedArticle(refresh?: boolean) {
     const allArticlesChecked =
-      $(ext.articleSelector + ext.uncheckedArticlesSelector).length == 0;
+      $(ext.articleSelector).filter(ext.uncheckedArticlesSelector).length == 0;
     if (allArticlesChecked) {
       this.prepareMarkAsRead();
       this.page.refreshHidingInfo();
@@ -278,8 +236,6 @@ export class ArticleManager {
     }
     this.page.put(ext.sortArticlesId, false);
     let sub = this.getCurrentSub();
-    let endOfFeed: JQuery;
-    let sortedVisibleEntryIds: string[] = [];
     $(ext.articlesContainerSelector).each((i, c) => {
       let visibleArticles: Article[] = [];
       let hiddenArticles: Article[] = [];
@@ -322,7 +278,6 @@ export class ArticleManager {
         visibleArticles.forEach(appendArticle);
         hiddenArticles.forEach(appendArticle);
       }
-      sortedVisibleEntryIds.push(...visibleArticles.map((a) => a.getEntryId()));
     });
   }
 

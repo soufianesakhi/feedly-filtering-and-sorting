@@ -242,20 +242,6 @@ export class UIManager {
     this.updateMenu();
     setTimeout(() => {
       this.refreshFilteringAndSorting();
-
-      if (
-        (this.subscription.isSortingEnabled &&
-          this.subscription.getSortingType() == SortingType.PopularityAsc) ||
-        this.subscription.getSortingType() == SortingType.PopularityDesc
-      ) {
-        let maxCheck = 10;
-        const handle = setInterval(() => {
-          if (maxCheck-- === 0) {
-            return clearInterval(handle);
-          }
-          this.articleManager.checkPopularityAndSort();
-        }, 3000);
-      }
     }, 500);
     if (this.subscription.isAutoRefreshEnabled()) {
       setInterval(() => {

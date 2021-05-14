@@ -12,6 +12,7 @@ declare var getReactPage: () => any;
 declare var getSortedVisibleArticles: () => string[];
 declare var getStreamPage: () => any;
 declare var getStreamObj: () => any;
+declare var getService: (name: string) => any;
 declare var disableOverrides: () => boolean;
 declare var onClickCapture: (
   element: JQuery,
@@ -40,6 +41,7 @@ export class FeedlyPage {
         "getReactPage",
         "getStreamPage",
         "getStreamObj",
+        "getService",
         "onClickCapture",
         "disableOverrides",
         "fetchMoreEntries",
@@ -54,6 +56,7 @@ export class FeedlyPage {
       this.getReactPage,
       this.getStreamPage,
       this.getStreamObj,
+      this.getService,
       this.onClickCapture,
       this.disableOverrides,
       this.fetchMoreEntries,
@@ -152,7 +155,14 @@ export class FeedlyPage {
     let removeChild = Node.prototype.removeChild;
     Node.prototype.removeChild = function (child) {
       try {
-        return removeChild.apply(this, arguments);
+        if (disableOverrides()) {
+          return removeChild.apply(this, arguments);
+        }
+        if (getFFnS(ext.inliningEntryId) && $(child).is(ext.articleSelector)) {
+          putFFnS(ext.inliningEntryId, false);
+        } else {
+          return removeChild.apply(this, arguments);
+        }
       } catch (e) {
         if ($(this).hasClass(ext.articlesChunkClass)) {
           $(child).remove();
@@ -169,7 +179,7 @@ export class FeedlyPage {
       try {
         const mainEntrySuffix = "_main";
         const id = node["id"].replace(mainEntrySuffix, "");
-        const sortedIds = getSortedVisibleArticles();
+        const sortedIds = getService("navigo").entries.map((e) => e.id);
         let nextIndex = sortedIds.indexOf(id) + 1;
         if (nextIndex > 0 && nextIndex < sortedIds.length) {
           const nextId = sortedIds[nextIndex];
@@ -177,7 +187,15 @@ export class FeedlyPage {
         } else {
           sibling = null;
         }
-      } catch (e) {}
+        if ($(node).is(ext.inlineArticleSelector)) {
+          const oldNode = document.getElementById(node["id"]);
+          if (oldNode) {
+            removeChild.call(oldNode.parentNode, oldNode);
+          }
+        }
+      } catch (e) {
+        console.log(e);
+      }
       if (sibling) {
         return insertBefore.call(sibling.parentNode, node, sibling);
       } else {
@@ -186,7 +204,7 @@ export class FeedlyPage {
     }
     Node.prototype.insertBefore = function (node, siblingNode) {
       try {
-        if ($(this).hasClass(ext.articlesChunkClass)) {
+        if (!disableOverrides() && $(this).hasClass(ext.articlesChunkClass)) {
           return insertArticleNode(this, node, siblingNode);
         } else {
           return insertBefore.apply(this, arguments);
@@ -197,7 +215,7 @@ export class FeedlyPage {
     };
     Node.prototype.appendChild = function (child) {
       try {
-        if ($(this).hasClass(ext.articlesChunkClass)) {
+        if (!disableOverrides() && $(this).hasClass(ext.articlesChunkClass)) {
           return insertArticleNode(this, child);
         } else {
           return appendChild.apply(this, arguments);
@@ -209,13 +227,13 @@ export class FeedlyPage {
   }
 
   autoLoad() {
-    var navigo = window["streets"].service("navigo");
+    var navigo = getService("navigo");
     navigo.initAutoLoad = true;
     navigo.setEntries(navigo.getEntries());
   }
 
   getStreamPage(): any {
-    var observers = window["streets"].service("navigo").observers;
+    var observers = getService("navigo").observers;
     for (let i = 0, len = observers.length; i < len; i++) {
       let stream = observers[i].stream;
       if ((stream && stream.streamId) || observers[i]._streams) {
@@ -225,7 +243,7 @@ export class FeedlyPage {
   }
 
   getReactPage(): any {
-    var observers = window["streets"].service("feedly").observers;
+    var observers = getService("feedly").observers;
     for (let i = 0, len = observers.length; i < len; i++) {
       const prototype = Object.getPrototypeOf(observers[i]);
       if (prototype.markAsRead) {
@@ -241,6 +259,10 @@ export class FeedlyPage {
       streamObj = streamPage._streams[Object.keys(streamPage._streams)[0]];
     }
     return streamObj;
+  }
+
+  getService(name: string) {
+    return window["streets"].service(name);
   }
 
   onNewPageObserve() {
@@ -308,7 +330,7 @@ export class FeedlyPage {
             window.open(link, link);
           });
         if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
-          let reader = window["streets"].service("reader");
+          let reader = getService("reader");
           articlesToOpen.forEach((entryId) => {
             reader.askMarkEntryAsRead(entryId);
             const a = $(getById(entryId));
@@ -346,7 +368,7 @@ export class FeedlyPage {
   }
 
   getKeptUnreadEntryIds() {
-    var navigo = window["streets"].service("navigo");
+    let navigo = getService("navigo");
     let entries: any[] = navigo.originalEntries || navigo.getEntries();
     let keptUnreadEntryIds = entries
       .filter((e) => {
@@ -360,14 +382,13 @@ export class FeedlyPage {
 
   getSortedVisibleArticles(): string[] {
     var sortedVisibleArticles: string[] = [];
-    $(ext.articleSelector + ":visible").each((i, a) => {
+    $(ext.sortedVisibleArticlesSelector).each((i, a) => {
       sortedVisibleArticles.push(getArticleId($(a)));
     });
     return sortedVisibleArticles;
   }
 
   onNewArticleObserve() {
-    var reader = window["streets"].service("reader");
     var getLink = (a: JQuery) => {
       return a.find(ext.articleUrlAnchorSelector).attr("href");
     };
@@ -401,6 +422,7 @@ export class FeedlyPage {
           endExcl = sortedVisibleArticles.length;
         }
         var hide = getFFnS(ext.hideWhenMarkAboveBelowId);
+        let reader = getService("reader");
         for (var i = start; i < endExcl; i++) {
           var id = sortedVisibleArticles[i];
           if (markAsRead) {
@@ -433,6 +455,7 @@ export class FeedlyPage {
 
       var entryId = getArticleId(a);
 
+      let reader = getService("reader");
       var e = reader.lookupEntry(entryId);
       var entryInfos = $("<span>", {
         class: ext.entryInfosJsonClass,
@@ -620,8 +643,7 @@ export class FeedlyPage {
 
   loadNextBatch(ev?: MouseEvent) {
     ev && ev.stopPropagation();
-    var navigo = window["streets"].service("navigo");
-    var reader = window["streets"].service("reader");
+    let navigo = getService("navigo");
     let entries: any[] = navigo.originalEntries || navigo.getEntries();
     let markAsReadEntryIds: string[];
     if (getFFnS(ext.keepArticlesUnreadId)) {
@@ -639,6 +661,7 @@ export class FeedlyPage {
     markAsReadEntryIds = markAsReadEntryIds.filter((id) => {
       return keptUnreadEntryIds.indexOf(id) < 0;
     });
+    let reader = getService("reader");
     reader.askMarkEntriesAsRead(markAsReadEntryIds, {});
     window.scrollTo(0, 0);
     $(ext.articlesContainerSelector).empty();
@@ -659,8 +682,6 @@ export class FeedlyPage {
     var loadNextBatchBtnId = "#FFnS_LoadNextBatchBtn";
     var secondaryMarkAsReadBtnsSelector = ".mark-as-read-button.secondary";
     var loadByBatchText = "Mark batch as read and load next batch";
-    var navigo = window["streets"].service("navigo");
-    var reader = window["streets"].service("reader");
     var autoLoadAllArticleDefaultBatchSize = 1000;
 
     var isAutoLoad: () => boolean = () => {
@@ -693,7 +714,7 @@ export class FeedlyPage {
       }
     };
 
-    var navigoPrototype = Object.getPrototypeOf(navigo);
+    var navigoPrototype = Object.getPrototypeOf(getService("navigo"));
     var setEntries = navigoPrototype.setEntries;
     navigoPrototype.setEntries = function (entries: any[]) {
       if (disableOverrides()) {
@@ -710,6 +731,7 @@ export class FeedlyPage {
         ) {
           let isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
           let firstLoadByBatch = false;
+          let navigo = getService("navigo");
           if (navigo.initAutoLoad) {
             navigo.initAutoLoad = false;
             firstLoadByBatch = isLoadByBatch;
@@ -779,6 +801,7 @@ export class FeedlyPage {
           let ids = $.map<Element, string>(markAsReadEntries.toArray(), (e) =>
             getArticleId($(e))
           );
+          let reader = getService("reader");
           reader.askMarkEntriesAsRead(ids, {});
           markAsReadEntries
             .removeClass(ext.markAsReadImmediatelyClass)
@@ -821,9 +844,6 @@ export class FeedlyPage {
   }
 
   overrideMarkAsRead() {
-    var reader = window["streets"].service("reader");
-    var navigo = window["streets"].service("navigo");
-
     var prototype = Object.getPrototypeOf(getReactPage());
     var markAsRead: Function = prototype.markAsRead;
     prototype.markAsRead = function (lastEntryObject) {
@@ -832,6 +852,7 @@ export class FeedlyPage {
       }
       let jumpToNext = () => {
         if (document.URL.indexOf("category/global.") < 0) {
+          let navigo = getService("navigo");
           if (navigo.getNextURI()) {
             this.feedly.jumpToNext();
           } else {
@@ -860,6 +881,7 @@ export class FeedlyPage {
           console.log(
             idsToMarkAsRead.length + " new articles will be marked as read"
           );
+          let reader = getService("reader");
           reader.askMarkEntriesAsRead(idsToMarkAsRead, {});
         } else {
           console.log("No article to mark as read");
@@ -872,16 +894,17 @@ export class FeedlyPage {
   }
 
   overrideSorting() {
-    var navigo = window["streets"].service("navigo");
-    var prototype = Object.getPrototypeOf(navigo);
+    var prototype = Object.getPrototypeOf(getService("navigo"));
     function filterVisible(entry) {
-      return !($(getById(entry.id)).css("display") === "none");
+      const item = $(getById(entry.id));
+      return item.length > 0 && !(item.css("display") === "none");
     }
     function ensureSortedEntries() {
+      let navigo = getService("navigo");
       var entries: any[] = navigo.entries;
       var originalEntries: any[] = navigo.originalEntries || entries;
       navigo.originalEntries = originalEntries;
-      var sortedVisibleArticles: String[] = getSortedVisibleArticles();
+      var sortedVisibleArticles: string[] = getSortedVisibleArticles();
       if (!sortedVisibleArticles) {
         navigo.entries = originalEntries;
         navigo.originalEntries = null;
@@ -900,12 +923,9 @@ export class FeedlyPage {
       if (!sorted) {
         entries = [].concat(originalEntries);
         entries = entries.filter(filterVisible);
-        entries.sort((a, b) => {
-          return (
-            sortedVisibleArticles.indexOf(a.id) -
-            sortedVisibleArticles.indexOf(b.id)
-          );
-        });
+        const idToEntry = {};
+        entries.forEach((e) => (idToEntry[e.id] = e));
+        entries = sortedVisibleArticles.map((id) => idToEntry[id]);
         navigo.entries = entries;
       }
     }
@@ -951,10 +971,12 @@ export class FeedlyPage {
       if (disableOverrides()) {
         return setEntries.apply(this, arguments);
       }
+      let navigo = getService("navigo");
       navigo.originalEntries = null;
       return setEntries.apply(this, arguments);
     };
     prototype.reset = function () {
+      let navigo = getService("navigo");
       navigo.originalEntries = null;
       return reset.apply(this, arguments);
     };
@@ -963,6 +985,7 @@ export class FeedlyPage {
       if (disableOverrides()) {
         return listEntryIds.apply(this, arguments);
       }
+      let navigo = getService("navigo");
       var a = [];
       var entries: any[] = navigo.originalEntries || navigo.entries;
       return (
@@ -975,8 +998,7 @@ export class FeedlyPage {
   }
 
   overrideNavigation() {
-    var navigo = window["streets"].service("navigo");
-    var prototype = Object.getPrototypeOf(navigo);
+    var prototype = Object.getPrototypeOf(getService("navigo"));
     const collectionPrefix = "collection/content/";
     const getNextURI = prototype.getNextURI;
     prototype.getNextURI = function () {
@@ -991,9 +1013,7 @@ export class FeedlyPage {
       ) {
         try {
           let categories = JSON.parse(
-            window["streets"]
-              .service("preferences")
-              .getPreference("categoriesOrderingId")
+            getService("preferences").getPreference("categoriesOrderingId")
           );
           return collectionPrefix + categories[0];
         } catch (e) {
@@ -1001,6 +1021,13 @@ export class FeedlyPage {
         }
       }
       return e;
+    };
+    const inlineEntry = prototype.inlineEntry;
+    prototype.inlineEntry = function () {
+      if (!disableOverrides()) {
+        putFFnS(ext.inliningEntryId, true);
+      }
+      return inlineEntry.apply(this, arguments);
     };
   }
 }

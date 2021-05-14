@@ -36,7 +36,9 @@ var ext = {
     articlesContainerSelector: ".list-entries",
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
-    articleSelector: ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame)",
+    articleSelector: ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame), .EntryList__chunk > [id].inlineFrame.u100",
+    sortedVisibleArticlesSelector: ".EntryList__chunk > [id]:not([gap-article]):visible",
+    inlineArticleSelector: ".inlineFrame[id]",
     articleAndInlineSelector: ".EntryList__chunk > [id]:not([gap-article])",
     unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
     uncheckedArticlesSelector: ":not([gap-article]):not([checked-FFnS])",
@@ -88,6 +90,7 @@ var ext = {
     maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles",
     forceRefreshArticlesId: "forceRefreshArticles",
     disablePageOverridesId: "disablePageOverrides",
+    inliningEntryId: "inliningEntry",
 };
 
 var templates = {
@@ -1186,46 +1189,6 @@ var ArticleManager = /** @class */ (function () {
             }
         }
     };
-    ArticleManager.prototype.checkPopularityAndSort = function () {
-        var _this = this;
-        var sorted = true;
-        $(ext.articlesContainerSelector).each(function (i, articlesContainer) {
-            var popularityArr = [];
-            var hotPopularityArr = [];
-            $(articlesContainer)
-                .find(ext.articleSelector + ":visible")
-                .each(function (i, article) {
-                var engagement = $(article).find(ext.popularitySelector);
-                var popularity = parsePopularity($(engagement).text());
-                if ($(engagement).is(".EntryEngagement--hot, .hot, .onfire")) {
-                    hotPopularityArr.push(popularity);
-                }
-                else {
-                    popularityArr.push(popularity);
-                }
-            });
-            sorted = sorted && _this.checkPopularitySorted(hotPopularityArr);
-            sorted = sorted && _this.checkPopularitySorted(popularityArr);
-        });
-        if (!sorted) {
-            console.log("Sorting by popularity after check");
-            this.sortArticles(true);
-        }
-    };
-    ArticleManager.prototype.checkPopularitySorted = function (popularityArr) {
-        var sorted = true;
-        var sortedCheck = this.getCurrentSub().getSortingType() == SortingType.PopularityDesc
-            ? function (i) {
-                return popularityArr[i] >= popularityArr[i + 1];
-            }
-            : function (i) {
-                return popularityArr[i] <= popularityArr[i + 1];
-            };
-        for (var i = 0; i < popularityArr.length - 1 && sorted; i++) {
-            sorted = sortedCheck(i);
-        }
-        return sorted;
-    };
     ArticleManager.prototype.checkDisableAllFilters = function () {
         if (this.page.get(ext.disableAllFiltersButtonId)) {
             if (this.page.get(ext.disableAllFiltersEnabled, true)) {
@@ -1285,7 +1248,7 @@ var ArticleManager = /** @class */ (function () {
         return $("body").hasClass("theme--dark");
     };
     ArticleManager.prototype.checkLastAddedArticle = function (refresh) {
-        var allArticlesChecked = $(ext.articleSelector + ext.uncheckedArticlesSelector).length == 0;
+        var allArticlesChecked = $(ext.articleSelector).filter(ext.uncheckedArticlesSelector).length == 0;
         if (allArticlesChecked) {
             this.prepareMarkAsRead();
             this.page.refreshHidingInfo();
@@ -1302,8 +1265,6 @@ var ArticleManager = /** @class */ (function () {
         }
         this.page.put(ext.sortArticlesId, false);
         var sub = this.getCurrentSub();
-        var endOfFeed;
-        var sortedVisibleEntryIds = [];
         $(ext.articlesContainerSelector).each(function (i, c) {
             var visibleArticles = [];
             var hiddenArticles = [];
@@ -1348,7 +1309,6 @@ var ArticleManager = /** @class */ (function () {
                 visibleArticles.forEach(appendArticle);
                 hiddenArticles.forEach(appendArticle);
             }
-            sortedVisibleEntryIds.push.apply(sortedVisibleEntryIds, visibleArticles.map(function (a) { return a.getEntryId(); }));
         });
     };
     ArticleManager.prototype.prepareMarkAsRead = function () {
@@ -2007,13 +1967,14 @@ var FeedlyPage = /** @class */ (function () {
             "getReactPage",
             "getStreamPage",
             "getStreamObj",
+            "getService",
             "onClickCapture",
             "disableOverrides",
             "fetchMoreEntries",
             "loadNextBatch",
             "getKeptUnreadEntryIds",
             "getSortedVisibleArticles",
-        ], this.get, this.put, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
+        ], this.get, this.put, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.getService, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
         injectToWindow(["overrideLoadingEntries"], this.overrideLoadingEntries);
         injectToWindow(["overrideSorting"], this.overrideSorting);
         injectToWindow(["overrideNavigation"], this.overrideNavigation);
@@ -2071,7 +2032,15 @@ var FeedlyPage = /** @class */ (function () {
         var removeChild = Node.prototype.removeChild;
         Node.prototype.removeChild = function (child) {
             try {
-                return removeChild.apply(this, arguments);
+                if (disableOverrides()) {
+                    return removeChild.apply(this, arguments);
+                }
+                if (getFFnS(ext.inliningEntryId) && $(child).is(ext.articleSelector)) {
+                    putFFnS(ext.inliningEntryId, false);
+                }
+                else {
+                    return removeChild.apply(this, arguments);
+                }
             }
             catch (e) {
                 if ($(this).hasClass(ext.articlesChunkClass)) {
@@ -2090,7 +2059,7 @@ var FeedlyPage = /** @class */ (function () {
             try {
                 var mainEntrySuffix = "_main";
                 var id = node["id"].replace(mainEntrySuffix, "");
-                var sortedIds = getSortedVisibleArticles();
+                var sortedIds = getService("navigo").entries.map(function (e) { return e.id; });
                 var nextIndex = sortedIds.indexOf(id) + 1;
                 if (nextIndex > 0 && nextIndex < sortedIds.length) {
                     var nextId = sortedIds[nextIndex];
@@ -2099,8 +2068,16 @@ var FeedlyPage = /** @class */ (function () {
                 else {
                     sibling = null;
                 }
+                if ($(node).is(ext.inlineArticleSelector)) {
+                    var oldNode = document.getElementById(node["id"]);
+                    if (oldNode) {
+                        removeChild.call(oldNode.parentNode, oldNode);
+                    }
+                }
             }
-            catch (e) { }
+            catch (e) {
+                console.log(e);
+            }
             if (sibling) {
                 return insertBefore.call(sibling.parentNode, node, sibling);
             }
@@ -2110,7 +2087,7 @@ var FeedlyPage = /** @class */ (function () {
         }
         Node.prototype.insertBefore = function (node, siblingNode) {
             try {
-                if ($(this).hasClass(ext.articlesChunkClass)) {
+                if (!disableOverrides() && $(this).hasClass(ext.articlesChunkClass)) {
                     return insertArticleNode(this, node, siblingNode);
                 }
                 else {
@@ -2123,7 +2100,7 @@ var FeedlyPage = /** @class */ (function () {
         };
         Node.prototype.appendChild = function (child) {
             try {
-                if ($(this).hasClass(ext.articlesChunkClass)) {
+                if (!disableOverrides() && $(this).hasClass(ext.articlesChunkClass)) {
                     return insertArticleNode(this, child);
                 }
                 else {
@@ -2136,12 +2113,12 @@ var FeedlyPage = /** @class */ (function () {
         };
     };
     FeedlyPage.prototype.autoLoad = function () {
-        var navigo = window["streets"].service("navigo");
+        var navigo = getService("navigo");
         navigo.initAutoLoad = true;
         navigo.setEntries(navigo.getEntries());
     };
     FeedlyPage.prototype.getStreamPage = function () {
-        var observers = window["streets"].service("navigo").observers;
+        var observers = getService("navigo").observers;
         for (var i = 0, len = observers.length; i < len; i++) {
             var stream = observers[i].stream;
             if ((stream && stream.streamId) || observers[i]._streams) {
@@ -2150,7 +2127,7 @@ var FeedlyPage = /** @class */ (function () {
         }
     };
     FeedlyPage.prototype.getReactPage = function () {
-        var observers = window["streets"].service("feedly").observers;
+        var observers = getService("feedly").observers;
         for (var i = 0, len = observers.length; i < len; i++) {
             var prototype = Object.getPrototypeOf(observers[i]);
             if (prototype.markAsRead) {
@@ -2165,6 +2142,9 @@ var FeedlyPage = /** @class */ (function () {
             streamObj = streamPage._streams[Object.keys(streamPage._streams)[0]];
         }
         return streamObj;
+    };
+    FeedlyPage.prototype.getService = function (name) {
+        return window["streets"].service(name);
     };
     FeedlyPage.prototype.onNewPageObserve = function () {
         NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
@@ -2223,7 +2203,7 @@ var FeedlyPage = /** @class */ (function () {
                     window.open(link, link);
                 });
                 if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
-                    var reader_1 = window["streets"].service("reader");
+                    var reader_1 = getService("reader");
                     articlesToOpen.forEach(function (entryId) {
                         reader_1.askMarkEntryAsRead(entryId);
                         var a = $(getById(entryId));
@@ -2255,7 +2235,7 @@ var FeedlyPage = /** @class */ (function () {
         element.get(0).addEventListener("click", callback, true);
     };
     FeedlyPage.prototype.getKeptUnreadEntryIds = function () {
-        var navigo = window["streets"].service("navigo");
+        var navigo = getService("navigo");
         var entries = navigo.originalEntries || navigo.getEntries();
         var keptUnreadEntryIds = entries
             .filter(function (e) {
@@ -2268,13 +2248,12 @@ var FeedlyPage = /** @class */ (function () {
     };
     FeedlyPage.prototype.getSortedVisibleArticles = function () {
         var sortedVisibleArticles = [];
-        $(ext.articleSelector + ":visible").each(function (i, a) {
+        $(ext.sortedVisibleArticlesSelector).each(function (i, a) {
             sortedVisibleArticles.push(getArticleId($(a)));
         });
         return sortedVisibleArticles;
     };
     FeedlyPage.prototype.onNewArticleObserve = function () {
-        var reader = window["streets"].service("reader");
         var getLink = function (a) {
             return a.find(ext.articleUrlAnchorSelector).attr("href");
         };
@@ -2309,6 +2288,7 @@ var FeedlyPage = /** @class */ (function () {
                     endExcl = sortedVisibleArticles.length;
                 }
                 var hide = getFFnS(ext.hideWhenMarkAboveBelowId);
+                var reader = getService("reader");
                 for (var i = start; i < endExcl; i++) {
                     var id = sortedVisibleArticles[i];
                     if (markAsRead) {
@@ -2336,6 +2316,7 @@ var FeedlyPage = /** @class */ (function () {
             }
             var a = $(element);
             var entryId = getArticleId(a);
+            var reader = getService("reader");
             var e = reader.lookupEntry(entryId);
             var entryInfos = $("<span>", {
                 class: ext.entryInfosJsonClass,
@@ -2491,8 +2472,7 @@ var FeedlyPage = /** @class */ (function () {
     };
     FeedlyPage.prototype.loadNextBatch = function (ev) {
         ev && ev.stopPropagation();
-        var navigo = window["streets"].service("navigo");
-        var reader = window["streets"].service("reader");
+        var navigo = getService("navigo");
         var entries = navigo.originalEntries || navigo.getEntries();
         var markAsReadEntryIds;
         if (getFFnS(ext.keepArticlesUnreadId)) {
@@ -2511,6 +2491,7 @@ var FeedlyPage = /** @class */ (function () {
         markAsReadEntryIds = markAsReadEntryIds.filter(function (id) {
             return keptUnreadEntryIds.indexOf(id) < 0;
         });
+        var reader = getService("reader");
         reader.askMarkEntriesAsRead(markAsReadEntryIds, {});
         window.scrollTo(0, 0);
         $(ext.articlesContainerSelector).empty();
@@ -2529,8 +2510,6 @@ var FeedlyPage = /** @class */ (function () {
         var loadNextBatchBtnId = "#FFnS_LoadNextBatchBtn";
         var secondaryMarkAsReadBtnsSelector = ".mark-as-read-button.secondary";
         var loadByBatchText = "Mark batch as read and load next batch";
-        var navigo = window["streets"].service("navigo");
-        var reader = window["streets"].service("reader");
         var autoLoadAllArticleDefaultBatchSize = 1000;
         var isAutoLoad = function () {
             try {
@@ -2560,7 +2539,7 @@ var FeedlyPage = /** @class */ (function () {
                 setBatchSize.apply(this, arguments);
             }
         };
-        var navigoPrototype = Object.getPrototypeOf(navigo);
+        var navigoPrototype = Object.getPrototypeOf(getService("navigo"));
         var setEntries = navigoPrototype.setEntries;
         navigoPrototype.setEntries = function (entries) {
             if (disableOverrides()) {
@@ -2575,6 +2554,7 @@ var FeedlyPage = /** @class */ (function () {
                     isAutoLoad()) {
                     var isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
                     var firstLoadByBatch_1 = false;
+                    var navigo = getService("navigo");
                     if (navigo.initAutoLoad) {
                         navigo.initAutoLoad = false;
                         firstLoadByBatch_1 = isLoadByBatch;
@@ -2636,6 +2616,7 @@ var FeedlyPage = /** @class */ (function () {
                     var ids = $.map(markAsReadEntries.toArray(), function (e) {
                         return getArticleId($(e));
                     });
+                    var reader = getService("reader");
                     reader.askMarkEntriesAsRead(ids, {});
                     markAsReadEntries
                         .removeClass(ext.markAsReadImmediatelyClass)
@@ -2673,8 +2654,6 @@ var FeedlyPage = /** @class */ (function () {
         });
     };
     FeedlyPage.prototype.overrideMarkAsRead = function () {
-        var reader = window["streets"].service("reader");
-        var navigo = window["streets"].service("navigo");
         var prototype = Object.getPrototypeOf(getReactPage());
         var markAsRead = prototype.markAsRead;
         prototype.markAsRead = function (lastEntryObject) {
@@ -2684,6 +2663,7 @@ var FeedlyPage = /** @class */ (function () {
             }
             var jumpToNext = function () {
                 if (document.URL.indexOf("category/global.") < 0) {
+                    var navigo = getService("navigo");
                     if (navigo.getNextURI()) {
                         _this.feedly.jumpToNext();
                     }
@@ -2711,6 +2691,7 @@ var FeedlyPage = /** @class */ (function () {
                         return keptUnreadEntryIds_2.indexOf(id) < 0;
                     });
                     console.log(idsToMarkAsRead.length + " new articles will be marked as read");
+                    var reader = getService("reader");
                     reader.askMarkEntriesAsRead(idsToMarkAsRead, {});
                 }
                 else {
@@ -2724,12 +2705,13 @@ var FeedlyPage = /** @class */ (function () {
         };
     };
     FeedlyPage.prototype.overrideSorting = function () {
-        var navigo = window["streets"].service("navigo");
-        var prototype = Object.getPrototypeOf(navigo);
+        var prototype = Object.getPrototypeOf(getService("navigo"));
         function filterVisible(entry) {
-            return !($(getById(entry.id)).css("display") === "none");
+            var item = $(getById(entry.id));
+            return item.length > 0 && !(item.css("display") === "none");
         }
         function ensureSortedEntries() {
+            var navigo = getService("navigo");
             var entries = navigo.entries;
             var originalEntries = navigo.originalEntries || entries;
             navigo.originalEntries = originalEntries;
@@ -2750,10 +2732,9 @@ var FeedlyPage = /** @class */ (function () {
             if (!sorted) {
                 entries = [].concat(originalEntries);
                 entries = entries.filter(filterVisible);
-                entries.sort(function (a, b) {
-                    return (sortedVisibleArticles.indexOf(a.id) -
-                        sortedVisibleArticles.indexOf(b.id));
-                });
+                var idToEntry_1 = {};
+                entries.forEach(function (e) { return (idToEntry_1[e.id] = e); });
+                entries = sortedVisibleArticles.map(function (id) { return idToEntry_1[id]; });
                 navigo.entries = entries;
             }
         }
@@ -2792,10 +2773,12 @@ var FeedlyPage = /** @class */ (function () {
             if (disableOverrides()) {
                 return setEntries.apply(this, arguments);
             }
+            var navigo = getService("navigo");
             navigo.originalEntries = null;
             return setEntries.apply(this, arguments);
         };
         prototype.reset = function () {
+            var navigo = getService("navigo");
             navigo.originalEntries = null;
             return reset.apply(this, arguments);
         };
@@ -2804,6 +2787,7 @@ var FeedlyPage = /** @class */ (function () {
             if (disableOverrides()) {
                 return listEntryIds.apply(this, arguments);
             }
+            var navigo = getService("navigo");
             var a = [];
             var entries = navigo.originalEntries || navigo.entries;
             return (entries.forEach(function (b) {
@@ -2813,8 +2797,7 @@ var FeedlyPage = /** @class */ (function () {
         };
     };
     FeedlyPage.prototype.overrideNavigation = function () {
-        var navigo = window["streets"].service("navigo");
-        var prototype = Object.getPrototypeOf(navigo);
+        var prototype = Object.getPrototypeOf(getService("navigo"));
         var collectionPrefix = "collection/content/";
         var getNextURI = prototype.getNextURI;
         prototype.getNextURI = function () {
@@ -2826,9 +2809,7 @@ var FeedlyPage = /** @class */ (function () {
                 (e.endsWith("/category/global.all") &&
                     e.endsWith(getStreamObj().streamId))) {
                 try {
-                    var categories = JSON.parse(window["streets"]
-                        .service("preferences")
-                        .getPreference("categoriesOrderingId"));
+                    var categories = JSON.parse(getService("preferences").getPreference("categoriesOrderingId"));
                     return collectionPrefix + categories[0];
                 }
                 catch (e) {
@@ -2836,6 +2817,13 @@ var FeedlyPage = /** @class */ (function () {
                 }
             }
             return e;
+        };
+        var inlineEntry = prototype.inlineEntry;
+        prototype.inlineEntry = function () {
+            if (!disableOverrides()) {
+                putFFnS(ext.inliningEntryId, true);
+            }
+            return inlineEntry.apply(this, arguments);
         };
     };
     return FeedlyPage;
@@ -3004,17 +2992,6 @@ var UIManager = /** @class */ (function () {
         this.updateMenu();
         setTimeout(function () {
             _this.refreshFilteringAndSorting();
-            if ((_this.subscription.isSortingEnabled &&
-                _this.subscription.getSortingType() == SortingType.PopularityAsc) ||
-                _this.subscription.getSortingType() == SortingType.PopularityDesc) {
-                var maxCheck_1 = 10;
-                var handle_1 = setInterval(function () {
-                    if (maxCheck_1-- === 0) {
-                        return clearInterval(handle_1);
-                    }
-                    _this.articleManager.checkPopularityAndSort();
-                }, 3000);
-            }
         }, 500);
         if (this.subscription.isAutoRefreshEnabled()) {
             setInterval(function () {

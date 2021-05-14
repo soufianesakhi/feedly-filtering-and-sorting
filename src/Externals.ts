@@ -16,7 +16,10 @@ var ext = {
   articlesChunkClass: "EntryList__chunk",
   articlesChunkSelector: ".EntryList__chunk",
   articleSelector:
-    ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame)",
+    ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame), .EntryList__chunk > [id].inlineFrame.u100",
+  sortedVisibleArticlesSelector:
+    ".EntryList__chunk > [id]:not([gap-article]):visible",
+  inlineArticleSelector: ".inlineFrame[id]",
   articleAndInlineSelector: ".EntryList__chunk > [id]:not([gap-article])",
   unreadArticlesCountSelector:
     ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
@@ -71,4 +74,5 @@ var ext = {
   maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles",
   forceRefreshArticlesId: "forceRefreshArticles",
   disablePageOverridesId: "disablePageOverrides",
+  inliningEntryId: "inliningEntry",
 };
