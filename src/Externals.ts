@@ -74,5 +74,6 @@ var ext = {
   forceRefreshArticlesId: "forceRefreshArticles",
   disablePageOverridesId: "disablePageOverrides",
   inliningEntryId: "inliningEntry",
+  navigatingToNextId: "navigatingToNext",
   layoutChangeSelector: "input[id^='layout-']",
 };

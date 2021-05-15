@@ -993,8 +993,14 @@ export class FeedlyPage {
       if (disableOverrides()) {
         return getNextURI.apply(this, arguments);
       }
-      var e = this.nextURI;
-      if (!e) {
+      let nextURI = this.nextURI;
+      if (getFFnS(ext.navigatingToNextId)) {
+        putFFnS(ext.navigatingToNextId, false);
+        if (nextURI && nextURI.endsWith("/category/global.all")) {
+          nextURI = null;
+        }
+      }
+      if (!nextURI) {
         try {
           let categories = JSON.parse(
             getService("preferences").getPreference("categoriesOrderingId")
@@ -1004,7 +1010,7 @@ export class FeedlyPage {
           console.log(e);
         }
       }
-      return e;
+      return nextURI;
     };
     const inlineEntry = prototype.inlineEntry;
     prototype.inlineEntry = function () {
@@ -1012,6 +1018,15 @@ export class FeedlyPage {
         putFFnS(ext.inliningEntryId, true);
       }
       return inlineEntry.apply(this, arguments);
+    };
+
+    const feedly = getService("feedly");
+    const jumpToNext = feedly.jumpToNext;
+    feedly.jumpToNext = () => {
+      if (!disableOverrides()) {
+        putFFnS(ext.navigatingToNextId, true);
+      }
+      return jumpToNext.apply(this, arguments);
     };
   }
 }

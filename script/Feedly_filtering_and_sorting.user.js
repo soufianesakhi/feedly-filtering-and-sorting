@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.20.5
+// @version     3.21.0
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -91,6 +91,7 @@ var ext = {
     forceRefreshArticlesId: "forceRefreshArticles",
     disablePageOverridesId: "disablePageOverrides",
     inliningEntryId: "inliningEntry",
+    navigatingToNextId: "navigatingToNext",
     layoutChangeSelector: "input[id^='layout-']",
 };
 
@@ -2709,8 +2710,14 @@ class FeedlyPage {
             if (disableOverrides()) {
                 return getNextURI.apply(this, arguments);
             }
-            var e = this.nextURI;
-            if (!e) {
+            let nextURI = this.nextURI;
+            if (getFFnS(ext.navigatingToNextId)) {
+                putFFnS(ext.navigatingToNextId, false);
+                if (nextURI && nextURI.endsWith("/category/global.all")) {
+                    nextURI = null;
+                }
+            }
+            if (!nextURI) {
                 try {
                     let categories = JSON.parse(getService("preferences").getPreference("categoriesOrderingId"));
                     return collectionPrefix + categories[0];
@@ -2719,7 +2726,7 @@ class FeedlyPage {
                     console.log(e);
                 }
             }
-            return e;
+            return nextURI;
         };
         const inlineEntry = prototype.inlineEntry;
         prototype.inlineEntry = function () {
@@ -2727,6 +2734,14 @@ class FeedlyPage {
                 putFFnS(ext.inliningEntryId, true);
             }
             return inlineEntry.apply(this, arguments);
+        };
+        const feedly = getService("feedly");
+        const jumpToNext = feedly.jumpToNext;
+        feedly.jumpToNext = () => {
+            if (!disableOverrides()) {
+                putFFnS(ext.navigatingToNextId, true);
+            }
+            return jumpToNext.apply(this, arguments);
         };
     }
 }
