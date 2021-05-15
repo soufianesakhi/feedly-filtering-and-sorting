@@ -84,12 +84,20 @@ module.exports = function (grunt) {
               replacement: "",
             },
             {
+              pattern: /.*import\s+\{.*\sfrom\s.*[\r\n]+/g,
+              replacement: "",
+            },
+            {
               pattern: /= new[^(\.]*\./gi,
               replacement: "= new ",
             },
             {
               pattern: /exports\./g,
               replacement: "exported.",
+            },
+            {
+              pattern: /export (?=function|class|var )/g,
+              replacement: "",
             },
           ].concat(srcReplacements),
         },

@@ -179,46 +179,21 @@ export function deepClone<T>(
 
 export function executeWindow(sourceName: string, ...functions: Function[]) {
   var srcTxt = "try {\n";
-  for (var i = 0; i < functions.length; i++) {
-    srcTxt += "(" + functions[i].toString() + ")();\n";
-  }
+  srcTxt += functions.map((f) => `(function ${f})();\n`).join("\n");
   srcTxt += "\n} catch(e) { console.log(e) }";
   injectScriptText(srcTxt, sourceName);
 }
 
-export function injectToWindow(
-  functionNames: string[],
-  ...functions: Function[]
-) {
-  var srcTxt = "";
-  for (let i = 0; i < functions.length; i++) {
-    srcTxt +=
-      functions[i]
-        .toString()
-        .replace(/^function/, "function " + functionNames[i]) + "\n";
-  }
-  injectScriptText(
-    srcTxt,
-    "FFnS-" + (functions.length == 1 ? functionNames[0] : "Functions"),
-    true
-  );
+export function injectToWindow(...functions: Function[]) {
+  var srcTxt = functions.map((f) => "function " + f).join("\n");
+  const name = functions.length == 1 ? functions[0].name : "Functions";
+  injectScriptText(srcTxt, "FFnS-" + name, true);
 }
 
 export function injectClasses(...classes: Function[]) {
-  var srcTxt = "";
-  for (var i = 0; i < classes.length; i++) {
-    var txt = classes[i].toString();
-    var className = /function ([^\(]+)/i.exec(txt)[1];
-    srcTxt +=
-      "var " +
-      className +
-      " = (function () {\n" +
-      classes[i].toString() +
-      "\nreturn " +
-      className +
-      ";" +
-      "\n}());";
-  }
+  var srcTxt = classes
+    .map((c) => `${c} window.${c.name} = ${c.name};`)
+    .join("\n");
   injectScriptText(srcTxt, "classes-" + Date.now(), true);
 }
 
@@ -228,10 +203,10 @@ export function injectScriptText(
   evalPermitted?: boolean
 ) {
   if (sourceURL) {
-    srcTxt += "//# sourceURL=" + sourceURL;
+    srcTxt += "//# sourceURL=" + sourceURL + ".js";
   }
   if (evalPermitted && typeof InstallTrigger != "undefined") {
-    srcTxt = "eval(`" + srcTxt + "`)";
+    srcTxt = "eval(atob('" + btoa(srcTxt) + "'))";
   }
   var script = document.createElement("script");
   script.type = "text/javascript";

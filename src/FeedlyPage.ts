@@ -4,53 +4,38 @@ import { EntryInfos } from "./ArticleManager";
 import { Subscription } from "./Subscription";
 import { executeWindow, injectClasses, injectToWindow } from "./Utils";
 
-declare var getFFnS: (id: string, persistent?: boolean) => any;
-declare var putFFnS: (id: string, value: any, persistent?: boolean) => any;
-declare var getById: (id: string) => HTMLElement;
-declare var getArticleId: (a: JQuery) => string;
-declare var getReactPage: () => any;
-declare var getSortedVisibleArticles: () => string[];
-declare var getStreamPage: () => any;
-declare var getStreamObj: () => any;
-declare var getService: (name: string) => any;
-declare var disableOverrides: () => boolean;
-declare var onClickCapture: (
-  element: JQuery,
-  callback: (event: MouseEvent) => any
-) => void;
-declare var fetchMoreEntries: (batchSize: number) => void;
-declare var loadNextBatch: (ev?: MouseEvent) => void;
-declare var getKeptUnreadEntryIds: () => string[];
-declare var overrideLoadingEntries: () => any;
-declare var overrideSorting: () => any;
-declare var overrideNavigation: () => any;
-declare var onNewPageObserve: () => any;
-declare var onNewArticleObserve: () => any;
+declare var getFFnS: FeedlyPage["getFFnS"];
+declare var putFFnS: FeedlyPage["putFFnS"];
+declare var getById: FeedlyPage["getById"];
+declare var getArticleId: FeedlyPage["getArticleId"];
+declare var getReactPage: FeedlyPage["getReactPage"];
+declare var getSortedVisibleArticles: FeedlyPage["getSortedVisibleArticles"];
+declare var getStreamPage: FeedlyPage["getStreamPage"];
+declare var getStreamObj: FeedlyPage["getStreamObj"];
+declare var getService: FeedlyPage["getService"];
+declare var disableOverrides: FeedlyPage["disableOverrides"];
+declare var onClickCapture: FeedlyPage["onClickCapture"];
+declare var fetchMoreEntries: FeedlyPage["fetchMoreEntries"];
+declare var loadNextBatch: FeedlyPage["loadNextBatch"];
+declare var getKeptUnreadEntryIds: FeedlyPage["getKeptUnreadEntryIds"];
+declare var overrideLoadingEntries: FeedlyPage["overrideLoadingEntries"];
+declare var overrideSorting: FeedlyPage["overrideSorting"];
+declare var overrideNavigation: FeedlyPage["overrideNavigation"];
+declare var onNewPageObserve: FeedlyPage["onNewPageObserve"];
+declare var onNewArticleObserve: FeedlyPage["onNewArticleObserve"];
 
 export class FeedlyPage {
   hiddingInfoClass = "FFnS_Hiding_Info";
 
+  get = this.getFFnS;
+  put = this.putFFnS;
+
   constructor() {
     this.put("ext", ext);
+    injectClasses(EntryInfos);
     injectToWindow(
-      [
-        "getFFnS",
-        "putFFnS",
-        "getById",
-        "getArticleId",
-        "getReactPage",
-        "getStreamPage",
-        "getStreamObj",
-        "getService",
-        "onClickCapture",
-        "disableOverrides",
-        "fetchMoreEntries",
-        "loadNextBatch",
-        "getKeptUnreadEntryIds",
-        "getSortedVisibleArticles",
-      ],
-      this.get,
-      this.put,
+      this.getFFnS,
+      this.putFFnS,
       this.getById,
       this.getArticleId,
       this.getReactPage,
@@ -64,17 +49,12 @@ export class FeedlyPage {
       this.getKeptUnreadEntryIds,
       this.getSortedVisibleArticles
     );
-    injectToWindow(["overrideLoadingEntries"], this.overrideLoadingEntries);
-    injectToWindow(["overrideSorting"], this.overrideSorting);
-    injectToWindow(["overrideNavigation"], this.overrideNavigation);
-    injectToWindow(["onNewPageObserve"], this.onNewPageObserve);
-    injectToWindow(["onNewArticleObserve"], this.onNewArticleObserve);
-    injectClasses(EntryInfos);
-    executeWindow(
-      "Feedly-Page-FFnS.js",
-      this.initWindow,
-      this.overrideMarkAsRead
-    );
+    injectToWindow(this.overrideLoadingEntries);
+    injectToWindow(this.overrideSorting);
+    injectToWindow(this.overrideNavigation);
+    injectToWindow(this.onNewPageObserve);
+    injectToWindow(this.onNewArticleObserve);
+    executeWindow("Feedly-Page-FFnS", this.initWindow, this.overrideMarkAsRead);
   }
 
   update(sub: Subscription) {
@@ -140,7 +120,7 @@ export class FeedlyPage {
 
   initAutoLoad() {
     if (this.get(ext.autoLoadAllArticlesId, true)) {
-      executeWindow("Feedly-Page-FFnS-InitAutoLoad.js", this.autoLoad);
+      executeWindow("Feedly-Page-FFnS-InitAutoLoad", this.autoLoad);
     }
   }
 
@@ -354,6 +334,12 @@ export class FeedlyPage {
         $(`#${ext.forceRefreshArticlesId}`).click();
       });
     });
+
+    NodeCreationObserver.onCreation(ext.layoutChangeSelector, (e) => {
+      $(e).click(() =>
+        setTimeout(() => $(`#${ext.forceRefreshArticlesId}`).click(), 1000)
+      );
+    });
   }
 
   disableOverrides(): boolean {
@@ -381,10 +367,11 @@ export class FeedlyPage {
   }
 
   getSortedVisibleArticles(): string[] {
-    var sortedVisibleArticles: string[] = [];
-    $(ext.sortedVisibleArticlesSelector).each((i, a) => {
-      sortedVisibleArticles.push(getArticleId($(a)));
-    });
+    const sortedVisibleArticles = Array.from(
+      document.querySelectorAll<HTMLElement>(ext.sortedArticlesSelector)
+    )
+      .filter((a) => a.style.display !== "none")
+      .map((a) => getArticleId(a));
     return sortedVisibleArticles;
   }
 
@@ -453,7 +440,7 @@ export class FeedlyPage {
       }
       var a = $(element);
 
-      var entryId = getArticleId(a);
+      var entryId = getArticleId(element as HTMLElement);
 
       let reader = getService("reader");
       var e = reader.lookupEntry(entryId);
@@ -514,9 +501,9 @@ export class FeedlyPage {
         title: "Open in a new window/tab and mark as read",
       });
 
-      var link = getLink(a);
       let openAndMarkAsRead = (event: MouseEvent) => {
         event.stopPropagation();
+        let link = getLink(a);
         window.open(link, link);
         reader.askMarkEntryAsRead(entryId);
         if (inlineView) {
@@ -595,14 +582,14 @@ export class FeedlyPage {
     $("." + this.hiddingInfoClass).remove();
   }
 
-  put(id: string, value: any, persistent?: boolean) {
+  putFFnS(id: string, value: any, persistent?: boolean) {
     sessionStorage.setItem(
       "FFnS" + (persistent ? "#" : "_") + id,
       JSON.stringify(value)
     );
   }
 
-  get(id: string, persistent?: boolean) {
+  getFFnS(id: string, persistent?: boolean) {
     return JSON.parse(
       sessionStorage.getItem("FFnS" + (persistent ? "#" : "_") + id)
     );
@@ -612,8 +599,8 @@ export class FeedlyPage {
     return document.getElementById(id + "_main");
   }
 
-  getArticleId(a: JQuery) {
-    return a.attr("id").replace(/_main$/, "");
+  getArticleId(e: HTMLElement) {
+    return e.getAttribute("id").replace(/_main$/, "");
   }
 
   fetchMoreEntries(batchSize: number) {
@@ -798,8 +785,9 @@ export class FeedlyPage {
           if (markAsReadEntries.length == 0) {
             return;
           }
-          let ids = $.map<Element, string>(markAsReadEntries.toArray(), (e) =>
-            getArticleId($(e))
+          let ids = $.map<HTMLElement, string>(
+            markAsReadEntries.toArray(),
+            (e) => getArticleId(e)
           );
           let reader = getService("reader");
           reader.askMarkEntriesAsRead(ids, {});
@@ -1027,3 +1015,5 @@ export class FeedlyPage {
     };
   }
 }
+
+const page = typeof FeedlyPage;

@@ -70,6 +70,9 @@ export class ArticleManager {
   }
 
   filterAndRestrict(article: Article) {
+    if (this.isDisableAllFilters()) {
+      return;
+    }
     var sub = this.getCurrentSub();
     if (sub.isFilteringEnabled() || sub.isRestrictingEnabled()) {
       var hide = false;
@@ -122,7 +125,7 @@ export class ArticleManager {
             if (advControls.keepUnread && advControls.markAsReadVisible) {
               this.articlesToMarkAsRead.push(article);
             }
-          } else if (advControls.hide) {
+          } else if (advControls.hide && !this.isDisableAllFilters()) {
             article.setVisible(false);
           }
         }
@@ -134,7 +137,7 @@ export class ArticleManager {
     this.duplicateChecker.check(article);
 
     const filteringByReadingTime = sub.getFilteringByReadingTime();
-    if (filteringByReadingTime.enabled) {
+    if (filteringByReadingTime.enabled && !this.isDisableAllFilters()) {
       let thresholdWords =
         filteringByReadingTime.thresholdMinutes *
         filteringByReadingTime.wordsPerMinute;
@@ -151,12 +154,17 @@ export class ArticleManager {
   }
 
   checkDisableAllFilters() {
-    if (this.page.get(ext.disableAllFiltersButtonId)) {
-      if (this.page.get(ext.disableAllFiltersEnabled, true)) {
-        $(ext.articleSelector).css("display", "");
-        this.page.clearHidingInfo();
-      }
+    if (this.isDisableAllFilters()) {
+      $(ext.articleSelector).css("display", "");
+      this.page.clearHidingInfo();
     }
+  }
+
+  isDisableAllFilters() {
+    return (
+      this.page.get(ext.disableAllFiltersButtonId) &&
+      this.page.get(ext.disableAllFiltersEnabled, true)
+    );
   }
 
   applyColoringRules(article: Article) {

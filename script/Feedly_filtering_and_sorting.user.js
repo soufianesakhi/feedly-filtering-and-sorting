@@ -37,7 +37,7 @@ var ext = {
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
     articleSelector: ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame), .EntryList__chunk > [id].inlineFrame.u100",
-    sortedVisibleArticlesSelector: ".EntryList__chunk > [id]:not([gap-article]):visible",
+    sortedArticlesSelector: ".EntryList__chunk > [id]:not([gap-article])",
     inlineArticleSelector: ".inlineFrame[id]",
     articleAndInlineSelector: ".EntryList__chunk > [id]:not([gap-article])",
     unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
@@ -91,6 +91,7 @@ var ext = {
     forceRefreshArticlesId: "forceRefreshArticles",
     disablePageOverridesId: "disablePageOverrides",
     inliningEntryId: "inliningEntry",
+    layoutChangeSelector: "input[id^='layout-']",
 };
 
 var templates = {
@@ -107,7 +108,7 @@ var templates = {
 };
 
 var exported = {};
-var pageSupportedRegexp = new RegExp(ext.supportedURLsPattern, "i");
+const pageSupportedRegexp = new RegExp(ext.supportedURLsPattern, "i");
 function currentPageNotSupported() {
     return !pageSupportedRegexp.test(document.URL);
 }
@@ -115,7 +116,7 @@ function $id(id) {
     return $("#" + id);
 }
 function onClick(jq, handler, thisArg) {
-    jq.click(function (eventObject) {
+    jq.click((eventObject) => {
         try {
             handler.apply(thisArg, eventObject);
         }
@@ -125,7 +126,7 @@ function onClick(jq, handler, thisArg) {
     });
 }
 function bindMarkup(html, bindings) {
-    bindings.forEach(function (binding) {
+    bindings.forEach((binding) => {
         html = html.replace(new RegExp("{{[ ]*" + binding.name + "[ ]*}}", "g"), "" + binding.value);
     });
     return html;
@@ -157,7 +158,7 @@ function registerAccessors(srcObject, srcFieldName, targetPrototype, setterCallb
             }
             var getterName = (type === "boolean" ? "is" : "get") + accessorName;
             var setterName = "set" + accessorName;
-            (function () {
+            (() => {
                 var callbackField = field;
                 var getFinalObj = function (callbackSrcObj) {
                     return fieldObjectName == null
@@ -194,10 +195,10 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
         clone = {};
         typedClone = toClone;
     }
-    var _loop_1 = function () {
-        type = typeof typedClone[field];
+    for (var field in typedClone) {
+        var type = typeof typedClone[field];
         if (toClone[field] == null) {
-            return "continue";
+            continue;
         }
         switch (type) {
             case "object":
@@ -205,15 +206,15 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
                     clone[field] = deepClone(toClone[field], alternativeToCloneByField[field], alternativeToCloneByField);
                 }
                 else {
-                    array = toClone[field];
+                    var array = toClone[field];
                     if (array.length > 0) {
-                        arrayType = typeof array[0];
+                        var arrayType = typeof array[0];
                         if (arrayType === "object") {
-                            var cloneArray_1 = [];
-                            array.forEach(function (element) {
-                                cloneArray_1.push(deepClone(element, new alternativeToCloneByField[field](), alternativeToCloneByField));
+                            let cloneArray = [];
+                            array.forEach((element) => {
+                                cloneArray.push(deepClone(element, new alternativeToCloneByField[field](), alternativeToCloneByField));
                             });
-                            clone[field] = cloneArray_1;
+                            clone[field] = cloneArray;
                         }
                         else {
                             clone[field] = array.slice(0);
@@ -232,66 +233,32 @@ function deepClone(toClone, clone, alternativeToCloneByField) {
                 clone[field] = getOrDefault(toClone[field], clone[field]);
                 break;
         }
-    };
-    var type, array, arrayType;
-    for (var field in typedClone) {
-        _loop_1();
     }
     return clone;
 }
-function executeWindow(sourceName) {
-    var functions = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        functions[_i - 1] = arguments[_i];
-    }
+function executeWindow(sourceName, ...functions) {
     var srcTxt = "try {\n";
-    for (var i = 0; i < functions.length; i++) {
-        srcTxt += "(" + functions[i].toString() + ")();\n";
-    }
+    srcTxt += functions.map((f) => `(function ${f})();\n`).join("\n");
     srcTxt += "\n} catch(e) { console.log(e) }";
     injectScriptText(srcTxt, sourceName);
 }
-function injectToWindow(functionNames) {
-    var functions = [];
-    for (var _i = 1; _i < arguments.length; _i++) {
-        functions[_i - 1] = arguments[_i];
-    }
-    var srcTxt = "";
-    for (var i = 0; i < functions.length; i++) {
-        srcTxt +=
-            functions[i]
-                .toString()
-                .replace(/^function/, "function " + functionNames[i]) + "\n";
-    }
-    injectScriptText(srcTxt, "FFnS-" + (functions.length == 1 ? functionNames[0] : "Functions"), true);
+function injectToWindow(...functions) {
+    var srcTxt = functions.map((f) => "function " + f).join("\n");
+    const name = functions.length == 1 ? functions[0].name : "Functions";
+    injectScriptText(srcTxt, "FFnS-" + name, true);
 }
-function injectClasses() {
-    var classes = [];
-    for (var _i = 0; _i < arguments.length; _i++) {
-        classes[_i] = arguments[_i];
-    }
-    var srcTxt = "";
-    for (var i = 0; i < classes.length; i++) {
-        var txt = classes[i].toString();
-        var className = /function ([^\(]+)/i.exec(txt)[1];
-        srcTxt +=
-            "var " +
-                className +
-                " = (function () {\n" +
-                classes[i].toString() +
-                "\nreturn " +
-                className +
-                ";" +
-                "\n}());";
-    }
+function injectClasses(...classes) {
+    var srcTxt = classes
+        .map((c) => `${c} window.${c.name} = ${c.name};`)
+        .join("\n");
     injectScriptText(srcTxt, "classes-" + Date.now(), true);
 }
 function injectScriptText(srcTxt, sourceURL, evalPermitted) {
     if (sourceURL) {
-        srcTxt += "//# sourceURL=" + sourceURL;
+        srcTxt += "//# sourceURL=" + sourceURL + ".js";
     }
     if (evalPermitted && typeof InstallTrigger != "undefined") {
-        srcTxt = "eval(`" + srcTxt + "`)";
+        srcTxt = "eval(atob('" + btoa(srcTxt) + "'))";
     }
     var script = document.createElement("script");
     script.type = "text/javascript";
@@ -315,7 +282,7 @@ function exportFile(content, filename) {
     downloadLink.click();
 }
 function getDateWithoutTime(date) {
-    var result = new Date(date.getTime());
+    let result = new Date(date.getTime());
     result.setHours(0, 0, 0, 0);
     return result;
 }
@@ -327,7 +294,7 @@ function pushIfAbsent(array, value) {
     return false;
 }
 function removeContent(elements) {
-    elements.each(function (i, element) {
+    elements.each((i, element) => {
         var attributes = $.map(element.attributes, function (item) {
             return item.name;
         });
@@ -338,24 +305,24 @@ function removeContent(elements) {
     });
 }
 function hexToRgb(hexColor) {
-    var rgb = parseInt(hexColor.substring(1), 16);
-    var r = (rgb >> 16) & 0xff;
-    var g = (rgb >> 8) & 0xff;
-    var b = (rgb >> 0) & 0xff;
+    const rgb = parseInt(hexColor.substring(1), 16);
+    const r = (rgb >> 16) & 0xff;
+    const g = (rgb >> 8) & 0xff;
+    const b = (rgb >> 0) & 0xff;
     return [r, g, b];
 }
 function isLight(rgb) {
-    var luma = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]; // per ITU-R BT.709
+    const luma = 0.2126 * rgb[0] + 0.7152 * rgb[1] + 0.0722 * rgb[2]; // per ITU-R BT.709
     return luma > 128;
 }
 function shadeColor(rgb, percent) {
-    var R = (rgb[0] * (100 + percent)) / 100;
-    var G = (rgb[1] * (100 + percent)) / 100;
-    var B = (rgb[2] * (100 + percent)) / 100;
+    let R = (rgb[0] * (100 + percent)) / 100;
+    let G = (rgb[1] * (100 + percent)) / 100;
+    let B = (rgb[2] * (100 + percent)) / 100;
     R = R < 255 ? R : 255;
     G = G < 255 ? G : 255;
     B = B < 255 ? B : 255;
-    return "rgb(" + R + ", " + G + ", " + B + ")";
+    return `rgb(${R}, ${G}, ${B})`;
 }
 
 var SortingType;
@@ -374,38 +341,38 @@ var SortingType;
     SortingType[SortingType["Random"] = 11] = "Random";
     SortingType[SortingType["PublishDayNewFirst"] = 12] = "PublishDayNewFirst";
     SortingType[SortingType["PublishDayOldFirst"] = 13] = "PublishDayOldFirst";
-})(SortingType = exported.SortingType || (exported.SortingType = {}));
+})(SortingType || (SortingType = {}));
 var FilteringType;
 (function (FilteringType) {
     FilteringType[FilteringType["RestrictedOn"] = 0] = "RestrictedOn";
     FilteringType[FilteringType["FilteredOut"] = 1] = "FilteredOut";
-})(FilteringType = exported.FilteringType || (exported.FilteringType = {}));
+})(FilteringType || (FilteringType = {}));
 var KeywordMatchingArea;
 (function (KeywordMatchingArea) {
     KeywordMatchingArea[KeywordMatchingArea["Title"] = 0] = "Title";
     KeywordMatchingArea[KeywordMatchingArea["Body"] = 1] = "Body";
     KeywordMatchingArea[KeywordMatchingArea["Author"] = 2] = "Author";
-})(KeywordMatchingArea = exported.KeywordMatchingArea || (exported.KeywordMatchingArea = {}));
+})(KeywordMatchingArea || (KeywordMatchingArea = {}));
 var KeywordMatchingMethod;
 (function (KeywordMatchingMethod) {
     KeywordMatchingMethod[KeywordMatchingMethod["Simple"] = 0] = "Simple";
     KeywordMatchingMethod[KeywordMatchingMethod["Word"] = 1] = "Word";
     KeywordMatchingMethod[KeywordMatchingMethod["RegExp"] = 2] = "RegExp";
-})(KeywordMatchingMethod = exported.KeywordMatchingMethod || (exported.KeywordMatchingMethod = {}));
+})(KeywordMatchingMethod || (KeywordMatchingMethod = {}));
 var ColoringRuleSource;
 (function (ColoringRuleSource) {
     ColoringRuleSource[ColoringRuleSource["SpecificKeywords"] = 0] = "SpecificKeywords";
     ColoringRuleSource[ColoringRuleSource["SourceTitle"] = 1] = "SourceTitle";
     ColoringRuleSource[ColoringRuleSource["RestrictingKeywords"] = 2] = "RestrictingKeywords";
     ColoringRuleSource[ColoringRuleSource["FilteringKeywords"] = 3] = "FilteringKeywords";
-})(ColoringRuleSource = exported.ColoringRuleSource || (exported.ColoringRuleSource = {}));
+})(ColoringRuleSource || (ColoringRuleSource = {}));
 var HTMLElementType;
 (function (HTMLElementType) {
     HTMLElementType[HTMLElementType["SelectBox"] = 0] = "SelectBox";
     HTMLElementType[HTMLElementType["CheckBox"] = 1] = "CheckBox";
     HTMLElementType[HTMLElementType["NumberInput"] = 2] = "NumberInput";
     HTMLElementType[HTMLElementType["ColorInput"] = 3] = "ColorInput";
-})(HTMLElementType = exported.HTMLElementType || (exported.HTMLElementType = {}));
+})(HTMLElementType || (HTMLElementType = {}));
 function getFilteringTypes() {
     return [FilteringType.FilteredOut, FilteringType.RestrictedOn];
 }
@@ -413,12 +380,12 @@ function getFilteringTypeId(type) {
     return FilteringType[type];
 }
 
-var AsyncResult = /** @class */ (function () {
-    function AsyncResult(task, taskThisArg) {
+class AsyncResult {
+    constructor(task, taskThisArg) {
         this.task = task;
         this.taskThisArg = taskThisArg;
     }
-    AsyncResult.prototype.then = function (callback, thisArg) {
+    then(callback, thisArg) {
         try {
             this.resultCallback = callback;
             this.resultThisArg = thisArg;
@@ -427,38 +394,35 @@ var AsyncResult = /** @class */ (function () {
         catch (e) {
             console.log(e);
         }
-    };
-    AsyncResult.prototype.result = function (result) {
+    }
+    result(result) {
         try {
             this.resultCallback.call(this.resultThisArg, result);
         }
         catch (e) {
             console.log(e);
         }
-    };
-    AsyncResult.prototype.chain = function (asyncResult) {
-        this.then(function () {
+    }
+    chain(asyncResult) {
+        this.then(() => {
             asyncResult.done();
         }, this);
-    };
-    AsyncResult.prototype.done = function () {
+    }
+    done() {
         try {
             this.resultCallback.apply(this.resultThisArg);
         }
         catch (e) {
             console.log(e);
         }
-    };
-    return AsyncResult;
-}());
-
-var UserScriptInitializer = /** @class */ (function () {
-    function UserScriptInitializer() {
     }
-    UserScriptInitializer.prototype.loadScript = function (name) {
+}
+
+class UserScriptInitializer {
+    loadScript(name) {
         injectScriptText(GM_getResourceText(name));
-    };
-    UserScriptInitializer.prototype.getResourceURLs = function () {
+    }
+    getResourceURLs() {
         return {
             plusIconURL: "https://cdn0.iconfinder.com/data/icons/social-messaging-ui-color-shapes/128/add-circle-blue-128.png",
             eraseIconURL: "https://cdn2.iconfinder.com/data/icons/large-glossy-svg-icons/512/erase_delete_remove_wipe_out-128.png",
@@ -469,58 +433,53 @@ var UserScriptInitializer = /** @class */ (function () {
             clearFiltersURL: "https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/web-ext/images/filter_clear.png",
             extensionIconURL: "https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/web-ext/icons/128.png"
         };
-    };
-    return UserScriptInitializer;
-}());
+    }
+}
 var INITIALIZER = new UserScriptInitializer();
 
-var UserScriptStorage = /** @class */ (function () {
-    function UserScriptStorage() {
-    }
-    UserScriptStorage.prototype.getAsync = function (id, defaultValue) {
-        return new AsyncResult(function (p) {
+class UserScriptStorage {
+    getAsync(id, defaultValue) {
+        return new AsyncResult(p => {
             p.result(JSON.parse(GM_getValue(id, JSON.stringify(defaultValue))));
         }, this);
-    };
-    UserScriptStorage.prototype.getItemsAsync = function (ids) {
-        return new AsyncResult(function (p) {
-            var results = {};
-            ids.forEach(function (id) {
-                var value = GM_getValue(id, null);
+    }
+    getItemsAsync(ids) {
+        return new AsyncResult(p => {
+            let results = {};
+            ids.forEach(id => {
+                let value = GM_getValue(id, null);
                 if (value != null) {
                     results[id] = JSON.parse(value);
                 }
             });
             p.result(results);
         }, this);
-    };
-    UserScriptStorage.prototype.put = function (id, value) {
+    }
+    put(id, value) {
         GM_setValue(id, JSON.stringify(value));
-    };
-    UserScriptStorage.prototype.delete = function (id) {
+    }
+    delete(id) {
         GM_deleteValue(id);
-    };
-    UserScriptStorage.prototype.listKeys = function () {
+    }
+    listKeys() {
         return GM_listValues();
-    };
-    UserScriptStorage.prototype.init = function () {
-        return new AsyncResult(function (p) {
+    }
+    init() {
+        return new AsyncResult(p => {
             p.done();
         }, this);
-    };
-    UserScriptStorage.prototype.getSyncStorageManager = function () {
+    }
+    getSyncStorageManager() {
         return null;
-    };
-    UserScriptStorage.prototype.getLocalStorage = function () {
+    }
+    getLocalStorage() {
         return this;
-    };
-    return UserScriptStorage;
-}());
+    }
+}
 var DataStore = new UserScriptStorage();
 
-var SubscriptionDTO = /** @class */ (function () {
-    function SubscriptionDTO(url) {
-        var _this = this;
+class SubscriptionDTO {
+    constructor(url) {
         this.filteringEnabled = false;
         this.restrictingEnabled = false;
         this.sortingEnabled = true;
@@ -556,14 +515,13 @@ var SubscriptionDTO = /** @class */ (function () {
         this.highlightDuplicatesColor = "FFFF00";
         this.filteringByReadingTime = new FilteringByReadingTime();
         this.url = url;
-        getFilteringTypes().forEach(function (type) {
-            _this.filteringListsByType[type] = [];
+        getFilteringTypes().forEach(type => {
+            this.filteringListsByType[type] = [];
         });
     }
-    return SubscriptionDTO;
-}());
-var AdvancedControlsReceivedPeriod = /** @class */ (function () {
-    function AdvancedControlsReceivedPeriod() {
+}
+class AdvancedControlsReceivedPeriod {
+    constructor() {
         this.maxHours = 6;
         this.keepUnread = false;
         this.hide = false;
@@ -571,20 +529,18 @@ var AdvancedControlsReceivedPeriod = /** @class */ (function () {
         this.minPopularity = 200;
         this.markAsReadVisible = false;
     }
-    return AdvancedControlsReceivedPeriod;
-}());
-var FilteringByReadingTime = /** @class */ (function () {
-    function FilteringByReadingTime() {
+}
+class FilteringByReadingTime {
+    constructor() {
         this.enabled = false;
         this.filterLong = true;
         this.thresholdMinutes = 5;
         this.keepUnread = false;
         this.wordsPerMinute = 200;
     }
-    return FilteringByReadingTime;
-}());
-var ColoringRule = /** @class */ (function () {
-    function ColoringRule() {
+}
+class ColoringRule {
+    constructor() {
         this.source = ColoringRuleSource.SpecificKeywords;
         this.color = "FFFF00";
         this.highlightAllTitle = true;
@@ -592,270 +548,264 @@ var ColoringRule = /** @class */ (function () {
         this.matchingArea = KeywordMatchingArea.Title;
         this.specificKeywords = [];
     }
-    return ColoringRule;
-}());
+}
 
-var Subscription = /** @class */ (function () {
-    function Subscription(dao, dto) {
+class Subscription {
+    constructor(dao, dto) {
         this.dao = dao;
         if (dto) {
             this.dto = dto;
         }
     }
-    Subscription.prototype.getURL = function () {
+    getURL() {
         return this.dto.url;
-    };
-    Subscription.prototype.isFilteringEnabled = function () {
+    }
+    isFilteringEnabled() {
         return this.dto.filteringEnabled;
-    };
-    Subscription.prototype.isRestrictingEnabled = function () {
+    }
+    isRestrictingEnabled() {
         return this.dto.restrictingEnabled;
-    };
-    Subscription.prototype.isSortingEnabled = function () {
+    }
+    isSortingEnabled() {
         return this.dto.sortingEnabled;
-    };
-    Subscription.prototype.isPinHotToTop = function () {
+    }
+    isPinHotToTop() {
         return this.dto.pinHotToTop;
-    };
-    Subscription.prototype.isOpenAndMarkAsRead = function () {
+    }
+    isOpenAndMarkAsRead() {
         return this.dto.openAndMarkAsRead;
-    };
-    Subscription.prototype.isVisualOpenAndMarkAsRead = function () {
+    }
+    isVisualOpenAndMarkAsRead() {
         return this.dto.visualOpenAndMarkAsRead;
-    };
-    Subscription.prototype.isTitleOpenAndMarkAsRead = function () {
+    }
+    isTitleOpenAndMarkAsRead() {
         return this.dto.titleOpenAndMarkAsRead;
-    };
-    Subscription.prototype.isMarkAsReadAboveBelow = function () {
+    }
+    isMarkAsReadAboveBelow() {
         return this.dto.markAsReadAboveBelow;
-    };
-    Subscription.prototype.isMarkAsReadAboveBelowRead = function () {
+    }
+    isMarkAsReadAboveBelowRead() {
         return this.dto.markAsReadAboveBelowRead;
-    };
-    Subscription.prototype.isHideWhenMarkAboveBelow = function () {
+    }
+    isHideWhenMarkAboveBelow() {
         return this.dto.hideWhenMarkAboveBelow;
-    };
-    Subscription.prototype.isOpenCurrentFeedArticles = function () {
+    }
+    isOpenCurrentFeedArticles() {
         return this.dto.openCurrentFeedArticles;
-    };
-    Subscription.prototype.isDisplayDisableAllFiltersButton = function () {
+    }
+    isDisplayDisableAllFiltersButton() {
         return this.dto.displayDisableAllFiltersButton;
-    };
-    Subscription.prototype.isOpenCurrentFeedArticlesUnreadOnly = function () {
+    }
+    isOpenCurrentFeedArticlesUnreadOnly() {
         return this.dto.openCurrentFeedArticlesUnreadOnly;
-    };
-    Subscription.prototype.isMarkAsReadOnOpenCurrentFeedArticles = function () {
+    }
+    isMarkAsReadOnOpenCurrentFeedArticles() {
         return this.dto.markAsReadOnOpenCurrentFeedArticles;
-    };
-    Subscription.prototype.getMaxOpenCurrentFeedArticles = function () {
+    }
+    getMaxOpenCurrentFeedArticles() {
         return this.dto.maxOpenCurrentFeedArticles;
-    };
-    Subscription.prototype.isHideAfterRead = function () {
+    }
+    isHideAfterRead() {
         return this.dto.hideAfterRead;
-    };
-    Subscription.prototype.isReplaceHiddenWithGap = function () {
+    }
+    isReplaceHiddenWithGap() {
         return this.dto.replaceHiddenWithGap;
-    };
-    Subscription.prototype.isAlwaysUseDefaultMatchingAreas = function () {
+    }
+    isAlwaysUseDefaultMatchingAreas() {
         return this.dto.alwaysUseDefaultMatchingAreas;
-    };
-    Subscription.prototype.isMarkAsReadFiltered = function () {
+    }
+    isMarkAsReadFiltered() {
         return this.dto.markAsReadFiltered;
-    };
-    Subscription.prototype.getAdvancedControlsReceivedPeriod = function () {
+    }
+    getAdvancedControlsReceivedPeriod() {
         return this.dto.advancedControlsReceivedPeriod;
-    };
-    Subscription.prototype.getSortingType = function () {
+    }
+    getSortingType() {
         return this.dto.sortingType;
-    };
-    Subscription.prototype.getFilteringList = function (type) {
+    }
+    getFilteringList(type) {
         return this.dto.filteringListsByType[type];
-    };
-    Subscription.prototype.getKeywordMatchingAreas = function () {
+    }
+    getKeywordMatchingAreas() {
         return this.dto.keywordMatchingAreas;
-    };
-    Subscription.prototype.getKeywordMatchingMethod = function () {
+    }
+    getKeywordMatchingMethod() {
         return this.dto.keywordMatchingMethod;
-    };
-    Subscription.prototype.isDisablePageOverrides = function () {
+    }
+    isDisablePageOverrides() {
         return this.dto.disablePageOverrides;
-    };
-    Subscription.prototype.isAutoRefreshEnabled = function () {
+    }
+    isAutoRefreshEnabled() {
         return this.dto.autoRefreshEnabled;
-    };
-    Subscription.prototype.getAutoRefreshTime = function () {
+    }
+    getAutoRefreshTime() {
         return this.dto.autoRefreshMinutes * 60 * 1000;
-    };
-    Subscription.prototype.checkDuplicates = function () {
+    }
+    checkDuplicates() {
         return (this.isHideDuplicates() ||
             this.isMarkAsReadDuplicates() ||
             this.isHighlightDuplicates());
-    };
-    Subscription.prototype.isHideDuplicates = function () {
+    }
+    isHideDuplicates() {
         return this.dto.hideDuplicates;
-    };
-    Subscription.prototype.isMarkAsReadDuplicates = function () {
+    }
+    isMarkAsReadDuplicates() {
         return this.dto.markAsReadDuplicates;
-    };
-    Subscription.prototype.isHighlightDuplicates = function () {
+    }
+    isHighlightDuplicates() {
         return this.dto.highlightDuplicates;
-    };
-    Subscription.prototype.getHighlightDuplicatesColor = function () {
+    }
+    getHighlightDuplicatesColor() {
         return this.dto.highlightDuplicatesColor;
-    };
-    Subscription.prototype.getFilteringByReadingTime = function () {
+    }
+    getFilteringByReadingTime() {
         return this.dto.filteringByReadingTime;
-    };
-    Subscription.prototype.setHours_AdvancedControlsReceivedPeriod = function (hours) {
+    }
+    setHours_AdvancedControlsReceivedPeriod(hours) {
         if (hours > 23) {
             return;
         }
         var advancedPeriodDays = Math.floor(this.getAdvancedControlsReceivedPeriod().maxHours / 24);
         this.setMaxHours_AdvancedControlsReceivedPeriod(hours, advancedPeriodDays);
-    };
-    Subscription.prototype.setDays_AdvancedControlsReceivedPeriod = function (days) {
+    }
+    setDays_AdvancedControlsReceivedPeriod(days) {
         var advancedPeriodHours = this.getAdvancedControlsReceivedPeriod().maxHours % 24;
         this.setMaxHours_AdvancedControlsReceivedPeriod(advancedPeriodHours, days);
-    };
-    Subscription.prototype.setMaxHours_AdvancedControlsReceivedPeriod = function (hours, days) {
+    }
+    setMaxHours_AdvancedControlsReceivedPeriod(hours, days) {
         var maxHours = hours + 24 * days;
         this.getAdvancedControlsReceivedPeriod().maxHours = maxHours;
         this.save();
-    };
-    Subscription.prototype.getAdditionalSortingTypes = function () {
+    }
+    getAdditionalSortingTypes() {
         return this.dto.additionalSortingTypes;
-    };
-    Subscription.prototype.setAdditionalSortingTypes = function (additionalSortingTypes) {
+    }
+    setAdditionalSortingTypes(additionalSortingTypes) {
         this.dto.additionalSortingTypes = additionalSortingTypes;
         this.save();
-    };
-    Subscription.prototype.addAdditionalSortingType = function (additionalSortingType) {
+    }
+    addAdditionalSortingType(additionalSortingType) {
         this.dto.additionalSortingTypes.push(additionalSortingType);
         this.save();
-    };
-    Subscription.prototype.getColoringRules = function () {
+    }
+    getColoringRules() {
         return this.dto.coloringRules;
-    };
-    Subscription.prototype.setColoringRules = function (coloringRules) {
+    }
+    setColoringRules(coloringRules) {
         this.dto.coloringRules = coloringRules;
         this.save();
-    };
-    Subscription.prototype.addColoringRule = function (coloringRule) {
+    }
+    addColoringRule(coloringRule) {
         this.dto.coloringRules.push(coloringRule);
         this.save();
-    };
-    Subscription.prototype.addKeyword = function (keyword, type) {
+    }
+    addKeyword(keyword, type) {
         this.getFilteringList(type).push(keyword.trim());
         this.save();
-    };
-    Subscription.prototype.removeKeyword = function (keyword, type) {
+    }
+    removeKeyword(keyword, type) {
         var keywordList = this.getFilteringList(type);
         var index = keywordList.indexOf(keyword);
         if (index > -1) {
             keywordList.splice(index, 1);
         }
         this.save();
-    };
-    Subscription.prototype.resetFilteringList = function (type) {
+    }
+    resetFilteringList(type) {
         this.getFilteringList(type).length = 0;
-    };
-    Subscription.prototype.save = function () {
+    }
+    save() {
         this.dao.save(this.dto);
-    };
-    return Subscription;
-}());
+    }
+}
 
-var SubscriptionDAO = /** @class */ (function () {
-    function SubscriptionDAO() {
+class SubscriptionDAO {
+    constructor() {
         this.SUBSCRIPTION_ID_PREFIX = "subscription_";
         this.GLOBAL_SETTINGS_SUBSCRIPTION_URL = "---global settings---";
         registerAccessors(new SubscriptionDTO(""), "dto", Subscription.prototype, this.save, this);
     }
-    SubscriptionDAO.prototype.init = function () {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            DataStore.init().then(function () {
-                var t = _this;
+    init() {
+        return new AsyncResult(p => {
+            DataStore.init().then(() => {
+                var t = this;
                 var onLoad = function (sub) {
                     t.defaultSubscription = sub;
                     p.done();
                 };
-                if (DataStore.listKeys().indexOf(_this.getSubscriptionId(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL)) > -1) {
-                    _this.loadSubscription(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL).then(onLoad, _this);
+                if (DataStore.listKeys().indexOf(this.getSubscriptionId(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL)) > -1) {
+                    this.loadSubscription(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL).then(onLoad, this);
                 }
                 else {
                     // First time installing
-                    var dto = new SubscriptionDTO(_this.GLOBAL_SETTINGS_SUBSCRIPTION_URL);
-                    _this.save(dto);
-                    onLoad.call(_this, new Subscription(_this, dto));
+                    var dto = new SubscriptionDTO(this.GLOBAL_SETTINGS_SUBSCRIPTION_URL);
+                    this.save(dto);
+                    onLoad.call(this, new Subscription(this, dto));
                 }
-            }, _this);
+            }, this);
         }, this);
-    };
-    SubscriptionDAO.prototype.loadSubscription = function (url, forceReloadGlobalSettings) {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            var sub = new Subscription(_this);
+    }
+    loadSubscription(url, forceReloadGlobalSettings) {
+        return new AsyncResult(p => {
+            var sub = new Subscription(this);
             if (forceReloadGlobalSettings) {
-                url = _this.GLOBAL_SETTINGS_SUBSCRIPTION_URL;
+                url = this.GLOBAL_SETTINGS_SUBSCRIPTION_URL;
             }
-            _this.load(url).then(function (dto) {
+            this.load(url).then(dto => {
                 sub.dto = dto;
                 if (forceReloadGlobalSettings) {
-                    _this.defaultSubscription = sub;
+                    this.defaultSubscription = sub;
                 }
                 p.result(sub);
-            }, _this);
+            }, this);
         }, this);
-    };
-    SubscriptionDAO.prototype.save = function (dto) {
+    }
+    save(dto) {
         var url = dto.url;
         var id = this.getSubscriptionId(url);
         DataStore.put(id, dto);
         console.log("Subscription saved: " + JSON.stringify(dto));
-    };
-    SubscriptionDAO.prototype.saveAll = function (subscriptions) {
+    }
+    saveAll(subscriptions) {
         for (var url in subscriptions) {
             subscriptions[url].url = url;
             this.save(subscriptions[url]);
         }
-        var globalSettings = subscriptions[this.GLOBAL_SETTINGS_SUBSCRIPTION_URL];
+        let globalSettings = subscriptions[this.GLOBAL_SETTINGS_SUBSCRIPTION_URL];
         if (globalSettings) {
             // ensure initialization of new properties
-            var defaultDTO = this.clone(globalSettings, globalSettings.url);
+            let defaultDTO = this.clone(globalSettings, globalSettings.url);
             this.defaultSubscription = new Subscription(this, defaultDTO);
         }
-    };
-    SubscriptionDAO.prototype.loadAll = function () {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            var ids = _this.getAllSubscriptionIds();
-            DataStore.getItemsAsync(ids).then(function (results) {
+    }
+    loadAll() {
+        return new AsyncResult(p => {
+            let ids = this.getAllSubscriptionIds();
+            DataStore.getItemsAsync(ids).then(results => {
                 for (var key in results) {
                     var url = results[key].url;
                     if (!url) {
-                        url = key.substring(_this.SUBSCRIPTION_ID_PREFIX.length);
+                        url = key.substring(this.SUBSCRIPTION_ID_PREFIX.length);
                     }
                     results[url] = results[key];
                     delete results[url].url;
                     delete results[key];
                 }
                 p.result(results);
-            }, _this);
+            }, this);
         }, this);
-    };
-    SubscriptionDAO.prototype.load = function (url) {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            DataStore.getAsync(_this.getSubscriptionId(url), null).then(function (dto) {
+    }
+    load(url) {
+        return new AsyncResult(p => {
+            DataStore.getAsync(this.getSubscriptionId(url), null).then(dto => {
                 var cloneURL;
                 if (dto) {
                     var linkedURL = dto.linkedUrl;
                     if (linkedURL != null) {
                         console.log("Loading linked subscription: " + linkedURL);
-                        _this.load(linkedURL).then(function (dto) {
+                        this.load(linkedURL).then(dto => {
                             p.result(dto);
-                        }, _this);
+                        }, this);
                         return;
                     }
                     else {
@@ -864,21 +814,21 @@ var SubscriptionDAO = /** @class */ (function () {
                     }
                 }
                 else {
-                    dto = _this.defaultSubscription
-                        ? _this.defaultSubscription.dto
+                    dto = this.defaultSubscription
+                        ? this.defaultSubscription.dto
                         : new SubscriptionDTO(url);
                     cloneURL = url;
                 }
-                dto = _this.clone(dto, cloneURL);
+                dto = this.clone(dto, cloneURL);
                 p.result(dto);
-            }, _this);
+            }, this);
         }, this);
-    };
-    SubscriptionDAO.prototype.delete = function (url) {
+    }
+    delete(url) {
         DataStore.delete(this.getSubscriptionId(url));
         console.log("Deleted: " + url);
-    };
-    SubscriptionDAO.prototype.clone = function (dtoToClone, cloneUrl) {
+    }
+    clone(dtoToClone, cloneUrl) {
         var clone = deepClone(dtoToClone, new SubscriptionDTO(cloneUrl), {
             advancedControlsReceivedPeriod: new AdvancedControlsReceivedPeriod(),
             coloringRules: ColoringRule,
@@ -886,59 +836,54 @@ var SubscriptionDAO = /** @class */ (function () {
         });
         clone.url = cloneUrl;
         return clone;
-    };
-    SubscriptionDAO.prototype.importSettings = function (urlToImport, actualUrl) {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            _this.load(urlToImport).then(function (dto) {
+    }
+    importSettings(urlToImport, actualUrl) {
+        return new AsyncResult(p => {
+            this.load(urlToImport).then(dto => {
                 dto.url = actualUrl;
-                if (_this.isURLGlobal(actualUrl)) {
-                    _this.defaultSubscription.dto = dto;
+                if (this.isURLGlobal(actualUrl)) {
+                    this.defaultSubscription.dto = dto;
                 }
-                _this.save(dto);
+                this.save(dto);
                 p.done();
-            }, _this);
+            }, this);
         }, this);
-    };
-    SubscriptionDAO.prototype.getGlobalSettings = function () {
+    }
+    getGlobalSettings() {
         return this.defaultSubscription;
-    };
-    SubscriptionDAO.prototype.getAllSubscriptionIds = function () {
-        var _this = this;
-        return DataStore.listKeys().filter(function (value) {
-            return value.indexOf(_this.SUBSCRIPTION_ID_PREFIX) == 0;
+    }
+    getAllSubscriptionIds() {
+        return DataStore.listKeys().filter((value) => {
+            return value.indexOf(this.SUBSCRIPTION_ID_PREFIX) == 0;
         });
-    };
-    SubscriptionDAO.prototype.getAllSubscriptionURLs = function () {
-        var _this = this;
-        return this.getAllSubscriptionIds().map(function (value) {
-            return value.substring(_this.SUBSCRIPTION_ID_PREFIX.length);
+    }
+    getAllSubscriptionURLs() {
+        return this.getAllSubscriptionIds().map((value) => {
+            return value.substring(this.SUBSCRIPTION_ID_PREFIX.length);
         });
-    };
-    SubscriptionDAO.prototype.getSubscriptionId = function (url) {
+    }
+    getSubscriptionId(url) {
         return this.SUBSCRIPTION_ID_PREFIX + url;
-    };
-    SubscriptionDAO.prototype.linkSubscriptions = function (url, linkedURL) {
+    }
+    linkSubscriptions(url, linkedURL) {
         var id = this.getSubscriptionId(url);
         var linkedSub = new LinkedSubscriptionDTO(linkedURL);
         var t = this;
         DataStore.put(id, linkedSub);
         console.log("Subscription linked: " + JSON.stringify(linkedSub));
-    };
-    SubscriptionDAO.prototype.isURLGlobal = function (url) {
+    }
+    isURLGlobal(url) {
         return url === this.GLOBAL_SETTINGS_SUBSCRIPTION_URL;
-    };
-    return SubscriptionDAO;
-}());
-var LinkedSubscriptionDTO = /** @class */ (function () {
-    function LinkedSubscriptionDTO(linkedUrl) {
+    }
+}
+class LinkedSubscriptionDTO {
+    constructor(linkedUrl) {
         this.linkedUrl = linkedUrl;
     }
-    return LinkedSubscriptionDTO;
-}());
+}
 
-var SettingsManager = /** @class */ (function () {
-    function SettingsManager(uiManager) {
+class SettingsManager {
+    constructor(uiManager) {
         this.defaultUrlPrefixPattern = new RegExp(ext.defaultUrlPrefixPattern, "i");
         this.subscriptionUrlPrefixPattern = new RegExp(ext.subscriptionUrlPrefixPattern, "i");
         this.categoryUrlPrefixPattern = new RegExp(ext.categoryUrlPrefixPattern, "i");
@@ -946,35 +891,33 @@ var SettingsManager = /** @class */ (function () {
         this.dao = new SubscriptionDAO();
         this.uiManager = uiManager;
     }
-    SettingsManager.prototype.init = function () {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            _this.dao.init().chain(p);
+    init() {
+        return new AsyncResult(p => {
+            this.dao.init().chain(p);
         }, this);
-    };
-    SettingsManager.prototype.loadSubscription = function (globalSettingsEnabled, forceReloadGlobalSettings) {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            var onLoad = function (sub) {
-                _this.currentSubscription = sub;
+    }
+    loadSubscription(globalSettingsEnabled, forceReloadGlobalSettings) {
+        return new AsyncResult(p => {
+            var onLoad = (sub) => {
+                this.currentSubscription = sub;
                 p.result(sub);
             };
             if (globalSettingsEnabled) {
                 if (forceReloadGlobalSettings) {
-                    _this.dao.loadSubscription(null, true).then(onLoad, _this);
+                    this.dao.loadSubscription(null, true).then(onLoad, this);
                 }
                 else {
-                    onLoad.call(_this, _this.dao.getGlobalSettings());
+                    onLoad.call(this, this.dao.getGlobalSettings());
                 }
             }
             else {
-                _this.dao
-                    .loadSubscription(_this.getActualSubscriptionURL())
-                    .then(onLoad, _this);
+                this.dao
+                    .loadSubscription(this.getActualSubscriptionURL())
+                    .then(onLoad, this);
             }
         }, this);
-    };
-    SettingsManager.prototype.linkToSubscription = function (url) {
+    }
+    linkToSubscription(url) {
         var currentURL = this.currentSubscription.getURL();
         if (url === currentURL) {
             alert("Linking to the same subscription URL is impossible");
@@ -985,22 +928,21 @@ var SettingsManager = /** @class */ (function () {
         else {
             this.dao.linkSubscriptions(currentURL, url);
         }
-    };
-    SettingsManager.prototype.deleteSubscription = function (url) {
+    }
+    deleteSubscription(url) {
         this.dao.delete(url);
-    };
-    SettingsManager.prototype.importAllSettings = function (file) {
-        var _this = this;
-        var fr = new FileReader();
-        fr.onload = function () {
+    }
+    importAllSettings(file) {
+        let fr = new FileReader();
+        fr.onload = () => {
             try {
-                var settingsExport = JSON.parse(fr.result);
-                _this.uiManager.autoLoadAllArticlesCB.refreshValue(settingsExport.autoLoadAllArticles);
-                _this.uiManager.loadByBatchEnabledCB.refreshValue(settingsExport.loadByBatchEnabled);
-                _this.uiManager.batchSizeInput.refreshValue(settingsExport.batchSize);
-                _this.uiManager.globalSettingsEnabledCB.refreshValue(settingsExport.globalSettingsEnabled);
-                _this.dao.saveAll(settingsExport.subscriptions);
-                _this.uiManager.refreshPage();
+                let settingsExport = JSON.parse(fr.result);
+                this.uiManager.autoLoadAllArticlesCB.refreshValue(settingsExport.autoLoadAllArticles);
+                this.uiManager.loadByBatchEnabledCB.refreshValue(settingsExport.loadByBatchEnabled);
+                this.uiManager.batchSizeInput.refreshValue(settingsExport.batchSize);
+                this.uiManager.globalSettingsEnabledCB.refreshValue(settingsExport.globalSettingsEnabled);
+                this.dao.saveAll(settingsExport.subscriptions);
+                this.uiManager.refreshPage();
                 alert("The settings were successfully imported");
             }
             catch (e) {
@@ -1009,72 +951,66 @@ var SettingsManager = /** @class */ (function () {
             }
         };
         fr.readAsText(file);
-    };
-    SettingsManager.prototype.exportAllSettings = function () {
-        var _this = this;
-        this.dao.loadAll().then(function (subscriptions) {
-            var settingsExport = {
-                autoLoadAllArticles: _this.uiManager.autoLoadAllArticlesCB.getValue(),
-                loadByBatchEnabled: _this.uiManager.loadByBatchEnabledCB.getValue(),
-                batchSize: _this.uiManager.batchSizeInput.getValue(),
-                globalSettingsEnabled: _this.uiManager.globalSettingsEnabledCB.getValue(),
+    }
+    exportAllSettings() {
+        this.dao.loadAll().then(subscriptions => {
+            let settingsExport = {
+                autoLoadAllArticles: this.uiManager.autoLoadAllArticlesCB.getValue(),
+                loadByBatchEnabled: this.uiManager.loadByBatchEnabledCB.getValue(),
+                batchSize: this.uiManager.batchSizeInput.getValue(),
+                globalSettingsEnabled: this.uiManager.globalSettingsEnabledCB.getValue(),
                 subscriptions: subscriptions
             };
             exportFile(JSON.stringify(settingsExport, null, 4), "feedly-filtering-and-sorting.json");
         }, this);
-    };
-    SettingsManager.prototype.importSubscription = function (url) {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            var currentURL = _this.currentSubscription.getURL();
-            _this.dao.importSettings(url, currentURL).chain(p);
+    }
+    importSubscription(url) {
+        return new AsyncResult(p => {
+            var currentURL = this.currentSubscription.getURL();
+            this.dao.importSettings(url, currentURL).chain(p);
         }, this);
-    };
-    SettingsManager.prototype.getAllSubscriptionURLs = function () {
+    }
+    getAllSubscriptionURLs() {
         return this.dao.getAllSubscriptionURLs();
-    };
-    SettingsManager.prototype.getActualSubscriptionURL = function () {
-        var url = document.URL.replace(this.subscriptionUrlPrefixPattern, "subscription")
+    }
+    getActualSubscriptionURL() {
+        const url = document.URL.replace(this.subscriptionUrlPrefixPattern, "subscription")
             .replace(this.categoryUrlPrefixPattern, "")
             .replace(this.defaultUrlPrefixPattern, "");
         return decodeURIComponent(url);
-    };
-    SettingsManager.prototype.isGlobalMode = function () {
-        return this.dao.isURLGlobal(this.currentSubscription.getURL());
-    };
-    SettingsManager.prototype.getCurrentSubscription = function () {
-        return this.currentSubscription;
-    };
-    SettingsManager.prototype.getCrossCheckDuplicatesSettings = function () {
-        return this.crossCheckDuplicatesSettings;
-    };
-    return SettingsManager;
-}());
-var CrossCheckDuplicatesSettings = /** @class */ (function () {
-    function CrossCheckDuplicatesSettings() {
     }
-    CrossCheckDuplicatesSettings.prototype.setChangeCallback = function (fun) {
+    isGlobalMode() {
+        return this.dao.isURLGlobal(this.currentSubscription.getURL());
+    }
+    getCurrentSubscription() {
+        return this.currentSubscription;
+    }
+    getCrossCheckDuplicatesSettings() {
+        return this.crossCheckDuplicatesSettings;
+    }
+}
+class CrossCheckDuplicatesSettings {
+    setChangeCallback(fun) {
         this.changeCallback = fun;
-    };
-    CrossCheckDuplicatesSettings.prototype.isEnabled = function () {
+    }
+    isEnabled() {
         return this.enabled;
-    };
-    CrossCheckDuplicatesSettings.prototype.setEnabled = function (enabled) {
+    }
+    setEnabled(enabled) {
         this.enabled = enabled;
         this.changeCallback();
-    };
-    CrossCheckDuplicatesSettings.prototype.getDays = function () {
+    }
+    getDays() {
         return this.days;
-    };
-    CrossCheckDuplicatesSettings.prototype.setDays = function (days) {
+    }
+    setDays(days) {
         this.days = days;
         this.changeCallback();
-    };
-    return CrossCheckDuplicatesSettings;
-}());
+    }
+}
 
-var ArticleManager = /** @class */ (function () {
-    function ArticleManager(settingsManager, keywordManager, page) {
+class ArticleManager {
+    constructor(settingsManager, keywordManager, page) {
         this.articlesToMarkAsRead = [];
         this.darkMode = this.isDarkMode();
         this.settingsManager = settingsManager;
@@ -1083,33 +1019,31 @@ var ArticleManager = /** @class */ (function () {
         this.page = page;
         this.duplicateChecker = new DuplicateChecker(this);
     }
-    ArticleManager.prototype.refreshArticles = function () {
-        var _this = this;
+    refreshArticles() {
         this.resetArticles();
         if ($(ext.articleSelector).length == 0) {
             return;
         }
-        $(ext.articleSelector).each(function (i, e) {
-            _this.addArticle(e, true);
+        $(ext.articleSelector).each((i, e) => {
+            this.addArticle(e, true);
         });
         this.checkLastAddedArticle(true);
         this.sortArticles(true);
-    };
-    ArticleManager.prototype.resetArticles = function () {
+    }
+    resetArticles() {
         this.articlesToMarkAsRead = [];
         this.duplicateChecker.reset();
-    };
-    ArticleManager.prototype.refreshColoring = function () {
-        var _this = this;
+    }
+    refreshColoring() {
         this.darkMode = this.isDarkMode();
-        $(ext.articleSelector).each(function (i, e) {
-            _this.applyColoringRules(new Article(e));
+        $(ext.articleSelector).each((i, e) => {
+            this.applyColoringRules(new Article(e));
         });
-    };
-    ArticleManager.prototype.getCurrentSub = function () {
+    }
+    getCurrentSub() {
         return this.settingsManager.getCurrentSubscription();
-    };
-    ArticleManager.prototype.addArticle = function (a, skipCheck) {
+    }
+    addArticle(a, skipCheck) {
         var article = new Article(a);
         this.filterAndRestrict(article);
         this.advancedControls(article);
@@ -1119,8 +1053,11 @@ var ArticleManager = /** @class */ (function () {
             this.checkLastAddedArticle();
             this.sortArticles();
         }
-    };
-    ArticleManager.prototype.filterAndRestrict = function (article) {
+    }
+    filterAndRestrict(article) {
+        if (this.isDisableAllFilters()) {
+            return;
+        }
         var sub = this.getCurrentSub();
         if (sub.isFilteringEnabled() || sub.isRestrictingEnabled()) {
             var hide = false;
@@ -1128,7 +1065,7 @@ var ArticleManager = /** @class */ (function () {
                 hide = this.keywordManager.matchKeywords(article, sub, FilteringType.RestrictedOn, true);
             }
             if (sub.isFilteringEnabled()) {
-                var filtered = this.keywordManager.matchKeywords(article, sub, FilteringType.FilteredOut);
+                let filtered = this.keywordManager.matchKeywords(article, sub, FilteringType.FilteredOut);
                 hide = hide || filtered;
                 if (filtered && sub.isMarkAsReadFiltered()) {
                     article.addClass(ext.markAsReadImmediatelyClass);
@@ -1144,8 +1081,8 @@ var ArticleManager = /** @class */ (function () {
         else {
             article.setVisible();
         }
-    };
-    ArticleManager.prototype.advancedControls = function (article) {
+    }
+    advancedControls(article) {
         var sub = this.getCurrentSub();
         var advControls = sub.getAdvancedControlsReceivedPeriod();
         if (advControls.keepUnread || advControls.hide) {
@@ -1165,7 +1102,7 @@ var ArticleManager = /** @class */ (function () {
                             this.articlesToMarkAsRead.push(article);
                         }
                     }
-                    else if (advControls.hide) {
+                    else if (advControls.hide && !this.isDisableAllFilters()) {
                         article.setVisible(false);
                     }
                 }
@@ -1175,11 +1112,11 @@ var ArticleManager = /** @class */ (function () {
             }
         }
         this.duplicateChecker.check(article);
-        var filteringByReadingTime = sub.getFilteringByReadingTime();
-        if (filteringByReadingTime.enabled) {
-            var thresholdWords = filteringByReadingTime.thresholdMinutes *
+        const filteringByReadingTime = sub.getFilteringByReadingTime();
+        if (filteringByReadingTime.enabled && !this.isDisableAllFilters()) {
+            let thresholdWords = filteringByReadingTime.thresholdMinutes *
                 filteringByReadingTime.wordsPerMinute;
-            var articleWords = article.body.split(" ").length;
+            let articleWords = article.body.split(" ").length;
             if (articleWords != thresholdWords &&
                 filteringByReadingTime.filterLong == articleWords > thresholdWords) {
                 article.setVisible(false);
@@ -1188,21 +1125,23 @@ var ArticleManager = /** @class */ (function () {
                 this.articlesToMarkAsRead.push(article);
             }
         }
-    };
-    ArticleManager.prototype.checkDisableAllFilters = function () {
-        if (this.page.get(ext.disableAllFiltersButtonId)) {
-            if (this.page.get(ext.disableAllFiltersEnabled, true)) {
-                $(ext.articleSelector).css("display", "");
-                this.page.clearHidingInfo();
-            }
+    }
+    checkDisableAllFilters() {
+        if (this.isDisableAllFilters()) {
+            $(ext.articleSelector).css("display", "");
+            this.page.clearHidingInfo();
         }
-    };
-    ArticleManager.prototype.applyColoringRules = function (article) {
-        var sub = this.getCurrentSub();
-        var rules = sub.getColoringRules();
-        for (var i = 0; i < rules.length; i++) {
-            var rule = rules[i];
-            var keywords = void 0;
+    }
+    isDisableAllFilters() {
+        return (this.page.get(ext.disableAllFiltersButtonId) &&
+            this.page.get(ext.disableAllFiltersEnabled, true));
+    }
+    applyColoringRules(article) {
+        let sub = this.getCurrentSub();
+        let rules = sub.getColoringRules();
+        for (let i = 0; i < rules.length; i++) {
+            let rule = rules[i];
+            let keywords;
             switch (rule.source) {
                 case ColoringRuleSource.SpecificKeywords:
                     keywords = rule.specificKeywords;
@@ -1218,22 +1157,22 @@ var ArticleManager = /** @class */ (function () {
                 article.setColor(this.generateColor(article.getSource()));
             }
             else {
-                var match = this.keywordManager.matchSpecficKeywords(article, keywords, rule.matchingMethod, rule.matchingArea);
+                let match = this.keywordManager.matchSpecficKeywords(article, keywords, rule.matchingMethod, rule.matchingArea);
                 article.setColor(match ? this.correctDarkness("#" + rule.color) : "");
                 if (match) {
                     return;
                 }
             }
         }
-    };
-    ArticleManager.prototype.correctDarkness = function (hexColor) {
-        var rgb = hexToRgb(hexColor);
+    }
+    correctDarkness(hexColor) {
+        const rgb = hexToRgb(hexColor);
         if (isLight(rgb) && this.darkMode) {
             return shadeColor(rgb, -80);
         }
         return hexColor;
-    };
-    ArticleManager.prototype.generateColor = function (id) {
+    }
+    generateColor(id) {
         if (!id || id.length == 0) {
             return "";
         }
@@ -1241,14 +1180,14 @@ var ArticleManager = /** @class */ (function () {
         for (var i = 0; i < id.length; i++) {
             x += id.charCodeAt(i);
         }
-        var h = (x % 360) + 1;
+        let h = (x % 360) + 1;
         return "hsl(" + h + ", 100%, " + (this.darkMode ? "20%)" : "80%)");
-    };
-    ArticleManager.prototype.isDarkMode = function () {
+    }
+    isDarkMode() {
         return $("body").hasClass("theme--dark");
-    };
-    ArticleManager.prototype.checkLastAddedArticle = function (refresh) {
-        var allArticlesChecked = $(ext.articleSelector).filter(ext.uncheckedArticlesSelector).length == 0;
+    }
+    checkLastAddedArticle(refresh) {
+        const allArticlesChecked = $(ext.articleSelector).filter(ext.uncheckedArticlesSelector).length == 0;
         if (allArticlesChecked) {
             this.prepareMarkAsRead();
             this.page.refreshHidingInfo();
@@ -1257,20 +1196,19 @@ var ArticleManager = /** @class */ (function () {
             }
             this.checkDisableAllFilters();
         }
-    };
-    ArticleManager.prototype.sortArticles = function (force) {
-        var _this = this;
+    }
+    sortArticles(force) {
         if (!this.page.get(ext.sortArticlesId) && !force) {
             return;
         }
         this.page.put(ext.sortArticlesId, false);
-        var sub = this.getCurrentSub();
-        $(ext.articlesContainerSelector).each(function (i, c) {
-            var visibleArticles = [];
-            var hiddenArticles = [];
-            var articlesContainer = $(c);
-            articlesContainer.find(ext.articleSelector).each(function (i, e) {
-                var a = new Article(e);
+        let sub = this.getCurrentSub();
+        $(ext.articlesContainerSelector).each((i, c) => {
+            let visibleArticles = [];
+            let hiddenArticles = [];
+            let articlesContainer = $(c);
+            articlesContainer.find(ext.articleSelector).each((i, e) => {
+                let a = new Article(e);
                 if (a.isVisible()) {
                     visibleArticles.push(a);
                 }
@@ -1281,7 +1219,7 @@ var ArticleManager = /** @class */ (function () {
             if (sub.isPinHotToTop()) {
                 var hotArticles = [];
                 var normalArticles = [];
-                visibleArticles.forEach(function (article) {
+                visibleArticles.forEach((article) => {
                     if (article.isHot()) {
                         hotArticles.push(article);
                     }
@@ -1289,95 +1227,94 @@ var ArticleManager = /** @class */ (function () {
                         normalArticles.push(article);
                     }
                 });
-                _this.sortArticleArray(hotArticles);
-                _this.sortArticleArray(normalArticles);
+                this.sortArticleArray(hotArticles);
+                this.sortArticleArray(normalArticles);
                 visibleArticles = hotArticles.concat(normalArticles);
             }
             else {
-                _this.sortArticleArray(visibleArticles);
+                this.sortArticleArray(visibleArticles);
             }
             if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
                 console.log("Sorting articles at " + new Date().toTimeString());
-                var chunks = articlesContainer.find(ext.articlesChunkSelector);
+                let chunks = articlesContainer.find(ext.articlesChunkSelector);
                 removeContent(chunks.find(".Heading"));
-                var containerChunk_1 = chunks.first();
-                containerChunk_1.empty();
-                var appendArticle = function (article) {
-                    var container = article.getContainer();
-                    container.detach().appendTo(containerChunk_1);
+                let containerChunk = chunks.first();
+                containerChunk.empty();
+                let appendArticle = (article) => {
+                    const container = article.getContainer();
+                    container.detach().appendTo(containerChunk);
                 };
                 visibleArticles.forEach(appendArticle);
                 hiddenArticles.forEach(appendArticle);
             }
         });
-    };
-    ArticleManager.prototype.prepareMarkAsRead = function () {
+    }
+    prepareMarkAsRead() {
         if (this.articlesToMarkAsRead.length > 0) {
-            var ids = this.articlesToMarkAsRead.map(function (article) {
+            var ids = this.articlesToMarkAsRead.map((article) => {
                 return article.getEntryId();
             });
             this.page.put(ext.articlesToMarkAsReadId, ids);
         }
-    };
-    ArticleManager.prototype.sortArticleArray = function (articles) {
+    }
+    sortArticleArray(articles) {
         var sub = this.getCurrentSub();
         if (!sub.isSortingEnabled()) {
             return;
         }
-        var st = sub.getSortingType();
+        let st = sub.getSortingType();
         var sortingTypes = [st].concat(sub.getAdditionalSortingTypes());
         articles.sort(this.articleSorterFactory.getSorter(sortingTypes));
         if (SortingType.SourceNewestReceiveDate == st) {
-            var sourceToArticles_1 = {};
-            articles.forEach(function (a) {
-                var sourceArticles = (sourceToArticles_1[a.getSource()] ||
-                    (sourceToArticles_1[a.getSource()] = []),
-                    sourceToArticles_1[a.getSource()]);
+            let sourceToArticles = {};
+            articles.forEach((a) => {
+                let sourceArticles = (sourceToArticles[a.getSource()] ||
+                    (sourceToArticles[a.getSource()] = []),
+                    sourceToArticles[a.getSource()]);
                 sourceArticles.push(a);
             });
             articles.length = 0;
-            for (var source in sourceToArticles_1) {
-                articles.push.apply(articles, sourceToArticles_1[source]);
+            for (let source in sourceToArticles) {
+                articles.push(...sourceToArticles[source]);
             }
         }
-    };
-    ArticleManager.prototype.isOldestFirst = function () {
+    }
+    isOldestFirst() {
         return !this.page.get(ext.isNewestFirstId, true);
-    };
-    return ArticleManager;
-}());
-var ArticleSorterFactory = /** @class */ (function () {
-    function ArticleSorterFactory() {
+    }
+}
+class ArticleSorterFactory {
+    constructor() {
         this.sorterByType = {};
         function titleSorter(isAscending) {
             var multiplier = isAscending ? 1 : -1;
-            return function (a, b) {
+            return (a, b) => {
                 return a.getTitle().localeCompare(b.getTitle()) * multiplier;
             };
         }
         function popularitySorter(isAscending) {
             var multiplier = isAscending ? 1 : -1;
-            return function (a, b) {
+            return (a, b) => {
                 return (a.getPopularity() - b.getPopularity()) * multiplier;
             };
         }
         function receivedDateSorter(isNewFirst) {
             var multiplier = isNewFirst ? -1 : 1;
-            return function (a, b) {
+            return (a, b) => {
                 return (a.getReceivedAge() - b.getReceivedAge()) * multiplier;
             };
         }
         function publishDateSorter(isNewFirst) {
             var multiplier = isNewFirst ? -1 : 1;
-            return function (a, b) {
+            return (a, b) => {
                 return (a.getPublishAge() - b.getPublishAge()) * multiplier;
             };
         }
         function publishDaySorter(isNewFirst) {
             var multiplier = isNewFirst ? -1 : 1;
-            return function (a, b) {
-                var dateA = a.getPublishDate(), dateB = b.getPublishDate();
-                var result = dateA.getFullYear() - dateB.getFullYear();
+            return (a, b) => {
+                let dateA = a.getPublishDate(), dateB = b.getPublishDate();
+                let result = dateA.getFullYear() - dateB.getFullYear();
                 if (result == 0) {
                     result = dateA.getMonth() - dateB.getMonth();
                     if (result == 0) {
@@ -1389,7 +1326,7 @@ var ArticleSorterFactory = /** @class */ (function () {
         }
         function sourceSorter(isAscending) {
             var multiplier = isAscending ? 1 : -1;
-            return function (a, b) {
+            return (a, b) => {
                 return a.getSource().localeCompare(b.getSource()) * multiplier;
             };
         }
@@ -1411,30 +1348,28 @@ var ArticleSorterFactory = /** @class */ (function () {
         this.sorterByType[SortingType.SourceDesc] = sourceSorter(false);
         this.sorterByType[SortingType.SourceNewestReceiveDate] =
             receivedDateSorter(true);
-        this.sorterByType[SortingType.Random] = function () {
+        this.sorterByType[SortingType.Random] = () => {
             return Math.random() - 0.5;
         };
     }
-    ArticleSorterFactory.prototype.getSorter = function (sortingTypes) {
-        var _this = this;
+    getSorter(sortingTypes) {
         if (sortingTypes.length == 1) {
             return this.sorterByType[sortingTypes[0]];
         }
-        return function (a, b) {
+        return (a, b) => {
             var res;
             for (var i = 0; i < sortingTypes.length; i++) {
-                res = _this.sorterByType[sortingTypes[i]](a, b);
+                res = this.sorterByType[sortingTypes[i]](a, b);
                 if (res != 0) {
                     return res;
                 }
             }
             return res;
         };
-    };
-    return ArticleSorterFactory;
-}());
-var EntryInfos = /** @class */ (function () {
-    function EntryInfos(jsonInfos) {
+    }
+}
+class EntryInfos {
+    constructor(jsonInfos) {
         var bodyInfos = jsonInfos.content ? jsonInfos.content : jsonInfos.summary;
         this.body = bodyInfos ? bodyInfos.content : "";
         this.author = jsonInfos.author;
@@ -1442,10 +1377,9 @@ var EntryInfos = /** @class */ (function () {
         this.published = jsonInfos.published;
         this.received = jsonInfos.crawled;
     }
-    return EntryInfos;
-}());
-var Article = /** @class */ (function () {
-    function Article(articleContainer) {
+}
+class Article {
+    constructor(articleContainer) {
         this.container = $(articleContainer);
         this.entryId = this.container.attr("id").replace(/_main$/, "");
         var infosElement = this.container.find("." + ext.entryInfosJsonClass);
@@ -1460,7 +1394,7 @@ var Article = /** @class */ (function () {
                 this.publishAge = this.entryInfos.published;
             }
             else {
-                var isInlineView = this.container.find(ext.inlineViewClass).length > 0;
+                let isInlineView = this.container.find(ext.inlineViewClass).length > 0;
                 this.body = this.container
                     .find(isInlineView ? ".content" : ".summary")
                     .text()
@@ -1497,66 +1431,65 @@ var Article = /** @class */ (function () {
         // URL
         this.url = this.container.find(ext.articleUrlAnchorSelector).attr("href");
     }
-    Article.prototype.addClass = function (c) {
+    addClass(c) {
         return this.container.addClass(c);
-    };
-    Article.prototype.getTitle = function () {
+    }
+    getTitle() {
         return this.title;
-    };
-    Article.prototype.getUrl = function () {
+    }
+    getUrl() {
         return this.url;
-    };
-    Article.prototype.getSource = function () {
+    }
+    getSource() {
         return this.source;
-    };
-    Article.prototype.getPopularity = function () {
+    }
+    getPopularity() {
         return this.popularity;
-    };
-    Article.prototype.getReceivedAge = function () {
+    }
+    getReceivedAge() {
         return this.receivedAge;
-    };
-    Article.prototype.getReceivedDate = function () {
+    }
+    getReceivedDate() {
         return new Date(this.receivedAge);
-    };
-    Article.prototype.getPublishAge = function () {
+    }
+    getPublishAge() {
         return this.publishAge;
-    };
-    Article.prototype.getPublishDate = function () {
+    }
+    getPublishDate() {
         return new Date(this.publishAge);
-    };
-    Article.prototype.isHot = function () {
+    }
+    isHot() {
         var span = this.container.find(ext.popularitySelector);
         return (span.hasClass("hot") ||
             span.hasClass("onfire") ||
             span.hasClass("EntryEngagement--hot"));
-    };
-    Article.prototype.getEntryId = function () {
+    }
+    getEntryId() {
         return this.entryId;
-    };
-    Article.prototype.setVisible = function (visible) {
+    }
+    setVisible(visible) {
         if (visible != null && !visible) {
-            var parent_1 = this.container.parent();
-            this.container.detach().appendTo(parent_1);
+            const parent = this.container.parent();
+            this.container.detach().appendTo(parent);
             this.container.css("display", "none");
         }
         else {
             this.container.css("display", "");
         }
-    };
-    Article.prototype.getContainer = function () {
+    }
+    getContainer() {
         return this.container;
-    };
-    Article.prototype.isVisible = function () {
+    }
+    isVisible() {
         return !(this.container.css("display") === "none");
-    };
-    Article.prototype.checked = function () {
+    }
+    checked() {
         this.container.attr(ext.checkedArticlesAttribute, "");
-    };
-    Article.prototype.setColor = function (color) {
+    }
+    setColor(color) {
         this.container.css("background-color", color);
-    };
-    return Article;
-}());
+    }
+}
 function parsePopularity(popularityStr) {
     popularityStr = popularityStr.trim().replace("+", "");
     if (popularityStr.indexOf("K") > -1) {
@@ -1566,26 +1499,26 @@ function parsePopularity(popularityStr) {
     return Number(popularityStr);
 }
 
-var DuplicateChecker = /** @class */ (function () {
-    function DuplicateChecker(articleManager) {
+class DuplicateChecker {
+    constructor(articleManager) {
         this.articleManager = articleManager;
         this.url2Article = {};
         this.title2Article = {};
         this.crossArticles = new CrossArticleManager(articleManager, this);
     }
-    DuplicateChecker.prototype.reset = function () {
+    reset() {
         this.url2Article = {};
         this.title2Article = {};
-    };
-    DuplicateChecker.prototype.allArticlesChecked = function () {
+    }
+    allArticlesChecked() {
         this.crossArticles.save(true);
-    };
-    DuplicateChecker.prototype.check = function (article) {
+    }
+    check(article) {
         var sub = this.articleManager.getCurrentSub();
         if (sub.checkDuplicates()) {
-            var url = article.getUrl();
-            var title = article.getTitle();
-            var duplicate = true;
+            let url = article.getUrl();
+            let title = article.getTitle();
+            let duplicate = true;
             if (!url || !title) {
                 duplicate = false;
             }
@@ -1598,22 +1531,21 @@ var DuplicateChecker = /** @class */ (function () {
             }
             this.crossArticles.addArticle(article, duplicate);
         }
-    };
-    DuplicateChecker.prototype.checkDuplicate = function (a, b) {
+    }
+    checkDuplicate(a, b) {
         if (!b || a.getEntryId() === b.getEntryId()) {
             return false;
         }
-        var toKeep = a.getPublishAge() > b.getPublishAge() ? a : b;
-        var duplicate = a.getPublishAge() > b.getPublishAge() ? b : a;
+        let toKeep = a.getPublishAge() > b.getPublishAge() ? a : b;
+        let duplicate = a.getPublishAge() > b.getPublishAge() ? b : a;
         this.title2Article[a.getTitle()] = toKeep;
         this.title2Article[b.getTitle()] = toKeep;
         this.url2Article[a.getUrl()] = toKeep;
         this.url2Article[b.getUrl()] = toKeep;
         this.setDuplicate(duplicate, toKeep);
         return true;
-    };
-    DuplicateChecker.prototype.setDuplicate = function (duplicate, newerDuplicate) {
-        if (newerDuplicate === void 0) { newerDuplicate = duplicate; }
+    }
+    setDuplicate(duplicate, newerDuplicate = duplicate) {
         var sub = this.articleManager.getCurrentSub();
         if (sub.isHideDuplicates()) {
             duplicate.setVisible(false);
@@ -1625,12 +1557,10 @@ var DuplicateChecker = /** @class */ (function () {
         if (sub.isHighlightDuplicates()) {
             newerDuplicate.setColor("#" + sub.getHighlightDuplicatesColor());
         }
-    };
-    return DuplicateChecker;
-}());
-var CrossArticleManager = /** @class */ (function () {
-    function CrossArticleManager(articleManager, duplicateChecker) {
-        var _this = this;
+    }
+}
+class CrossArticleManager {
+    constructor(articleManager, duplicateChecker) {
         this.duplicateChecker = duplicateChecker;
         this.URLS_KEY_PREFIX = "cross_article_urls_";
         this.TITLES_KEY_PREFIX = "cross_article_titles_";
@@ -1644,22 +1574,22 @@ var CrossArticleManager = /** @class */ (function () {
         this.initializing = false;
         this.ready = false;
         this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
-        this.crossCheckSettings.setChangeCallback(function () { return _this.refresh(); });
+        this.crossCheckSettings.setChangeCallback(() => this.refresh());
     }
-    CrossArticleManager.prototype.addArticle = function (a, duplicate) {
+    addArticle(a, duplicate) {
         if (!this.crossCheckSettings.isEnabled() || !this.isReady()) {
             return;
         }
         if (!duplicate) {
             duplicate = this.checkDuplicate(a);
         }
-        var articleDay = getDateWithoutTime(a.getReceivedDate()).getTime();
+        const articleDay = getDateWithoutTime(a.getReceivedDate()).getTime();
         if (articleDay < this.getThresholdDay()) {
             return;
         }
         this.initDay(articleDay);
         try {
-            var changed = pushIfAbsent(this.crossUrls[articleDay], a.getUrl());
+            let changed = pushIfAbsent(this.crossUrls[articleDay], a.getUrl());
             changed =
                 pushIfAbsent(this.crossTitles[articleDay], a.getTitle()) || changed;
             if (!duplicate) {
@@ -1675,8 +1605,8 @@ var CrossArticleManager = /** @class */ (function () {
             console.log(this.daysArray.map(this.formatDay));
             console.log(this.crossUrls);
         }
-    };
-    CrossArticleManager.prototype.save = function (saveAll) {
+    }
+    save(saveAll) {
         if (saveAll) {
             this.changedDays = this.daysArray;
         }
@@ -1688,15 +1618,14 @@ var CrossArticleManager = /** @class */ (function () {
         this.saveDaysArray();
         this.changedDays.forEach(this.saveDay, this);
         this.changedDays = [];
-    };
-    CrossArticleManager.prototype.checkDuplicate = function (a) {
-        var _this = this;
-        var id = a.getEntryId();
-        var checkedNotDuplicate = this.daysArray.some(function (day) { return _this.crossIds[day].indexOf(id) > -1; });
+    }
+    checkDuplicate(a) {
+        const id = a.getEntryId();
+        const checkedNotDuplicate = this.daysArray.some((day) => this.crossIds[day].indexOf(id) > -1);
         if (!checkedNotDuplicate) {
-            var found = this.daysArray.some(function (day) {
-                return (_this.crossUrls[day].indexOf(a.getUrl()) > -1 ||
-                    _this.crossTitles[day].indexOf(a.getTitle()) > -1);
+            let found = this.daysArray.some((day) => {
+                return (this.crossUrls[day].indexOf(a.getUrl()) > -1 ||
+                    this.crossTitles[day].indexOf(a.getTitle()) > -1);
             }, this);
             if (found) {
                 this.duplicateChecker.setDuplicate(a);
@@ -1704,42 +1633,40 @@ var CrossArticleManager = /** @class */ (function () {
             }
         }
         return false;
-    };
-    CrossArticleManager.prototype.isReady = function () {
+    }
+    isReady() {
         return this.ready;
-    };
-    CrossArticleManager.prototype.init = function () {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            _this.localStorage = DataStore.getLocalStorage();
-            _this.localStorage
-                .getAsync(_this.DAYS_ARRAY_KEY, [])
-                .then(function (result) {
+    }
+    init() {
+        return new AsyncResult((p) => {
+            this.localStorage = DataStore.getLocalStorage();
+            this.localStorage
+                .getAsync(this.DAYS_ARRAY_KEY, [])
+                .then((result) => {
                 console.log("[Duplicates cross checking] Loading the stored days ...");
-                _this.setAndCleanDays(result);
-                if (_this.daysArray.length == 0) {
+                this.setAndCleanDays(result);
+                if (this.daysArray.length == 0) {
                     console.log("[Duplicates cross checking] No day was stored");
                     p.done();
                 }
                 else {
-                    _this.loadDays(_this.daysArray.slice(0)).chain(p);
+                    this.loadDays(this.daysArray.slice(0)).chain(p);
                 }
-            }, _this);
+            }, this);
         }, this);
-    };
-    CrossArticleManager.prototype.refresh = function () {
-        var _this = this;
+    }
+    refresh() {
         if (this.crossCheckSettings.isEnabled()) {
             if (!this.isReady()) {
                 if (this.initializing) {
                     return;
                 }
                 this.initializing = true;
-                this.init().then(function () {
-                    _this.ready = true;
-                    _this.addArticles();
-                    _this.save();
-                    _this.initializing = false;
+                this.init().then(() => {
+                    this.ready = true;
+                    this.addArticles();
+                    this.save();
+                    this.initializing = false;
                 }, this);
             }
             else {
@@ -1748,85 +1675,82 @@ var CrossArticleManager = /** @class */ (function () {
                 this.save();
             }
         }
-    };
-    CrossArticleManager.prototype.addArticles = function () {
-        var _this = this;
-        $(ext.articleSelector).each(function (i, e) {
-            _this.addArticle(new Article(e));
+    }
+    addArticles() {
+        $(ext.articleSelector).each((i, e) => {
+            this.addArticle(new Article(e));
         });
-    };
-    CrossArticleManager.prototype.getUrlsKey = function (day) {
+    }
+    getUrlsKey(day) {
         return this.URLS_KEY_PREFIX + day;
-    };
-    CrossArticleManager.prototype.getTitlesKey = function (day) {
+    }
+    getTitlesKey(day) {
         return this.TITLES_KEY_PREFIX + day;
-    };
-    CrossArticleManager.prototype.getIdsKey = function (day) {
+    }
+    getIdsKey(day) {
         return this.IDS_KEY_PREFIX + day;
-    };
-    CrossArticleManager.prototype.getThresholdDay = function () {
-        var maxDays = this.crossCheckSettings.getDays();
-        var thresholdDate = getDateWithoutTime(new Date());
+    }
+    getThresholdDay() {
+        const maxDays = this.crossCheckSettings.getDays();
+        let thresholdDate = getDateWithoutTime(new Date());
         thresholdDate.setDate(thresholdDate.getDate() - maxDays);
-        var thresholdDay = thresholdDate.getTime();
+        let thresholdDay = thresholdDate.getTime();
         return thresholdDay;
-    };
-    CrossArticleManager.prototype.setAndCleanDays = function (crossArticleDays) {
-        this.daysArray = crossArticleDays.slice(0).filter(function (val) {
+    }
+    setAndCleanDays(crossArticleDays) {
+        this.daysArray = crossArticleDays.slice(0).filter((val) => {
             return !isNaN(val);
         });
-        var thresholdDay = this.getThresholdDay();
+        let thresholdDay = this.getThresholdDay();
         crossArticleDays
-            .filter(function (day) { return day < thresholdDay; })
+            .filter((day) => day < thresholdDay)
             .forEach(this.cleanDay, this);
-    };
-    CrossArticleManager.prototype.initDay = function (day) {
+    }
+    initDay(day) {
         if (this.daysArray.indexOf(day) < 0) {
             this.daysArray.push(day);
             this.crossUrls[day] = [];
             this.crossTitles[day] = [];
             this.crossIds[day] = [];
         }
-    };
-    CrossArticleManager.prototype.loadDays = function (days) {
-        var _this = this;
+    }
+    loadDays(days) {
         if (days.length == 1) {
             return this.loadDay(days[0]);
         }
         else {
-            return new AsyncResult(function (p) {
-                _this.loadDay(days.pop()).then(function () {
-                    _this.loadDays(days).chain(p);
-                }, _this);
+            return new AsyncResult((p) => {
+                this.loadDay(days.pop()).then(() => {
+                    this.loadDays(days).chain(p);
+                }, this);
             }, this);
         }
-    };
-    CrossArticleManager.prototype.loadDay = function (day) {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            _this.localStorage
-                .getAsync(_this.getIdsKey(day), [])
-                .then(function (result) {
-                _this.crossIds[day] = result;
-                _this.localStorage
-                    .getAsync(_this.getUrlsKey(day), [])
-                    .then(function (result) {
-                    _this.crossUrls[day] = result;
-                    _this.localStorage
-                        .getAsync(_this.getTitlesKey(day), [])
-                        .then(function (result) {
-                        _this.crossTitles[day] = result;
+    }
+    loadDay(day) {
+        return new AsyncResult((p) => {
+            this.localStorage
+                .getAsync(this.getIdsKey(day), [])
+                .then((result) => {
+                this.crossIds[day] = result;
+                this.localStorage
+                    .getAsync(this.getUrlsKey(day), [])
+                    .then((result) => {
+                    this.crossUrls[day] = result;
+                    this.localStorage
+                        .getAsync(this.getTitlesKey(day), [])
+                        .then((result) => {
+                        this.crossTitles[day] = result;
                         console.log("[Duplicates cross checking] Loaded successfully the day: " +
-                            _this.formatDay(day) +
+                            this.formatDay(day) +
                             ", title count: " +
-                            _this.crossTitles[day].length);
+                            this.crossTitles[day].length);
                         p.done();
-                    }, _this);
-                }, _this);
-            }, _this);
+                    }, this);
+                }, this);
+            }, this);
         }, this);
-    };
-    CrossArticleManager.prototype.cleanDay = function (day) {
+    }
+    cleanDay(day) {
         console.log("[Duplicates cross checking] Cleaning the stored day: " +
             this.formatDay(day));
         this.daysArray.splice(this.daysArray.indexOf(day), 1);
@@ -1836,8 +1760,8 @@ var CrossArticleManager = /** @class */ (function () {
         delete this.crossIds[day];
         this.localStorage.delete(this.getUrlsKey(day));
         this.localStorage.delete(this.getTitlesKey(day));
-    };
-    CrossArticleManager.prototype.saveDay = function (day) {
+    }
+    saveDay(day) {
         console.log("[Duplicates cross checking] Saving the day: " +
             this.formatDay(day) +
             ", title count: " +
@@ -1845,30 +1769,29 @@ var CrossArticleManager = /** @class */ (function () {
         this.localStorage.put(this.getUrlsKey(day), this.crossUrls[day]);
         this.localStorage.put(this.getTitlesKey(day), this.crossTitles[day]);
         this.localStorage.put(this.getIdsKey(day), this.crossIds[day]);
-    };
-    CrossArticleManager.prototype.saveDaysArray = function () {
+    }
+    saveDaysArray() {
         this.localStorage.put(this.DAYS_ARRAY_KEY, this.daysArray);
-    };
-    CrossArticleManager.prototype.formatDay = function (day) {
+    }
+    formatDay(day) {
         return new Date(day).toLocaleDateString();
-    };
-    return CrossArticleManager;
-}());
+    }
+}
 
-var KeywordManager = /** @class */ (function () {
-    function KeywordManager() {
+class KeywordManager {
+    constructor() {
         this.separator = "#";
         this.areaPrefix = "#Area#";
         this.keywordSplitPattern = new RegExp(this.separator + "(.+)");
         this.matcherFactory = new KeywordMatcherFactory();
     }
-    KeywordManager.prototype.insertArea = function (keyword, area) {
+    insertArea(keyword, area) {
         return (this.areaPrefix + KeywordMatchingArea[area] + this.separator + keyword);
-    };
-    KeywordManager.prototype.matchSpecficKeywords = function (article, keywords, method, area) {
+    }
+    matchSpecficKeywords(article, keywords, method, area) {
         var matcher = this.matcherFactory.getMatcher(area, method);
         for (var i = 0; i < keywords.length; i++) {
-            var keyword = keywords[i];
+            let keyword = keywords[i];
             if (keyword.indexOf(this.areaPrefix) == 0) {
                 keyword = this.splitKeywordArea(keyword)[1];
             }
@@ -1877,8 +1800,8 @@ var KeywordManager = /** @class */ (function () {
             }
         }
         return false;
-    };
-    KeywordManager.prototype.matchKeywords = function (article, sub, type, invert) {
+    }
+    matchKeywords(article, sub, type, invert) {
         var keywords = sub.getFilteringList(type);
         if (keywords.length == 0) {
             return false;
@@ -1888,7 +1811,7 @@ var KeywordManager = /** @class */ (function () {
         for (var i = 0; i < keywords.length; i++) {
             var keyword = keywords[i];
             if (keyword.indexOf(this.areaPrefix) == 0) {
-                var split = this.splitKeywordArea(keyword);
+                let split = this.splitKeywordArea(keyword);
                 keyword = split[1];
                 if (!sub.isAlwaysUseDefaultMatchingAreas()) {
                     var area = KeywordMatchingArea[split[0]];
@@ -1906,89 +1829,72 @@ var KeywordManager = /** @class */ (function () {
             }
         }
         return !match;
-    };
-    KeywordManager.prototype.splitKeywordArea = function (keyword) {
+    }
+    splitKeywordArea(keyword) {
         keyword = keyword.slice(this.areaPrefix.length);
         return keyword.split(this.keywordSplitPattern);
-    };
-    return KeywordManager;
-}());
-var KeywordMatcherFactory = /** @class */ (function () {
-    function KeywordMatcherFactory() {
-        var _this = this;
+    }
+}
+class KeywordMatcherFactory {
+    constructor() {
         this.matcherByType = {};
         this.comparerByMethod = {};
-        this.comparerByMethod[KeywordMatchingMethod.Simple] = function (area, keyword) {
+        this.comparerByMethod[KeywordMatchingMethod.Simple] = (area, keyword) => {
             return area.indexOf(keyword.toLowerCase()) != -1;
         };
-        this.comparerByMethod[KeywordMatchingMethod.RegExp] = function (area, pattern) {
+        this.comparerByMethod[KeywordMatchingMethod.RegExp] = (area, pattern) => {
             return new RegExp(pattern, "i").test(area);
         };
-        this.comparerByMethod[KeywordMatchingMethod.Word] = function (area, word) {
+        this.comparerByMethod[KeywordMatchingMethod.Word] = (area, word) => {
             return new RegExp("\\b" + word + "\\b", "i").test(area);
         };
-        this.matcherByType[KeywordMatchingArea.Title] = function (a, k, method) {
-            return _this.comparerByMethod[method](a.title, k);
+        this.matcherByType[KeywordMatchingArea.Title] = (a, k, method) => {
+            return this.comparerByMethod[method](a.title, k);
         };
-        this.matcherByType[KeywordMatchingArea.Body] = function (a, k, method) {
-            return _this.comparerByMethod[method](a.body, k);
+        this.matcherByType[KeywordMatchingArea.Body] = (a, k, method) => {
+            return this.comparerByMethod[method](a.body, k);
         };
-        this.matcherByType[KeywordMatchingArea.Author] = function (a, k, method) {
-            return _this.comparerByMethod[method](a.author, k);
+        this.matcherByType[KeywordMatchingArea.Author] = (a, k, method) => {
+            return this.comparerByMethod[method](a.author, k);
         };
     }
-    KeywordMatcherFactory.prototype.getMatchers = function (sub) {
-        var _this = this;
+    getMatchers(sub) {
         var method = sub.getKeywordMatchingMethod();
-        return sub.getKeywordMatchingAreas().map(function (a) {
-            return _this.getMatcher(a, method);
+        return sub.getKeywordMatchingAreas().map(a => {
+            return this.getMatcher(a, method);
         });
-    };
-    KeywordMatcherFactory.prototype.getMatcher = function (area, method) {
+    }
+    getMatcher(area, method) {
         var t = this;
         return {
-            match: function (a, k) {
+            match(a, k) {
                 return t.matcherByType[area](a, k, method);
             }
         };
-    };
-    return KeywordMatcherFactory;
-}());
-
-var FeedlyPage = /** @class */ (function () {
-    function FeedlyPage() {
-        this.hiddingInfoClass = "FFnS_Hiding_Info";
-        this.put("ext", ext);
-        injectToWindow([
-            "getFFnS",
-            "putFFnS",
-            "getById",
-            "getArticleId",
-            "getReactPage",
-            "getStreamPage",
-            "getStreamObj",
-            "getService",
-            "onClickCapture",
-            "disableOverrides",
-            "fetchMoreEntries",
-            "loadNextBatch",
-            "getKeptUnreadEntryIds",
-            "getSortedVisibleArticles",
-        ], this.get, this.put, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.getService, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
-        injectToWindow(["overrideLoadingEntries"], this.overrideLoadingEntries);
-        injectToWindow(["overrideSorting"], this.overrideSorting);
-        injectToWindow(["overrideNavigation"], this.overrideNavigation);
-        injectToWindow(["onNewPageObserve"], this.onNewPageObserve);
-        injectToWindow(["onNewArticleObserve"], this.onNewArticleObserve);
-        injectClasses(EntryInfos);
-        executeWindow("Feedly-Page-FFnS.js", this.initWindow, this.overrideMarkAsRead);
     }
-    FeedlyPage.prototype.update = function (sub) {
+}
+
+class FeedlyPage {
+    constructor() {
+        this.hiddingInfoClass = "FFnS_Hiding_Info";
+        this.get = this.getFFnS;
+        this.put = this.putFFnS;
+        this.put("ext", ext);
+        injectClasses(EntryInfos);
+        injectToWindow(this.getFFnS, this.putFFnS, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.getService, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
+        injectToWindow(this.overrideLoadingEntries);
+        injectToWindow(this.overrideSorting);
+        injectToWindow(this.overrideNavigation);
+        injectToWindow(this.onNewPageObserve);
+        injectToWindow(this.onNewArticleObserve);
+        executeWindow("Feedly-Page-FFnS", this.initWindow, this.overrideMarkAsRead);
+    }
+    update(sub) {
         this.updateCheck(sub.isOpenAndMarkAsRead(), ext.openAndMarkAsReadId, ext.openAndMarkAsReadClass);
         this.updateCheck(sub.isMarkAsReadAboveBelow(), ext.markAsReadAboveBelowId, ext.markAsReadAboveBelowClass);
         this.updateCheck(sub.isOpenCurrentFeedArticles(), ext.openCurrentFeedArticlesId, ext.openCurrentFeedArticlesClass);
         this.updateCheck(sub.isDisplayDisableAllFiltersButton(), ext.disableAllFiltersButtonId, ext.disableAllFiltersButtonClass);
-        var filteringByReadingTime = sub.getFilteringByReadingTime();
+        const filteringByReadingTime = sub.getFilteringByReadingTime();
         if (sub.getAdvancedControlsReceivedPeriod().keepUnread ||
             (filteringByReadingTime.enabled && filteringByReadingTime.keepUnread)) {
             this.put(ext.keepArticlesUnreadId, true);
@@ -2006,8 +1912,8 @@ var FeedlyPage = /** @class */ (function () {
         this.put(ext.maxOpenCurrentFeedArticlesId, sub.getMaxOpenCurrentFeedArticles());
         this.put(ext.markAsReadOnOpenCurrentFeedArticlesId, sub.isMarkAsReadOnOpenCurrentFeedArticles());
         this.put(ext.disablePageOverridesId, sub.isDisablePageOverrides());
-    };
-    FeedlyPage.prototype.updateCheck = function (enabled, id, className) {
+    }
+    updateCheck(enabled, id, className) {
         if (enabled) {
             this.put(id, true);
             $("." + className).css("display", "");
@@ -2015,13 +1921,13 @@ var FeedlyPage = /** @class */ (function () {
         else {
             $("." + className).css("display", "none");
         }
-    };
-    FeedlyPage.prototype.initAutoLoad = function () {
+    }
+    initAutoLoad() {
         if (this.get(ext.autoLoadAllArticlesId, true)) {
-            executeWindow("Feedly-Page-FFnS-InitAutoLoad.js", this.autoLoad);
+            executeWindow("Feedly-Page-FFnS-InitAutoLoad", this.autoLoad);
         }
-    };
-    FeedlyPage.prototype.initWindow = function () {
+    }
+    initWindow() {
         window["ext"] = getFFnS("ext");
         NodeCreationObserver.init("observed-page");
         overrideLoadingEntries();
@@ -2029,7 +1935,7 @@ var FeedlyPage = /** @class */ (function () {
         overrideNavigation();
         onNewPageObserve();
         onNewArticleObserve();
-        var removeChild = Node.prototype.removeChild;
+        let removeChild = Node.prototype.removeChild;
         Node.prototype.removeChild = function (child) {
             try {
                 if (disableOverrides()) {
@@ -2053,23 +1959,23 @@ var FeedlyPage = /** @class */ (function () {
                 }
             }
         };
-        var insertBefore = Node.prototype.insertBefore;
-        var appendChild = Node.prototype.appendChild;
+        const insertBefore = Node.prototype.insertBefore;
+        const appendChild = Node.prototype.appendChild;
         function insertArticleNode(parent, node, sibling) {
             try {
-                var mainEntrySuffix = "_main";
-                var id = node["id"].replace(mainEntrySuffix, "");
-                var sortedIds = getService("navigo").entries.map(function (e) { return e.id; });
-                var nextIndex = sortedIds.indexOf(id) + 1;
+                const mainEntrySuffix = "_main";
+                const id = node["id"].replace(mainEntrySuffix, "");
+                const sortedIds = getService("navigo").entries.map((e) => e.id);
+                let nextIndex = sortedIds.indexOf(id) + 1;
                 if (nextIndex > 0 && nextIndex < sortedIds.length) {
-                    var nextId = sortedIds[nextIndex];
+                    const nextId = sortedIds[nextIndex];
                     sibling = document.getElementById(nextId + mainEntrySuffix);
                 }
                 else {
                     sibling = null;
                 }
                 if ($(node).is(ext.inlineArticleSelector)) {
-                    var oldNode = document.getElementById(node["id"]);
+                    const oldNode = document.getElementById(node["id"]);
                     if (oldNode) {
                         removeChild.call(oldNode.parentNode, oldNode);
                     }
@@ -2111,59 +2017,59 @@ var FeedlyPage = /** @class */ (function () {
                 console.log(e);
             }
         };
-    };
-    FeedlyPage.prototype.autoLoad = function () {
+    }
+    autoLoad() {
         var navigo = getService("navigo");
         navigo.initAutoLoad = true;
         navigo.setEntries(navigo.getEntries());
-    };
-    FeedlyPage.prototype.getStreamPage = function () {
+    }
+    getStreamPage() {
         var observers = getService("navigo").observers;
-        for (var i = 0, len = observers.length; i < len; i++) {
-            var stream = observers[i].stream;
+        for (let i = 0, len = observers.length; i < len; i++) {
+            let stream = observers[i].stream;
             if ((stream && stream.streamId) || observers[i]._streams) {
                 return observers[i];
             }
         }
-    };
-    FeedlyPage.prototype.getReactPage = function () {
+    }
+    getReactPage() {
         var observers = getService("feedly").observers;
-        for (var i = 0, len = observers.length; i < len; i++) {
-            var prototype = Object.getPrototypeOf(observers[i]);
+        for (let i = 0, len = observers.length; i < len; i++) {
+            const prototype = Object.getPrototypeOf(observers[i]);
             if (prototype.markAsRead) {
                 return observers[i];
             }
         }
-    };
-    FeedlyPage.prototype.getStreamObj = function () {
-        var streamPage = getStreamPage();
-        var streamObj = streamPage.stream;
+    }
+    getStreamObj() {
+        let streamPage = getStreamPage();
+        let streamObj = streamPage.stream;
         if (!streamObj) {
             streamObj = streamPage._streams[Object.keys(streamPage._streams)[0]];
         }
         return streamObj;
-    };
-    FeedlyPage.prototype.getService = function (name) {
+    }
+    getService(name) {
         return window["streets"].service(name);
-    };
-    FeedlyPage.prototype.onNewPageObserve = function () {
-        NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
+    }
+    onNewPageObserve() {
+        NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, () => {
             if (disableOverrides()) {
                 return;
             }
-            var openCurrentFeedArticlesBtn = $("<button>", {
+            let openCurrentFeedArticlesBtn = $("<button>", {
                 title: "Open all current feed articles in a new tab",
                 class: ext.openCurrentFeedArticlesClass + " " + ext.containerButtonClass,
                 style: getFFnS(ext.openCurrentFeedArticlesId) ? "" : "display: none",
                 type: "button",
             });
-            var disableAllFiltersBtn = $("<button>", {
+            let disableAllFiltersBtn = $("<button>", {
                 class: ext.disableAllFiltersButtonClass + " " + ext.containerButtonClass,
                 style: getFFnS(ext.disableAllFiltersButtonId) ? "" : "display: none",
                 type: "button",
             });
             function refreshDisableAllFiltersBtn(enabled) {
-                disableAllFiltersBtn.attr("title", (enabled ? "Restore" : "Disable all") + " filters");
+                disableAllFiltersBtn.attr("title", `${enabled ? "Restore" : "Disable all"} filters`);
                 if (enabled) {
                     disableAllFiltersBtn.addClass("enabled");
                 }
@@ -2172,41 +2078,41 @@ var FeedlyPage = /** @class */ (function () {
                 }
             }
             refreshDisableAllFiltersBtn(getFFnS(ext.disableAllFiltersEnabled, true));
-            var feedButtonsContainer = $("<div id='" + ext.buttonsContainerId + "'>");
+            let feedButtonsContainer = $(`<div id='${ext.buttonsContainerId}'>`);
             feedButtonsContainer.append(openCurrentFeedArticlesBtn);
             feedButtonsContainer.append(disableAllFiltersBtn);
             $("header.header").parent().after(feedButtonsContainer);
-            onClickCapture(openCurrentFeedArticlesBtn, function (event) {
+            onClickCapture(openCurrentFeedArticlesBtn, (event) => {
                 event.stopPropagation();
-                var articlesToOpen = getSortedVisibleArticles();
+                let articlesToOpen = getSortedVisibleArticles();
                 if (articlesToOpen.length == 0) {
                     return;
                 }
                 if (getFFnS(ext.openCurrentFeedArticlesUnreadOnlyId)) {
-                    articlesToOpen = articlesToOpen.filter(function (id) {
-                        var a = $(getById(id));
+                    articlesToOpen = articlesToOpen.filter((id) => {
+                        const a = $(getById(id));
                         return (a.hasClass(ext.unreadArticleClass) ||
                             (a.hasClass(ext.inlineViewClass) &&
                                 a.find(ext.articleViewReadSelector).length === 0));
                     });
                 }
-                var max = getFFnS(ext.maxOpenCurrentFeedArticlesId);
+                let max = getFFnS(ext.maxOpenCurrentFeedArticlesId);
                 if (max && max > 0) {
                     if (max < articlesToOpen.length) {
                         articlesToOpen.length = max;
                     }
                 }
                 articlesToOpen
-                    .map(function (id) { return getById(id); })
-                    .forEach(function (a) {
-                    var link = $(a).find(ext.articleUrlAnchorSelector).attr("href");
+                    .map((id) => getById(id))
+                    .forEach((a) => {
+                    let link = $(a).find(ext.articleUrlAnchorSelector).attr("href");
                     window.open(link, link);
                 });
                 if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
-                    var reader_1 = getService("reader");
-                    articlesToOpen.forEach(function (entryId) {
-                        reader_1.askMarkEntryAsRead(entryId);
-                        var a = $(getById(entryId));
+                    let reader = getService("reader");
+                    articlesToOpen.forEach((entryId) => {
+                        reader.askMarkEntryAsRead(entryId);
+                        const a = $(getById(entryId));
                         if (a.hasClass(ext.inlineViewClass)) {
                             a.find(ext.articleTitleSelector).addClass(ext.articleViewReadTitleClass);
                         }
@@ -2216,56 +2122,58 @@ var FeedlyPage = /** @class */ (function () {
                     });
                 }
             });
-            onClickCapture(disableAllFiltersBtn, function (event) {
+            onClickCapture(disableAllFiltersBtn, (event) => {
                 event.stopPropagation();
-                var newEnabled = !getFFnS(ext.disableAllFiltersEnabled, true);
+                const newEnabled = !getFFnS(ext.disableAllFiltersEnabled, true);
                 putFFnS(ext.disableAllFiltersEnabled, newEnabled, true);
                 refreshDisableAllFiltersBtn(newEnabled);
-                $("#" + ext.forceRefreshArticlesId).click();
+                $(`#${ext.forceRefreshArticlesId}`).click();
             });
         });
-    };
-    FeedlyPage.prototype.disableOverrides = function () {
-        var disable = getFFnS(ext.disablePageOverridesId);
+        NodeCreationObserver.onCreation(ext.layoutChangeSelector, (e) => {
+            $(e).click(() => setTimeout(() => $(`#${ext.forceRefreshArticlesId}`).click(), 1000));
+        });
+    }
+    disableOverrides() {
+        let disable = getFFnS(ext.disablePageOverridesId);
         disable =
             disable || !new RegExp(ext.supportedURLsPattern, "i").test(document.URL);
         return disable;
-    };
-    FeedlyPage.prototype.onClickCapture = function (element, callback) {
+    }
+    onClickCapture(element, callback) {
         element.get(0).addEventListener("click", callback, true);
-    };
-    FeedlyPage.prototype.getKeptUnreadEntryIds = function () {
-        var navigo = getService("navigo");
-        var entries = navigo.originalEntries || navigo.getEntries();
-        var keptUnreadEntryIds = entries
-            .filter(function (e) {
+    }
+    getKeptUnreadEntryIds() {
+        let navigo = getService("navigo");
+        let entries = navigo.originalEntries || navigo.getEntries();
+        let keptUnreadEntryIds = entries
+            .filter((e) => {
             return e.wasKeptUnread();
         })
-            .map(function (e) {
+            .map((e) => {
             return e.id;
         });
         return keptUnreadEntryIds;
-    };
-    FeedlyPage.prototype.getSortedVisibleArticles = function () {
-        var sortedVisibleArticles = [];
-        $(ext.sortedVisibleArticlesSelector).each(function (i, a) {
-            sortedVisibleArticles.push(getArticleId($(a)));
-        });
+    }
+    getSortedVisibleArticles() {
+        const sortedVisibleArticles = Array.from(document.querySelectorAll(ext.sortedArticlesSelector))
+            .filter((a) => a.style.display !== "none")
+            .map((a) => getArticleId(a));
         return sortedVisibleArticles;
-    };
-    FeedlyPage.prototype.onNewArticleObserve = function () {
-        var getLink = function (a) {
+    }
+    onNewArticleObserve() {
+        var getLink = (a) => {
             return a.find(ext.articleUrlAnchorSelector).attr("href");
         };
-        var getMarkAsReadAboveBelowCallback = function (entryId, above) {
-            return function (event) {
+        var getMarkAsReadAboveBelowCallback = (entryId, above) => {
+            return (event) => {
                 event.stopPropagation();
                 var sortedVisibleArticles = getSortedVisibleArticles();
                 var markAsRead = getFFnS(ext.markAsReadAboveBelowReadId);
                 if (markAsRead) {
-                    var keptUnreadEntryIds_1 = getKeptUnreadEntryIds();
-                    sortedVisibleArticles = sortedVisibleArticles.filter(function (id) {
-                        return keptUnreadEntryIds_1.indexOf(id) < 0;
+                    let keptUnreadEntryIds = getKeptUnreadEntryIds();
+                    sortedVisibleArticles = sortedVisibleArticles.filter((id) => {
+                        return keptUnreadEntryIds.indexOf(id) < 0;
                     });
                 }
                 var index = sortedVisibleArticles.indexOf(entryId);
@@ -2288,12 +2196,12 @@ var FeedlyPage = /** @class */ (function () {
                     endExcl = sortedVisibleArticles.length;
                 }
                 var hide = getFFnS(ext.hideWhenMarkAboveBelowId);
-                var reader = getService("reader");
+                let reader = getService("reader");
                 for (var i = start; i < endExcl; i++) {
                     var id = sortedVisibleArticles[i];
                     if (markAsRead) {
                         reader.askMarkEntryAsRead(id);
-                        var a = $(getById(id));
+                        const a = $(getById(id));
                         if (a.hasClass(ext.inlineViewClass)) {
                             a.find(ext.articleTitleSelector).addClass(ext.articleViewReadTitleClass);
                         }
@@ -2310,13 +2218,13 @@ var FeedlyPage = /** @class */ (function () {
                 }
             };
         };
-        NodeCreationObserver.onCreation(ext.articleAndInlineSelector, function (element) {
+        NodeCreationObserver.onCreation(ext.articleAndInlineSelector, (element) => {
             if (disableOverrides()) {
                 return;
             }
             var a = $(element);
-            var entryId = getArticleId(a);
-            var reader = getService("reader");
+            var entryId = getArticleId(element);
+            let reader = getService("reader");
             var e = reader.lookupEntry(entryId);
             var entryInfos = $("<span>", {
                 class: ext.entryInfosJsonClass,
@@ -2336,14 +2244,14 @@ var FeedlyPage = /** @class */ (function () {
                 a.find(".ago").after(buttonContainer);
             }
             else if (inlineView) {
-                NodeCreationObserver.onCreation("[id^='" + entryId + "'] .headerInfo > :first-child", function (e) {
+                NodeCreationObserver.onCreation(`[id^='${entryId}'] .headerInfo > :first-child`, (e) => {
                     $(e).append(buttonContainer);
                 }, true);
             }
             else {
                 a.find(".CondensedToolbar .fx.tag-button").prepend(buttonContainer);
             }
-            var addButton = function (id, attributes) {
+            var addButton = (id, attributes) => {
                 attributes.type = "button";
                 attributes.style = getFFnS(id) ? "" : "display: none";
                 attributes.class += " mark-as-read";
@@ -2370,9 +2278,9 @@ var FeedlyPage = /** @class */ (function () {
                 class: ext.openAndMarkAsReadClass,
                 title: "Open in a new window/tab and mark as read",
             });
-            var link = getLink(a);
-            var openAndMarkAsRead = function (event) {
+            let openAndMarkAsRead = (event) => {
                 event.stopPropagation();
+                let link = getLink(a);
                 window.open(link, link);
                 reader.askMarkEntryAsRead(entryId);
                 if (inlineView) {
@@ -2382,7 +2290,7 @@ var FeedlyPage = /** @class */ (function () {
                 }
             };
             onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
-            var visualElement;
+            let visualElement;
             if (cardsView) {
                 visualElement = a.find(".visual-container");
             }
@@ -2390,14 +2298,14 @@ var FeedlyPage = /** @class */ (function () {
                 visualElement = a.find(".visual");
             }
             if (visualElement) {
-                onClickCapture(visualElement, function (e) {
+                onClickCapture(visualElement, (e) => {
                     if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
                         openAndMarkAsRead(e);
                     }
                 });
             }
             if (titleView) {
-                onClickCapture(a.find(".content"), function (e) {
+                onClickCapture(a.find(".content"), (e) => {
                     if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
                         e.stopPropagation();
                         reader.askMarkEntryAsRead(entryId);
@@ -2407,8 +2315,8 @@ var FeedlyPage = /** @class */ (function () {
             onClickCapture(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(entryId, false));
             onClickCapture(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(entryId, true));
         });
-    };
-    FeedlyPage.prototype.reset = function () {
+    }
+    reset() {
         this.clearHidingInfo();
         var i = sessionStorage.length;
         while (i--) {
@@ -2417,10 +2325,10 @@ var FeedlyPage = /** @class */ (function () {
                 sessionStorage.removeItem(key);
             }
         }
-    };
-    FeedlyPage.prototype.refreshHidingInfo = function () {
+    }
+    refreshHidingInfo() {
         var hiddenCount = 0;
-        $(ext.articleSelector).each(function (i, a) {
+        $(ext.articleSelector).each((i, a) => {
             if (!$(a).is(":visible")) {
                 hiddenCount++;
             }
@@ -2434,25 +2342,25 @@ var FeedlyPage = /** @class */ (function () {
             "'> (" +
             hiddenCount +
             " hidden entries)</div>");
-    };
-    FeedlyPage.prototype.clearHidingInfo = function () {
+    }
+    clearHidingInfo() {
         $("." + this.hiddingInfoClass).remove();
-    };
-    FeedlyPage.prototype.put = function (id, value, persistent) {
+    }
+    putFFnS(id, value, persistent) {
         sessionStorage.setItem("FFnS" + (persistent ? "#" : "_") + id, JSON.stringify(value));
-    };
-    FeedlyPage.prototype.get = function (id, persistent) {
+    }
+    getFFnS(id, persistent) {
         return JSON.parse(sessionStorage.getItem("FFnS" + (persistent ? "#" : "_") + id));
-    };
-    FeedlyPage.prototype.getById = function (id) {
+    }
+    getById(id) {
         return document.getElementById(id + "_main");
-    };
-    FeedlyPage.prototype.getArticleId = function (a) {
-        return a.attr("id").replace(/_main$/, "");
-    };
-    FeedlyPage.prototype.fetchMoreEntries = function (batchSize) {
+    }
+    getArticleId(e) {
+        return e.getAttribute("id").replace(/_main$/, "");
+    }
+    fetchMoreEntries(batchSize) {
         var autoLoadingMessageId = "FFnS_LoadingMessage";
-        var stream = getStreamPage().stream;
+        let stream = getStreamPage().stream;
         if ($(".message.loading").length == 0) {
             $(ext.articlesContainerSelector)
                 .first()
@@ -2469,38 +2377,38 @@ var FeedlyPage = /** @class */ (function () {
             new Date().toTimeString());
         stream.askMoreEntries();
         stream.askingMoreEntries = false;
-    };
-    FeedlyPage.prototype.loadNextBatch = function (ev) {
+    }
+    loadNextBatch(ev) {
         ev && ev.stopPropagation();
-        var navigo = getService("navigo");
-        var entries = navigo.originalEntries || navigo.getEntries();
-        var markAsReadEntryIds;
+        let navigo = getService("navigo");
+        let entries = navigo.originalEntries || navigo.getEntries();
+        let markAsReadEntryIds;
         if (getFFnS(ext.keepArticlesUnreadId)) {
             markAsReadEntryIds = getFFnS(ext.articlesToMarkAsReadId);
         }
         else {
             markAsReadEntryIds = entries
-                .sort(function (a, b) {
+                .sort((a, b) => {
                 return a.jsonInfo.crawled - b.jsonInfo.crawled;
             })
-                .map(function (e) {
+                .map((e) => {
                 return e.id;
             });
         }
-        var keptUnreadEntryIds = getKeptUnreadEntryIds();
-        markAsReadEntryIds = markAsReadEntryIds.filter(function (id) {
+        let keptUnreadEntryIds = getKeptUnreadEntryIds();
+        markAsReadEntryIds = markAsReadEntryIds.filter((id) => {
             return keptUnreadEntryIds.indexOf(id) < 0;
         });
-        var reader = getService("reader");
+        let reader = getService("reader");
         reader.askMarkEntriesAsRead(markAsReadEntryIds, {});
         window.scrollTo(0, 0);
         $(ext.articlesContainerSelector).empty();
         navigo.originalEntries = null;
         navigo.entries = [];
         fetchMoreEntries(getFFnS(ext.batchSizeId, true));
-    };
-    FeedlyPage.prototype.overrideLoadingEntries = function () {
-        var streamObj = getStreamObj();
+    }
+    overrideLoadingEntries() {
+        let streamObj = getStreamObj();
         if (!streamObj) {
             setTimeout(overrideLoadingEntries, 1000);
             return;
@@ -2511,7 +2419,7 @@ var FeedlyPage = /** @class */ (function () {
         var secondaryMarkAsReadBtnsSelector = ".mark-as-read-button.secondary";
         var loadByBatchText = "Mark batch as read and load next batch";
         var autoLoadAllArticleDefaultBatchSize = 1000;
-        var isAutoLoad = function () {
+        var isAutoLoad = () => {
             try {
                 return (getStreamPage() != null &&
                     ($(ext.articleSelector).length == 0 ||
@@ -2552,20 +2460,20 @@ var FeedlyPage = /** @class */ (function () {
                 if (entries.length > 0 &&
                     entries[entries.length - 1].jsonInfo.unread &&
                     isAutoLoad()) {
-                    var isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
-                    var firstLoadByBatch_1 = false;
-                    var navigo = getService("navigo");
+                    let isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
+                    let firstLoadByBatch = false;
+                    let navigo = getService("navigo");
                     if (navigo.initAutoLoad) {
                         navigo.initAutoLoad = false;
-                        firstLoadByBatch_1 = isLoadByBatch;
+                        firstLoadByBatch = isLoadByBatch;
                     }
-                    var streamPage = getStreamPage();
+                    const streamPage = getStreamPage();
                     streamPage._scrollTarget.removeEventListener("scroll", streamPage._throttledCheckMoreEntriesNeeded);
-                    var isBatchLoading = true;
-                    var autoLoadAllArticleBatchSize_1 = autoLoadAllArticleDefaultBatchSize;
+                    let isBatchLoading = true;
+                    let autoLoadAllArticleBatchSize = autoLoadAllArticleDefaultBatchSize;
                     if (isLoadByBatch) {
-                        var batchSize = getFFnS(ext.batchSizeId, true);
-                        autoLoadAllArticleBatchSize_1 = batchSize;
+                        let batchSize = getFFnS(ext.batchSizeId, true);
+                        autoLoadAllArticleBatchSize = batchSize;
                         if (entries.length >= batchSize) {
                             isBatchLoading = false;
                         }
@@ -2578,9 +2486,9 @@ var FeedlyPage = /** @class */ (function () {
                         isBatchLoading &&
                         $(loadNextBatchBtnId).length == 0) {
                         stream.askingMoreEntries = true;
-                        setTimeout(function () {
-                            var batchSize = autoLoadAllArticleBatchSize_1;
-                            if (firstLoadByBatch_1) {
+                        setTimeout(() => {
+                            let batchSize = autoLoadAllArticleBatchSize;
+                            if (firstLoadByBatch) {
                                 batchSize = batchSize - entries.length;
                             }
                             fetchMoreEntries(batchSize);
@@ -2608,20 +2516,18 @@ var FeedlyPage = /** @class */ (function () {
                         }
                     }
                 }
-                setTimeout(function () {
-                    var markAsReadEntries = $(ext.markAsReadImmediatelySelector);
+                setTimeout(() => {
+                    let markAsReadEntries = $(ext.markAsReadImmediatelySelector);
                     if (markAsReadEntries.length == 0) {
                         return;
                     }
-                    var ids = $.map(markAsReadEntries.toArray(), function (e) {
-                        return getArticleId($(e));
-                    });
-                    var reader = getService("reader");
+                    let ids = $.map(markAsReadEntries.toArray(), (e) => getArticleId(e));
+                    let reader = getService("reader");
                     reader.askMarkEntriesAsRead(ids, {});
                     markAsReadEntries
                         .removeClass(ext.markAsReadImmediatelyClass)
-                        .each(function (_, e) {
-                        var a = $(e);
+                        .each((_, e) => {
+                        const a = $(e);
                         if (a.hasClass(ext.inlineViewClass)) {
                             a.find(ext.articleTitleSelector).addClass(ext.articleViewReadTitleClass);
                         }
@@ -2636,7 +2542,7 @@ var FeedlyPage = /** @class */ (function () {
             }
             return setEntries.apply(this, arguments);
         };
-        NodeCreationObserver.onCreation(ext.loadingMessageSelector, function (e) {
+        NodeCreationObserver.onCreation(ext.loadingMessageSelector, (e) => {
             if (disableOverrides()) {
                 return;
             }
@@ -2644,7 +2550,7 @@ var FeedlyPage = /** @class */ (function () {
                 $(e).hide();
             }
         });
-        NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, function (e) {
+        NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, (e) => {
             if (disableOverrides()) {
                 return;
             }
@@ -2652,27 +2558,26 @@ var FeedlyPage = /** @class */ (function () {
                 $(secondaryMarkAsReadBtnsSelector).attr("title", loadByBatchText);
             }
         });
-    };
-    FeedlyPage.prototype.overrideMarkAsRead = function () {
+    }
+    overrideMarkAsRead() {
         var prototype = Object.getPrototypeOf(getReactPage());
         var markAsRead = prototype.markAsRead;
         prototype.markAsRead = function (lastEntryObject) {
-            var _this = this;
             if (disableOverrides()) {
                 return markAsRead.apply(this, arguments);
             }
-            var jumpToNext = function () {
+            let jumpToNext = () => {
                 if (document.URL.indexOf("category/global.") < 0) {
-                    var navigo = getService("navigo");
+                    let navigo = getService("navigo");
                     if (navigo.getNextURI()) {
-                        _this.feedly.jumpToNext();
+                        this.feedly.jumpToNext();
                     }
                     else {
-                        _this.feedly.loadDefaultPage();
+                        this.feedly.loadDefaultPage();
                     }
                 }
                 else {
-                    _this._askRefreshCurrentPage();
+                    this._askRefreshCurrentPage();
                 }
             };
             if (lastEntryObject && lastEntryObject.asOf) {
@@ -2686,12 +2591,12 @@ var FeedlyPage = /** @class */ (function () {
                 console.log("Marking as read with keeping new articles unread");
                 var idsToMarkAsRead = getFFnS(ext.articlesToMarkAsReadId);
                 if (idsToMarkAsRead) {
-                    var keptUnreadEntryIds_2 = getKeptUnreadEntryIds();
-                    idsToMarkAsRead = idsToMarkAsRead.filter(function (id) {
-                        return keptUnreadEntryIds_2.indexOf(id) < 0;
+                    let keptUnreadEntryIds = getKeptUnreadEntryIds();
+                    idsToMarkAsRead = idsToMarkAsRead.filter((id) => {
+                        return keptUnreadEntryIds.indexOf(id) < 0;
                     });
                     console.log(idsToMarkAsRead.length + " new articles will be marked as read");
-                    var reader = getService("reader");
+                    let reader = getService("reader");
                     reader.askMarkEntriesAsRead(idsToMarkAsRead, {});
                 }
                 else {
@@ -2703,15 +2608,15 @@ var FeedlyPage = /** @class */ (function () {
                 markAsRead.call(this, lastEntryObject);
             }
         };
-    };
-    FeedlyPage.prototype.overrideSorting = function () {
+    }
+    overrideSorting() {
         var prototype = Object.getPrototypeOf(getService("navigo"));
         function filterVisible(entry) {
-            var item = $(getById(entry.id));
+            const item = $(getById(entry.id));
             return item.length > 0 && !(item.css("display") === "none");
         }
         function ensureSortedEntries() {
-            var navigo = getService("navigo");
+            let navigo = getService("navigo");
             var entries = navigo.entries;
             var originalEntries = navigo.originalEntries || entries;
             navigo.originalEntries = originalEntries;
@@ -2732,9 +2637,9 @@ var FeedlyPage = /** @class */ (function () {
             if (!sorted) {
                 entries = [].concat(originalEntries);
                 entries = entries.filter(filterVisible);
-                var idToEntry_1 = {};
-                entries.forEach(function (e) { return (idToEntry_1[e.id] = e); });
-                entries = sortedVisibleArticles.map(function (id) { return idToEntry_1[id]; });
+                const idToEntry = {};
+                entries.forEach((e) => (idToEntry[e.id] = e));
+                entries = sortedVisibleArticles.map((id) => idToEntry[id]);
                 navigo.entries = entries;
             }
         }
@@ -2773,21 +2678,21 @@ var FeedlyPage = /** @class */ (function () {
             if (disableOverrides()) {
                 return setEntries.apply(this, arguments);
             }
-            var navigo = getService("navigo");
+            let navigo = getService("navigo");
             navigo.originalEntries = null;
             return setEntries.apply(this, arguments);
         };
         prototype.reset = function () {
-            var navigo = getService("navigo");
+            let navigo = getService("navigo");
             navigo.originalEntries = null;
             return reset.apply(this, arguments);
         };
-        var listEntryIds = prototype.listEntryIds;
+        const listEntryIds = prototype.listEntryIds;
         prototype.listEntryIds = function () {
             if (disableOverrides()) {
                 return listEntryIds.apply(this, arguments);
             }
-            var navigo = getService("navigo");
+            let navigo = getService("navigo");
             var a = [];
             var entries = navigo.originalEntries || navigo.entries;
             return (entries.forEach(function (b) {
@@ -2795,11 +2700,11 @@ var FeedlyPage = /** @class */ (function () {
             }),
                 a);
         };
-    };
-    FeedlyPage.prototype.overrideNavigation = function () {
+    }
+    overrideNavigation() {
         var prototype = Object.getPrototypeOf(getService("navigo"));
-        var collectionPrefix = "collection/content/";
-        var getNextURI = prototype.getNextURI;
+        const collectionPrefix = "collection/content/";
+        const getNextURI = prototype.getNextURI;
         prototype.getNextURI = function () {
             if (disableOverrides()) {
                 return getNextURI.apply(this, arguments);
@@ -2807,7 +2712,7 @@ var FeedlyPage = /** @class */ (function () {
             var e = this.nextURI;
             if (!e) {
                 try {
-                    var categories = JSON.parse(getService("preferences").getPreference("categoriesOrderingId"));
+                    let categories = JSON.parse(getService("preferences").getPreference("categoriesOrderingId"));
                     return collectionPrefix + categories[0];
                 }
                 catch (e) {
@@ -2816,19 +2721,19 @@ var FeedlyPage = /** @class */ (function () {
             }
             return e;
         };
-        var inlineEntry = prototype.inlineEntry;
+        const inlineEntry = prototype.inlineEntry;
         prototype.inlineEntry = function () {
             if (!disableOverrides()) {
                 putFFnS(ext.inliningEntryId, true);
             }
             return inlineEntry.apply(this, arguments);
         };
-    };
-    return FeedlyPage;
-}());
+    }
+}
+const page = typeof FeedlyPage;
 
-var UIManager = /** @class */ (function () {
-    function UIManager() {
+class UIManager {
+    constructor() {
         this.containsReadArticles = false;
         this.forceReloadGlobalSettings = false;
         this.keywordToId = {};
@@ -2894,83 +2799,76 @@ var UIManager = /** @class */ (function () {
         this.settingsDivContainerId = this.getHTMLId("settingsDivContainer");
         this.closeBtnId = this.getHTMLId("CloseSettingsBtn");
     }
-    UIManager.prototype.init = function () {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            _this.settingsManager = new SettingsManager(_this);
-            _this.keywordManager = new KeywordManager();
-            _this.page = new FeedlyPage();
-            _this.htmlSubscriptionManager = new HTMLSubscriptionManager(_this);
-            _this.settingsManager.init().then(function () {
-                _this.articleManager = new ArticleManager(_this.settingsManager, _this.keywordManager, _this.page);
-                _this.autoLoadAllArticlesCB = new HTMLGlobalSettings(ext.autoLoadAllArticlesId, false, _this);
-                _this.globalSettingsEnabledCB = new HTMLGlobalSettings("globalSettingsEnabled", true, _this, true, false);
-                _this.loadByBatchEnabledCB = new HTMLGlobalSettings(ext.loadByBatchEnabledId, false, _this);
-                _this.batchSizeInput = new HTMLGlobalSettings(ext.batchSizeId, 200, _this);
-                var crossCheckSettings = _this.settingsManager.getCrossCheckDuplicatesSettings();
-                _this.crossCheckDuplicatesCB = new HTMLGlobalSettings("CrossCheckDuplicates", false, _this, false, false);
-                _this.crossCheckDuplicatesDaysInput = new HTMLGlobalSettings("CrossCheckDuplicatesDays", 3, _this, false, false);
-                _this.crossCheckDuplicatesCB.setAdditionalChangeCallback(function (val) {
-                    return crossCheckSettings.setEnabled(val);
-                });
-                _this.crossCheckDuplicatesDaysInput.setAdditionalChangeCallback(function (val) {
-                    return crossCheckSettings.setDays(val);
-                });
-                _this.globalSettings = [
-                    _this.autoLoadAllArticlesCB,
-                    _this.loadByBatchEnabledCB,
-                    _this.batchSizeInput,
-                    _this.globalSettingsEnabledCB,
-                    _this.crossCheckDuplicatesCB,
-                    _this.crossCheckDuplicatesDaysInput,
+    init() {
+        return new AsyncResult((p) => {
+            this.settingsManager = new SettingsManager(this);
+            this.keywordManager = new KeywordManager();
+            this.page = new FeedlyPage();
+            this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
+            this.settingsManager.init().then(() => {
+                this.articleManager = new ArticleManager(this.settingsManager, this.keywordManager, this.page);
+                this.autoLoadAllArticlesCB = new HTMLGlobalSettings(ext.autoLoadAllArticlesId, false, this);
+                this.globalSettingsEnabledCB = new HTMLGlobalSettings("globalSettingsEnabled", true, this, true, false);
+                this.loadByBatchEnabledCB = new HTMLGlobalSettings(ext.loadByBatchEnabledId, false, this);
+                this.batchSizeInput = new HTMLGlobalSettings(ext.batchSizeId, 200, this);
+                const crossCheckSettings = this.settingsManager.getCrossCheckDuplicatesSettings();
+                this.crossCheckDuplicatesCB = new HTMLGlobalSettings("CrossCheckDuplicates", false, this, false, false);
+                this.crossCheckDuplicatesDaysInput = new HTMLGlobalSettings("CrossCheckDuplicatesDays", 3, this, false, false);
+                this.crossCheckDuplicatesCB.setAdditionalChangeCallback((val) => crossCheckSettings.setEnabled(val));
+                this.crossCheckDuplicatesDaysInput.setAdditionalChangeCallback((val) => crossCheckSettings.setDays(val));
+                this.globalSettings = [
+                    this.autoLoadAllArticlesCB,
+                    this.loadByBatchEnabledCB,
+                    this.batchSizeInput,
+                    this.globalSettingsEnabledCB,
+                    this.crossCheckDuplicatesCB,
+                    this.crossCheckDuplicatesDaysInput,
                 ];
-                _this.initGlobalSettings(_this.globalSettings.slice(0)).then(function () {
-                    _this.page.initAutoLoad();
-                    _this.updateSubscription().then(function () {
-                        _this.initUI();
-                        _this.registerSettings();
-                        _this.postUpdate();
-                        _this.initSettingsCallbacks();
-                        _this.postInit();
+                this.initGlobalSettings(this.globalSettings.slice(0)).then(() => {
+                    this.page.initAutoLoad();
+                    this.updateSubscription().then(() => {
+                        this.initUI();
+                        this.registerSettings();
+                        this.postUpdate();
+                        this.initSettingsCallbacks();
+                        this.postInit();
                         p.done();
-                    }, _this);
-                }, _this);
-            }, _this);
+                    }, this);
+                }, this);
+            }, this);
         }, this);
-    };
-    UIManager.prototype.initGlobalSettings = function (settings) {
-        var _this = this;
+    }
+    initGlobalSettings(settings) {
         if (settings.length == 1) {
             return settings[0].init();
         }
         else {
-            return new AsyncResult(function (p) {
+            return new AsyncResult((p) => {
                 settings
                     .pop()
                     .init()
-                    .then(function () {
-                    _this.initGlobalSettings(settings).chain(p);
-                }, _this);
+                    .then(() => {
+                    this.initGlobalSettings(settings).chain(p);
+                }, this);
             }, this);
         }
-    };
-    UIManager.prototype.resetGlobalSettings = function (settings) {
-        var _this = this;
+    }
+    resetGlobalSettings(settings) {
         if (settings.length == 1) {
             return settings[0].reset();
         }
         else {
-            return new AsyncResult(function (p) {
+            return new AsyncResult((p) => {
                 settings
                     .pop()
                     .reset()
-                    .then(function () {
-                    _this.resetGlobalSettings(settings).chain(p);
-                }, _this);
+                    .then(() => {
+                    this.resetGlobalSettings(settings).chain(p);
+                }, this);
             }, this);
         }
-    };
-    UIManager.prototype.updatePage = function () {
+    }
+    updatePage() {
         if (currentPageNotSupported()) {
             return;
         }
@@ -2981,62 +2879,59 @@ var UIManager = /** @class */ (function () {
         catch (err) {
             console.log(err);
         }
-    };
-    UIManager.prototype.postUpdate = function () {
-        var _this = this;
+    }
+    postUpdate() {
         if (currentPageNotSupported()) {
             return;
         }
         this.updateMenu();
-        setTimeout(function () {
-            _this.refreshFilteringAndSorting();
+        setTimeout(() => {
+            this.refreshFilteringAndSorting();
         }, 500);
         if (this.subscription.isAutoRefreshEnabled()) {
-            setInterval(function () {
+            setInterval(() => {
                 window.location.reload();
             }, this.subscription.getAutoRefreshTime());
         }
-    };
-    UIManager.prototype.resetPage = function () {
+    }
+    resetPage() {
         this.containsReadArticles = false;
         this.articleManager.resetArticles();
-    };
-    UIManager.prototype.refreshPage = function () {
+    }
+    refreshPage() {
         this.updatePage();
         this.refreshFilteringAndSorting();
-    };
-    UIManager.prototype.refreshFilteringAndSorting = function () {
+    }
+    refreshFilteringAndSorting() {
         this.page.reset();
         this.page.update(this.subscription);
         this.articleManager.refreshArticles();
-    };
-    UIManager.prototype.updateSubscription = function () {
-        var _this = this;
-        return new AsyncResult(function (p) {
+    }
+    updateSubscription() {
+        return new AsyncResult((p) => {
             if (currentPageNotSupported()) {
                 p.done();
                 return;
             }
-            var globalSettingsEnabled = _this.globalSettingsEnabledCB.getValue();
-            _this.settingsManager
-                .loadSubscription(globalSettingsEnabled, _this.forceReloadGlobalSettings)
-                .then(function (sub) {
-                _this.subscription = sub;
+            var globalSettingsEnabled = this.globalSettingsEnabledCB.getValue();
+            this.settingsManager
+                .loadSubscription(globalSettingsEnabled, this.forceReloadGlobalSettings)
+                .then((sub) => {
+                this.subscription = sub;
                 p.done();
-            }, _this);
+            }, this);
         }, this);
-    };
-    UIManager.prototype.updateMenu = function () {
-        var _this = this;
+    }
+    updateMenu() {
         this.htmlSubscriptionManager.update();
-        getFilteringTypes().forEach(function (type) {
-            _this.prepareFilteringList(type);
+        getFilteringTypes().forEach((type) => {
+            this.prepareFilteringList(type);
         });
         this.updateSettingsControls();
         // Additional sorting types
         $("#FFnS_AdditionalSortingTypes").empty();
-        this.subscription.getAdditionalSortingTypes().forEach(function (s) {
-            var id = _this.registerAdditionalSortingType();
+        this.subscription.getAdditionalSortingTypes().forEach((s) => {
+            var id = this.registerAdditionalSortingType();
             $id(id).val(s);
         });
         // coloring rules
@@ -3047,15 +2942,15 @@ var UIManager = /** @class */ (function () {
         this.refreshColoringRuleArrows();
         this.updateSettingsModeTitle();
         this.updateFilteringKeywordMatchingSelects();
-    };
-    UIManager.prototype.updateSettingsModeTitle = function () {
+    }
+    updateSettingsModeTitle() {
         var title = this.globalSettingsEnabledCB.getValue()
             ? "Global"
             : "Subscription";
         title += " settings";
         $id("FFnS_settings_mode_title").text(title);
-    };
-    UIManager.prototype.updateSettingsControls = function () {
+    }
+    updateSettingsControls() {
         $id("FFnS_SettingsControls_SelectedSubscription").html(this.getImportOptionsHTML());
         var linkedSubContainer = $id("FFnS_SettingsControls_LinkedSubContainer");
         var linkedSub = $id("FFnS_SettingsControls_LinkedSub");
@@ -3071,19 +2966,18 @@ var UIManager = /** @class */ (function () {
             linkedSubContainer.css("display", "none");
             linkedSub.text("");
         }
-    };
-    UIManager.prototype.getSettingsControlsSelectedSubscription = function () {
+    }
+    getSettingsControlsSelectedSubscription() {
         return $id("FFnS_SettingsControls_SelectedSubscription").val();
-    };
-    UIManager.prototype.initUI = function () {
+    }
+    initUI() {
         this.initSettingsMenu();
         this.initShowSettingsBtns();
-        this.globalSettings.forEach(function (globalSetting) {
+        this.globalSettings.forEach((globalSetting) => {
             globalSetting.initUI();
         });
-    };
-    UIManager.prototype.initSettingsMenu = function () {
-        var _this = this;
+    }
+    initSettingsMenu() {
         var marginElementClass = this.getHTMLId("margin_element");
         var tabsMenuId = this.getHTMLId("tabs_menu");
         var tabsContentContainerId = this.getHTMLId("tabs_content");
@@ -3132,31 +3026,30 @@ var UIManager = /** @class */ (function () {
         $("#" + tabsContentContainerId + " > div")
             .first()
             .show();
-        $(document).keyup(function (event) {
+        $(document).keyup((event) => {
             if (event.key === "Escape") {
-                $id(_this.settingsDivContainerId).hide();
+                $id(this.settingsDivContainerId).hide();
             }
-            _this.checkKeywordsInputEnter(event);
+            this.checkKeywordsInputEnter(event);
         });
-        $("#FFnS_settingsDivContainer").click(function (event) {
+        $("#FFnS_settingsDivContainer").click((event) => {
             if (event.target.id === "FFnS_settingsDivContainer") {
-                $id(_this.settingsDivContainerId).hide();
+                $id(this.settingsDivContainerId).hide();
             }
         });
-    };
-    UIManager.prototype.checkKeywordsInputEnter = function (event) {
-        var _this = this;
+    }
+    checkKeywordsInputEnter(event) {
         if (event.key !== "Enter") {
             return;
         }
-        keywordInputs.forEach(function (e) {
-            var input = e.input, type = e.type;
+        keywordInputs.forEach((e) => {
+            const { input, type } = e;
             if ($(input).is(":focus")) {
-                _this.addKeyword($(input), type);
+                this.addKeyword($(input), type);
             }
         });
-    };
-    UIManager.prototype.getSortingSelectHTML = function (id) {
+    }
+    getSortingSelectHTML(id) {
         return bindMarkup(templates.sortingSelectHTML, [
             { name: "Id", value: id },
             { name: "PopularityDesc", value: SortingType.PopularityDesc },
@@ -3177,8 +3070,8 @@ var UIManager = /** @class */ (function () {
             },
             { name: "Random", value: SortingType.Random },
         ]);
-    };
-    UIManager.prototype.getFilteringListHTML = function (type) {
+    }
+    getFilteringListHTML(type) {
         var ids = this.getIds(type);
         var filteringListHTML = bindMarkup(templates.filteringListHTML, [
             { name: "FilteringTypeTabId", value: this.getFilteringTypeTabId(type) },
@@ -3192,8 +3085,8 @@ var UIManager = /** @class */ (function () {
             },
         ]);
         return filteringListHTML;
-    };
-    UIManager.prototype.getKeywordMatchingSelectHTML = function (attributes, includeDefaultOption, type, selectId) {
+    }
+    getKeywordMatchingSelectHTML(attributes, includeDefaultOption, type, selectId) {
         var defaultOption = includeDefaultOption
             ? bindMarkup(templates.emptyOptionHTML, [
                 { name: "value", value: "-- area (optional) --" },
@@ -3212,13 +3105,13 @@ var UIManager = /** @class */ (function () {
             { name: "KeywordMatchingArea.Author", value: KeywordMatchingArea.Author },
         ]);
         return filteringListHTML;
-    };
-    UIManager.prototype.getKeywordMatchingSelectId = function (html, type) {
+    }
+    getKeywordMatchingSelectId(html, type) {
         var suffix = type == undefined ? "s" : "_" + FilteringType[type];
         var id = "KeywordMatchingArea" + suffix;
         return html ? this.getHTMLId(id) : id;
-    };
-    UIManager.prototype.getKeywordMatchingMethod = function (fullSize, id) {
+    }
+    getKeywordMatchingMethod(fullSize, id) {
         id = id || "FFnS_KeywordMatchingMethod";
         return bindMarkup(templates.keywordMatchingMethodHTML, [
             { name: "id", value: id },
@@ -3233,20 +3126,20 @@ var UIManager = /** @class */ (function () {
             },
             { name: "size", value: fullSize ? 'size="3"' : "" },
         ]);
-    };
-    UIManager.prototype.getImportOptionsHTML = function () {
+    }
+    getImportOptionsHTML() {
         var optionsHTML = "";
         var urls = this.settingsManager.getAllSubscriptionURLs();
-        urls.forEach(function (url) {
+        urls.forEach((url) => {
             optionsHTML += bindMarkup(templates.optionHTML, [
                 { name: "value", value: url },
             ]);
         });
         return optionsHTML;
-    };
-    UIManager.prototype.initShowSettingsBtns = function () {
+    }
+    initShowSettingsBtns() {
         var this_ = this;
-        NodeCreationObserver.onCreation(ext.settingsBtnPredecessorSelector, function (element) {
+        NodeCreationObserver.onCreation(ext.settingsBtnPredecessorSelector, (element) => {
             if (currentPageNotSupported() ||
                 $(element).parent().find(".ShowSettingsBtn").length > 0) {
                 return;
@@ -3263,17 +3156,16 @@ var UIManager = /** @class */ (function () {
                 focusKeywordsInput();
             });
         });
-    };
-    UIManager.prototype.registerSettings = function () {
-        var _this = this;
-        this.htmlSettingsElements.forEach(function (element) {
-            _this.htmlSubscriptionManager.registerSettings(element.ids, element.type);
+    }
+    registerSettings() {
+        this.htmlSettingsElements.forEach((element) => {
+            this.htmlSubscriptionManager.registerSettings(element.ids, element.type);
         });
         this.htmlSubscriptionManager.registerSettings([
             "Hours_AdvancedControlsReceivedPeriod",
             "Days_AdvancedControlsReceivedPeriod",
         ], HTMLElementType.NumberInput, {
-            update: function (subscriptionSetting) {
+            update: (subscriptionSetting) => {
                 var advancedControlsReceivedPeriod = subscriptionSetting.manager.subscription.getAdvancedControlsReceivedPeriod();
                 var maxHours = advancedControlsReceivedPeriod.maxHours;
                 var advancedPeriodHours = maxHours % 24;
@@ -3286,64 +3178,63 @@ var UIManager = /** @class */ (function () {
                 }
             },
         });
-        this.htmlSubscriptionManager.registerSelectBoxBoolean(ext.markAsReadAboveBelowReadId, function (subscription) {
+        this.htmlSubscriptionManager.registerSelectBoxBoolean(ext.markAsReadAboveBelowReadId, (subscription) => {
             return subscription.isMarkAsReadAboveBelowRead();
         });
-        this.htmlSubscriptionManager.registerSelectBoxBoolean("FilterLong_FilteringByReadingTime", function (subscription) {
+        this.htmlSubscriptionManager.registerSelectBoxBoolean("FilterLong_FilteringByReadingTime", (subscription) => {
             return subscription.getFilteringByReadingTime().filterLong;
         });
-    };
-    UIManager.prototype.initSettingsCallbacks = function () {
-        var _this = this;
+    }
+    initSettingsCallbacks() {
         this.htmlSubscriptionManager.setUpCallbacks();
-        $id(this.closeBtnId).click(function () {
-            $id(_this.settingsDivContainerId).toggle();
+        $id(this.closeBtnId).click(() => {
+            $id(this.settingsDivContainerId).toggle();
         });
-        var importSettings = $id("FFnS_ImportSettings");
-        importSettings.change(function () {
-            _this.settingsManager.importAllSettings(importSettings.prop("files")[0]);
+        let importSettings = $id("FFnS_ImportSettings");
+        importSettings.change(() => {
+            this.settingsManager.importAllSettings(importSettings.prop("files")[0]);
         });
-        $id("FFnS_ExportSettings").click(function () {
-            _this.settingsManager.exportAllSettings();
+        $id("FFnS_ExportSettings").click(() => {
+            this.settingsManager.exportAllSettings();
         });
-        $id("FFnS_SettingsControls_ImportFromOtherSub").click(function () {
-            _this.importFromOtherSub();
+        $id("FFnS_SettingsControls_ImportFromOtherSub").click(() => {
+            this.importFromOtherSub();
         });
-        $id("FFnS_SettingsControls_LinkToSub").click(function () {
-            _this.linkToSub();
+        $id("FFnS_SettingsControls_LinkToSub").click(() => {
+            this.linkToSub();
         });
-        $id("FFnS_SettingsControls_UnlinkFromSub").click(function () {
-            _this.unlinkFromSub();
+        $id("FFnS_SettingsControls_UnlinkFromSub").click(() => {
+            this.unlinkFromSub();
         });
-        $id("FFnS_SettingsControls_DeleteSub").click(function () {
-            _this.deleteSub();
+        $id("FFnS_SettingsControls_DeleteSub").click(() => {
+            this.deleteSub();
         });
-        $id("FFnS_AddSortingType").click(function () {
-            var id = _this.registerAdditionalSortingType();
-            _this.subscription.addAdditionalSortingType($id(id).val());
-            _this.refreshFilteringAndSorting();
+        $id("FFnS_AddSortingType").click(() => {
+            var id = this.registerAdditionalSortingType();
+            this.subscription.addAdditionalSortingType($id(id).val());
+            this.refreshFilteringAndSorting();
         });
-        $id("FFnS_EraseSortingTypes").click(function () {
-            _this.subscription.setAdditionalSortingTypes([]);
+        $id("FFnS_EraseSortingTypes").click(() => {
+            this.subscription.setAdditionalSortingTypes([]);
             $("#FFnS_AdditionalSortingTypes").empty();
-            _this.refreshFilteringAndSorting();
+            this.refreshFilteringAndSorting();
         });
-        onClick($id("FFnS_AddColoringRule"), function () {
-            var cr = new ColoringRule();
-            _this.registerColoringRule(cr);
-            _this.subscription.addColoringRule(cr);
-            _this.articleManager.refreshColoring();
-            _this.refreshColoringRuleArrows();
+        onClick($id("FFnS_AddColoringRule"), () => {
+            let cr = new ColoringRule();
+            this.registerColoringRule(cr);
+            this.subscription.addColoringRule(cr);
+            this.articleManager.refreshColoring();
+            this.refreshColoringRuleArrows();
         });
-        onClick($id("FFnS_EraseColoringRules"), function () {
-            _this.subscription.setColoringRules([]);
+        onClick($id("FFnS_EraseColoringRules"), () => {
+            this.subscription.setColoringRules([]);
             $id("FFnS_ColoringRules").empty();
-            _this.articleManager.refreshColoring();
+            this.articleManager.refreshColoring();
         });
         this.setUpFilteringListEvents();
         $id("FFnS_AlwaysUseDefaultMatchingAreas").change(this.updateFilteringKeywordMatchingSelects);
-    };
-    UIManager.prototype.updateFilteringKeywordMatchingSelects = function () {
+    }
+    updateFilteringKeywordMatchingSelects() {
         var selects = $(".FFnS_keywordMatchingSelect[filtering]");
         if (isChecked($($id("FFnS_AlwaysUseDefaultMatchingAreas")))) {
             selects.hide();
@@ -3351,51 +3242,48 @@ var UIManager = /** @class */ (function () {
         else {
             selects.show();
         }
-    };
-    UIManager.prototype.postInit = function () {
-        var _this = this;
-        var syncManager = DataStore.getSyncStorageManager();
-        var syncCBId = "FFnS_syncSettingsEnabled";
+    }
+    postInit() {
+        let syncManager = DataStore.getSyncStorageManager();
+        let syncCBId = "FFnS_syncSettingsEnabled";
         if (syncManager) {
             setChecked(syncCBId, syncManager.isSyncEnabled());
-            $id(syncCBId).change(function () {
+            $id(syncCBId).change(() => {
                 syncManager.setSyncEnabled(isChecked($id(syncCBId)));
-                _this.forceReloadGlobalSettings = true;
-                _this.resetGlobalSettings(_this.globalSettings.slice(0)).then(function () {
-                    _this.refreshPage();
-                    _this.forceReloadGlobalSettings = false;
-                }, _this);
+                this.forceReloadGlobalSettings = true;
+                this.resetGlobalSettings(this.globalSettings.slice(0)).then(() => {
+                    this.refreshPage();
+                    this.forceReloadGlobalSettings = false;
+                }, this);
             });
         }
         else {
             $id(syncCBId).closest(".setting_group").remove();
         }
-        var forceRefreshArticlesBtn = $("<button>", {
+        const forceRefreshArticlesBtn = $("<button>", {
             id: ext.forceRefreshArticlesId,
             style: "display: none;",
         });
         $("body").append(forceRefreshArticlesBtn);
-        forceRefreshArticlesBtn.click(function (e) {
+        forceRefreshArticlesBtn.click((e) => {
             e.preventDefault();
-            _this.articleManager.refreshArticles();
+            this.articleManager.refreshArticles();
         });
-        onClick($(".icon-fx-light-mode-md-black, .icon-fx-dark-mode-md-black"), function () {
-            setTimeout(function () { return _this.articleManager.refreshColoring(); }, 100);
+        onClick($(".icon-fx-light-mode-md-black, .icon-fx-dark-mode-md-black"), () => {
+            setTimeout(() => this.articleManager.refreshColoring(), 100);
         });
-    };
-    UIManager.prototype.registerAdditionalSortingType = function () {
-        var _this = this;
+    }
+    registerAdditionalSortingType() {
         var id = this.getHTMLId("AdditionalSortingType_" + this.idCount++);
         $("#FFnS_AdditionalSortingTypes").append(this.getSortingSelectHTML(id));
-        $id(id).change(function () { return _this.updateAdditionalSortingTypes(); });
+        $id(id).change(() => this.updateAdditionalSortingTypes());
         return id;
-    };
-    UIManager.prototype.registerColoringRule = function (cr) {
-        var _this = this;
+    }
+    registerColoringRule(cr) {
         var ids = new ColoringRuleHTMLIds(this.getHTMLId("ColoringRule_" + this.idCount++));
-        var self = this;
+        let self = this;
         // append template
-        var html = bindMarkup(templates.coloringRuleHTML, [
+        let html = bindMarkup(templates.coloringRuleHTML, [
             { name: "Id", value: ids.id },
             { name: "Color", value: cr.color },
             { name: "SpecificKeywords", value: ColoringRuleSource.SpecificKeywords },
@@ -3428,9 +3316,9 @@ var UIManager = /** @class */ (function () {
         $id(ids.matchingMethodId).val(cr.matchingMethod);
         $id(ids.matchingAreaId).val(cr.matchingArea);
         this.refreshColoringRuleSpecificKeywords(cr, ids);
-        var refreshVisibility = function () {
+        let refreshVisibility = () => {
             $id(ids.keywordGroupId).css("display", cr.source == ColoringRuleSource.SpecificKeywords ? "" : "none");
-            var sourceTitle = cr.source == ColoringRuleSource.SourceTitle;
+            let sourceTitle = cr.source == ColoringRuleSource.SourceTitle;
             $id(ids.matchingMethodContainerId).css("display", sourceTitle ? "none" : "");
             $id(ids.matchingAreaContainerId).css("display", sourceTitle ? "none" : "");
             $id(ids.optionsSpanId).css("display", sourceTitle ? "none" : "");
@@ -3442,7 +3330,7 @@ var UIManager = /** @class */ (function () {
         function onChange(id, cb, input, click, onchange) {
             function callback() {
                 try {
-                    var noChange = cb.call(this);
+                    let noChange = cb.call(this);
                     if (noChange) {
                         return;
                     }
@@ -3476,7 +3364,7 @@ var UIManager = /** @class */ (function () {
             cr.matchingArea = Number($(this).val());
         });
         onChange(ids.colorId, function () {
-            var str = $(this).val();
+            let str = $(this).val();
             if (str.match(/^\W*([0-9A-F]{3}([0-9A-F]{3})?)\W*$/i)) {
                 cr.color = str.toUpperCase();
             }
@@ -3485,22 +3373,22 @@ var UIManager = /** @class */ (function () {
                 return true;
             }
         }, true, false, true);
-        onChange(ids.addBtnId, function () {
-            var keyword = $id(ids.keywordInputId).val();
+        onChange(ids.addBtnId, () => {
+            let keyword = $id(ids.keywordInputId).val();
             if (keyword != null && keyword !== "") {
                 cr.specificKeywords.push(keyword);
             }
             $id(ids.keywordInputId).val("");
-            _this.refreshColoringRuleSpecificKeywords(cr, ids);
+            this.refreshColoringRuleSpecificKeywords(cr, ids);
         }, false, true);
-        onChange(ids.eraseBtnId, function () {
+        onChange(ids.eraseBtnId, () => {
             cr.specificKeywords = [];
             $id(ids.keywordContainerId).empty();
         }, false, true);
         // Coloring rule management
-        onClick($id(ids.removeColoringRuleId), function () {
-            var rules = self.subscription.getColoringRules();
-            var i = rules.indexOf(cr);
+        onClick($id(ids.removeColoringRuleId), () => {
+            let rules = self.subscription.getColoringRules();
+            let i = rules.indexOf(cr);
             if (i > -1) {
                 rules.splice(i, 1);
                 self.subscription.save();
@@ -3509,24 +3397,24 @@ var UIManager = /** @class */ (function () {
             $id(ids.id).remove();
             self.refreshColoringRuleArrows();
         });
-        var getMoveColoringRuleCallback = function (up) {
-            return function () {
-                var rules = self.subscription.getColoringRules();
-                var i = rules.indexOf(cr);
+        let getMoveColoringRuleCallback = (up) => {
+            return () => {
+                let rules = self.subscription.getColoringRules();
+                let i = rules.indexOf(cr);
                 if (up ? i > 0 : i < rules.length) {
-                    var swapIdx = up ? i - 1 : i + 1;
-                    var swap = rules[swapIdx];
+                    let swapIdx = up ? i - 1 : i + 1;
+                    let swap = rules[swapIdx];
                     rules[swapIdx] = rules[i];
                     rules[i] = swap;
                     self.subscription.save();
                     self.articleManager.refreshColoring();
-                    var element = $id(ids.id);
+                    let element = $id(ids.id);
                     if (up) {
-                        var prev = element.prev();
+                        let prev = element.prev();
                         element.detach().insertBefore(prev);
                     }
                     else {
-                        var next = element.next();
+                        let next = element.next();
                         element.detach().insertAfter(next);
                     }
                     self.refreshColoringRuleArrows();
@@ -3535,14 +3423,14 @@ var UIManager = /** @class */ (function () {
         };
         onClick($id(ids.moveUpColoringRuleId), getMoveColoringRuleCallback(true));
         onClick($id(ids.moveDownColoringRuleId), getMoveColoringRuleCallback(false));
-    };
-    UIManager.prototype.refreshColoringRuleArrows = function () {
+    }
+    refreshColoringRuleArrows() {
         $(".FFnS_MoveUpColoringRule").not(":first").show();
         $(".FFnS_MoveUpColoringRule:first").hide();
         $(".FFnS_MoveDownColoringRule").not(":last").show();
         $(".FFnS_MoveDownColoringRule:last").hide();
-    };
-    UIManager.prototype.refreshColoringRuleSpecificKeywords = function (cr, ids) {
+    }
+    refreshColoringRuleSpecificKeywords(cr, ids) {
         var keywords = cr.specificKeywords;
         var html = "";
         for (var i = 0; i < keywords.length; i++) {
@@ -3555,27 +3443,26 @@ var UIManager = /** @class */ (function () {
             html += keywordHTML;
         }
         $id(ids.keywordContainerId).html(html);
-    };
-    UIManager.prototype.setUpFilteringListEvents = function () {
+    }
+    setUpFilteringListEvents() {
         getFilteringTypes().forEach(this.setUpFilteringListManagementEvents, this);
-    };
-    UIManager.prototype.setUpFilteringListManagementEvents = function (type) {
-        var _this = this;
+    }
+    setUpFilteringListManagementEvents(type) {
         var ids = this.getIds(type);
         // Add button
-        $id(this.getHTMLId(ids.plusBtnId)).click(function () {
-            var input = $id(_this.getHTMLId(ids.inputId));
-            _this.addKeyword(input, type);
+        $id(this.getHTMLId(ids.plusBtnId)).click(() => {
+            var input = $id(this.getHTMLId(ids.inputId));
+            this.addKeyword(input, type);
         });
         // Erase all button
-        $id(this.getHTMLId(ids.eraseBtnId)).click(function () {
+        $id(this.getHTMLId(ids.eraseBtnId)).click(() => {
             if (confirm("Erase all the keywords of this list ?")) {
-                _this.subscription.resetFilteringList(type);
-                _this.updateFilteringList(type);
+                this.subscription.resetFilteringList(type);
+                this.updateFilteringList(type);
             }
         });
-    };
-    UIManager.prototype.addKeyword = function (input, type) {
+    }
+    addKeyword(input, type) {
         var keyword = input.val();
         if (keyword != null && keyword !== "") {
             var area = $id(this.getKeywordMatchingSelectId(true, type)).val();
@@ -3586,8 +3473,8 @@ var UIManager = /** @class */ (function () {
             this.updateFilteringList(type);
             input.val("");
         }
-    };
-    UIManager.prototype.setUpKeywordButtonsEvents = function (type) {
+    }
+    setUpKeywordButtonsEvents(type) {
         var ids = this.getIds(type);
         var keywordList = this.subscription.getFilteringList(type);
         // Keyword buttons events
@@ -3602,12 +3489,12 @@ var UIManager = /** @class */ (function () {
                 }
             });
         }
-    };
-    UIManager.prototype.updateFilteringList = function (type) {
+    }
+    updateFilteringList(type) {
         this.prepareFilteringList(type);
         this.refreshFilteringAndSorting();
-    };
-    UIManager.prototype.prepareFilteringList = function (type) {
+    }
+    prepareFilteringList(type) {
         var ids = this.getIds(type);
         var filteringList = this.subscription.getFilteringList(type);
         var filteringKeywordsHTML = "";
@@ -3622,22 +3509,20 @@ var UIManager = /** @class */ (function () {
         }
         $id(ids.filetringKeywordsId).html(filteringKeywordsHTML);
         this.setUpKeywordButtonsEvents(type);
-    };
-    UIManager.prototype.updateAdditionalSortingTypes = function () {
+    }
+    updateAdditionalSortingTypes() {
         var additionalSortingTypes = [];
-        $("#FFnS_AdditionalSortingTypes > select").each(function (i, e) {
-            return additionalSortingTypes.push($(e).val());
-        });
+        $("#FFnS_AdditionalSortingTypes > select").each((i, e) => additionalSortingTypes.push($(e).val()));
         this.subscription.setAdditionalSortingTypes(additionalSortingTypes);
         this.refreshFilteringAndSorting();
-    };
-    UIManager.prototype.addArticle = function (article) {
+    }
+    addArticle(article) {
         if (currentPageNotSupported()) {
             return;
         }
         try {
             this.articleManager.addArticle(article);
-            var callback = this.readArticlesMutationCallback(article);
+            const callback = this.readArticlesMutationCallback(article);
             var articleObserver = new MutationObserver(callback);
             articleObserver.observe(article, { attributes: true });
             callback([], articleObserver);
@@ -3645,17 +3530,16 @@ var UIManager = /** @class */ (function () {
         catch (err) {
             console.log(err);
         }
-    };
-    UIManager.prototype.readArticlesMutationCallback = function (article) {
-        var _this = this;
-        return function (mr, observer) {
-            var readClassElement = !$(article).hasClass(ext.inlineViewClass)
+    }
+    readArticlesMutationCallback(article) {
+        return (mr, observer) => {
+            let readClassElement = !$(article).hasClass(ext.inlineViewClass)
                 ? $(article)
                 : $(article).closest(ext.articleViewEntryContainerSelector);
             if (readClassElement.hasClass(ext.readArticleClass) &&
                 !$(article).hasClass(ext.inlineViewClass)) {
-                if (_this.subscription.isHideAfterRead()) {
-                    if (_this.subscription.isReplaceHiddenWithGap()) {
+                if (this.subscription.isHideAfterRead()) {
+                    if (this.subscription.isReplaceHiddenWithGap()) {
                         $(article).attr("gap-article", "true");
                     }
                     else {
@@ -3665,8 +3549,8 @@ var UIManager = /** @class */ (function () {
                 observer.disconnect();
             }
         };
-    };
-    UIManager.prototype.addSection = function (section) {
+    }
+    addSection(section) {
         if (currentPageNotSupported()) {
             return;
         }
@@ -3676,8 +3560,8 @@ var UIManager = /** @class */ (function () {
         else {
             $(section).remove();
         }
-    };
-    UIManager.prototype.importFromOtherSub = function () {
+    }
+    importFromOtherSub() {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
         if (selectedURL &&
             confirm("Import settings from the subscription url /" + selectedURL + " ?")) {
@@ -3685,42 +3569,42 @@ var UIManager = /** @class */ (function () {
                 .importSubscription(selectedURL)
                 .then(this.refreshPage, this);
         }
-    };
-    UIManager.prototype.linkToSub = function () {
+    }
+    linkToSub() {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
         if (selectedURL &&
             confirm("Link current subscription to: /" + selectedURL + " ?")) {
             this.settingsManager.linkToSubscription(selectedURL);
             this.refreshPage();
         }
-    };
-    UIManager.prototype.unlinkFromSub = function () {
+    }
+    unlinkFromSub() {
         if (confirm("Unlink current subscription ?")) {
             this.settingsManager.deleteSubscription(this.settingsManager.getActualSubscriptionURL());
             this.refreshPage();
         }
-    };
-    UIManager.prototype.deleteSub = function () {
+    }
+    deleteSub() {
         var selectedURL = this.getSettingsControlsSelectedSubscription();
         if (selectedURL && confirm("Delete : /" + selectedURL + " ?")) {
             this.settingsManager.deleteSubscription(selectedURL);
             this.refreshPage();
         }
-    };
-    UIManager.prototype.getHTMLId = function (id) {
+    }
+    getHTMLId(id) {
         return "FFnS_" + id;
-    };
-    UIManager.prototype.getKeywordId = function (keywordListId, keyword) {
+    }
+    getKeywordId(keywordListId, keyword) {
         if (!(keyword in this.keywordToId)) {
             var id = this.idCount++;
             this.keywordToId[keyword] = id;
         }
         return this.getHTMLId(keywordListId + "_" + this.keywordToId[keyword]);
-    };
-    UIManager.prototype.getFilteringTypeTabId = function (filteringType) {
+    }
+    getFilteringTypeTabId(filteringType) {
         return this.getHTMLId("Tab_" + FilteringType[filteringType]);
-    };
-    UIManager.prototype.getIds = function (type) {
+    }
+    getIds(type) {
         var id = getFilteringTypeId(type);
         return {
             typeId: "Keywords_" + id,
@@ -3729,11 +3613,10 @@ var UIManager = /** @class */ (function () {
             eraseBtnId: "DeleteAll_" + id,
             filetringKeywordsId: "FiletringKeywords_" + id,
         };
-    };
-    return UIManager;
-}());
-var ColoringRuleHTMLIds = /** @class */ (function () {
-    function ColoringRuleHTMLIds(id) {
+    }
+}
+class ColoringRuleHTMLIds {
+    constructor(id) {
         this.id = id;
         this.highlightId = id + " .FFnS_HighlightAllTitle";
         this.colorId = id + " .FFnS_SpecificColor";
@@ -3755,75 +3638,73 @@ var ColoringRuleHTMLIds = /** @class */ (function () {
         this.moveUpColoringRuleId = id + " .FFnS_MoveUpColoringRule";
         this.moveDownColoringRuleId = id + " .FFnS_MoveDownColoringRule";
     }
-    return ColoringRuleHTMLIds;
-}());
-var keywordInputs = [
+}
+const keywordInputs = [
     { input: "#FFnS_Input_FilteredOut", type: FilteringType.FilteredOut },
     { input: "#FFnS_Input_RestrictedOn", type: FilteringType.RestrictedOn },
 ];
-var focusKeywordsInputSelector = keywordInputs
-    .map(function (e) { return e.input + ":visible"; })
+const focusKeywordsInputSelector = keywordInputs
+    .map((e) => e.input + ":visible")
     .join(",");
 function focusKeywordsInput() {
     $(focusKeywordsInputSelector).focus().val("");
 }
 
-var HTMLSubscriptionManager = /** @class */ (function () {
-    function HTMLSubscriptionManager(manager) {
-        var _this = this;
+class HTMLSubscriptionManager {
+    constructor(manager) {
         this.subscriptionSettings = [];
         this.configByElementType = {};
         this.manager = manager;
         this.configByElementType[HTMLElementType.SelectBox] = {
-            setUpChangeCallback: function (subscriptionSetting) {
-                $id(subscriptionSetting.htmlId).change(_this.getChangeCallback(subscriptionSetting));
+            setUpChangeCallback: subscriptionSetting => {
+                $id(subscriptionSetting.htmlId).change(this.getChangeCallback(subscriptionSetting));
             },
-            getHTMLValue: function (subscriptionSetting) {
+            getHTMLValue: subscriptionSetting => {
                 return $id(subscriptionSetting.htmlId).val();
             },
-            update: function (subscriptionSetting) {
-                var value = _this.manager.subscription["get" + subscriptionSetting.id]();
+            update: subscriptionSetting => {
+                var value = this.manager.subscription["get" + subscriptionSetting.id]();
                 $id(subscriptionSetting.htmlId).val(value);
             }
         };
         this.configByElementType[HTMLElementType.CheckBox] = {
-            setUpChangeCallback: function (subscriptionSetting) {
-                $id(subscriptionSetting.htmlId).change(_this.getChangeCallback(subscriptionSetting));
+            setUpChangeCallback: subscriptionSetting => {
+                $id(subscriptionSetting.htmlId).change(this.getChangeCallback(subscriptionSetting));
             },
-            getHTMLValue: function (subscriptionSetting) {
+            getHTMLValue: subscriptionSetting => {
                 return isChecked($id(subscriptionSetting.htmlId));
             },
-            update: function (subscriptionSetting) {
-                var value = _this.manager.subscription["is" + subscriptionSetting.id]();
+            update: subscriptionSetting => {
+                var value = this.manager.subscription["is" + subscriptionSetting.id]();
                 setChecked(subscriptionSetting.htmlId, value);
             }
         };
         this.configByElementType[HTMLElementType.NumberInput] = {
-            setUpChangeCallback: function (subscriptionSetting) {
-                var callback = _this.getChangeCallback(subscriptionSetting);
-                $id(subscriptionSetting.htmlId)[0].oninput = function (ev) {
+            setUpChangeCallback: subscriptionSetting => {
+                var callback = this.getChangeCallback(subscriptionSetting);
+                $id(subscriptionSetting.htmlId)[0].oninput = ev => {
                     callback();
                 };
             },
-            getHTMLValue: function (subscriptionSetting) {
+            getHTMLValue: subscriptionSetting => {
                 return Number($id(subscriptionSetting.htmlId).val());
             },
             update: this.configByElementType[HTMLElementType.SelectBox].update
         };
         this.configByElementType[HTMLElementType.ColorInput] = {
-            setUpChangeCallback: function (subscriptionSetting) {
-                var callback = _this.getChangeCallback(subscriptionSetting);
-                var e = $id(subscriptionSetting.htmlId)[0];
-                e.oninput = function (ev) {
+            setUpChangeCallback: subscriptionSetting => {
+                var callback = this.getChangeCallback(subscriptionSetting);
+                const e = $id(subscriptionSetting.htmlId)[0];
+                e.oninput = ev => {
                     callback();
                 };
                 e.onchange = e.oninput;
             },
             getHTMLValue: this.configByElementType[HTMLElementType.SelectBox]
                 .getHTMLValue,
-            update: function (subscriptionSetting) {
-                var value = _this.manager.subscription["get" + subscriptionSetting.id]();
-                var jq = $id(subscriptionSetting.htmlId);
+            update: subscriptionSetting => {
+                var value = this.manager.subscription["get" + subscriptionSetting.id]();
+                const jq = $id(subscriptionSetting.htmlId);
                 jq.val(value);
                 if (!subscriptionSetting["jscolor"]) {
                     subscriptionSetting["jscolor"] = true;
@@ -3832,7 +3713,7 @@ var HTMLSubscriptionManager = /** @class */ (function () {
             }
         };
     }
-    HTMLSubscriptionManager.prototype.getChangeCallback = function (setting) {
+    getChangeCallback(setting) {
         return function () {
             try {
                 var val = setting.config.getHTMLValue(setting);
@@ -3846,41 +3727,39 @@ var HTMLSubscriptionManager = /** @class */ (function () {
                 console.log(e);
             }
         };
-    };
-    HTMLSubscriptionManager.prototype.registerSettings = function (ids, type, subscriptionSettingConfig) {
+    }
+    registerSettings(ids, type, subscriptionSettingConfig) {
         this.addSettings(ids, this.configByElementType[type], subscriptionSettingConfig);
-    };
-    HTMLSubscriptionManager.prototype.registerSelectBoxBoolean = function (id, getValueCallback) {
+    }
+    registerSelectBoxBoolean(id, getValueCallback) {
         this.registerSettings([id], HTMLElementType.SelectBox, {
-            update: function (subscriptionSetting) {
+            update: (subscriptionSetting) => {
                 $id(subscriptionSetting.htmlId).val(getValueCallback(subscriptionSetting.manager.subscription) + "");
             },
-            getHTMLValue: function (subscriptionSetting) {
+            getHTMLValue: subscriptionSetting => {
                 return $id(subscriptionSetting.htmlId).val() === "true";
             }
         });
-    };
-    HTMLSubscriptionManager.prototype.addSettings = function (ids, config, subscriptionSettingConfig) {
-        var _this = this;
-        ids.forEach(function (id) {
-            var setting = new HTMLSubscriptionSetting(_this.manager, id, config, subscriptionSettingConfig);
-            _this.subscriptionSettings.push(setting);
+    }
+    addSettings(ids, config, subscriptionSettingConfig) {
+        ids.forEach(id => {
+            var setting = new HTMLSubscriptionSetting(this.manager, id, config, subscriptionSettingConfig);
+            this.subscriptionSettings.push(setting);
         });
-    };
-    HTMLSubscriptionManager.prototype.setUpCallbacks = function () {
-        this.subscriptionSettings.forEach(function (subscriptionSetting) {
+    }
+    setUpCallbacks() {
+        this.subscriptionSettings.forEach(subscriptionSetting => {
             subscriptionSetting.setUpCallbacks();
         });
-    };
-    HTMLSubscriptionManager.prototype.update = function () {
-        this.subscriptionSettings.forEach(function (subscriptionSetting) {
+    }
+    update() {
+        this.subscriptionSettings.forEach(subscriptionSetting => {
             subscriptionSetting.update();
         });
-    };
-    return HTMLSubscriptionManager;
-}());
-var HTMLSubscriptionSetting = /** @class */ (function () {
-    function HTMLSubscriptionSetting(manager, id, config, subscriptionSettingConfig) {
+    }
+}
+class HTMLSubscriptionSetting {
+    constructor(manager, id, config, subscriptionSettingConfig) {
         this.manager = manager;
         this.id = id;
         this.htmlId = manager.getHTMLId(id);
@@ -3897,19 +3776,16 @@ var HTMLSubscriptionSetting = /** @class */ (function () {
             update: update
         };
     }
-    HTMLSubscriptionSetting.prototype.update = function () {
+    update() {
         this.config.update(this);
-    };
-    HTMLSubscriptionSetting.prototype.setUpCallbacks = function () {
+    }
+    setUpCallbacks() {
         this.config.setUpChangeCallback(this);
-    };
-    return HTMLSubscriptionSetting;
-}());
+    }
+}
 
-var HTMLGlobalSettings = /** @class */ (function () {
-    function HTMLGlobalSettings(id, defaultValue, uiManager, fullRefreshOnChange, sessionStore) {
-        if (fullRefreshOnChange === void 0) { fullRefreshOnChange = false; }
-        if (sessionStore === void 0) { sessionStore = true; }
+class HTMLGlobalSettings {
+    constructor(id, defaultValue, uiManager, fullRefreshOnChange = false, sessionStore = true) {
         this.id = id;
         this.defaultValue = defaultValue;
         this.isBoolean = typeof defaultValue === "boolean";
@@ -3918,76 +3794,73 @@ var HTMLGlobalSettings = /** @class */ (function () {
         this.fullRefreshOnChange = fullRefreshOnChange;
         this.sessionStoreEnabled = sessionStore;
     }
-    HTMLGlobalSettings.prototype.init = function () {
+    init() {
         return this.load();
-    };
-    HTMLGlobalSettings.prototype.load = function () {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            DataStore.getAsync(_this.id, _this.defaultValue).then(function (value) {
-                _this.setValue(value);
+    }
+    load() {
+        return new AsyncResult(p => {
+            DataStore.getAsync(this.id, this.defaultValue).then(value => {
+                this.setValue(value);
                 p.done();
-            }, _this);
+            }, this);
         }, this);
-    };
-    HTMLGlobalSettings.prototype.reset = function () {
-        var _this = this;
-        return new AsyncResult(function (p) {
-            _this.load().then(function () {
-                _this.refreshHTMLValue();
+    }
+    reset() {
+        return new AsyncResult(p => {
+            this.load().then(() => {
+                this.refreshHTMLValue();
                 p.done();
-            }, _this);
+            }, this);
         }, this);
-    };
-    HTMLGlobalSettings.prototype.getValue = function () {
+    }
+    getValue() {
         return this.value;
-    };
-    HTMLGlobalSettings.prototype.setValue = function (value) {
+    }
+    setValue(value) {
         this.value = value;
         this.sessionStore();
-    };
-    HTMLGlobalSettings.prototype.refreshValue = function (value) {
+    }
+    refreshValue(value) {
         this.setValue(value);
         this.save();
         this.refreshHTMLValue();
-    };
-    HTMLGlobalSettings.prototype.setAdditionalChangeCallback = function (additionalChangeCallback) {
+    }
+    setAdditionalChangeCallback(additionalChangeCallback) {
         this.additionalChangeCallback = additionalChangeCallback;
-    };
-    HTMLGlobalSettings.prototype.save = function () {
+    }
+    save() {
         DataStore.put(this.id, this.value);
-    };
-    HTMLGlobalSettings.prototype.sessionStore = function () {
+    }
+    sessionStore() {
         if (this.sessionStoreEnabled) {
             this.uiManager.page.put(this.id, this.value, true);
         }
-    };
-    HTMLGlobalSettings.prototype.getHTMLValue = function (e) {
+    }
+    getHTMLValue(e) {
         if (this.isBoolean) {
             return isChecked(e);
         }
         else {
             return Number(e.val());
         }
-    };
-    HTMLGlobalSettings.prototype.refreshHTMLValue = function () {
+    }
+    refreshHTMLValue() {
         if (this.isBoolean) {
             setChecked(this.htmlId, this.value);
         }
         else {
             return $id(this.htmlId).val(this.value);
         }
-    };
-    HTMLGlobalSettings.prototype.initUI = function () {
-        var _this = this;
+    }
+    initUI() {
         var this_ = this;
-        var additionalCallback = function () {
-            if (_this.additionalChangeCallback) {
-                _this.additionalChangeCallback.call(_this, this_.value);
+        let additionalCallback = () => {
+            if (this.additionalChangeCallback) {
+                this.additionalChangeCallback.call(this, this_.value);
             }
         };
         function changeCallback() {
-            var val = this_.getHTMLValue($(this));
+            let val = this_.getHTMLValue($(this));
             this_.setValue(val);
             this_.save();
             if (this_.fullRefreshOnChange) {
@@ -4003,15 +3876,14 @@ var HTMLGlobalSettings = /** @class */ (function () {
         }
         this.refreshHTMLValue();
         additionalCallback();
-    };
-    return HTMLGlobalSettings;
-}());
+    }
+}
 
 var DEBUG = false;
 function initResources() {
     INITIALIZER.loadScript("jquery.min.js");
     INITIALIZER.loadScript("node-creation-observer.js");
-    var urls = INITIALIZER.getResourceURLs();
+    let urls = INITIALIZER.getResourceURLs();
     ext.plusIconLink = urls.plusIconURL;
     ext.eraseIconLink = urls.eraseIconURL;
     ext.closeIconLink = urls.closeIconURL;
@@ -4031,7 +3903,7 @@ $(document).ready(function () {
         var uiManagerBind = callbackBindedTo(uiManager);
         NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, function () {
             console.log("Feedly page fully loaded");
-            uiManager.init().then(function () {
+            uiManager.init().then(() => {
                 NodeCreationObserver.onCreation(ext.articleSelector, uiManagerBind(uiManager.addArticle));
                 NodeCreationObserver.onCreation(ext.sectionSelector, uiManagerBind(uiManager.addSection));
                 NodeCreationObserver.onCreation(ext.subscriptionChangeSelector, uiManagerBind(uiManager.updatePage));
