@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.21.0
+// @version     3.21.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1471,7 +1471,7 @@ class Article {
     setVisible(visible) {
         if (visible != null && !visible) {
             const parent = this.container.parent();
-            this.container.detach().appendTo(parent);
+            this.container.detach().prependTo(parent);
             this.container.css("display", "none");
         }
         else {

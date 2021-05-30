@@ -557,7 +557,7 @@ export class Article {
   setVisible(visible?: boolean) {
     if (visible != null && !visible) {
       const parent = this.container.parent();
-      this.container.detach().appendTo(parent);
+      this.container.detach().prependTo(parent);
       this.container.css("display", "none");
     } else {
       this.container.css("display", "");
