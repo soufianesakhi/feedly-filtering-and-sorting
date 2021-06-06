@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.21.1
+// @version     3.21.2
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2561,17 +2561,18 @@ class FeedlyPage {
         });
     }
     overrideMarkAsRead() {
-        var prototype = Object.getPrototypeOf(getReactPage());
-        var markAsRead = prototype.markAsRead;
-        prototype.markAsRead = function (lastEntryObject) {
+        var prototype = Object.getPrototypeOf(getService("readingManager"));
+        var askMarkPageAsRead = prototype.askMarkPageAsRead;
+        prototype.askMarkPageAsRead = function (lastEntryObject) {
+            let readingManager = getService("readingManager");
             if (disableOverrides()) {
-                return markAsRead.apply(this, arguments);
+                return askMarkPageAsRead.apply(readingManager, arguments);
             }
             let jumpToNext = () => {
                 if (document.URL.indexOf("category/global.") < 0) {
                     let navigo = getService("navigo");
                     if (navigo.getNextURI()) {
-                        this.feedly.jumpToNext();
+                        readingManager._jumpToNext.call(readingManager);
                     }
                     else {
                         this.feedly.loadDefaultPage();
@@ -2582,7 +2583,7 @@ class FeedlyPage {
                 }
             };
             if (lastEntryObject && lastEntryObject.asOf) {
-                markAsRead.call(this, lastEntryObject);
+                askMarkPageAsRead.call(readingManager, lastEntryObject);
             }
             else if (getFFnS(ext.loadByBatchEnabledId, true) &&
                 !getStreamPage().stream.state.hasAllEntries) {
@@ -2606,7 +2607,7 @@ class FeedlyPage {
                 jumpToNext();
             }
             else {
-                markAsRead.call(this, lastEntryObject);
+                askMarkPageAsRead.call(readingManager, lastEntryObject);
             }
         };
     }
@@ -2735,13 +2736,13 @@ class FeedlyPage {
             }
             return inlineEntry.apply(this, arguments);
         };
-        const feedly = getService("feedly");
-        const jumpToNext = feedly.jumpToNext;
-        feedly.jumpToNext = () => {
+        const readingManager = Object.getPrototypeOf(getService("readingManager"));
+        const _jumpToNext = readingManager._jumpToNext;
+        readingManager._jumpToNext = () => {
             if (!disableOverrides()) {
                 putFFnS(ext.navigatingToNextId, true);
             }
-            return jumpToNext.apply(this, arguments);
+            return _jumpToNext.apply(getService("readingManager"), arguments);
         };
     }
 }
