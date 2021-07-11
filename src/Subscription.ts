@@ -1,16 +1,17 @@
 /// <reference path="./_references.d.ts" />
 
+import { ArticleSorterConfig } from "./ArticleSorter";
 import {
   FilteringType,
   KeywordMatchingArea,
   KeywordMatchingMethod,
-  SortingType
+  SortingType,
 } from "./DataTypes";
 import { SubscriptionDAO } from "./SubscriptionDAO";
 import {
   AdvancedControlsReceivedPeriod,
   ColoringRule,
-  SubscriptionDTO
+  SubscriptionDTO,
 } from "./SubscriptionDTO";
 
 export class Subscription {
@@ -234,5 +235,14 @@ export class Subscription {
 
   save() {
     this.dao.save(this.dto);
+  }
+
+  getArticleSorterConfig(): ArticleSorterConfig {
+    return {
+      sortingEnabled: this.isSortingEnabled(),
+      pinHotToTop: this.isPinHotToTop(),
+      sortingType: this.getSortingType(),
+      additionalSortingTypes: this.getAdditionalSortingTypes(),
+    };
   }
 }

@@ -7,9 +7,9 @@ import {
   AdvancedControlsReceivedPeriod,
   ColoringRule,
   FilteringByReadingTime,
-  SubscriptionDTO
+  SubscriptionDTO,
 } from "./SubscriptionDTO";
-import { deepClone, registerAccessors } from "./Utils";
+import { debugLog, deepClone, registerAccessors } from "./Utils";
 
 export class SubscriptionDAO {
   private SUBSCRIPTION_ID_PREFIX = "subscription_";
@@ -27,10 +27,10 @@ export class SubscriptionDAO {
   }
 
   init(): AsyncResult<any> {
-    return new AsyncResult<any>(p => {
+    return new AsyncResult<any>((p) => {
       DataStore.init().then(() => {
         var t = this;
-        var onLoad = function(sub: Subscription) {
+        var onLoad = function (sub: Subscription) {
           t.defaultSubscription = sub;
           p.done();
         };
@@ -57,12 +57,12 @@ export class SubscriptionDAO {
     url: string,
     forceReloadGlobalSettings?: boolean
   ): AsyncResult<Subscription> {
-    return new AsyncResult<Subscription>(p => {
+    return new AsyncResult<Subscription>((p) => {
       var sub = new Subscription(this);
       if (forceReloadGlobalSettings) {
         url = this.GLOBAL_SETTINGS_SUBSCRIPTION_URL;
       }
-      this.load(url).then(dto => {
+      this.load(url).then((dto) => {
         sub.dto = dto;
         if (forceReloadGlobalSettings) {
           this.defaultSubscription = sub;
@@ -76,7 +76,10 @@ export class SubscriptionDAO {
     var url = dto.url;
     var id = this.getSubscriptionId(url);
     DataStore.put(id, dto);
-    console.log("Subscription saved: " + JSON.stringify(dto));
+    debugLog(
+      () => "Subscription saved: " + JSON.stringify(dto),
+      "SubscriptionDAO"
+    );
   }
 
   saveAll(subscriptions: { [key: string]: SubscriptionDTO }) {
@@ -93,9 +96,9 @@ export class SubscriptionDAO {
   }
 
   loadAll(): AsyncResult<{ [key: string]: SubscriptionDTO }> {
-    return new AsyncResult<{ [key: string]: SubscriptionDTO }>(p => {
+    return new AsyncResult<{ [key: string]: SubscriptionDTO }>((p) => {
       let ids = this.getAllSubscriptionIds();
-      DataStore.getItemsAsync<SubscriptionDTO>(ids).then(results => {
+      DataStore.getItemsAsync<SubscriptionDTO>(ids).then((results) => {
         for (var key in results) {
           var url = results[key].url;
           if (!url) {
@@ -111,20 +114,26 @@ export class SubscriptionDAO {
   }
 
   load(url: string): AsyncResult<SubscriptionDTO> {
-    return new AsyncResult<SubscriptionDTO>(p => {
-      DataStore.getAsync(this.getSubscriptionId(url), null).then(dto => {
+    return new AsyncResult<SubscriptionDTO>((p) => {
+      DataStore.getAsync(this.getSubscriptionId(url), null).then((dto) => {
         var cloneURL;
         if (dto) {
           var linkedURL = (<LinkedSubscriptionDTO>dto).linkedUrl;
           if (linkedURL != null) {
-            console.log("Loading linked subscription: " + linkedURL);
-            this.load(linkedURL).then(dto => {
+            debugLog(
+              () => "Loading linked subscription: " + linkedURL,
+              "SubscriptionDAO"
+            );
+            this.load(linkedURL).then((dto) => {
               p.result(dto);
             }, this);
             return;
           } else {
             cloneURL = dto.url;
-            console.log("Loaded saved subscription: " + JSON.stringify(dto));
+            debugLog(
+              () => "Loaded saved subscription: " + JSON.stringify(dto),
+              "SubscriptionDAO"
+            );
           }
         } else {
           dto = this.defaultSubscription
@@ -140,22 +149,22 @@ export class SubscriptionDAO {
 
   delete(url: string) {
     DataStore.delete(this.getSubscriptionId(url));
-    console.log("Deleted: " + url);
+    debugLog(() => "Deleted: " + url, "SubscriptionDAO");
   }
 
   clone(dtoToClone: SubscriptionDTO, cloneUrl: string): SubscriptionDTO {
     var clone = deepClone(dtoToClone, new SubscriptionDTO(cloneUrl), {
       advancedControlsReceivedPeriod: new AdvancedControlsReceivedPeriod(),
       coloringRules: ColoringRule,
-      filteringByReadingTime: new FilteringByReadingTime()
+      filteringByReadingTime: new FilteringByReadingTime(),
     });
     clone.url = cloneUrl;
     return clone;
   }
 
   importSettings(urlToImport: string, actualUrl: string): AsyncResult<any> {
-    return new AsyncResult<any>(p => {
-      this.load(urlToImport).then(dto => {
+    return new AsyncResult<any>((p) => {
+      this.load(urlToImport).then((dto) => {
         dto.url = actualUrl;
         if (this.isURLGlobal(actualUrl)) {
           this.defaultSubscription.dto = dto;
@@ -191,7 +200,10 @@ export class SubscriptionDAO {
     var linkedSub = new LinkedSubscriptionDTO(linkedURL);
     var t = this;
     DataStore.put(id, linkedSub);
-    console.log("Subscription linked: " + JSON.stringify(linkedSub));
+    debugLog(
+      () => "Subscription linked: " + JSON.stringify(linkedSub),
+      "SubscriptionDAO"
+    );
   }
 
   isURLGlobal(url: string): boolean {

@@ -1,14 +1,13 @@
 /// <reference path="./_references.d.ts" />
 
 import { Article } from "./Article";
-import { ArticleSorter } from "./ArticleSorter";
 import { ColoringRuleSource, FilteringType } from "./DataTypes";
 import { DuplicateChecker } from "./DuplicatesManager";
 import { FeedlyPage } from "./FeedlyPage";
 import { KeywordManager } from "./KeywordManager";
 import { SettingsManager } from "./SettingsManager";
 import { Subscription } from "./Subscription";
-import { hexToRgb, isLight, removeContent, shadeColor } from "./Utils";
+import { hexToRgb, isLight, shadeColor } from "./Utils";
 
 export class ArticleManager {
   settingsManager: SettingsManager;
@@ -244,33 +243,8 @@ export class ArticleManager {
     }
     this.page.put(ext.sortArticlesId, false);
     let sub = this.getCurrentSub();
-    let sortingEnabled = sub.isSortingEnabled();
-    let pinHotToTop = sub.isPinHotToTop();
-    if (sortingEnabled || pinHotToTop) {
-      console.log("Sorting articles at " + new Date().toTimeString());
-      $(ext.articlesContainerSelector).each((_, c) => {
-        let articlesContainer = $(c);
-        const articles = articlesContainer
-          .find(ext.articleSelector)
-          .get()
-          .map((e) => new Article(e));
-        let { visibleArticles, hiddenArticles } = new ArticleSorter(
-          sortingEnabled,
-          pinHotToTop,
-          sub.getSortingType(),
-          sub.getAdditionalSortingTypes()
-        ).sort(articles);
-        let chunks = articlesContainer.find(ext.articlesChunkSelector);
-        removeContent(chunks.find(".Heading"));
-        let containerChunk = chunks.first();
-        containerChunk.empty();
-        let appendArticle = (article: Article) => {
-          const container = article.getContainer();
-          container.detach().appendTo(containerChunk);
-        };
-        visibleArticles.forEach(appendArticle);
-        hiddenArticles.forEach(appendArticle);
-      });
+    if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
+      this.page.sortArticles(sub);
     }
   }
 

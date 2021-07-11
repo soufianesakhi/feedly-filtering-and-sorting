@@ -73,7 +73,7 @@ var ext = {
   maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles",
   forceRefreshArticlesId: "forceRefreshArticles",
   disablePageOverridesId: "disablePageOverrides",
-  inliningEntryId: "inliningEntry",
+  articleSorterConfigId: "articleSorterConfig",
   navigatingToNextId: "navigatingToNext",
   layoutChangeSelector: "input[id^='layout-']",
 };

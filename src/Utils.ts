@@ -1,3 +1,5 @@
+import { debugEnabled } from "./Main";
+
 var exported = {};
 
 const pageSupportedRegexp = new RegExp(ext.supportedURLsPattern, "i");
@@ -185,7 +187,9 @@ export function executeWindow(sourceName: string, ...functions: Function[]) {
 }
 
 export function injectToWindow(...functions: Function[]) {
-  var srcTxt = functions.map((f) => "function " + f).join("\n");
+  var srcTxt = functions
+    .map((f) => (f.prototype ? "" : "function ") + f)
+    .join("\n");
   const name = functions.length == 1 ? functions[0].name : "Functions";
   injectScriptText(srcTxt, "FFnS-" + name, true);
 }
@@ -194,7 +198,7 @@ export function injectClasses(...classes: Function[]) {
   var srcTxt = classes
     .map((c) => `${c} window.${c.name} = ${c.name};`)
     .join("\n");
-  injectScriptText(srcTxt, "classes-" + Date.now(), true);
+  injectScriptText(srcTxt, "FFnS-classes", true);
 }
 
 export function injectScriptText(
@@ -283,4 +287,20 @@ export function shadeColor(rgb: number[], percent) {
   B = B < 255 ? B : 255;
 
   return `rgb(${R}, ${G}, ${B})`;
+}
+
+export function debugLog(
+  buildMessage: () => string | string[],
+  category?: string
+) {
+  if (debugEnabled) {
+    let message = buildMessage();
+    if (message == null) {
+      return;
+    }
+    if (Array.isArray(message)) {
+      message = message.join(" | ");
+    }
+    console.debug((category ? `[${category}] ` : "") + message);
+  }
 }

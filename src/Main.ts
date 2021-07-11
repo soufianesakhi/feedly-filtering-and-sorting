@@ -4,7 +4,7 @@ import { INITIALIZER } from "./initializer/Initializer";
 import { UIManager } from "./UIManager";
 import { bindMarkup, callbackBindedTo, injectStyleText } from "./Utils";
 
-var DEBUG = false;
+export var debugEnabled = localStorage.getItem("debug_enabled") === "true";
 
 function initResources() {
   INITIALIZER.loadScript("jquery.min.js");

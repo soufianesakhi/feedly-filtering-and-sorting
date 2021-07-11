@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.21.2
+// @version     3.21.3
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -90,7 +90,7 @@ var ext = {
     maxOpenCurrentFeedArticlesId: "maxOpenCurrentFeedArticles",
     forceRefreshArticlesId: "forceRefreshArticles",
     disablePageOverridesId: "disablePageOverrides",
-    inliningEntryId: "inliningEntry",
+    articleSorterConfigId: "articleSorterConfig",
     navigatingToNextId: "navigatingToNext",
     layoutChangeSelector: "input[id^='layout-']",
 };
@@ -244,7 +244,9 @@ function executeWindow(sourceName, ...functions) {
     injectScriptText(srcTxt, sourceName);
 }
 function injectToWindow(...functions) {
-    var srcTxt = functions.map((f) => "function " + f).join("\n");
+    var srcTxt = functions
+        .map((f) => (f.prototype ? "" : "function ") + f)
+        .join("\n");
     const name = functions.length == 1 ? functions[0].name : "Functions";
     injectScriptText(srcTxt, "FFnS-" + name, true);
 }
@@ -252,7 +254,7 @@ function injectClasses(...classes) {
     var srcTxt = classes
         .map((c) => `${c} window.${c.name} = ${c.name};`)
         .join("\n");
-    injectScriptText(srcTxt, "classes-" + Date.now(), true);
+    injectScriptText(srcTxt, "FFnS-classes", true);
 }
 function injectScriptText(srcTxt, sourceURL, evalPermitted) {
     if (sourceURL) {
@@ -324,6 +326,18 @@ function shadeColor(rgb, percent) {
     G = G < 255 ? G : 255;
     B = B < 255 ? B : 255;
     return `rgb(${R}, ${G}, ${B})`;
+}
+function debugLog(buildMessage, category) {
+    if (debugEnabled) {
+        let message = buildMessage();
+        if (message == null) {
+            return;
+        }
+        if (Array.isArray(message)) {
+            message = message.join(" | ");
+        }
+        console.debug((category ? `[${category}] ` : "") + message);
+    }
 }
 
 var SortingType;
@@ -718,6 +732,14 @@ class Subscription {
     save() {
         this.dao.save(this.dto);
     }
+    getArticleSorterConfig() {
+        return {
+            sortingEnabled: this.isSortingEnabled(),
+            pinHotToTop: this.isPinHotToTop(),
+            sortingType: this.getSortingType(),
+            additionalSortingTypes: this.getAdditionalSortingTypes(),
+        };
+    }
 }
 
 class SubscriptionDAO {
@@ -727,7 +749,7 @@ class SubscriptionDAO {
         registerAccessors(new SubscriptionDTO(""), "dto", Subscription.prototype, this.save, this);
     }
     init() {
-        return new AsyncResult(p => {
+        return new AsyncResult((p) => {
             DataStore.init().then(() => {
                 var t = this;
                 var onLoad = function (sub) {
@@ -747,12 +769,12 @@ class SubscriptionDAO {
         }, this);
     }
     loadSubscription(url, forceReloadGlobalSettings) {
-        return new AsyncResult(p => {
+        return new AsyncResult((p) => {
             var sub = new Subscription(this);
             if (forceReloadGlobalSettings) {
                 url = this.GLOBAL_SETTINGS_SUBSCRIPTION_URL;
             }
-            this.load(url).then(dto => {
+            this.load(url).then((dto) => {
                 sub.dto = dto;
                 if (forceReloadGlobalSettings) {
                     this.defaultSubscription = sub;
@@ -765,7 +787,7 @@ class SubscriptionDAO {
         var url = dto.url;
         var id = this.getSubscriptionId(url);
         DataStore.put(id, dto);
-        console.log("Subscription saved: " + JSON.stringify(dto));
+        debugLog(() => "Subscription saved: " + JSON.stringify(dto), "SubscriptionDAO");
     }
     saveAll(subscriptions) {
         for (var url in subscriptions) {
@@ -780,9 +802,9 @@ class SubscriptionDAO {
         }
     }
     loadAll() {
-        return new AsyncResult(p => {
+        return new AsyncResult((p) => {
             let ids = this.getAllSubscriptionIds();
-            DataStore.getItemsAsync(ids).then(results => {
+            DataStore.getItemsAsync(ids).then((results) => {
                 for (var key in results) {
                     var url = results[key].url;
                     if (!url) {
@@ -797,21 +819,21 @@ class SubscriptionDAO {
         }, this);
     }
     load(url) {
-        return new AsyncResult(p => {
-            DataStore.getAsync(this.getSubscriptionId(url), null).then(dto => {
+        return new AsyncResult((p) => {
+            DataStore.getAsync(this.getSubscriptionId(url), null).then((dto) => {
                 var cloneURL;
                 if (dto) {
                     var linkedURL = dto.linkedUrl;
                     if (linkedURL != null) {
-                        console.log("Loading linked subscription: " + linkedURL);
-                        this.load(linkedURL).then(dto => {
+                        debugLog(() => "Loading linked subscription: " + linkedURL, "SubscriptionDAO");
+                        this.load(linkedURL).then((dto) => {
                             p.result(dto);
                         }, this);
                         return;
                     }
                     else {
                         cloneURL = dto.url;
-                        console.log("Loaded saved subscription: " + JSON.stringify(dto));
+                        debugLog(() => "Loaded saved subscription: " + JSON.stringify(dto), "SubscriptionDAO");
                     }
                 }
                 else {
@@ -827,20 +849,20 @@ class SubscriptionDAO {
     }
     delete(url) {
         DataStore.delete(this.getSubscriptionId(url));
-        console.log("Deleted: " + url);
+        debugLog(() => "Deleted: " + url, "SubscriptionDAO");
     }
     clone(dtoToClone, cloneUrl) {
         var clone = deepClone(dtoToClone, new SubscriptionDTO(cloneUrl), {
             advancedControlsReceivedPeriod: new AdvancedControlsReceivedPeriod(),
             coloringRules: ColoringRule,
-            filteringByReadingTime: new FilteringByReadingTime()
+            filteringByReadingTime: new FilteringByReadingTime(),
         });
         clone.url = cloneUrl;
         return clone;
     }
     importSettings(urlToImport, actualUrl) {
-        return new AsyncResult(p => {
-            this.load(urlToImport).then(dto => {
+        return new AsyncResult((p) => {
+            this.load(urlToImport).then((dto) => {
                 dto.url = actualUrl;
                 if (this.isURLGlobal(actualUrl)) {
                     this.defaultSubscription.dto = dto;
@@ -871,7 +893,7 @@ class SubscriptionDAO {
         var linkedSub = new LinkedSubscriptionDTO(linkedURL);
         var t = this;
         DataStore.put(id, linkedSub);
-        console.log("Subscription linked: " + JSON.stringify(linkedSub));
+        debugLog(() => "Subscription linked: " + JSON.stringify(linkedSub), "SubscriptionDAO");
     }
     isURLGlobal(url) {
         return url === this.GLOBAL_SETTINGS_SUBSCRIPTION_URL;
@@ -1010,13 +1032,293 @@ class CrossCheckDuplicatesSettings {
     }
 }
 
+class EntryInfos {
+    constructor(jsonInfos) {
+        var bodyInfos = jsonInfos.content ? jsonInfos.content : jsonInfos.summary;
+        this.body = bodyInfos ? bodyInfos.content : "";
+        this.author = jsonInfos.author;
+        this.engagement = jsonInfos.engagement;
+        this.published = jsonInfos.published;
+        this.received = jsonInfos.crawled;
+    }
+}
+class Article {
+    constructor(articleContainer) {
+        this.container = $(articleContainer);
+        this.entryId = this.container
+            .attr("id")
+            .replace(/_inlineFrame$/, "")
+            .replace(/_main$/, "");
+        var infosElement = this.container.find("." + ext.entryInfosJsonClass);
+        if (infosElement.length > 0) {
+            this.entryInfos = JSON.parse(infosElement.text());
+            if (this.entryInfos) {
+                this.body = this.entryInfos.body;
+                this.body = this.body ? this.body.toLowerCase() : "";
+                this.author = this.entryInfos.author;
+                this.author = this.author ? this.author.toLowerCase() : "";
+                this.receivedAge = this.entryInfos.received;
+                this.publishAge = this.entryInfos.published;
+            }
+            else {
+                let isInlineView = this.container.find(ext.inlineViewClass).length > 0;
+                this.body = this.container
+                    .find(isInlineView ? ".content" : ".summary")
+                    .text()
+                    .toLowerCase();
+                this.author = this.container
+                    .find(".authors")
+                    .text()
+                    .replace("by", "")
+                    .trim()
+                    .toLowerCase();
+                var ageStr = this.container
+                    .find(ext.publishAgeSpanSelector)
+                    .attr(ext.publishAgeTimestampAttr);
+                var ageSplit = ageStr.split("--");
+                var publishDate = ageSplit[0].replace(/[^:]*:/, "").trim();
+                var receivedDate = ageSplit[1].replace(/[^:]*:/, "").trim();
+                this.publishAge = Date.parse(publishDate);
+                this.receivedAge = Date.parse(receivedDate);
+            }
+        }
+        // Title
+        this.title = this.container
+            .find(ext.articleTitleSelector)
+            .text()
+            .trim()
+            .toLowerCase();
+        // Popularity
+        this.popularity = this.parsePopularity(this.container.find(ext.popularitySelector).text());
+        // Source
+        var source = this.container.find(ext.articleSourceSelector);
+        if (source != null) {
+            this.source = source.text().trim();
+        }
+        // URL
+        this.url = this.container.find(ext.articleUrlAnchorSelector).attr("href");
+    }
+    addClass(c) {
+        return this.container.addClass(c);
+    }
+    getTitle() {
+        return this.title;
+    }
+    getUrl() {
+        return this.url;
+    }
+    getSource() {
+        return this.source;
+    }
+    getPopularity() {
+        return this.popularity;
+    }
+    getReceivedAge() {
+        return this.receivedAge;
+    }
+    getReceivedDate() {
+        return new Date(this.receivedAge);
+    }
+    getPublishAge() {
+        return this.publishAge;
+    }
+    getPublishDate() {
+        return new Date(this.publishAge);
+    }
+    isHot() {
+        var span = this.container.find(ext.popularitySelector);
+        return (span.hasClass("hot") ||
+            span.hasClass("onfire") ||
+            span.hasClass("EntryEngagement--hot"));
+    }
+    getEntryId() {
+        return this.entryId;
+    }
+    setVisible(visible) {
+        if (visible != null && !visible) {
+            const parent = this.container.parent();
+            this.container.detach().prependTo(parent);
+            this.container.css("display", "none");
+        }
+        else {
+            this.container.css("display", "");
+        }
+    }
+    getContainer() {
+        return this.container;
+    }
+    isVisible() {
+        return !(this.container.css("display") === "none");
+    }
+    checked() {
+        this.container.attr(ext.checkedArticlesAttribute, "");
+    }
+    setColor(color) {
+        this.container.css("background-color", color);
+    }
+    parsePopularity(popularityStr) {
+        popularityStr = popularityStr.trim().replace("+", "");
+        if (popularityStr.indexOf("K") > -1) {
+            popularityStr = popularityStr.replace("K", "");
+            popularityStr += "000";
+        }
+        return Number(popularityStr);
+    }
+}
+
+class ArticleSorter {
+    constructor(sortingEnabled, pinHotToTop, sortingType, additionalSortingTypes) {
+        this.sortingEnabled = sortingEnabled;
+        this.pinHotToTop = pinHotToTop;
+        this.sortingType = sortingType;
+        this.sortingTypes = [sortingType].concat(additionalSortingTypes);
+    }
+    static from(config) {
+        return new ArticleSorter(config.sortingEnabled, config.pinHotToTop, config.sortingType, config.additionalSortingTypes);
+    }
+    sort(articles) {
+        let visibleArticles = [];
+        let hiddenArticles = [];
+        articles.forEach((a) => {
+            if (a.isVisible()) {
+                visibleArticles.push(a);
+            }
+            else {
+                hiddenArticles.push(a);
+            }
+        });
+        if (this.pinHotToTop) {
+            var hotArticles = [];
+            var normalArticles = [];
+            visibleArticles.forEach((article) => {
+                if (article.isHot()) {
+                    hotArticles.push(article);
+                }
+                else {
+                    normalArticles.push(article);
+                }
+            });
+            if (this.sortingEnabled) {
+                this.sortArray(hotArticles);
+                this.sortArray(normalArticles);
+            }
+            visibleArticles = hotArticles.concat(normalArticles);
+        }
+        else if (this.sortingEnabled) {
+            this.sortArray(visibleArticles);
+        }
+        return { visibleArticles, hiddenArticles };
+    }
+    sortArray(articles) {
+        articles.sort(articleSorterFactory.getSorter(this.sortingTypes));
+        if (SortingType.SourceNewestReceiveDate == this.sortingType) {
+            let sourceToArticles = {};
+            articles.forEach((a) => {
+                let sourceArticles = (sourceToArticles[a.getSource()] ||
+                    (sourceToArticles[a.getSource()] = []),
+                    sourceToArticles[a.getSource()]);
+                sourceArticles.push(a);
+            });
+            articles.length = 0;
+            for (let source in sourceToArticles) {
+                articles.push(...sourceToArticles[source]);
+            }
+        }
+    }
+}
+class ArticleSorterFactory {
+    constructor() {
+        this.sorterByType = {};
+        function titleSorter(isAscending) {
+            var multiplier = isAscending ? 1 : -1;
+            return (a, b) => {
+                return a.getTitle().localeCompare(b.getTitle()) * multiplier;
+            };
+        }
+        function popularitySorter(isAscending) {
+            var multiplier = isAscending ? 1 : -1;
+            return (a, b) => {
+                return (a.getPopularity() - b.getPopularity()) * multiplier;
+            };
+        }
+        function receivedDateSorter(isNewFirst) {
+            var multiplier = isNewFirst ? -1 : 1;
+            return (a, b) => {
+                return (a.getReceivedAge() - b.getReceivedAge()) * multiplier;
+            };
+        }
+        function publishDateSorter(isNewFirst) {
+            var multiplier = isNewFirst ? -1 : 1;
+            return (a, b) => {
+                return (a.getPublishAge() - b.getPublishAge()) * multiplier;
+            };
+        }
+        function publishDaySorter(isNewFirst) {
+            var multiplier = isNewFirst ? -1 : 1;
+            return (a, b) => {
+                let dateA = a.getPublishDate(), dateB = b.getPublishDate();
+                let result = dateA.getFullYear() - dateB.getFullYear();
+                if (result == 0) {
+                    result = dateA.getMonth() - dateB.getMonth();
+                    if (result == 0) {
+                        result = dateA.getDay() - dateB.getDay();
+                    }
+                }
+                return result * multiplier;
+            };
+        }
+        function sourceSorter(isAscending) {
+            var multiplier = isAscending ? 1 : -1;
+            return (a, b) => {
+                return a.getSource().localeCompare(b.getSource()) * multiplier;
+            };
+        }
+        this.sorterByType[SortingType.TitleDesc] = titleSorter(false);
+        this.sorterByType[SortingType.TitleAsc] = titleSorter(true);
+        this.sorterByType[SortingType.PopularityDesc] = popularitySorter(false);
+        this.sorterByType[SortingType.PopularityAsc] = popularitySorter(true);
+        this.sorterByType[SortingType.ReceivedDateNewFirst] =
+            receivedDateSorter(true);
+        this.sorterByType[SortingType.ReceivedDateOldFirst] =
+            receivedDateSorter(false);
+        this.sorterByType[SortingType.PublishDateNewFirst] =
+            publishDateSorter(true);
+        this.sorterByType[SortingType.PublishDateOldFirst] =
+            publishDateSorter(false);
+        this.sorterByType[SortingType.PublishDayNewFirst] = publishDaySorter(true);
+        this.sorterByType[SortingType.PublishDayOldFirst] = publishDaySorter(false);
+        this.sorterByType[SortingType.SourceAsc] = sourceSorter(true);
+        this.sorterByType[SortingType.SourceDesc] = sourceSorter(false);
+        this.sorterByType[SortingType.SourceNewestReceiveDate] =
+            receivedDateSorter(true);
+        this.sorterByType[SortingType.Random] = () => {
+            return Math.random() - 0.5;
+        };
+    }
+    getSorter(sortingTypes) {
+        if (sortingTypes.length == 1) {
+            return this.sorterByType[sortingTypes[0]];
+        }
+        return (a, b) => {
+            var res;
+            for (var i = 0; i < sortingTypes.length; i++) {
+                res = this.sorterByType[sortingTypes[i]](a, b);
+                if (res != 0) {
+                    return res;
+                }
+            }
+            return res;
+        };
+    }
+}
+articleSorterFactory = new ArticleSorterFactory();
+
 class ArticleManager {
     constructor(settingsManager, keywordManager, page) {
         this.articlesToMarkAsRead = [];
         this.darkMode = this.isDarkMode();
         this.settingsManager = settingsManager;
         this.keywordManager = keywordManager;
-        this.articleSorterFactory = new ArticleSorterFactory();
         this.page = page;
         this.duplicateChecker = new DuplicateChecker(this);
     }
@@ -1204,51 +1506,9 @@ class ArticleManager {
         }
         this.page.put(ext.sortArticlesId, false);
         let sub = this.getCurrentSub();
-        $(ext.articlesContainerSelector).each((i, c) => {
-            let visibleArticles = [];
-            let hiddenArticles = [];
-            let articlesContainer = $(c);
-            articlesContainer.find(ext.articleSelector).each((i, e) => {
-                let a = new Article(e);
-                if (a.isVisible()) {
-                    visibleArticles.push(a);
-                }
-                else {
-                    hiddenArticles.push(a);
-                }
-            });
-            if (sub.isPinHotToTop()) {
-                var hotArticles = [];
-                var normalArticles = [];
-                visibleArticles.forEach((article) => {
-                    if (article.isHot()) {
-                        hotArticles.push(article);
-                    }
-                    else {
-                        normalArticles.push(article);
-                    }
-                });
-                this.sortArticleArray(hotArticles);
-                this.sortArticleArray(normalArticles);
-                visibleArticles = hotArticles.concat(normalArticles);
-            }
-            else {
-                this.sortArticleArray(visibleArticles);
-            }
-            if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
-                console.log("Sorting articles at " + new Date().toTimeString());
-                let chunks = articlesContainer.find(ext.articlesChunkSelector);
-                removeContent(chunks.find(".Heading"));
-                let containerChunk = chunks.first();
-                containerChunk.empty();
-                let appendArticle = (article) => {
-                    const container = article.getContainer();
-                    container.detach().appendTo(containerChunk);
-                };
-                visibleArticles.forEach(appendArticle);
-                hiddenArticles.forEach(appendArticle);
-            }
-        });
+        if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
+            this.page.sortArticles(sub);
+        }
     }
     prepareMarkAsRead() {
         if (this.articlesToMarkAsRead.length > 0) {
@@ -1258,246 +1518,9 @@ class ArticleManager {
             this.page.put(ext.articlesToMarkAsReadId, ids);
         }
     }
-    sortArticleArray(articles) {
-        var sub = this.getCurrentSub();
-        if (!sub.isSortingEnabled()) {
-            return;
-        }
-        let st = sub.getSortingType();
-        var sortingTypes = [st].concat(sub.getAdditionalSortingTypes());
-        articles.sort(this.articleSorterFactory.getSorter(sortingTypes));
-        if (SortingType.SourceNewestReceiveDate == st) {
-            let sourceToArticles = {};
-            articles.forEach((a) => {
-                let sourceArticles = (sourceToArticles[a.getSource()] ||
-                    (sourceToArticles[a.getSource()] = []),
-                    sourceToArticles[a.getSource()]);
-                sourceArticles.push(a);
-            });
-            articles.length = 0;
-            for (let source in sourceToArticles) {
-                articles.push(...sourceToArticles[source]);
-            }
-        }
-    }
     isOldestFirst() {
         return !this.page.get(ext.isNewestFirstId, true);
     }
-}
-class ArticleSorterFactory {
-    constructor() {
-        this.sorterByType = {};
-        function titleSorter(isAscending) {
-            var multiplier = isAscending ? 1 : -1;
-            return (a, b) => {
-                return a.getTitle().localeCompare(b.getTitle()) * multiplier;
-            };
-        }
-        function popularitySorter(isAscending) {
-            var multiplier = isAscending ? 1 : -1;
-            return (a, b) => {
-                return (a.getPopularity() - b.getPopularity()) * multiplier;
-            };
-        }
-        function receivedDateSorter(isNewFirst) {
-            var multiplier = isNewFirst ? -1 : 1;
-            return (a, b) => {
-                return (a.getReceivedAge() - b.getReceivedAge()) * multiplier;
-            };
-        }
-        function publishDateSorter(isNewFirst) {
-            var multiplier = isNewFirst ? -1 : 1;
-            return (a, b) => {
-                return (a.getPublishAge() - b.getPublishAge()) * multiplier;
-            };
-        }
-        function publishDaySorter(isNewFirst) {
-            var multiplier = isNewFirst ? -1 : 1;
-            return (a, b) => {
-                let dateA = a.getPublishDate(), dateB = b.getPublishDate();
-                let result = dateA.getFullYear() - dateB.getFullYear();
-                if (result == 0) {
-                    result = dateA.getMonth() - dateB.getMonth();
-                    if (result == 0) {
-                        result = dateA.getDay() - dateB.getDay();
-                    }
-                }
-                return result * multiplier;
-            };
-        }
-        function sourceSorter(isAscending) {
-            var multiplier = isAscending ? 1 : -1;
-            return (a, b) => {
-                return a.getSource().localeCompare(b.getSource()) * multiplier;
-            };
-        }
-        this.sorterByType[SortingType.TitleDesc] = titleSorter(false);
-        this.sorterByType[SortingType.TitleAsc] = titleSorter(true);
-        this.sorterByType[SortingType.PopularityDesc] = popularitySorter(false);
-        this.sorterByType[SortingType.PopularityAsc] = popularitySorter(true);
-        this.sorterByType[SortingType.ReceivedDateNewFirst] =
-            receivedDateSorter(true);
-        this.sorterByType[SortingType.ReceivedDateOldFirst] =
-            receivedDateSorter(false);
-        this.sorterByType[SortingType.PublishDateNewFirst] =
-            publishDateSorter(true);
-        this.sorterByType[SortingType.PublishDateOldFirst] =
-            publishDateSorter(false);
-        this.sorterByType[SortingType.PublishDayNewFirst] = publishDaySorter(true);
-        this.sorterByType[SortingType.PublishDayOldFirst] = publishDaySorter(false);
-        this.sorterByType[SortingType.SourceAsc] = sourceSorter(true);
-        this.sorterByType[SortingType.SourceDesc] = sourceSorter(false);
-        this.sorterByType[SortingType.SourceNewestReceiveDate] =
-            receivedDateSorter(true);
-        this.sorterByType[SortingType.Random] = () => {
-            return Math.random() - 0.5;
-        };
-    }
-    getSorter(sortingTypes) {
-        if (sortingTypes.length == 1) {
-            return this.sorterByType[sortingTypes[0]];
-        }
-        return (a, b) => {
-            var res;
-            for (var i = 0; i < sortingTypes.length; i++) {
-                res = this.sorterByType[sortingTypes[i]](a, b);
-                if (res != 0) {
-                    return res;
-                }
-            }
-            return res;
-        };
-    }
-}
-class EntryInfos {
-    constructor(jsonInfos) {
-        var bodyInfos = jsonInfos.content ? jsonInfos.content : jsonInfos.summary;
-        this.body = bodyInfos ? bodyInfos.content : "";
-        this.author = jsonInfos.author;
-        this.engagement = jsonInfos.engagement;
-        this.published = jsonInfos.published;
-        this.received = jsonInfos.crawled;
-    }
-}
-class Article {
-    constructor(articleContainer) {
-        this.container = $(articleContainer);
-        this.entryId = this.container.attr("id").replace(/_main$/, "");
-        var infosElement = this.container.find("." + ext.entryInfosJsonClass);
-        if (infosElement.length > 0) {
-            this.entryInfos = JSON.parse(infosElement.text());
-            if (this.entryInfos) {
-                this.body = this.entryInfos.body;
-                this.body = this.body ? this.body.toLowerCase() : "";
-                this.author = this.entryInfos.author;
-                this.author = this.author ? this.author.toLowerCase() : "";
-                this.receivedAge = this.entryInfos.received;
-                this.publishAge = this.entryInfos.published;
-            }
-            else {
-                let isInlineView = this.container.find(ext.inlineViewClass).length > 0;
-                this.body = this.container
-                    .find(isInlineView ? ".content" : ".summary")
-                    .text()
-                    .toLowerCase();
-                this.author = this.container
-                    .find(".authors")
-                    .text()
-                    .replace("by", "")
-                    .trim()
-                    .toLowerCase();
-                var ageStr = this.container
-                    .find(ext.publishAgeSpanSelector)
-                    .attr(ext.publishAgeTimestampAttr);
-                var ageSplit = ageStr.split("--");
-                var publishDate = ageSplit[0].replace(/[^:]*:/, "").trim();
-                var receivedDate = ageSplit[1].replace(/[^:]*:/, "").trim();
-                this.publishAge = Date.parse(publishDate);
-                this.receivedAge = Date.parse(receivedDate);
-            }
-        }
-        // Title
-        this.title = this.container
-            .find(ext.articleTitleSelector)
-            .text()
-            .trim()
-            .toLowerCase();
-        // Popularity
-        this.popularity = parsePopularity(this.container.find(ext.popularitySelector).text());
-        // Source
-        var source = this.container.find(ext.articleSourceSelector);
-        if (source != null) {
-            this.source = source.text().trim();
-        }
-        // URL
-        this.url = this.container.find(ext.articleUrlAnchorSelector).attr("href");
-    }
-    addClass(c) {
-        return this.container.addClass(c);
-    }
-    getTitle() {
-        return this.title;
-    }
-    getUrl() {
-        return this.url;
-    }
-    getSource() {
-        return this.source;
-    }
-    getPopularity() {
-        return this.popularity;
-    }
-    getReceivedAge() {
-        return this.receivedAge;
-    }
-    getReceivedDate() {
-        return new Date(this.receivedAge);
-    }
-    getPublishAge() {
-        return this.publishAge;
-    }
-    getPublishDate() {
-        return new Date(this.publishAge);
-    }
-    isHot() {
-        var span = this.container.find(ext.popularitySelector);
-        return (span.hasClass("hot") ||
-            span.hasClass("onfire") ||
-            span.hasClass("EntryEngagement--hot"));
-    }
-    getEntryId() {
-        return this.entryId;
-    }
-    setVisible(visible) {
-        if (visible != null && !visible) {
-            const parent = this.container.parent();
-            this.container.detach().prependTo(parent);
-            this.container.css("display", "none");
-        }
-        else {
-            this.container.css("display", "");
-        }
-    }
-    getContainer() {
-        return this.container;
-    }
-    isVisible() {
-        return !(this.container.css("display") === "none");
-    }
-    checked() {
-        this.container.attr(ext.checkedArticlesAttribute, "");
-    }
-    setColor(color) {
-        this.container.css("background-color", color);
-    }
-}
-function parsePopularity(popularityStr) {
-    popularityStr = popularityStr.trim().replace("+", "");
-    if (popularityStr.indexOf("K") > -1) {
-        popularityStr = popularityStr.replace("K", "");
-        popularityStr += "000";
-    }
-    return Number(popularityStr);
 }
 
 class DuplicateChecker {
@@ -1574,7 +1597,8 @@ class CrossArticleManager {
         this.changedDays = [];
         this.initializing = false;
         this.ready = false;
-        this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
+        this.crossCheckSettings =
+            articleManager.settingsManager.getCrossCheckDuplicatesSettings();
         this.crossCheckSettings.setChangeCallback(() => this.refresh());
     }
     addArticle(a, duplicate) {
@@ -1861,7 +1885,7 @@ class KeywordMatcherFactory {
     }
     getMatchers(sub) {
         var method = sub.getKeywordMatchingMethod();
-        return sub.getKeywordMatchingAreas().map(a => {
+        return sub.getKeywordMatchingAreas().map((a) => {
             return this.getMatcher(a, method);
         });
     }
@@ -1870,7 +1894,7 @@ class KeywordMatcherFactory {
         return {
             match(a, k) {
                 return t.matcherByType[area](a, k, method);
-            }
+            },
         };
     }
 }
@@ -1881,8 +1905,9 @@ class FeedlyPage {
         this.get = this.getFFnS;
         this.put = this.putFFnS;
         this.put("ext", ext);
-        injectClasses(EntryInfos);
-        injectToWindow(this.getFFnS, this.putFFnS, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.getService, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles);
+        this.put("SortingType", SortingType);
+        injectClasses(EntryInfos, Article, ArticleSorter, ArticleSorterFactory);
+        injectToWindow(this.getFFnS, this.putFFnS, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.getService, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles, debugLog, removeContent, this.sortArticlesDOM);
         injectToWindow(this.overrideLoadingEntries);
         injectToWindow(this.overrideSorting);
         injectToWindow(this.overrideNavigation);
@@ -1913,6 +1938,34 @@ class FeedlyPage {
         this.put(ext.maxOpenCurrentFeedArticlesId, sub.getMaxOpenCurrentFeedArticles());
         this.put(ext.markAsReadOnOpenCurrentFeedArticlesId, sub.isMarkAsReadOnOpenCurrentFeedArticles());
         this.put(ext.disablePageOverridesId, sub.isDisablePageOverrides());
+        this.put(ext.articleSorterConfigId, sub.getArticleSorterConfig());
+    }
+    sortArticles(sub) {
+        this.sortArticlesDOM(sub.getArticleSorterConfig());
+    }
+    sortArticlesDOM(articleSorterConfig) {
+        debugLog(() => "Sorting articles at " + new Date().toTimeString());
+        const allVisibleArticles = [];
+        $(ext.articlesContainerSelector).each((_, c) => {
+            let articlesContainer = $(c);
+            const articles = articlesContainer
+                .find(ext.articleSelector)
+                .get()
+                .map((e) => new Article(e));
+            let { visibleArticles, hiddenArticles } = ArticleSorter.from(articleSorterConfig).sort(articles);
+            let chunks = articlesContainer.find(ext.articlesChunkSelector);
+            removeContent(chunks.find(".Heading"));
+            let containerChunk = chunks.first();
+            containerChunk.empty();
+            let appendArticle = (article) => {
+                const container = article.getContainer();
+                container.detach().appendTo(containerChunk);
+            };
+            visibleArticles.forEach(appendArticle);
+            hiddenArticles.forEach(appendArticle);
+            allVisibleArticles.push(...visibleArticles);
+        });
+        return allVisibleArticles;
     }
     updateCheck(enabled, id, className) {
         if (enabled) {
@@ -1930,6 +1983,9 @@ class FeedlyPage {
     }
     initWindow() {
         window["ext"] = getFFnS("ext");
+        window["SortingType"] = getFFnS("SortingType");
+        window["articleSorterFactory"] = new ArticleSorterFactory();
+        window["debugEnabled"] = localStorage.getItem("debug_enabled") === "true";
         NodeCreationObserver.init("observed-page");
         overrideLoadingEntries();
         overrideSorting();
@@ -1939,15 +1995,15 @@ class FeedlyPage {
         let removeChild = Node.prototype.removeChild;
         Node.prototype.removeChild = function (child) {
             try {
-                if (disableOverrides()) {
-                    return removeChild.apply(this, arguments);
-                }
-                if (getFFnS(ext.inliningEntryId) && $(child).is(ext.articleSelector)) {
-                    putFFnS(ext.inliningEntryId, false);
-                }
-                else {
-                    return removeChild.apply(this, arguments);
-                }
+                debugLog(() => {
+                    if (!$(child).is(ext.articleSelector)) {
+                        return null;
+                    }
+                    return [
+                        `child: ${child["id"] || child["classList"] || child["tagName"]}`,
+                    ];
+                }, "remove");
+                return removeChild.apply(this, arguments);
             }
             catch (e) {
                 if ($(this).hasClass(ext.articlesChunkClass)) {
@@ -1962,35 +2018,32 @@ class FeedlyPage {
         };
         const insertBefore = Node.prototype.insertBefore;
         const appendChild = Node.prototype.appendChild;
-        function insertArticleNode(parent, node, sibling) {
+        function insertArticleNode(_, node, sibling) {
+            const parent = sibling.parentNode;
             try {
-                const mainEntrySuffix = "_main";
-                const id = node["id"].replace(mainEntrySuffix, "");
+                const id = getArticleId(node);
                 const sortedIds = getService("navigo").entries.map((e) => e.id);
                 let nextIndex = sortedIds.indexOf(id) + 1;
                 if (nextIndex > 0 && nextIndex < sortedIds.length) {
                     const nextId = sortedIds[nextIndex];
-                    sibling = document.getElementById(nextId + mainEntrySuffix);
+                    sibling = getById(nextId);
                 }
                 else {
                     sibling = null;
-                }
-                if ($(node).is(ext.inlineArticleSelector)) {
-                    const oldNode = document.getElementById(node["id"]);
-                    if (oldNode) {
-                        removeChild.call(oldNode.parentNode, oldNode);
-                    }
                 }
             }
             catch (e) {
                 console.log(e);
             }
-            if (sibling) {
-                return insertBefore.call(sibling.parentNode, node, sibling);
+            if (!sibling) {
+                sibling = parent.firstChild;
             }
-            else {
-                return appendChild.call(parent, node);
-            }
+            debugLog(() => [
+                `node: ${node["id"] || node["classList"] || node["tagName"]}`,
+                "insertBefore",
+                `siblingNode: ${sibling["id"] || sibling["classList"] || sibling["tagName"]}`,
+            ], "insert");
+            return insertBefore.call(sibling.parentNode, node, sibling);
         }
         Node.prototype.insertBefore = function (node, siblingNode) {
             try {
@@ -1998,6 +2051,18 @@ class FeedlyPage {
                     return insertArticleNode(this, node, siblingNode);
                 }
                 else {
+                    debugLog(() => {
+                        if (!$(node).is(ext.articleSelector)) {
+                            return null;
+                        }
+                        return [
+                            `node: ${node["id"] || node["classList"] || node["tagName"]}`,
+                            "insertBefore",
+                            `siblingNode: ${siblingNode["id"] ||
+                                siblingNode["classList"] ||
+                                siblingNode["tagName"]}`,
+                        ];
+                    }, "insert");
                     return insertBefore.apply(this, arguments);
                 }
             }
@@ -2006,17 +2071,15 @@ class FeedlyPage {
             }
         };
         Node.prototype.appendChild = function (child) {
-            try {
-                if (!disableOverrides() && $(this).hasClass(ext.articlesChunkClass)) {
-                    return insertArticleNode(this, child);
+            debugLog(() => {
+                if (!$(child).is(ext.articleSelector)) {
+                    return null;
                 }
-                else {
-                    return appendChild.apply(this, arguments);
-                }
-            }
-            catch (e) {
-                console.log(e);
-            }
+                return [
+                    `child: ${child["id"] || child["classList"] || child["tagName"]}`,
+                ];
+            }, "append");
+            return appendChild.apply(this, arguments);
         };
     }
     autoLoad() {
@@ -2354,10 +2417,13 @@ class FeedlyPage {
         return JSON.parse(sessionStorage.getItem("FFnS" + (persistent ? "#" : "_") + id));
     }
     getById(id) {
-        return document.getElementById(id + "_main");
+        return document.querySelector(`.EntryList__chunk > [id^='${id}']`);
     }
     getArticleId(e) {
-        return e.getAttribute("id").replace(/_main$/, "");
+        return e
+            .getAttribute("id")
+            .replace(/_inlineFrame$/, "")
+            .replace(/_main$/, "");
     }
     fetchMoreEntries(batchSize) {
         var autoLoadingMessageId = "FFnS_LoadingMessage";
@@ -2372,7 +2438,7 @@ class FeedlyPage {
             }));
         }
         stream.setBatchSize(batchSize);
-        console.log("Fetching more articles (batch size: " +
+        debugLog(() => "Fetching more articles (batch size: " +
             stream._batchSize +
             ") at: " +
             new Date().toTimeString());
@@ -2498,7 +2564,7 @@ class FeedlyPage {
                     else if (hasAllEntries || !isBatchLoading) {
                         $(autoLoadingMessageId).remove();
                         if (hasAllEntries) {
-                            console.log("End auto load all articles at: " + new Date().toTimeString());
+                            debugLog(() => "End auto load all articles at: " + new Date().toTimeString());
                             if (isLoadByBatch) {
                                 $(loadNextBatchBtnId).remove();
                             }
@@ -2590,19 +2656,19 @@ class FeedlyPage {
                 loadNextBatch();
             }
             else if (getFFnS(ext.keepArticlesUnreadId)) {
-                console.log("Marking as read with keeping new articles unread");
+                debugLog(() => "Marking as read with keeping new articles unread");
                 var idsToMarkAsRead = getFFnS(ext.articlesToMarkAsReadId);
                 if (idsToMarkAsRead) {
                     let keptUnreadEntryIds = getKeptUnreadEntryIds();
                     idsToMarkAsRead = idsToMarkAsRead.filter((id) => {
                         return keptUnreadEntryIds.indexOf(id) < 0;
                     });
-                    console.log(idsToMarkAsRead.length + " new articles will be marked as read");
+                    debugLog(() => idsToMarkAsRead.length + " new articles will be marked as read");
                     let reader = getService("reader");
                     reader.askMarkEntriesAsRead(idsToMarkAsRead, {});
                 }
                 else {
-                    console.log("No article to mark as read");
+                    debugLog(() => "No article to mark as read");
                 }
                 jumpToNext();
             }
@@ -2613,11 +2679,8 @@ class FeedlyPage {
     }
     overrideSorting() {
         var prototype = Object.getPrototypeOf(getService("navigo"));
-        function filterVisible(entry) {
-            const item = $(getById(entry.id));
-            return item.length > 0 && !(item.css("display") === "none");
-        }
         function ensureSortedEntries() {
+            debugLog(() => "start", "ensureSortedEntries");
             let navigo = getService("navigo");
             var entries = navigo.entries;
             var originalEntries = navigo.originalEntries || entries;
@@ -2630,20 +2693,49 @@ class FeedlyPage {
             }
             var len = sortedVisibleArticles.length;
             var sorted = len == entries.length;
+            const visibleEntryIds = entries
+                .map((e) => e.id)
+                .filter((id) => sortedVisibleArticles.includes(id));
             for (var i = 0; i < len && sorted; i++) {
-                if (entries[i].id !== sortedVisibleArticles[i] ||
-                    !filterVisible(entries[i])) {
+                if (visibleEntryIds[i] !== sortedVisibleArticles[i]) {
                     sorted = false;
                 }
             }
-            if (!sorted) {
-                entries = [].concat(originalEntries);
-                entries = entries.filter(filterVisible);
-                const idToEntry = {};
-                entries.forEach((e) => (idToEntry[e.id] = e));
-                entries = sortedVisibleArticles.map((id) => idToEntry[id]);
-                navigo.entries = entries;
+            if (!sorted && len > 0) {
+                debugLog(() => "sorting entries", "ensureSortedEntries");
+                try {
+                    const articles = navigo.originalEntries.map((e) => new Article(getById(e.id)));
+                    const articleSorterConfig = getFFnS(ext.articleSorterConfigId);
+                    const sorter = ArticleSorter.from(articleSorterConfig);
+                    const { visibleArticles } = sorter.sort(articles);
+                    const idToEntry = {};
+                    navigo.originalEntries.forEach((e) => (idToEntry[e.id] = e));
+                    entries = visibleArticles.map((a) => idToEntry[a.getEntryId()]);
+                    debugLog(() => [
+                        "sorted entries",
+                        "\n\t" +
+                            entries
+                                .slice(0, Math.min(5, entries.length))
+                                .map((e) => e.getTitle())
+                                .join("\n\t"),
+                    ], "ensureSortedEntries");
+                    navigo.entries = entries;
+                    let visuallySorted = true;
+                    for (let i = 0; i < sortedVisibleArticles.length && visuallySorted; i++) {
+                        if (sortedVisibleArticles[i] !== visibleArticles[i].getEntryId()) {
+                            visuallySorted = false;
+                        }
+                        if (!visuallySorted) {
+                            debugLog(() => "sorting entries visually", "ensureSortedEntries");
+                            sortArticlesDOM(articleSorterConfig);
+                        }
+                    }
+                }
+                catch (e) {
+                    debugLog(() => ["!!", e.name, e.message, "!!"], "ensureSortedEntries");
+                }
             }
+            debugLog(() => "end", "ensureSortedEntries");
         }
         var lookupNextEntry = prototype.lookupNextEntry;
         var lookupPreviousEntry = prototype.lookupPreviousEntry;
@@ -2655,14 +2747,24 @@ class FeedlyPage {
                 return lookupNextEntry.apply(this, arguments);
             }
             ensureSortedEntries();
-            return lookupNextEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
+            const result = lookupNextEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
+            debugLog(() => [
+                "this.selectedEntryId: " + this.selectedEntryId,
+                "result: " + (result && result.getTitle()),
+            ], "lookupNextEntry");
+            return result;
         };
         prototype.lookupPreviousEntry = function (a) {
             if (disableOverrides()) {
                 return lookupPreviousEntry.apply(this, arguments);
             }
             ensureSortedEntries();
-            return lookupPreviousEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
+            const result = lookupPreviousEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
+            debugLog(() => [
+                "this.selectedEntryId: " + this.selectedEntryId,
+                "result: " + (result && result.getTitle()),
+            ], "lookupPreviousEntry");
+            return result;
         };
         prototype.getEntries = function () {
             if (disableOverrides()) {
@@ -2728,13 +2830,6 @@ class FeedlyPage {
                 }
             }
             return nextURI;
-        };
-        const inlineEntry = prototype.inlineEntry;
-        prototype.inlineEntry = function () {
-            if (!disableOverrides()) {
-                putFFnS(ext.inliningEntryId, true);
-            }
-            return inlineEntry.apply(this, arguments);
         };
         const readingManager = Object.getPrototypeOf(getService("readingManager"));
         const _jumpToNext = readingManager._jumpToNext;
@@ -3895,7 +3990,7 @@ class HTMLGlobalSettings {
     }
 }
 
-var DEBUG = false;
+var debugEnabled = localStorage.getItem("debug_enabled") === "true";
 function initResources() {
     INITIALIZER.loadScript("jquery.min.js");
     INITIALIZER.loadScript("node-creation-observer.js");
