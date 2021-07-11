@@ -1,6 +1,6 @@
 /// <reference path="./_references.d.ts" />
 
-import { EntryInfos } from "./ArticleManager";
+import { EntryInfos } from "./Article";
 import { Subscription } from "./Subscription";
 import { executeWindow, injectClasses, injectToWindow } from "./Utils";
 

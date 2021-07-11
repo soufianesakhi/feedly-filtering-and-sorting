@@ -1,8 +1,8 @@
-import { Article } from "./ArticleManager";
+import { Article } from "./Article";
 import {
   FilteringType,
   KeywordMatchingArea,
-  KeywordMatchingMethod
+  KeywordMatchingMethod,
 } from "./DataTypes";
 import { Subscription } from "./Subscription";
 
@@ -146,7 +146,7 @@ class KeywordMatcherFactory {
 
   getMatchers(sub: Subscription): KeywordMatcher[] {
     var method = sub.getKeywordMatchingMethod();
-    return sub.getKeywordMatchingAreas().map(a => {
+    return sub.getKeywordMatchingAreas().map((a) => {
       return this.getMatcher(a, method);
     });
   }
@@ -159,7 +159,7 @@ class KeywordMatcherFactory {
     return {
       match(a: Article, k: string): boolean {
         return t.matcherByType[area](a, k, method);
-      }
+      },
     };
   }
 }

@@ -6,12 +6,18 @@
     "noImplicitUseStrict": true,
     "watch": true
   },
-  "filesGlob": ["src/*.ts", "src/**/*.ts"],
+  "filesGlob": [
+    "src/*.ts",
+    "src/**/*.ts"
+  ],
   "atom": {
     "rewriteTsconfig": true
   },
   "files": [
+    "src/_references.d.ts",
+    "src/Article.ts",
     "src/ArticleManager.ts",
+    "src/ArticleSorter.ts",
     "src/AsyncResult.ts",
     "src/DataTypes.ts",
     "src/DuplicatesManager.ts",
@@ -28,7 +34,6 @@
     "src/Templates.ts",
     "src/UIManager.ts",
     "src/Utils.ts",
-    "src/_references.d.ts",
     "src/dao/Storage.d.ts",
     "src/dao/UserScriptStorage.ts",
     "src/dao/WebExtStorage.ts",

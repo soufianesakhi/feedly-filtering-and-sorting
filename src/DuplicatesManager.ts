@@ -1,6 +1,7 @@
 /// <reference path="./_references.d.ts" />
 
-import { Article, ArticleManager } from "./ArticleManager";
+import { Article } from "./Article";
+import { ArticleManager } from "./ArticleManager";
 import { AsyncResult } from "./AsyncResult";
 import { DataStore, StorageAdapter } from "./dao/Storage";
 import { CrossCheckDuplicatesSettings } from "./SettingsManager";
@@ -92,7 +93,8 @@ class CrossArticleManager {
     articleManager: ArticleManager,
     private duplicateChecker: DuplicateChecker
   ) {
-    this.crossCheckSettings = articleManager.settingsManager.getCrossCheckDuplicatesSettings();
+    this.crossCheckSettings =
+      articleManager.settingsManager.getCrossCheckDuplicatesSettings();
     this.crossCheckSettings.setChangeCallback(() => this.refresh());
   }
 
