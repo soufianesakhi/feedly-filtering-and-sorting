@@ -2808,6 +2808,7 @@ class FeedlyPage {
     overrideNavigation() {
         var prototype = Object.getPrototypeOf(getService("navigo"));
         const collectionPrefix = "collection/content/";
+        const allCategorySuffix = "category/global.all";
         const getNextURI = prototype.getNextURI;
         prototype.getNextURI = function () {
             if (disableOverrides()) {
@@ -2816,17 +2817,20 @@ class FeedlyPage {
             let nextURI = this.nextURI;
             if (getFFnS(ext.navigatingToNextId)) {
                 putFFnS(ext.navigatingToNextId, false);
-                if (nextURI && nextURI.endsWith("/category/global.all")) {
+                const currentCategory = document.URL.replace(new RegExp(ext.categoryUrlPrefixPattern, "i"), "");
+                if (nextURI &&
+                    nextURI.endsWith(allCategorySuffix) &&
+                    currentCategory == allCategorySuffix) {
                     nextURI = null;
                 }
-            }
-            if (!nextURI) {
-                try {
-                    let categories = JSON.parse(getService("preferences").getPreference("categoriesOrderingId"));
-                    return collectionPrefix + categories[0];
-                }
-                catch (e) {
-                    console.log(e);
+                if (!nextURI) {
+                    try {
+                        let categories = JSON.parse(getService("preferences").getPreference("categoriesOrderingId"));
+                        return collectionPrefix + categories[0];
+                    }
+                    catch (e) {
+                        console.log(e);
+                    }
                 }
             }
             return nextURI;
