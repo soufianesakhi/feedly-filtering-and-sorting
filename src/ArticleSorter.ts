@@ -16,7 +16,8 @@ export class ArticleSorter {
     private sortingEnabled: boolean,
     private pinHotToTop: boolean,
     private sortingType: SortingType,
-    additionalSortingTypes: SortingType[]
+    additionalSortingTypes: SortingType[],
+    private sortGaps = false
   ) {
     this.sortingTypes = [sortingType].concat(additionalSortingTypes);
   }
@@ -30,11 +31,15 @@ export class ArticleSorter {
     );
   }
 
+  articleVisible = this.sortGaps
+    ? (a: Article) => a.isVisible() || a.isGap()
+    : (a: Article) => a.isVisible();
+
   sort(articles: Article[]) {
     let visibleArticles: Article[] = [];
     let hiddenArticles: Article[] = [];
     articles.forEach((a) => {
-      if (a.isVisible()) {
+      if (this.articleVisible(a)) {
         visibleArticles.push(a);
       } else {
         hiddenArticles.push(a);

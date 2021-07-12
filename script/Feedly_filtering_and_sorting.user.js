@@ -37,6 +37,7 @@ var ext = {
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
     articleSelector: ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame), .EntryList__chunk > [id].inlineFrame.u100",
+    articleAndGapSelector: ".EntryList__chunk > [id]:not(.inlineFrame), .EntryList__chunk > [id].inlineFrame.u100",
     sortedArticlesSelector: ".EntryList__chunk > [id]:not([gap-article])",
     inlineArticleSelector: ".inlineFrame[id]",
     articleAndInlineSelector: ".EntryList__chunk > [id]:not([gap-article])",
@@ -1150,6 +1151,9 @@ class Article {
     isVisible() {
         return !(this.container.css("display") === "none");
     }
+    isGap() {
+        return this.container.attr("gap-article") === "true";
+    }
     checked() {
         this.container.attr(ext.checkedArticlesAttribute, "");
     }
@@ -1167,10 +1171,14 @@ class Article {
 }
 
 class ArticleSorter {
-    constructor(sortingEnabled, pinHotToTop, sortingType, additionalSortingTypes) {
+    constructor(sortingEnabled, pinHotToTop, sortingType, additionalSortingTypes, sortGaps = false) {
         this.sortingEnabled = sortingEnabled;
         this.pinHotToTop = pinHotToTop;
         this.sortingType = sortingType;
+        this.sortGaps = sortGaps;
+        this.articleVisible = this.sortGaps
+            ? (a) => a.isVisible() || a.isGap()
+            : (a) => a.isVisible();
         this.sortingTypes = [sortingType].concat(additionalSortingTypes);
     }
     static from(config) {
@@ -1180,7 +1188,7 @@ class ArticleSorter {
         let visibleArticles = [];
         let hiddenArticles = [];
         articles.forEach((a) => {
-            if (a.isVisible()) {
+            if (this.articleVisible(a)) {
                 visibleArticles.push(a);
             }
             else {
@@ -1945,11 +1953,10 @@ class FeedlyPage {
     }
     sortArticlesDOM(articleSorterConfig) {
         debugLog(() => "Sorting articles at " + new Date().toTimeString());
-        const allVisibleArticles = [];
         $(ext.articlesContainerSelector).each((_, c) => {
             let articlesContainer = $(c);
             const articles = articlesContainer
-                .find(ext.articleSelector)
+                .find(ext.articleAndGapSelector)
                 .get()
                 .map((e) => new Article(e));
             let { visibleArticles, hiddenArticles } = ArticleSorter.from(articleSorterConfig).sort(articles);
@@ -1963,9 +1970,7 @@ class FeedlyPage {
             };
             visibleArticles.forEach(appendArticle);
             hiddenArticles.forEach(appendArticle);
-            allVisibleArticles.push(...visibleArticles);
         });
-        return allVisibleArticles;
     }
     updateCheck(enabled, id, className) {
         if (enabled) {

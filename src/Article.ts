@@ -155,6 +155,10 @@ export class Article {
     return !(this.container.css("display") === "none");
   }
 
+  isGap(): boolean {
+    return this.container.attr("gap-article") === "true";
+  }
+
   checked() {
     this.container.attr(ext.checkedArticlesAttribute, "");
   }

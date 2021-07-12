@@ -134,11 +134,10 @@ export class FeedlyPage {
 
   sortArticlesDOM(articleSorterConfig: ArticleSorterConfig) {
     debugLog(() => "Sorting articles at " + new Date().toTimeString());
-    const allVisibleArticles: Article[] = [];
     $(ext.articlesContainerSelector).each((_, c) => {
       let articlesContainer = $(c);
       const articles = articlesContainer
-        .find(ext.articleSelector)
+        .find(ext.articleAndGapSelector)
         .get()
         .map((e) => new Article(e));
       let { visibleArticles, hiddenArticles } =
@@ -153,9 +152,7 @@ export class FeedlyPage {
       };
       visibleArticles.forEach(appendArticle);
       hiddenArticles.forEach(appendArticle);
-      allVisibleArticles.push(...visibleArticles);
     });
-    return allVisibleArticles;
   }
 
   updateCheck(enabled: boolean, id: string, className: string) {

@@ -17,6 +17,8 @@ var ext = {
   articlesChunkSelector: ".EntryList__chunk",
   articleSelector:
     ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame), .EntryList__chunk > [id].inlineFrame.u100",
+  articleAndGapSelector:
+    ".EntryList__chunk > [id]:not(.inlineFrame), .EntryList__chunk > [id].inlineFrame.u100",
   sortedArticlesSelector: ".EntryList__chunk > [id]:not([gap-article])",
   inlineArticleSelector: ".inlineFrame[id]",
   articleAndInlineSelector: ".EntryList__chunk > [id]:not([gap-article])",
