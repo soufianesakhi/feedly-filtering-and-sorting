@@ -5,8 +5,10 @@ import {
   ArticleSorter,
   ArticleSorterConfig,
   ArticleSorterFactory,
+  SortedArticles,
 } from "./ArticleSorter";
 import { SortingType } from "./DataTypes";
+import { enableDebug } from "./Main";
 import { Subscription } from "./Subscription";
 import {
   debugLog,
@@ -64,6 +66,7 @@ export class FeedlyPage {
       this.getKeptUnreadEntryIds,
       this.getSortedVisibleArticles,
       debugLog,
+      enableDebug,
       removeContent,
       this.sortArticlesDOM
     );
@@ -132,16 +135,57 @@ export class FeedlyPage {
     this.sortArticlesDOM(sub.getArticleSorterConfig());
   }
 
-  sortArticlesDOM(articleSorterConfig: ArticleSorterConfig) {
+  sortArticlesDOM(
+    articleSorterConfig?: ArticleSorterConfig,
+    sortedArticles?: SortedArticles
+  ) {
+    if (!articleSorterConfig) {
+      articleSorterConfig = getFFnS(ext.articleSorterConfigId);
+    }
+    if (
+      !articleSorterConfig.sortingEnabled &&
+      !articleSorterConfig.pinHotToTop
+    ) {
+      return;
+    }
     debugLog(() => "Sorting articles at " + new Date().toTimeString());
-    $(ext.articlesContainerSelector).each((_, c) => {
-      let articlesContainer = $(c);
-      const articles = articlesContainer
-        .find(ext.articleAndGapSelector)
-        .get()
-        .map((e) => new Article(e));
-      let { visibleArticles, hiddenArticles } =
-        ArticleSorter.from(articleSorterConfig).sort(articles);
+    const sortedArticlesContainers: SortedArticlesContainer[] = [];
+    if (sortedArticles) {
+      const { visibleArticles, hiddenArticles } = sortedArticles;
+      $(ext.articlesContainerSelector).each((_, container) => {
+        const ids = $(container)
+          .find(ext.articleAndGapSelector)
+          .get()
+          .map(getArticleId);
+        const conatinerVisibleArticles = visibleArticles.filter((a) =>
+          ids.includes(a.getEntryId())
+        );
+        const conatinerHiddenArticles = hiddenArticles.filter((a) =>
+          ids.includes(a.getEntryId())
+        );
+        sortedArticlesContainers.push({
+          container,
+          sortedArticles: {
+            visibleArticles: conatinerVisibleArticles,
+            hiddenArticles: conatinerHiddenArticles,
+          },
+        });
+      });
+    } else {
+      $(ext.articlesContainerSelector).each((_, container) => {
+        const articles = $(container)
+          .find(ext.articleAndGapSelector)
+          .get()
+          .map((e) => new Article(e));
+        const sortedArticles =
+          ArticleSorter.from(articleSorterConfig).sort(articles);
+        sortedArticlesContainers.push({ container, sortedArticles });
+      });
+    }
+    sortedArticlesContainers.forEach((sortedArticlesContainer) => {
+      const articlesContainer = $(sortedArticlesContainer.container);
+      const { visibleArticles, hiddenArticles } =
+        sortedArticlesContainer.sortedArticles;
       let chunks = articlesContainer.find(ext.articlesChunkSelector);
       removeContent(chunks.find(".Heading"));
       let containerChunk = chunks.first();
@@ -433,9 +477,11 @@ export class FeedlyPage {
     return keptUnreadEntryIds;
   }
 
-  getSortedVisibleArticles(): string[] {
+  getSortedVisibleArticles(container?: Element): string[] {
     const sortedVisibleArticles = Array.from(
-      document.querySelectorAll<HTMLElement>(ext.sortedArticlesSelector)
+      (container || document).querySelectorAll<HTMLElement>(
+        ext.sortedArticlesSelector
+      )
     )
       .filter((a) => a.style.display !== "none")
       .map((a) => getArticleId(a));
@@ -780,7 +826,7 @@ export class FeedlyPage {
       }
       try {
         if (entries.length > 0) {
-          putFFnS(ext.sortArticlesId, true);
+          setTimeout(() => sortArticlesDOM(), 300);
         }
         if (
           entries.length > 0 &&
@@ -958,36 +1004,49 @@ export class FeedlyPage {
   overrideSorting() {
     var prototype = Object.getPrototypeOf(getService("navigo"));
     function ensureSortedEntries() {
+      const articleSorterConfig: ArticleSorterConfig = getFFnS(
+        ext.articleSorterConfigId
+      );
+      if (
+        !articleSorterConfig.sortingEnabled &&
+        !articleSorterConfig.pinHotToTop
+      ) {
+        return;
+      }
       debugLog(() => "start", "ensureSortedEntries");
       let navigo = getService("navigo");
       var entries: any[] = navigo.entries;
       var originalEntries: any[] = navigo.originalEntries || entries;
       navigo.originalEntries = originalEntries;
-      var sortedVisibleArticles: string[] = getSortedVisibleArticles();
-      if (!sortedVisibleArticles) {
-        navigo.entries = originalEntries;
-        navigo.originalEntries = null;
-        return;
-      }
-      var len = sortedVisibleArticles.length;
-      var sorted = len == entries.length;
-      const visibleEntryIds = entries
-        .map((e) => e.id)
-        .filter((id) => sortedVisibleArticles.includes(id));
-      for (var i = 0; i < len && sorted; i++) {
-        if (visibleEntryIds[i] !== sortedVisibleArticles[i]) {
-          sorted = false;
+      let sorted = true;
+      let len = 0;
+      $(ext.articlesContainerSelector).each((_, container) => {
+        var sortedVisibleArticles: string[] =
+          getSortedVisibleArticles(container);
+        if (!sortedVisibleArticles) {
+          navigo.entries = originalEntries;
+          navigo.originalEntries = null;
+          return;
         }
-      }
+        len += sortedVisibleArticles.length;
+        const visibleEntryIds = entries
+          .map((e) => e.id)
+          .filter((id) => sortedVisibleArticles.includes(id));
+        for (var i = 0; i < sortedVisibleArticles.length && sorted; i++) {
+          if (visibleEntryIds[i] !== sortedVisibleArticles[i]) {
+            sorted = false;
+          }
+        }
+      });
       if (!sorted && len > 0) {
         debugLog(() => "sorting entries", "ensureSortedEntries");
         try {
           const articles = navigo.originalEntries.map(
             (e) => new Article(getById(e.id))
           );
-          const articleSorterConfig = getFFnS(ext.articleSorterConfigId);
           const sorter = ArticleSorter.from(articleSorterConfig);
-          const { visibleArticles } = sorter.sort(articles);
+          const sortedArticles = sorter.sort(articles);
+          const { visibleArticles } = sortedArticles;
           const idToEntry = {};
           navigo.originalEntries.forEach((e) => (idToEntry[e.id] = e));
           entries = visibleArticles.map((a) => idToEntry[a.getEntryId()]);
@@ -1003,20 +1062,7 @@ export class FeedlyPage {
             "ensureSortedEntries"
           );
           navigo.entries = entries;
-          let visuallySorted = true;
-          for (
-            let i = 0;
-            i < sortedVisibleArticles.length && visuallySorted;
-            i++
-          ) {
-            if (sortedVisibleArticles[i] !== visibleArticles[i].getEntryId()) {
-              visuallySorted = false;
-            }
-            if (!visuallySorted) {
-              debugLog(() => "sorting entries visually", "ensureSortedEntries");
-              sortArticlesDOM(articleSorterConfig);
-            }
-          }
+          sortArticlesDOM(articleSorterConfig, sortedArticles);
         } catch (e) {
           debugLog(
             () => ["!!", e.name, e.message, "!!"],
@@ -1156,6 +1202,11 @@ export class FeedlyPage {
       return _jumpToNext.apply(getService("readingManager"), arguments);
     };
   }
+}
+
+interface SortedArticlesContainer {
+  container: Element;
+  sortedArticles: SortedArticles;
 }
 
 const page = typeof FeedlyPage;

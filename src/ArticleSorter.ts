@@ -8,6 +8,11 @@ export interface ArticleSorterConfig {
   additionalSortingTypes: SortingType[];
 }
 
+export interface SortedArticles {
+  visibleArticles: Article[];
+  hiddenArticles: Article[];
+}
+
 declare var articleSorterFactory: ArticleSorterFactory;
 
 export class ArticleSorter {
@@ -35,7 +40,7 @@ export class ArticleSorter {
     ? (a: Article) => a.isVisible() || a.isGap()
     : (a: Article) => a.isVisible();
 
-  sort(articles: Article[]) {
+  sort(articles: Article[]): SortedArticles {
     let visibleArticles: Article[] = [];
     let hiddenArticles: Article[] = [];
     articles.forEach((a) => {

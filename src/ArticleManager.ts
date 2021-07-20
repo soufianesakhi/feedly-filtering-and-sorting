@@ -37,7 +37,7 @@ export class ArticleManager {
       this.addArticle(e, true);
     });
     this.checkLastAddedArticle(true);
-    this.sortArticles(true);
+    this.sortArticles();
   }
 
   resetArticles() {
@@ -64,7 +64,6 @@ export class ArticleManager {
     if (!skipCheck) {
       article.checked();
       this.checkLastAddedArticle();
-      this.sortArticles();
     }
   }
 
@@ -237,15 +236,9 @@ export class ArticleManager {
     }
   }
 
-  sortArticles(force?: boolean) {
-    if (!this.page.get(ext.sortArticlesId) && !force) {
-      return;
-    }
-    this.page.put(ext.sortArticlesId, false);
+  sortArticles() {
     let sub = this.getCurrentSub();
-    if (sub.isSortingEnabled() || sub.isPinHotToTop()) {
-      this.page.sortArticles(sub);
-    }
+    this.page.sortArticles(sub);
   }
 
   prepareMarkAsRead() {

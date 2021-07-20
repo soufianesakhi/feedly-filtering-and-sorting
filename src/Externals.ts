@@ -60,7 +60,6 @@ var ext = {
   loadByBatchEnabledId: "loadByBatchEnabled",
   isNewestFirstId: "isNewestFirst",
   markAsReadAboveBelowReadId: "MarkAsReadAboveBelowRead",
-  sortArticlesId: "isSortArticles",
   markAsReadImmediatelyClass: "FFnS-mark-as-read",
   buttonsContainerId: "FFnS-buttons-container",
   containerButtonClass: "FFnS-UI-button",

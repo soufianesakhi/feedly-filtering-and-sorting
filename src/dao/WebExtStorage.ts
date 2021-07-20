@@ -2,11 +2,12 @@
 
 import { AsyncResult } from "../AsyncResult";
 import { BROWSER } from "../initializer/Initializer";
+import { debugLog } from "../Utils";
 import {
   PromiseStorageArea,
   StorageArea,
   StorageManager,
-  SyncStorageManager
+  SyncStorageManager,
 } from "./Storage";
 
 var isArrayStorageMode = false;
@@ -19,9 +20,9 @@ class DefaultStorageAdapter {
     this.storage = storage;
   }
   public getAsync<t>(id: string, defaultValue: t): AsyncResult<t> {
-    return new AsyncResult<t>(p => {
+    return new AsyncResult<t>((p) => {
       var isArr = isArrayStorageMode;
-      var callback = result => {
+      var callback = (result) => {
         var data = (isArr ? result[0] : result)[id];
         if (data == null) {
           data = defaultValue;
@@ -33,9 +34,9 @@ class DefaultStorageAdapter {
   }
 
   public getItemsAsync<t>(ids: string[]): AsyncResult<{ [key: string]: t }> {
-    return new AsyncResult<{ [key: string]: t }>(p => {
+    return new AsyncResult<{ [key: string]: t }>((p) => {
       var isArr = isArrayStorageMode;
-      var callback = result => {
+      var callback = (result) => {
         let data = isArr ? result[0] : result;
         p.result(data);
       };
@@ -67,14 +68,12 @@ export class WebExtStorage implements StorageManager {
     this.browser = BROWSER;
   }
 
-  onError = function(e) {
+  onError = function (e) {
     throw e;
   };
 
-  onSave = function() {
-    if (DEBUG) {
-      console.log("Storage save success");
-    }
+  onSave = function () {
+    debugLog(() => "Storage save success");
   };
 
   public getAsync<t>(id: string, defaultValue: t): AsyncResult<t> {
@@ -113,8 +112,8 @@ export class WebExtStorage implements StorageManager {
   }
 
   private initStorage() {
-    return new AsyncResult<any>(p => {
-      var callback = result => {
+    return new AsyncResult<any>((p) => {
+      var callback = (result) => {
         if ($.isArray(result)) {
           isArrayStorageMode = true;
         }
@@ -129,7 +128,7 @@ export class WebExtStorage implements StorageManager {
         this.setUpStorages(() => new PromiseStorage(this));
         this.getSyncStorageArea()
           .get(this.useSyncStorageId)
-          .then(callback, e => {
+          .then(callback, (e) => {
             throw e;
           });
       } catch (e) {
@@ -147,9 +146,9 @@ export class WebExtStorage implements StorageManager {
   }
 
   public init(): AsyncResult<any> {
-    return new AsyncResult<any>(p => {
+    return new AsyncResult<any>((p) => {
       this.initStorage().then(() => {
-        var callback = result => {
+        var callback = (result) => {
           this.keys = this.keys.concat(
             Object.keys(isArrayStorageMode ? result[0] : result)
           );
@@ -180,7 +179,7 @@ export class WebExtStorage implements StorageManager {
         _this.syncStorage.set(toSave, () => {
           console.log("Sync storage " + (enabled ? "enabled" : "disabled"));
         });
-      }
+      },
     };
   }
 

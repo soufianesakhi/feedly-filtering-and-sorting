@@ -5,6 +5,9 @@ import { UIManager } from "./UIManager";
 import { bindMarkup, callbackBindedTo, injectStyleText } from "./Utils";
 
 export var debugEnabled = localStorage.getItem("debug_enabled") === "true";
+export function enableDebug(enabled = true) {
+  localStorage.setItem("debug_enabled", "" + enabled);
+}
 
 function initResources() {
   INITIALIZER.loadScript("jquery.min.js");
