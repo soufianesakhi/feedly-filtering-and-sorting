@@ -6,6 +6,10 @@
   "main": "src/Main.ts",
   "author": "Soufiane Sakhi",
   "license": "MIT",
+  "scripts": {
+    "build": "grunt",
+    "watch": "grunt watch"
+  },
   "devDependencies": {
     "grunt": "^1.4.0",
     "grunt-contrib-concat": "^1.0.0",

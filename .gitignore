@@ -1,6 +1,7 @@
 .idea/
 .tscache/
-.vscode/
+.vscode/*
+!.vscode/tasks.json
 .baseDir.ts
 .atom-build.json
 node_modules/

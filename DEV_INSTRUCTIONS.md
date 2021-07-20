@@ -1,4 +1,4 @@
-Install NodeJS (version 10) & NPM (https://nodejs.org/en/download).
+Install NodeJS (version 10 or later) & NPM (https://nodejs.org/en/download).
 
 ```
 npm install
