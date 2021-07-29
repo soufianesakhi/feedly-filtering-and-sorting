@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.21.5
+// @version     3.21.6
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2053,7 +2053,10 @@ class FeedlyPage {
                 const id = getArticleId(node);
                 const sortedIds = getService("navigo").entries.map((e) => e.id);
                 let nextIndex = sortedIds.indexOf(id) + 1;
-                if (nextIndex > 0 && nextIndex < sortedIds.length) {
+                if (nextIndex === sortedIds.length) {
+                    return parent.appendChild(node);
+                }
+                else if (nextIndex > 0 && nextIndex < sortedIds.length) {
                     const nextId = sortedIds[nextIndex];
                     sibling = getById(nextId);
                 }
@@ -2734,6 +2737,19 @@ class FeedlyPage {
                     .filter((id) => sortedVisibleArticles.includes(id));
                 for (var i = 0; i < sortedVisibleArticles.length && sorted; i++) {
                     if (visibleEntryIds[i] !== sortedVisibleArticles[i]) {
+                        debugLog(() => [
+                            "entries not sorted",
+                            "\n\t" +
+                                visibleEntryIds
+                                    .slice(Math.max(0, i - 1), Math.min(i + 2, entries.length))
+                                    .map((id) => new Article(getById(id)).getTitle())
+                                    .join("\n\t"),
+                            "\nvisible:\n\t" +
+                                sortedVisibleArticles
+                                    .slice(Math.max(0, i - 1), Math.min(i + 2, entries.length))
+                                    .map((id) => new Article(getById(id)).getTitle())
+                                    .join("\n\t"),
+                        ], "ensureSortedEntries");
                         sorted = false;
                     }
                 }
@@ -2761,6 +2777,7 @@ class FeedlyPage {
                 }
                 catch (e) {
                     debugLog(() => ["!!", e.name, e.message, "!!"], "ensureSortedEntries");
+                    setTimeout(ensureSortedEntries, 500);
                 }
             }
             debugLog(() => "end", "ensureSortedEntries");

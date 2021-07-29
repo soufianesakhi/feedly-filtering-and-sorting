@@ -14,10 +14,6 @@ When this extension/script is enabled, a filter icon will appear next to the set
 
 ![Import settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/settings_controls.PNG)
 
-The `Unread Only` option is required to be enabled to support all the features.
-
-![Feedly settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/feedly_settings.PNG)
-
 ## Features
 
 - Multi level sorting: by popularity, by title, by source or by publish date.
@@ -41,6 +37,14 @@ Two settings configurations are available:
   - Subscription and category specific configurations
   - The default settings values are the global settings.
   - A group of subscriptions can share the same configuration by linking them to the same subscription.
+
+## Requirements
+
+### Feedly settings
+![Feedly settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/feedly_settings.PNG)
+
+- The `Unread Only` option is required to be checked
+- Sorting should be set to either `Latest` or `Oldest`
 
 ## [Changelog](https://github.com/soufianesakhi/feedly-filtering-and-sorting/releases)
 

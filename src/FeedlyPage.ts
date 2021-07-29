@@ -255,7 +255,9 @@ export class FeedlyPage {
         const id = getArticleId(node);
         const sortedIds = getService("navigo").entries.map((e) => e.id);
         let nextIndex = sortedIds.indexOf(id) + 1;
-        if (nextIndex > 0 && nextIndex < sortedIds.length) {
+        if (nextIndex === sortedIds.length) {
+          return parent.appendChild(node);
+        } else if (nextIndex > 0 && nextIndex < sortedIds.length) {
           const nextId = sortedIds[nextIndex];
           sibling = getById(nextId);
         } else {
@@ -1030,10 +1032,26 @@ export class FeedlyPage {
         }
         len += sortedVisibleArticles.length;
         const visibleEntryIds = entries
-          .map((e) => e.id)
+          .map((e) => e.id as string)
           .filter((id) => sortedVisibleArticles.includes(id));
         for (var i = 0; i < sortedVisibleArticles.length && sorted; i++) {
           if (visibleEntryIds[i] !== sortedVisibleArticles[i]) {
+            debugLog(
+              () => [
+                "entries not sorted",
+                "\n\t" +
+                  visibleEntryIds
+                    .slice(Math.max(0, i - 1), Math.min(i + 2, entries.length))
+                    .map((id) => new Article(getById(id)).getTitle())
+                    .join("\n\t"),
+                "\nvisible:\n\t" +
+                  sortedVisibleArticles
+                    .slice(Math.max(0, i - 1), Math.min(i + 2, entries.length))
+                    .map((id) => new Article(getById(id)).getTitle())
+                    .join("\n\t"),
+              ],
+              "ensureSortedEntries"
+            );
             sorted = false;
           }
         }
@@ -1068,6 +1086,7 @@ export class FeedlyPage {
             () => ["!!", e.name, e.message, "!!"],
             "ensureSortedEntries"
           );
+          setTimeout(ensureSortedEntries, 500);
         }
       }
       debugLog(() => "end", "ensureSortedEntries");
