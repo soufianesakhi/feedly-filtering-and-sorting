@@ -530,22 +530,19 @@ export class UIManager {
   initShowSettingsBtns() {
     var this_ = this;
     NodeCreationObserver.onCreation(
-      ext.settingsBtnPredecessorSelector,
-      (element) => {
+      ext.settingsBtnContainerSelector,
+      (parent) => {
         if (
           currentPageNotSupported() ||
-          $(element).parent().find(".ShowSettingsBtn").length > 0
+          $(parent).find(".ShowSettingsBtn").length > 0
         ) {
           return;
         }
-        var clone = $(element).clone();
-        $(clone)
-          .empty()
-          .removeAttr("class")
+        var settingsBtn = $("<button>")
           .attr("title", "Feedly filtering and sorting")
           .addClass("ShowSettingsBtn");
-        $(element).after(clone);
-        $(clone).click(function () {
+        $(parent).children().last().before(settingsBtn);
+        $(settingsBtn).click(function () {
           $id(this_.settingsDivContainerId).toggle();
           focusKeywordsInput();
         });

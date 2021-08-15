@@ -23,12 +23,12 @@ export class WebExtInitializer implements Initializer {
       url: this.getURL(name),
       dataType: "text",
       async: false,
-      success: result => {
+      success: (result) => {
         injectScriptText(result);
       },
       error: (jqXHR: JQueryXHR, textStatus: string, errorThrown: string) => {
         console.log(errorThrown);
-      }
+      },
     });
   }
 
@@ -41,12 +41,12 @@ export class WebExtInitializer implements Initializer {
       moveDownIconURL: this.getURL("images/move-down.png"),
       openInNewTabURL: this.getURL("images/open-in-new-tab.png"),
       clearFiltersURL: this.getURL("images/filter_clear.png"),
-      extensionIconURL: this.getURL("icons/128.png")
+      extensionIconURL: this.getURL("icons/128.png"),
     };
   }
 
   getURL(name: string) {
-    return this.browser.extension.getURL(name);
+    return this.browser.runtime.getURL(name);
   }
 }
 

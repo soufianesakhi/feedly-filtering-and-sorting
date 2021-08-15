@@ -11,7 +11,8 @@ var ext = {
   subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
   categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
 
-  settingsBtnPredecessorSelector: "button[title='Refresh']",
+  settingsBtnContainerSelector:
+    ".header .actions-container, .header > .Heading + *",
   articlesContainerSelector: ".list-entries",
   articlesChunkClass: "EntryList__chunk",
   articlesChunkSelector: ".EntryList__chunk",

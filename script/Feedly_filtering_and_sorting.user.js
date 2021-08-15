@@ -32,7 +32,7 @@ var ext = {
     defaultUrlPrefixPattern: "https?://[^/]+/i/",
     subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
     categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
-    settingsBtnPredecessorSelector: "button[title='Refresh']",
+    settingsBtnContainerSelector: ".header .actions-container, .header > .Heading + *",
     articlesContainerSelector: ".list-entries",
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
@@ -2713,8 +2713,9 @@ class FeedlyPage {
         var prototype = Object.getPrototypeOf(getService("navigo"));
         function ensureSortedEntries() {
             const articleSorterConfig = getFFnS(ext.articleSorterConfigId);
-            if (!articleSorterConfig.sortingEnabled &&
-                !articleSorterConfig.pinHotToTop) {
+            if (!articleSorterConfig ||
+                (!articleSorterConfig.sortingEnabled &&
+                    !articleSorterConfig.pinHotToTop)) {
                 return;
             }
             debugLog(() => "start", "ensureSortedEntries");
@@ -3299,19 +3300,16 @@ class UIManager {
     }
     initShowSettingsBtns() {
         var this_ = this;
-        NodeCreationObserver.onCreation(ext.settingsBtnPredecessorSelector, (element) => {
+        NodeCreationObserver.onCreation(ext.settingsBtnContainerSelector, (parent) => {
             if (currentPageNotSupported() ||
-                $(element).parent().find(".ShowSettingsBtn").length > 0) {
+                $(parent).find(".ShowSettingsBtn").length > 0) {
                 return;
             }
-            var clone = $(element).clone();
-            $(clone)
-                .empty()
-                .removeAttr("class")
+            var settingsBtn = $("<button>")
                 .attr("title", "Feedly filtering and sorting")
                 .addClass("ShowSettingsBtn");
-            $(element).after(clone);
-            $(clone).click(function () {
+            $(parent).children().last().before(settingsBtn);
+            $(settingsBtn).click(function () {
                 $id(this_.settingsDivContainerId).toggle();
                 focusKeywordsInput();
             });
