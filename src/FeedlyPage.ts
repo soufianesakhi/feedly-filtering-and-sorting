@@ -577,7 +577,7 @@ export class FeedlyPage {
         a.find(".ago").after(buttonContainer);
       } else if (inlineView) {
         NodeCreationObserver.onCreation(
-          `[id^='${entryId}'] .headerInfo > :first-child`,
+          `[id^='${entryId}'] .ShareBar__actions-left`,
           (e) => {
             $(e).append(buttonContainer);
           },
