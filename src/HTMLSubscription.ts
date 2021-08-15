@@ -16,7 +16,7 @@ export class HTMLSubscriptionManager {
   manager: UIManager;
   configByElementType: { [key: number]: HTMLSubscriptionSettingConfig } = {};
 
-  getChangeCallback(setting: HTMLSubscriptionSetting): Function {
+  getChangeCallback(setting: HTMLSubscriptionSetting): any {
     return function() {
       try {
         var val = setting.config.getHTMLValue(setting);

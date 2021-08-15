@@ -553,7 +553,7 @@ export class FeedlyPage {
       if (disableOverrides()) {
         return;
       }
-      var a = $(element);
+      var a = $(element) as JQuery<HTMLElement>;
 
       var entryId = getArticleId(element as HTMLElement);
 

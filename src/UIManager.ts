@@ -339,7 +339,7 @@ export class UIManager {
   }
 
   getSettingsControlsSelectedSubscription(): string {
-    return $id("FFnS_SettingsControls_SelectedSubscription").val();
+    return $id("FFnS_SettingsControls_SelectedSubscription").val() as string;
   }
 
   initUI() {
@@ -416,7 +416,7 @@ export class UIManager {
     });
   }
 
-  checkKeywordsInputEnter(event: JQueryKeyEventObject) {
+  checkKeywordsInputEnter(event: JQuery.KeyUpEvent) {
     if (event.key !== "Enter") {
       return;
     }
@@ -626,7 +626,7 @@ export class UIManager {
 
     $id("FFnS_AddSortingType").click(() => {
       var id = this.registerAdditionalSortingType();
-      this.subscription.addAdditionalSortingType($id(id).val());
+      this.subscription.addAdditionalSortingType($id(id).val() as SortingType);
       this.refreshFilteringAndSorting();
     });
 
@@ -821,7 +821,7 @@ export class UIManager {
     onChange(
       ids.colorId,
       function () {
-        let str: string = $(this).val();
+        let str = $(this).val() as string;
         if (str.match(/^\W*([0-9A-F]{3}([0-9A-F]{3})?)\W*$/i)) {
           cr.color = str.toUpperCase();
         } else {
@@ -836,7 +836,7 @@ export class UIManager {
     onChange(
       ids.addBtnId,
       () => {
-        let keyword = $id(ids.keywordInputId).val();
+        let keyword = $id(ids.keywordInputId).val() as string;
         if (keyword != null && keyword !== "") {
           cr.specificKeywords.push(keyword);
         }
@@ -948,9 +948,11 @@ export class UIManager {
   }
 
   private addKeyword(input: JQuery, type: FilteringType) {
-    var keyword = input.val();
+    var keyword = input.val() as string;
     if (keyword != null && keyword !== "") {
-      var area = $id(this.getKeywordMatchingSelectId(true, type)).val();
+      var area = $id(
+        this.getKeywordMatchingSelectId(true, type)
+      ).val() as string;
       if (area.length > 0) {
         keyword = this.keywordManager.insertArea(keyword, area);
       }
@@ -1003,15 +1005,15 @@ export class UIManager {
   }
 
   updateAdditionalSortingTypes() {
-    var additionalSortingTypes = [];
-    $("#FFnS_AdditionalSortingTypes > select").each((i, e) =>
-      additionalSortingTypes.push($(e).val())
-    );
+    var additionalSortingTypes = [] as SortingType[];
+    $("#FFnS_AdditionalSortingTypes > select").each((i, e) => {
+      additionalSortingTypes.push($(e).val() as SortingType);
+    });
     this.subscription.setAdditionalSortingTypes(additionalSortingTypes);
     this.refreshFilteringAndSorting();
   }
 
-  addArticle(article: Element) {
+  addArticle(article: HTMLElement) {
     if (currentPageNotSupported()) {
       return;
     }

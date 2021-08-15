@@ -299,7 +299,7 @@ function pushIfAbsent(array, value) {
 function removeContent(elements) {
     elements.each((i, element) => {
         var attributes = $.map(element.attributes, function (item) {
-            return item.name;
+            return item["name"];
         });
         $.each(attributes, function (i, item) {
             $(element).removeAttr(item);
@@ -3672,7 +3672,9 @@ class UIManager {
     }
     updateAdditionalSortingTypes() {
         var additionalSortingTypes = [];
-        $("#FFnS_AdditionalSortingTypes > select").each((i, e) => additionalSortingTypes.push($(e).val()));
+        $("#FFnS_AdditionalSortingTypes > select").each((i, e) => {
+            additionalSortingTypes.push($(e).val());
+        });
         this.subscription.setAdditionalSortingTypes(additionalSortingTypes);
         this.refreshFilteringAndSorting();
     }

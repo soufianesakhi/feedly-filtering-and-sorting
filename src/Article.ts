@@ -27,7 +27,7 @@ export class Article {
   private url: string;
   private entryInfos: EntryInfos;
 
-  constructor(articleContainer: Element) {
+  constructor(articleContainer: HTMLElement) {
     this.container = $(articleContainer);
     this.entryId = this.container
       .attr("id")

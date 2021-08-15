@@ -1,7 +1,0 @@
-{
-  "globalDependencies": {
-    "greasemonkey": "registry:dt/greasemonkey",
-    "jquery": "registry:dt/jquery",
-    "node-creation-observer": "github:soufianesakhi/node-creation-observer-js/release#edabdee1caaee6af701333a527a0afd95240aa3b"
-  }
-}

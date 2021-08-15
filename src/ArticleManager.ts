@@ -56,7 +56,7 @@ export class ArticleManager {
     return this.settingsManager.getCurrentSubscription();
   }
 
-  addArticle(a: Element, skipCheck?: boolean) {
+  addArticle(a: HTMLElement, skipCheck?: boolean) {
     var article = new Article(a);
     this.filterAndRestrict(article);
     this.advancedControls(article);

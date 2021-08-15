@@ -1,4 +1,4 @@
-/// <reference path="../typings/index.d.ts" />
+/// <reference path="../node_modules/node-creation-observer/release/node-creation-observer-latest.d.ts" />
 /// <reference path="./Externals.ts" />
 /// <reference path="./Templates.ts" />
 
