@@ -828,7 +828,7 @@ export class FeedlyPage {
       }
       try {
         if (entries.length > 0) {
-          setTimeout(() => sortArticlesDOM(), 300);
+          setTimeout(() => sortArticlesDOM(), 1300);
         }
         if (
           entries.length > 0 &&
@@ -1032,9 +1032,8 @@ export class FeedlyPage {
           return;
         }
         len += sortedVisibleArticles.length;
-        const visibleEntryIds = entries
-          .map((e) => e.id as string)
-          .filter((id) => sortedVisibleArticles.includes(id));
+        navigo.entries = entries.filter((e) => sortedVisibleArticles.includes(e.id));
+        const visibleEntryIds = navigo.entries.map((e) => e.id as string);
         for (var i = 0; i < sortedVisibleArticles.length && sorted; i++) {
           if (visibleEntryIds[i] !== sortedVisibleArticles[i]) {
             debugLog(

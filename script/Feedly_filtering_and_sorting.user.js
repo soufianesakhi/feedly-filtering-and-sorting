@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.21.7
+// @version     3.21.8
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2554,7 +2554,7 @@ class FeedlyPage {
             }
             try {
                 if (entries.length > 0) {
-                    setTimeout(() => sortArticlesDOM(), 300);
+                    setTimeout(() => sortArticlesDOM(), 1300);
                 }
                 if (entries.length > 0 &&
                     entries[entries.length - 1].jsonInfo.unread &&
@@ -2733,9 +2733,8 @@ class FeedlyPage {
                     return;
                 }
                 len += sortedVisibleArticles.length;
-                const visibleEntryIds = entries
-                    .map((e) => e.id)
-                    .filter((id) => sortedVisibleArticles.includes(id));
+                navigo.entries = entries.filter((e) => sortedVisibleArticles.includes(e.id));
+                const visibleEntryIds = navigo.entries.map((e) => e.id);
                 for (var i = 0; i < sortedVisibleArticles.length && sorted; i++) {
                     if (visibleEntryIds[i] !== sortedVisibleArticles[i]) {
                         debugLog(() => [
