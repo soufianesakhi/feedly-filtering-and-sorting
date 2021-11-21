@@ -3,6 +3,7 @@ import { SortingType } from "./DataTypes";
 
 export interface ArticleSorterConfig {
   sortingEnabled: boolean;
+  filteringEnabled: boolean;
   pinHotToTop: boolean;
   sortingType: SortingType;
   additionalSortingTypes: SortingType[];

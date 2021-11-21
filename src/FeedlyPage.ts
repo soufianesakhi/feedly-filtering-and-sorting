@@ -1012,6 +1012,7 @@ export class FeedlyPage {
       if (
         !articleSorterConfig ||
         (!articleSorterConfig.sortingEnabled &&
+          !articleSorterConfig.filteringEnabled &&
           !articleSorterConfig.pinHotToTop)
       ) {
         return;

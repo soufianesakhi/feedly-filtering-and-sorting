@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.21.8
+// @version     3.21.9
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -735,6 +735,7 @@ class Subscription {
     getArticleSorterConfig() {
         return {
             sortingEnabled: this.isSortingEnabled(),
+            filteringEnabled: this.isFilteringEnabled() || this.isRestrictingEnabled() || this.isHideDuplicates(),
             pinHotToTop: this.isPinHotToTop(),
             sortingType: this.getSortingType(),
             additionalSortingTypes: this.getAdditionalSortingTypes(),
@@ -2715,6 +2716,7 @@ class FeedlyPage {
             const articleSorterConfig = getFFnS(ext.articleSorterConfigId);
             if (!articleSorterConfig ||
                 (!articleSorterConfig.sortingEnabled &&
+                    !articleSorterConfig.filteringEnabled &&
                     !articleSorterConfig.pinHotToTop)) {
                 return;
             }

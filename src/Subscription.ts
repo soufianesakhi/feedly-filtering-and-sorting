@@ -240,6 +240,7 @@ export class Subscription {
   getArticleSorterConfig(): ArticleSorterConfig {
     return {
       sortingEnabled: this.isSortingEnabled(),
+      filteringEnabled: this.isFilteringEnabled() || this.isRestrictingEnabled() || this.isHideDuplicates(),
       pinHotToTop: this.isPinHotToTop(),
       sortingType: this.getSortingType(),
       additionalSortingTypes: this.getAdditionalSortingTypes(),
