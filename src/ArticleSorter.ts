@@ -41,7 +41,7 @@ export class ArticleSorter {
     ? (a: Article) => a.isVisible() || a.isGap()
     : (a: Article) => a.isVisible();
 
-  sort(articles: Article[]): SortedArticles {
+  prepare(articles: Article[]): SortedArticles {
     let visibleArticles: Article[] = [];
     let hiddenArticles: Article[] = [];
     articles.forEach((a) => {
@@ -51,6 +51,11 @@ export class ArticleSorter {
         hiddenArticles.push(a);
       }
     });
+    return { visibleArticles, hiddenArticles };
+  }
+
+  sort(articles: Article[]): SortedArticles {
+    let { visibleArticles, hiddenArticles } = this.prepare(articles);
     if (this.pinHotToTop) {
       var hotArticles: Article[] = [];
       var normalArticles: Article[] = [];

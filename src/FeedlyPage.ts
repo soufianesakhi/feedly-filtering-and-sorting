@@ -144,7 +144,8 @@ export class FeedlyPage {
     }
     if (
       !articleSorterConfig.sortingEnabled &&
-      !articleSorterConfig.pinHotToTop
+      !articleSorterConfig.pinHotToTop &&
+      !sortedArticles
     ) {
       return;
     }
@@ -444,8 +445,13 @@ export class FeedlyPage {
         const newEnabled = !getFFnS(ext.disableAllFiltersEnabled, true);
         putFFnS(ext.disableAllFiltersEnabled, newEnabled, true);
         refreshDisableAllFiltersBtn(newEnabled);
+        document.dispatchEvent(new Event('ensureSortedEntries'));
         $(`#${ext.forceRefreshArticlesId}`).click();
       });
+
+      setTimeout(() =>{
+        document.dispatchEvent(new Event('ensureSortedEntries'));
+      }, 1000);
     });
 
     NodeCreationObserver.onCreation(ext.layoutChangeSelector, (e) => {
@@ -828,7 +834,7 @@ export class FeedlyPage {
       }
       try {
         if (entries.length > 0) {
-          setTimeout(() => sortArticlesDOM(), 1300);
+          setTimeout(() => document.dispatchEvent(new Event('ensureSortedEntries')), 500);
         }
         if (
           entries.length > 0 &&
@@ -1022,7 +1028,34 @@ export class FeedlyPage {
       var entries: any[] = navigo.entries;
       var originalEntries: any[] = navigo.originalEntries || entries;
       navigo.originalEntries = originalEntries;
-      let sorted = true;
+
+      const pageArticles = Array.from(
+        document.querySelectorAll<HTMLElement>(ext.pageArticlesSelector)
+      ).map((a) => getArticleId(a));
+      const addedArticles = entries.filter((e) => ! pageArticles.includes(e.id))
+        .map(e => e.id);
+
+      if (articleSorterConfig.filteringEnabled) {
+        const visibleArticles = getSortedVisibleArticles();
+        navigo.entries = entries.filter((e) => addedArticles.includes(e.id) || visibleArticles.includes(e.id));
+      }
+      
+      const sorter = ArticleSorter.from(articleSorterConfig);
+      if (!articleSorterConfig.sortingEnabled && !articleSorterConfig.pinHotToTop) {
+        const articles: Article[] = navigo.originalEntries
+          .map((e) => getById(e.id))
+          .filter((e) => e != null)
+          .map((e) => new Article(e));
+        var visibleEntryIds: string[] = getSortedVisibleArticles();
+        const entryIds = articles.map((a) => a.getEntryId()).filter(id => visibleEntryIds.includes(id));
+        for (var i = 0; i < visibleEntryIds.length; i++) {
+          if (entryIds[i] !== visibleEntryIds[i]) {
+            return sortArticlesDOM(articleSorterConfig, sorter.prepare(articles));
+          }
+        }
+        return;
+      }
+      let sorted = addedArticles.length === 0;
       let len = 0;
       $(ext.articlesContainerSelector).each((_, container) => {
         var sortedVisibleArticles: string[] =
@@ -1033,7 +1066,6 @@ export class FeedlyPage {
           return;
         }
         len += sortedVisibleArticles.length;
-        navigo.entries = entries.filter((e) => sortedVisibleArticles.includes(e.id));
         const visibleEntryIds = navigo.entries.map((e) => e.id as string);
         for (var i = 0; i < sortedVisibleArticles.length && sorted; i++) {
           if (visibleEntryIds[i] !== sortedVisibleArticles[i]) {
@@ -1063,7 +1095,6 @@ export class FeedlyPage {
           const articles = navigo.originalEntries.map(
             (e) => new Article(getById(e.id))
           );
-          const sorter = ArticleSorter.from(articleSorterConfig);
           const sortedArticles = sorter.sort(articles);
           const { visibleArticles } = sortedArticles;
           const idToEntry = {};
@@ -1092,6 +1123,7 @@ export class FeedlyPage {
       }
       debugLog(() => "end", "ensureSortedEntries");
     }
+    document.addEventListener("ensureSortedEntries", ensureSortedEntries);
 
     var lookupNextEntry = prototype.lookupNextEntry;
     var lookupPreviousEntry = prototype.lookupPreviousEntry;
