@@ -1055,7 +1055,7 @@ export class FeedlyPage {
         }
         return;
       }
-      let sorted = addedArticles.length === 0;
+      let sorted = false;
       let len = 0;
       $(ext.articlesContainerSelector).each((_, container) => {
         var sortedVisibleArticles: string[] =
