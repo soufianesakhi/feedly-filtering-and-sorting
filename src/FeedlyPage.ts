@@ -193,7 +193,10 @@ export class FeedlyPage {
       containerChunk.empty();
       let appendArticle = (article: Article) => {
         const container = article.getContainer();
-        container.detach().appendTo(containerChunk);
+        (window["appendChildOriginal"] || Node.prototype.appendChild).call(
+          containerChunk.get(0),
+          container.detach().get(0)
+        );
       };
       visibleArticles.forEach(appendArticle);
       hiddenArticles.forEach(appendArticle);
@@ -230,7 +233,7 @@ export class FeedlyPage {
     Node.prototype.removeChild = function (child) {
       try {
         debugLog(() => {
-          if (!$(child).is(ext.articleSelector)) {
+          if (!$(child).is(ext.articleAndInlineSelector)) {
             return null;
           }
           return [
@@ -250,14 +253,15 @@ export class FeedlyPage {
     };
     const insertBefore = Node.prototype.insertBefore;
     const appendChild = Node.prototype.appendChild;
-    function insertArticleNode(_, node: HTMLElement, sibling?: Node) {
-      const parent = sibling.parentNode;
+    window["appendChildOriginal"] = appendChild;
+    function insertArticleNode(_, node: HTMLElement, parent: Node) {
+      let sibling = null;
       try {
         const id = getArticleId(node);
         const sortedIds = getService("navigo").entries.map((e) => e.id);
         let nextIndex = sortedIds.indexOf(id) + 1;
         if (nextIndex === sortedIds.length) {
-          return parent.appendChild(node);
+          return appendChild.call(parent, node);
         } else if (nextIndex > 0 && nextIndex < sortedIds.length) {
           const nextId = sortedIds[nextIndex];
           sibling = getById(nextId);
@@ -269,6 +273,14 @@ export class FeedlyPage {
       }
       if (!sibling) {
         sibling = parent.firstChild;
+      }
+      if (!sibling) {
+        debugLog(() => {
+          return [
+            `child: ${node["id"] || node["classList"] || node["tagName"]}`,
+          ];
+        }, "append");
+        return appendChild.call(parent, node);
       }
       debugLog(
         () => [
@@ -285,10 +297,10 @@ export class FeedlyPage {
     Node.prototype.insertBefore = function (node, siblingNode) {
       try {
         if (!disableOverrides() && $(this).hasClass(ext.articlesChunkClass)) {
-          return insertArticleNode(this, node as any, siblingNode as any);
+          return insertArticleNode(this, node as any, siblingNode.parentNode);
         } else {
           debugLog(() => {
-            if (!$(node).is(ext.articleSelector)) {
+            if (!$(node).is(ext.articleAndInlineSelector)) {
               return null;
             }
             return [
@@ -308,15 +320,24 @@ export class FeedlyPage {
       }
     };
     Node.prototype.appendChild = function (child) {
-      debugLog(() => {
-        if (!$(child).is(ext.articleSelector)) {
-          return null;
-        }
-        return [
-          `child: ${child["id"] || child["classList"] || child["tagName"]}`,
-        ];
-      }, "append");
-      return appendChild.apply(this, arguments);
+      if (
+        !disableOverrides() &&
+        ($(child).is(ext.inlineArticleFrameSelector) ||
+          $(child).is(ext.readArticleSelector) || ($(child).is(ext.unreadArticleSelector) && getFFnS(ext.navigatingEntry)))
+      ) {
+        return insertArticleNode(this, child as any, this);
+      } else {
+        const result = appendChild.apply(this, arguments);
+        debugLog(() => {
+          if (!$(child).is(ext.articleAndInlineSelector)) {
+            return null;
+          }
+          return [
+            `child: ${child["id"] || child["classList"] || child["tagName"]}`,
+          ];
+        }, "append");
+        return result;
+      }
     };
   }
 
@@ -1010,8 +1031,10 @@ export class FeedlyPage {
   }
 
   overrideSorting() {
-    var prototype = Object.getPrototypeOf(getService("navigo"));
     function ensureSortedEntries() {
+      if (getFFnS(ext.navigatingEntry)) {
+        return;
+      }
       const articleSorterConfig: ArticleSorterConfig = getFFnS(
         ext.articleSorterConfigId
       );
@@ -1093,8 +1116,11 @@ export class FeedlyPage {
         debugLog(() => "sorting entries", "ensureSortedEntries");
         try {
           const articles = navigo.originalEntries.map(
-            (e) => new Article(getById(e.id))
-          );
+            (e) => {
+              const el = getById(e.id)
+              return el ? new Article(el) : null;
+            }
+          ).filter(a => !!a);
           const sortedArticles = sorter.sort(articles);
           const { visibleArticles } = sortedArticles;
           const idToEntry = {};
@@ -1118,24 +1144,32 @@ export class FeedlyPage {
             () => ["!!", e.name, e.message, "!!"],
             "ensureSortedEntries"
           );
-          setTimeout(ensureSortedEntries, 500);
         }
       }
       debugLog(() => "end", "ensureSortedEntries");
     }
     document.addEventListener("ensureSortedEntries", ensureSortedEntries);
 
-    var lookupNextEntry = prototype.lookupNextEntry;
-    var lookupPreviousEntry = prototype.lookupPreviousEntry;
-    var getEntries = prototype.getEntries;
-    var setEntries = prototype.setEntries;
-    var reset = prototype.reset;
+    const feedly = getService("feedly");
+    const feedlyInlineEntry = feedly.inlineEntry;
+    feedly.inlineEntry = function() {
+      putFFnS(ext.navigatingEntry, true);
+      const result = feedlyInlineEntry.apply(this, arguments);
+      putFFnS(ext.navigatingEntry, false);
+      return result;
+    }
 
-    prototype.lookupNextEntry = function (a) {
+    const navigoPrototype = Object.getPrototypeOf(getService("navigo"));
+    const lookupNextEntry = navigoPrototype.lookupNextEntry;
+    const lookupPreviousEntry = navigoPrototype.lookupPreviousEntry;
+    const getEntries = navigoPrototype.getEntries;
+    const setEntries = navigoPrototype.setEntries;
+    const reset = navigoPrototype.reset;
+
+    navigoPrototype.lookupNextEntry = function (a) {
       if (disableOverrides()) {
         return lookupNextEntry.apply(this, arguments);
       }
-      ensureSortedEntries();
       const result = lookupNextEntry.call(
         this,
         getFFnS(ext.hideAfterReadId) ? true : a
@@ -1149,11 +1183,10 @@ export class FeedlyPage {
       );
       return result;
     };
-    prototype.lookupPreviousEntry = function (a) {
+    navigoPrototype.lookupPreviousEntry = function (a) {
       if (disableOverrides()) {
         return lookupPreviousEntry.apply(this, arguments);
       }
-      ensureSortedEntries();
       const result = lookupPreviousEntry.call(
         this,
         getFFnS(ext.hideAfterReadId) ? true : a
@@ -1167,32 +1200,33 @@ export class FeedlyPage {
       );
       return result;
     };
-    prototype.getEntries = function () {
+    navigoPrototype.getEntries = function () {
       if (disableOverrides()) {
         return getEntries.apply(this, arguments);
       }
-      try {
-        ensureSortedEntries();
-      } catch (e) {
-        console.log(e);
-      }
       return getEntries.apply(this, arguments);
     };
-    prototype.setEntries = function () {
+    navigoPrototype.setEntries = function () {
       if (disableOverrides()) {
         return setEntries.apply(this, arguments);
       }
       let navigo = getService("navigo");
       navigo.originalEntries = null;
+      try {
+        setTimeout(ensureSortedEntries, 300);
+      } catch (e) {
+        console.log(e);
+      }
       return setEntries.apply(this, arguments);
     };
-    prototype.reset = function () {
+    navigoPrototype.reset = function () {
       let navigo = getService("navigo");
       navigo.originalEntries = null;
       return reset.apply(this, arguments);
     };
-    const listEntryIds = prototype.listEntryIds;
-    prototype.listEntryIds = function () {
+
+    const listEntryIds = navigoPrototype.listEntryIds;
+    navigoPrototype.listEntryIds = function () {
       if (disableOverrides()) {
         return listEntryIds.apply(this, arguments);
       }
@@ -1206,6 +1240,14 @@ export class FeedlyPage {
         a
       );
     };
+    
+    const inlineEntry = navigoPrototype.inlineEntry;
+    navigoPrototype.inlineEntry = function() {
+      putFFnS(ext.navigatingEntry, true);
+      const result = inlineEntry.apply(this, arguments);
+      putFFnS(ext.navigatingEntry, false);
+      return result;
+    }
   }
 
   overrideNavigation() {

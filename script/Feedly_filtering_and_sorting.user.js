@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.21.11
+// @version     3.21.12
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -42,6 +42,9 @@ var ext = {
     sortedArticlesSelector: ".EntryList__chunk > [id]:not([gap-article])",
     inlineArticleSelector: ".inlineFrame[id]",
     articleAndInlineSelector: ".EntryList__chunk > [id]:not([gap-article])",
+    inlineArticleFrameSelector: "div[id].inlineFrame",
+    readArticleSelector: "article[id].entry--read",
+    unreadArticleSelector: "article[id].entry--unread",
     unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
     uncheckedArticlesSelector: ":not([gap-article]):not([checked-FFnS])",
     checkedArticlesAttribute: "checked-FFnS",
@@ -93,6 +96,7 @@ var ext = {
     disablePageOverridesId: "disablePageOverrides",
     articleSorterConfigId: "articleSorterConfig",
     navigatingToNextId: "navigatingToNext",
+    navigatingEntry: "navigatingEntry",
     layoutChangeSelector: "input[id^='layout-']",
 };
 
@@ -1997,7 +2001,7 @@ class FeedlyPage {
             containerChunk.empty();
             let appendArticle = (article) => {
                 const container = article.getContainer();
-                container.detach().appendTo(containerChunk);
+                (window["appendChildOriginal"] || Node.prototype.appendChild).call(containerChunk.get(0), container.detach().get(0));
             };
             visibleArticles.forEach(appendArticle);
             hiddenArticles.forEach(appendArticle);
@@ -2032,7 +2036,7 @@ class FeedlyPage {
         Node.prototype.removeChild = function (child) {
             try {
                 debugLog(() => {
-                    if (!$(child).is(ext.articleSelector)) {
+                    if (!$(child).is(ext.articleAndInlineSelector)) {
                         return null;
                     }
                     return [
@@ -2054,14 +2058,15 @@ class FeedlyPage {
         };
         const insertBefore = Node.prototype.insertBefore;
         const appendChild = Node.prototype.appendChild;
-        function insertArticleNode(_, node, sibling) {
-            const parent = sibling.parentNode;
+        window["appendChildOriginal"] = appendChild;
+        function insertArticleNode(_, node, parent) {
+            let sibling = null;
             try {
                 const id = getArticleId(node);
                 const sortedIds = getService("navigo").entries.map((e) => e.id);
                 let nextIndex = sortedIds.indexOf(id) + 1;
                 if (nextIndex === sortedIds.length) {
-                    return parent.appendChild(node);
+                    return appendChild.call(parent, node);
                 }
                 else if (nextIndex > 0 && nextIndex < sortedIds.length) {
                     const nextId = sortedIds[nextIndex];
@@ -2077,6 +2082,14 @@ class FeedlyPage {
             if (!sibling) {
                 sibling = parent.firstChild;
             }
+            if (!sibling) {
+                debugLog(() => {
+                    return [
+                        `child: ${node["id"] || node["classList"] || node["tagName"]}`,
+                    ];
+                }, "append");
+                return appendChild.call(parent, node);
+            }
             debugLog(() => [
                 `node: ${node["id"] || node["classList"] || node["tagName"]}`,
                 "insertBefore",
@@ -2087,11 +2100,11 @@ class FeedlyPage {
         Node.prototype.insertBefore = function (node, siblingNode) {
             try {
                 if (!disableOverrides() && $(this).hasClass(ext.articlesChunkClass)) {
-                    return insertArticleNode(this, node, siblingNode);
+                    return insertArticleNode(this, node, siblingNode.parentNode);
                 }
                 else {
                     debugLog(() => {
-                        if (!$(node).is(ext.articleSelector)) {
+                        if (!$(node).is(ext.articleAndInlineSelector)) {
                             return null;
                         }
                         return [
@@ -2110,15 +2123,23 @@ class FeedlyPage {
             }
         };
         Node.prototype.appendChild = function (child) {
-            debugLog(() => {
-                if (!$(child).is(ext.articleSelector)) {
-                    return null;
-                }
-                return [
-                    `child: ${child["id"] || child["classList"] || child["tagName"]}`,
-                ];
-            }, "append");
-            return appendChild.apply(this, arguments);
+            if (!disableOverrides() &&
+                ($(child).is(ext.inlineArticleFrameSelector) ||
+                    $(child).is(ext.readArticleSelector) || ($(child).is(ext.unreadArticleSelector) && getFFnS(ext.navigatingEntry)))) {
+                return insertArticleNode(this, child, this);
+            }
+            else {
+                const result = appendChild.apply(this, arguments);
+                debugLog(() => {
+                    if (!$(child).is(ext.articleAndInlineSelector)) {
+                        return null;
+                    }
+                    return [
+                        `child: ${child["id"] || child["classList"] || child["tagName"]}`,
+                    ];
+                }, "append");
+                return result;
+            }
         };
     }
     autoLoad() {
@@ -2721,8 +2742,10 @@ class FeedlyPage {
         };
     }
     overrideSorting() {
-        var prototype = Object.getPrototypeOf(getService("navigo"));
         function ensureSortedEntries() {
+            if (getFFnS(ext.navigatingEntry)) {
+                return;
+            }
             const articleSorterConfig = getFFnS(ext.articleSorterConfigId);
             if (!articleSorterConfig ||
                 (!articleSorterConfig.sortingEnabled &&
@@ -2790,7 +2813,10 @@ class FeedlyPage {
             if (!sorted && len > 0) {
                 debugLog(() => "sorting entries", "ensureSortedEntries");
                 try {
-                    const articles = navigo.originalEntries.map((e) => new Article(getById(e.id)));
+                    const articles = navigo.originalEntries.map((e) => {
+                        const el = getById(e.id);
+                        return el ? new Article(el) : null;
+                    }).filter(a => !!a);
                     const sortedArticles = sorter.sort(articles);
                     const { visibleArticles } = sortedArticles;
                     const idToEntry = {};
@@ -2809,22 +2835,29 @@ class FeedlyPage {
                 }
                 catch (e) {
                     debugLog(() => ["!!", e.name, e.message, "!!"], "ensureSortedEntries");
-                    setTimeout(ensureSortedEntries, 500);
                 }
             }
             debugLog(() => "end", "ensureSortedEntries");
         }
         document.addEventListener("ensureSortedEntries", ensureSortedEntries);
-        var lookupNextEntry = prototype.lookupNextEntry;
-        var lookupPreviousEntry = prototype.lookupPreviousEntry;
-        var getEntries = prototype.getEntries;
-        var setEntries = prototype.setEntries;
-        var reset = prototype.reset;
-        prototype.lookupNextEntry = function (a) {
+        const feedly = getService("feedly");
+        const feedlyInlineEntry = feedly.inlineEntry;
+        feedly.inlineEntry = function () {
+            putFFnS(ext.navigatingEntry, true);
+            const result = feedlyInlineEntry.apply(this, arguments);
+            putFFnS(ext.navigatingEntry, false);
+            return result;
+        };
+        const navigoPrototype = Object.getPrototypeOf(getService("navigo"));
+        const lookupNextEntry = navigoPrototype.lookupNextEntry;
+        const lookupPreviousEntry = navigoPrototype.lookupPreviousEntry;
+        const getEntries = navigoPrototype.getEntries;
+        const setEntries = navigoPrototype.setEntries;
+        const reset = navigoPrototype.reset;
+        navigoPrototype.lookupNextEntry = function (a) {
             if (disableOverrides()) {
                 return lookupNextEntry.apply(this, arguments);
             }
-            ensureSortedEntries();
             const result = lookupNextEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
             debugLog(() => [
                 "this.selectedEntryId: " + this.selectedEntryId,
@@ -2832,11 +2865,10 @@ class FeedlyPage {
             ], "lookupNextEntry");
             return result;
         };
-        prototype.lookupPreviousEntry = function (a) {
+        navigoPrototype.lookupPreviousEntry = function (a) {
             if (disableOverrides()) {
                 return lookupPreviousEntry.apply(this, arguments);
             }
-            ensureSortedEntries();
             const result = lookupPreviousEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
             debugLog(() => [
                 "this.selectedEntryId: " + this.selectedEntryId,
@@ -2844,33 +2876,33 @@ class FeedlyPage {
             ], "lookupPreviousEntry");
             return result;
         };
-        prototype.getEntries = function () {
+        navigoPrototype.getEntries = function () {
             if (disableOverrides()) {
                 return getEntries.apply(this, arguments);
             }
-            try {
-                ensureSortedEntries();
-            }
-            catch (e) {
-                console.log(e);
-            }
             return getEntries.apply(this, arguments);
         };
-        prototype.setEntries = function () {
+        navigoPrototype.setEntries = function () {
             if (disableOverrides()) {
                 return setEntries.apply(this, arguments);
             }
             let navigo = getService("navigo");
             navigo.originalEntries = null;
+            try {
+                setTimeout(ensureSortedEntries, 300);
+            }
+            catch (e) {
+                console.log(e);
+            }
             return setEntries.apply(this, arguments);
         };
-        prototype.reset = function () {
+        navigoPrototype.reset = function () {
             let navigo = getService("navigo");
             navigo.originalEntries = null;
             return reset.apply(this, arguments);
         };
-        const listEntryIds = prototype.listEntryIds;
-        prototype.listEntryIds = function () {
+        const listEntryIds = navigoPrototype.listEntryIds;
+        navigoPrototype.listEntryIds = function () {
             if (disableOverrides()) {
                 return listEntryIds.apply(this, arguments);
             }
@@ -2881,6 +2913,13 @@ class FeedlyPage {
                 a.push(b.getId());
             }),
                 a);
+        };
+        const inlineEntry = navigoPrototype.inlineEntry;
+        navigoPrototype.inlineEntry = function () {
+            putFFnS(ext.navigatingEntry, true);
+            const result = inlineEntry.apply(this, arguments);
+            putFFnS(ext.navigatingEntry, false);
+            return result;
         };
     }
     overrideNavigation() {
@@ -3099,6 +3138,7 @@ class UIManager {
         this.page.reset();
         this.page.update(this.subscription);
         this.articleManager.refreshArticles();
+        document.dispatchEvent(new Event('ensureSortedEntries'));
     }
     updateSubscription() {
         return new AsyncResult((p) => {

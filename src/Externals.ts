@@ -24,6 +24,9 @@ var ext = {
   sortedArticlesSelector: ".EntryList__chunk > [id]:not([gap-article])",
   inlineArticleSelector: ".inlineFrame[id]",
   articleAndInlineSelector: ".EntryList__chunk > [id]:not([gap-article])",
+  inlineArticleFrameSelector: "div[id].inlineFrame",
+  readArticleSelector: "article[id].entry--read",
+  unreadArticleSelector: "article[id].entry--unread",
   unreadArticlesCountSelector:
     ".entry--unread:not([gap-article]), .entry__title:not(.entry__title--read)",
   uncheckedArticlesSelector: ":not([gap-article]):not([checked-FFnS])",
@@ -78,5 +81,6 @@ var ext = {
   disablePageOverridesId: "disablePageOverrides",
   articleSorterConfigId: "articleSorterConfig",
   navigatingToNextId: "navigatingToNext",
+  navigatingEntry: "navigatingEntry",
   layoutChangeSelector: "input[id^='layout-']",
 };
