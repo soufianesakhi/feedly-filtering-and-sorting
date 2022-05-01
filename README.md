@@ -50,7 +50,7 @@ Two settings configurations are available:
 
 ## Requests
 
-Please report bugs and feature requests in the following [link](https://github.com/soufianesakhi/feedly-filtering-and-sorting/issues).
+Please report bugs and feature requests by emailing me at soufiane.sakhi.js@gmail.com.
 
 ## Installation
 
