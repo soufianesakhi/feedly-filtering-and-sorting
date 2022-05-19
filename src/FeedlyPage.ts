@@ -385,17 +385,17 @@ export class FeedlyPage {
       if (disableOverrides()) {
         return;
       }
-      let openCurrentFeedArticlesBtn = $("<button>", {
+      let openCurrentFeedArticlesBtn = $("<div>", {
         title: "Open all current feed articles in a new tab",
         class:
           ext.openCurrentFeedArticlesClass + " " + ext.containerButtonClass,
-        style: getFFnS(ext.openCurrentFeedArticlesId) ? "" : "display: none",
+        style: getFFnS(ext.openCurrentFeedArticlesId) ? "cursor: pointer;" : "display: none",
         type: "button",
       });
-      let disableAllFiltersBtn = $("<button>", {
+      let disableAllFiltersBtn = $("<div>", {
         class:
           ext.disableAllFiltersButtonClass + " " + ext.containerButtonClass,
-        style: getFFnS(ext.disableAllFiltersButtonId) ? "" : "display: none",
+        style: getFFnS(ext.disableAllFiltersButtonId) ? "cursor: pointer;" : "display: none",
         type: "button",
       });
       function refreshDisableAllFiltersBtn(enabled: boolean) {
@@ -615,12 +615,12 @@ export class FeedlyPage {
       }
       var addButton = (id: string, attributes) => {
         attributes.type = "button";
-        attributes.style = getFFnS(id) ? "" : "display: none";
+        attributes.style = getFFnS(id) ? "cursor: pointer;" : "display: none";
         attributes.class += " mark-as-read";
         if (titleView) {
           attributes.class += " CondensedToolbar__button";
         }
-        var e = $("<button>", attributes);
+        var e = $("<div>", attributes);
         buttonContainer.append(e);
         return e;
       };
@@ -915,11 +915,11 @@ export class FeedlyPage {
               $(ext.articlesContainerSelector)
                 .last()
                 .after(
-                  $("<button>", {
+                  $("<div>", {
                     id: loadNextBatchBtnId.substring(1),
                     class: "full-width secondary",
                     type: "button",
-                    style: "margin-top: 1%;",
+                    style: "margin-top: 1%; cursor: pointer;",
                     text: loadByBatchText,
                   })
                 );

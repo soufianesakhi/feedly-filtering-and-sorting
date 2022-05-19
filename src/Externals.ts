@@ -11,8 +11,8 @@ var ext = {
   subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
   categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
 
-  settingsBtnContainerSelector:
-    ".header .actions-container, .header > .Heading + *",
+  settingsBtnPredecessorSelector:
+    ".header .MarkAsReadButton",
   articlesContainerSelector: ".list-entries",
   articlesChunkClass: "EntryList__chunk",
   articlesChunkSelector: ".EntryList__chunk",
