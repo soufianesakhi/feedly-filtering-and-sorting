@@ -17,13 +17,13 @@ var ext = {
   articlesChunkClass: "EntryList__chunk",
   articlesChunkSelector: ".EntryList__chunk",
   articleSelector:
-    ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame), .EntryList__chunk > [id].inlineFrame.u100",
+    ".EntryList__chunk > article:not([gap-article]), .EntryList__chunk > [id].inlineFrame.u100",
   articleAndGapSelector:
-    ".EntryList__chunk > [id]:not(.inlineFrame), .EntryList__chunk > [id].inlineFrame.u100",
-  pageArticlesSelector: ".EntryList__chunk > [id]",
+    ".EntryList__chunk > article, .EntryList__chunk > [id].inlineFrame.u100",
+  pageArticlesSelector: ".EntryList__chunk > article, .EntryList__chunk > [id].inlineFrame",
   sortedArticlesSelector: ".EntryList__chunk > [id]:not([gap-article])",
   inlineArticleSelector: ".inlineFrame[id]",
-  articleAndInlineSelector: ".EntryList__chunk > [id]:not([gap-article])",
+  articleAndInlineSelector: ".EntryList__chunk > article:not([gap-article]), .EntryList__chunk > [id].inlineFrame:not([gap-article])",
   inlineArticleFrameSelector: "div[id].inlineFrame",
   readArticleSelector: "article[id].entry--read",
   unreadArticleSelector: "article[id].entry--unread",

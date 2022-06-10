@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.0
+// @version     3.22.1
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -36,12 +36,12 @@ var ext = {
     articlesContainerSelector: ".list-entries",
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
-    articleSelector: ".EntryList__chunk > [id]:not([gap-article]):not(.inlineFrame), .EntryList__chunk > [id].inlineFrame.u100",
-    articleAndGapSelector: ".EntryList__chunk > [id]:not(.inlineFrame), .EntryList__chunk > [id].inlineFrame.u100",
-    pageArticlesSelector: ".EntryList__chunk > [id]",
+    articleSelector: ".EntryList__chunk > article:not([gap-article]), .EntryList__chunk > [id].inlineFrame.u100",
+    articleAndGapSelector: ".EntryList__chunk > article, .EntryList__chunk > [id].inlineFrame.u100",
+    pageArticlesSelector: ".EntryList__chunk > article, .EntryList__chunk > [id].inlineFrame",
     sortedArticlesSelector: ".EntryList__chunk > [id]:not([gap-article])",
     inlineArticleSelector: ".inlineFrame[id]",
-    articleAndInlineSelector: ".EntryList__chunk > [id]:not([gap-article])",
+    articleAndInlineSelector: ".EntryList__chunk > article:not([gap-article]), .EntryList__chunk > [id].inlineFrame:not([gap-article])",
     inlineArticleFrameSelector: "div[id].inlineFrame",
     readArticleSelector: "article[id].entry--read",
     unreadArticleSelector: "article[id].entry--unread",
@@ -1996,7 +1996,7 @@ class FeedlyPage {
             const articlesContainer = $(sortedArticlesContainer.container);
             const { visibleArticles, hiddenArticles } = sortedArticlesContainer.sortedArticles;
             let chunks = articlesContainer.find(ext.articlesChunkSelector);
-            removeContent(chunks.find(".Heading"));
+            removeContent(chunks.find(".Heading,.EntryList__heading"));
             let containerChunk = chunks.first();
             containerChunk.empty();
             let appendArticle = (article) => {
@@ -3755,7 +3755,7 @@ class UIManager {
             return;
         }
         try {
-            this.articleManager.addArticle(article);
+            setTimeout(() => this.articleManager.addArticle(article), 100);
             const callback = this.readArticlesMutationCallback(article);
             var articleObserver = new MutationObserver(callback);
             articleObserver.observe(article, { attributes: true });

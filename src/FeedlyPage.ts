@@ -188,7 +188,7 @@ export class FeedlyPage {
       const { visibleArticles, hiddenArticles } =
         sortedArticlesContainer.sortedArticles;
       let chunks = articlesContainer.find(ext.articlesChunkSelector);
-      removeContent(chunks.find(".Heading"));
+      removeContent(chunks.find(".Heading,.EntryList__heading"));
       let containerChunk = chunks.first();
       containerChunk.empty();
       let appendArticle = (article: Article) => {

@@ -1018,7 +1018,7 @@ export class UIManager {
       return;
     }
     try {
-      this.articleManager.addArticle(article);
+      setTimeout(() => this.articleManager.addArticle(article), 100);
       const callback = this.readArticlesMutationCallback(article);
       var articleObserver = new MutationObserver(callback);
       articleObserver.observe(article, { attributes: true });
