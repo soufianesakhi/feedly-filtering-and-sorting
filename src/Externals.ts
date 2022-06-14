@@ -39,7 +39,7 @@ var ext = {
   articleViewReadTitleClass: "entry__title--read",
   articleViewReadSelector: ".entry__title--read",
   articleViewEntryContainerSelector: ".u100",
-  loadingMessageSelector: ".list-entries .message.loading",
+  loadingMessageSelector: ".list-entries .EntryList__loading",
   sectionSelector: "#timeline > .section",
   publishAgeSpanSelector: ".ago, .metadata [title^=published]",
   publishAgeTimestampAttr: "title",
@@ -83,4 +83,5 @@ var ext = {
   navigatingToNextId: "navigatingToNext",
   navigatingEntry: "navigatingEntry",
   layoutChangeSelector: "input[id^='layout-']",
+  loadingElementSelector: ".FFnS-loading",
 };

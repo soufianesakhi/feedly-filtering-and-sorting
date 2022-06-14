@@ -749,17 +749,15 @@ export class FeedlyPage {
   }
 
   fetchMoreEntries(batchSize: number) {
-    var autoLoadingMessageId = "FFnS_LoadingMessage";
     let stream = getStreamPage().stream;
-    if ($(".message.loading").length == 0) {
+    if ($(".FFnS-loading").length == 0) {
       $(ext.articlesContainerSelector)
         .first()
         .before(
-          $("<div>", {
-            id: autoLoadingMessageId,
-            class: "message loading",
-            text: "Auto loading all articles",
-          })
+          `<div class='FFnS-loading'>
+              <div class='FFnS-loading-animation'><div></div><div></div><div></div><div></div></div>
+              <span>Auto loading all articles</span>
+           </div>`
         );
     }
     stream.setBatchSize(batchSize);
@@ -811,7 +809,6 @@ export class FeedlyPage {
     }
     putFFnS(ext.isNewestFirstId, streamObj._sort === "newest", true);
 
-    var autoLoadingMessageId = "#FFnS_LoadingMessage";
     var loadNextBatchBtnId = "#FFnS_LoadNextBatchBtn";
     var secondaryMarkAsReadBtnsSelector = ".mark-as-read-button.secondary";
     var loadByBatchText = "Mark batch as read and load next batch";
@@ -902,7 +899,7 @@ export class FeedlyPage {
               fetchMoreEntries(batchSize);
             }, 100);
           } else if (hasAllEntries || !isBatchLoading) {
-            $(autoLoadingMessageId).remove();
+            $(ext.loadingElementSelector).remove();
             if (hasAllEntries) {
               debugLog(
                 () =>
@@ -915,11 +912,10 @@ export class FeedlyPage {
               $(ext.articlesContainerSelector)
                 .last()
                 .after(
-                  $("<div>", {
+                  $("<button>", {
                     id: loadNextBatchBtnId.substring(1),
-                    class: "full-width secondary",
                     type: "button",
-                    style: "margin-top: 1%; cursor: pointer;",
+                    style: "margin-top: 1%; cursor: pointer; width: 100%; padding: 1%; margin: 4% 1% 0%;",
                     text: loadByBatchText,
                   })
                 );
@@ -963,7 +959,7 @@ export class FeedlyPage {
       if (disableOverrides()) {
         return;
       }
-      if ($(autoLoadingMessageId).length == 1) {
+      if ($(ext.loadingElementSelector).length > 0) {
         $(e).hide();
       }
     });
