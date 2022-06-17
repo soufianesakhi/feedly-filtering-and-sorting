@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.2
+// @version     3.22.3
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -102,7 +102,7 @@ var ext = {
 };
 
 var templates = {
-    settingsHTML: "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' /> <fieldset> <legend>General settings</legend> <div class='setting_group'> <span>Auto load all unread articles</span> <input id='FFnS_autoLoadAllArticles' type='checkbox' /> </div> <div class='setting_group'> <span>Load articles by batch</span> <input id='FFnS_loadByBatchEnabled' type='checkbox' /> <span>Batch size</span> <input id='FFnS_batchSize' class='FFnS_input MediumNumberInput' type='number' min='50' max='1000' step='50' /> </div> <div class='setting_group'> <span class='tooltip' >Always use global settings <span class='tooltiptext' >Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span > </span> <input id='FFnS_globalSettingsEnabled' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Sync settings <span class='tooltiptext' >The settings will be synced by the browser, and be available across all instances of that browser that the user is logged into (e.g. via Chrome sync, or Firefox sync), across different devices.</span > </span> <input id='FFnS_syncSettingsEnabled' type='checkbox' /> </div> </fieldset> <fieldset> <legend><span id='FFnS_settings_mode_title'></span></legend> <div class='setting_group'> <span class='tooltip' >Filtering enabled <span class='tooltiptext' >Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span > </span> <input id='FFnS_FilteringEnabled' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext' >Show only articles that contain at least one of the restricting keywords (not applied if empty)</span > </span> <input id='FFnS_RestrictingEnabled' type='checkbox' /> </div> <div class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> </div> {{ SortingSelect }} <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li><a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a></li> <li><a href='#FFnS_Tab_KeywordControls'>Keyword controls</a></li> <li><a href='#FFnS_Tab_UIControls'>UI controls</a></li> <li><a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a></li> <li><a href='#FFnS_Tab_SettingsControls'>Settings controls</a></li> </ul> <div id='FFnS_tabs_content'> {{ FilteringList.Type.FilteredOut }} {{ FilteringList.Type.RestrictedOn }} <div id='FFnS_Tab_KeywordControls' class='FFnS_Tab_Menu'> <p> The following settings are applied to the filtering and restricting </p> <fieldset> <legend>Matching area (domain)</legend> <div> <span>Search for keywords in the entry's: </span> {{ DefaultKeywordMatchingArea }} <span> (Multiple values can be selected)</span> </div> <div> <span>Always use these matching areas</span> <input id='FFnS_AlwaysUseDefaultMatchingAreas' type='checkbox' /> <span> (the area select boxes in the filtering and restricting will be invisible when this option is checked)</span > </div> </fieldset> <fieldset> <legend>Matching method</legend> <span>The keywords are treated as : </span> {{ KeywordMatchingMethod }} </fieldset> </div> <div id='FFnS_Tab_UIControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Custom buttons</legend> <div> <span >Add a button to open articles in a new window/tab and mark them as read</span > <input id='FFnS_OpenAndMarkAsRead' type='checkbox' /> </div> <div> <span >Open articles in a new window/tab and mark them as read when clicking the visual image (Cards &amp; Magazine view)</span > <input id='FFnS_VisualOpenAndMarkAsRead' type='checkbox' /> </div> <div> <span >Open articles in a new window/tab and mark them as read when clicking the title (Title view)</span > <input id='FFnS_TitleOpenAndMarkAsRead' type='checkbox' /> </div> <div> <span>Add buttons to mark articles above/below as</span> <select id='FFnS_MarkAsReadAboveBelowRead' class='FFnS_input'> <option value='true' selected>read</option> <option value='false'>unread</option> </select> <input id='FFnS_MarkAsReadAboveBelow' type='checkbox' /> <span> (Also hide using the same buttons when marking as read</span > <input id='FFnS_HideWhenMarkAboveBelow' type='checkbox' /> <span>)</span> </div> <div> <span >Add button to open all current feed articles in a new tab</span > <input id='FFnS_OpenCurrentFeedArticles' type='checkbox' /> <span> unread only</span> <input id='FFnS_OpenCurrentFeedArticlesUnreadOnly' type='checkbox' /> <span class='tooltip'> maximum articles to open <span class='tooltiptext' >If set to 0, all the articles will be opened</span > </span> <input id='FFnS_MaxOpenCurrentFeedArticles' class='FFnS_input MediumNumberInput' type='number' min='0' step='1' /> <span> mark as read</span> <input id='FFnS_MarkAsReadOnOpenCurrentFeedArticles' type='checkbox' /> </div> <div> <span >Add button to quickly disable all filters</span > <input id='FFnS_DisplayDisableAllFiltersButton' type='checkbox' /> </div> </fieldset> <fieldset> <legend> <span class='tooltip' >Coloring rules to highlight titles <span class='tooltiptext' >For each article, only the first matching coloring rule is applied by following their order. You can move up/down the coloring rules to change this order.</span > </span> </legend> <span id='FFnS_AddColoringRule'> <img src='{{plusIconLink}}' class='FFnS_icon' title='Add a new coloring rule' /> </span> <span id='FFnS_EraseColoringRules'> <img src='{{eraseIconLink}}' class='FFnS_icon' title='Remove all the coloring rules' /> </span> <span id='FFnS_ColoringRules'></span> </fieldset> </div> <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently received articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles received (crawled) less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23' /> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' /> <span>days</span> <span>ago should be:</span> </div> <div class='setting_group'> <span class='tooltip' >Kept unread if unread <span class='tooltiptext' >Only the articles that were not marked as read (manually or on scroll) will be kept unread. Please note that by enabling this option, only the loaded articles will be marked as read.</span > </span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> <div class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> <div class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input MediumNumberInput' type='number' min='0' step='100' /> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox' /> <span class='tooltip' >Marked as read if hot or popular <span class='tooltiptext' >Mark as read the articles made visible if hot or with popularity superior to the defined value</span > </span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> </fieldset> <fieldset> <legend>Reading time</legend> <div class='setting_group'> <span>Enable filtering of articles with reading time </span> <select id='FFnS_FilterLong_FilteringByReadingTime' class='FFnS_input' > <option value='true' selected>superior</option> <option value='false'>inferior</option> </select> <span>to </span> <input id='FFnS_ThresholdMinutes_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1' /> <span>minutes: </span> <input id='FFnS_Enabled_FilteringByReadingTime' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Keep unread <span class='tooltiptext' >When this option is enabled, the filtered articles will be kept unread</span > </span> <input id='FFnS_KeepUnread_FilteringByReadingTime' type='checkbox' /> <span class='tooltip' >Reading speed : <span class='tooltiptext' >The average words read per minute</span > </span> <input id='FFnS_WordsPerMinute_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1' /> </div> </fieldset> <fieldset> <legend> Additional sorting levels (applied when two entries have equal sorting) </legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> <fieldset> <legend>Duplicates filtering</legend> <div class='setting_group'> <span class='tooltip' >Hide duplicates <span class='tooltiptext tooltip-top' >The duplicate articles will be hidden based on the url and the title. For each duplicate article group, only the most recently published one will be kept.</span > </span> <input id='FFnS_HideDuplicates' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Mark as read <span class='tooltiptext tooltip-top' >The duplicate articles will be marked as read (based on the same rules of the 'Hide duplicates' option).</span > </span> <input id='FFnS_MarkAsReadDuplicates' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Highlight<span class='tooltiptext tooltip-top'> Apply a color to the newer duplicate articles</span ></span > <input id='FFnS_HighlightDuplicates' type='checkbox' /> <input id='FFnS_HighlightDuplicatesColor' class='FFnS_input jscolor' size='10' type='text' /> </div> <div class='setting_group'> <span class='tooltip' >Enable cross checking with persistence up to: <span class='tooltiptext tooltip-top' >The duplicates will be checked across all subscriptions and categories against current articles and stored articles. The url and title of all articles published less then the configured days will be stored locally (sync not supported).</span > </span> <input id='FFnS_CrossCheckDuplicatesDays' class='FFnS_input MediumNumberInput' type='number' min='0' /> <span> days </span> <input id='FFnS_CrossCheckDuplicates' type='checkbox' /> </div> </fieldset> <fieldset> <legend>Misc</legend> <div class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox' /> </div> <div class='setting_group'> <span>Hide articles after reading them</span> <input id='FFnS_HideAfterRead' type='checkbox' /> <span class='tooltip' >Replace with gap <span class='tooltiptext tooltip-top' >Replace the hidden article with a gap with same dimensions.</span > </span> <input id='FFnS_ReplaceHiddenWithGap' type='checkbox' /> </div> <div class='setting_group'> <span>Mark as read filtered articles</span> <input id='FFnS_MarkAsReadFiltered' type='checkbox' /> </div> <div class='setting_group'> <span>Disable page overrides</span> <input id='FFnS_DisablePageOverrides' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Auto refresh <span class='tooltiptext tooltip-top' >The articles will be reloaded periodically following the configured minutes</span > </span> <input id='FFnS_AutoRefreshEnabled' type='checkbox' /> <input id='FFnS_AutoRefreshMinutes' class='FFnS_input MediumNumberInput' type='number' min='1' /> <span>(minutes)</span> </div> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Import/export all settings from/to file</legend> <div class='setting_group'> <span>Import settings </span> <input id='FFnS_ImportSettings' type='file' /> </div> <button id='FFnS_ExportSettings'>Export settings</button> </fieldset> <fieldset> <legend>Subscription management</legend> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input' > {{ ImportMenu.SubscriptionOptions }} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'> Import settings from selected subscription </button> <button id='FFnS_SettingsControls_DeleteSub'> Delete selected subscription </button> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'> Link current subscription to selected subscription </button> </fieldset> </div> </div> </fieldset> </div> </div> ",
+    settingsHTML: "<div id='FFnS_settingsDivContainer'> <div id='FFnS_settingsDiv'> <img id='FFnS_CloseSettingsBtn' src='{{closeIconLink}}' /> <fieldset> <legend>General settings</legend> <div class='setting_group'> <span>Auto load all unread articles</span> <input id='FFnS_autoLoadAllArticles' type='checkbox' /> </div> <div class='setting_group' style='display: none;'> <span>Load articles by batch</span> <input id='FFnS_loadByBatchEnabled' type='checkbox' /> <span>Batch size</span> <input id='FFnS_batchSize' class='FFnS_input MediumNumberInput' type='number' min='50' max='1000' step='50' /> </div> <div class='setting_group'> <span class='tooltip' >Always use global settings <span class='tooltiptext' >Use the same filtering and sorting settings for all subscriptions and categories. Uncheck to have specific settings for each subscription/category</span > </span> <input id='FFnS_globalSettingsEnabled' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Sync settings <span class='tooltiptext' >The settings will be synced by the browser, and be available across all instances of that browser that the user is logged into (e.g. via Chrome sync, or Firefox sync), across different devices.</span > </span> <input id='FFnS_syncSettingsEnabled' type='checkbox' /> </div> </fieldset> <fieldset> <legend><span id='FFnS_settings_mode_title'></span></legend> <div class='setting_group'> <span class='tooltip' >Filtering enabled <span class='tooltiptext' >Hide the articles that contain at least one of the filtering keywords (not applied if empty)</span > </span> <input id='FFnS_FilteringEnabled' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip'> Restricting enabled <span class='tooltiptext' >Show only articles that contain at least one of the restricting keywords (not applied if empty)</span > </span> <input id='FFnS_RestrictingEnabled' type='checkbox' /> </div> <div class='setting_group'> <span>Sorting enabled</span> <input id='FFnS_SortingEnabled' type='checkbox' /> </div> {{ SortingSelect }} <ul id='FFnS_tabs_menu'> <li class='current'> <a href='#FFnS_Tab_FilteredOut'>Filtering keywords</a> </li> <li><a href='#FFnS_Tab_RestrictedOn'>Restricting keywords</a></li> <li><a href='#FFnS_Tab_KeywordControls'>Keyword controls</a></li> <li><a href='#FFnS_Tab_UIControls'>UI controls</a></li> <li><a href='#FFnS_Tab_AdvancedControls'>Advanced controls</a></li> <li><a href='#FFnS_Tab_SettingsControls'>Settings controls</a></li> </ul> <div id='FFnS_tabs_content'> {{ FilteringList.Type.FilteredOut }} {{ FilteringList.Type.RestrictedOn }} <div id='FFnS_Tab_KeywordControls' class='FFnS_Tab_Menu'> <p> The following settings are applied to the filtering and restricting </p> <fieldset> <legend>Matching area (domain)</legend> <div> <span>Search for keywords in the entry's: </span> {{ DefaultKeywordMatchingArea }} <span> (Multiple values can be selected)</span> </div> <div> <span>Always use these matching areas</span> <input id='FFnS_AlwaysUseDefaultMatchingAreas' type='checkbox' /> <span> (the area select boxes in the filtering and restricting will be invisible when this option is checked)</span > </div> </fieldset> <fieldset> <legend>Matching method</legend> <span>The keywords are treated as : </span> {{ KeywordMatchingMethod }} </fieldset> </div> <div id='FFnS_Tab_UIControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Custom buttons</legend> <div> <span >Add a button to open articles in a new window/tab and mark them as read</span > <input id='FFnS_OpenAndMarkAsRead' type='checkbox' /> </div> <div> <span >Open articles in a new window/tab and mark them as read when clicking the visual image (Cards &amp; Magazine view)</span > <input id='FFnS_VisualOpenAndMarkAsRead' type='checkbox' /> </div> <div> <span >Open articles in a new window/tab and mark them as read when clicking the title (Title view)</span > <input id='FFnS_TitleOpenAndMarkAsRead' type='checkbox' /> </div> <div> <span>Add buttons to mark articles above/below as</span> <select id='FFnS_MarkAsReadAboveBelowRead' class='FFnS_input'> <option value='true' selected>read</option> <option value='false'>unread</option> </select> <input id='FFnS_MarkAsReadAboveBelow' type='checkbox' /> <span> (Also hide using the same buttons when marking as read</span > <input id='FFnS_HideWhenMarkAboveBelow' type='checkbox' /> <span>)</span> </div> <div> <span >Add button to open all current feed articles in a new tab</span > <input id='FFnS_OpenCurrentFeedArticles' type='checkbox' /> <span> unread only</span> <input id='FFnS_OpenCurrentFeedArticlesUnreadOnly' type='checkbox' /> <span class='tooltip'> maximum articles to open <span class='tooltiptext' >If set to 0, all the articles will be opened</span > </span> <input id='FFnS_MaxOpenCurrentFeedArticles' class='FFnS_input MediumNumberInput' type='number' min='0' step='1' /> <span> mark as read</span> <input id='FFnS_MarkAsReadOnOpenCurrentFeedArticles' type='checkbox' /> </div> <div> <span >Add button to quickly disable all filters</span > <input id='FFnS_DisplayDisableAllFiltersButton' type='checkbox' /> </div> </fieldset> <fieldset> <legend> <span class='tooltip' >Coloring rules to highlight titles <span class='tooltiptext' >For each article, only the first matching coloring rule is applied by following their order. You can move up/down the coloring rules to change this order.</span > </span> </legend> <span id='FFnS_AddColoringRule'> <img src='{{plusIconLink}}' class='FFnS_icon' title='Add a new coloring rule' /> </span> <span id='FFnS_EraseColoringRules'> <img src='{{eraseIconLink}}' class='FFnS_icon' title='Remove all the coloring rules' /> </span> <span id='FFnS_ColoringRules'></span> </fieldset> </div> <div id='FFnS_Tab_AdvancedControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Recently received articles</legend> <div id='FFnS_MaxPeriod_Infos'> <span>Articles received (crawled) less than</span> <input id='FFnS_Hours_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' max='23' /> <span>hours and</span> <input id='FFnS_Days_AdvancedControlsReceivedPeriod' class='FFnS_input' type='number' min='0' /> <span>days</span> <span>ago should be:</span> </div> <div class='setting_group'> <span class='tooltip' >Kept unread if unread <span class='tooltiptext' >Only the articles that were not marked as read (manually or on scroll) will be kept unread. Please note that by enabling this option, only the loaded articles will be marked as read.</span > </span> <input id='FFnS_KeepUnread_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> <div class='setting_group'> <span>Hidden</span> <input id='FFnS_Hide_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> <div class='setting_group'> <span>Visible if hot or popularity superior to:</span> <input id='FFnS_MinPopularity_AdvancedControlsReceivedPeriod' class='FFnS_input MediumNumberInput' type='number' min='0' step='100' /> <input id='FFnS_ShowIfHot_AdvancedControlsReceivedPeriod' type='checkbox' /> <span class='tooltip' >Marked as read if hot or popular <span class='tooltiptext' >Mark as read the articles made visible if hot or with popularity superior to the defined value</span > </span> <input id='FFnS_MarkAsReadVisible_AdvancedControlsReceivedPeriod' type='checkbox' /> </div> </fieldset> <fieldset> <legend>Reading time</legend> <div class='setting_group'> <span>Enable filtering of articles with reading time </span> <select id='FFnS_FilterLong_FilteringByReadingTime' class='FFnS_input' > <option value='true' selected>superior</option> <option value='false'>inferior</option> </select> <span>to </span> <input id='FFnS_ThresholdMinutes_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1' /> <span>minutes: </span> <input id='FFnS_Enabled_FilteringByReadingTime' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Keep unread <span class='tooltiptext' >When this option is enabled, the filtered articles will be kept unread</span > </span> <input id='FFnS_KeepUnread_FilteringByReadingTime' type='checkbox' /> <span class='tooltip' >Reading speed : <span class='tooltiptext' >The average words read per minute</span > </span> <input id='FFnS_WordsPerMinute_FilteringByReadingTime' class='FFnS_input MediumNumberInput' type='number' min='1' /> </div> </fieldset> <fieldset> <legend> Additional sorting levels (applied when two entries have equal sorting) </legend> <span id='FFnS_AdditionalSortingTypes'></span> <span id='FFnS_AddSortingType'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='FFnS_EraseSortingTypes'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </fieldset> <fieldset> <legend>Duplicates filtering</legend> <div class='setting_group'> <span class='tooltip' >Hide duplicates <span class='tooltiptext tooltip-top' >The duplicate articles will be hidden based on the url and the title. For each duplicate article group, only the most recently published one will be kept.</span > </span> <input id='FFnS_HideDuplicates' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Mark as read <span class='tooltiptext tooltip-top' >The duplicate articles will be marked as read (based on the same rules of the 'Hide duplicates' option).</span > </span> <input id='FFnS_MarkAsReadDuplicates' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Highlight<span class='tooltiptext tooltip-top'> Apply a color to the newer duplicate articles</span ></span > <input id='FFnS_HighlightDuplicates' type='checkbox' /> <input id='FFnS_HighlightDuplicatesColor' class='FFnS_input jscolor' size='10' type='text' /> </div> <div class='setting_group'> <span class='tooltip' >Enable cross checking with persistence up to: <span class='tooltiptext tooltip-top' >The duplicates will be checked across all subscriptions and categories against current articles and stored articles. The url and title of all articles published less then the configured days will be stored locally (sync not supported).</span > </span> <input id='FFnS_CrossCheckDuplicatesDays' class='FFnS_input MediumNumberInput' type='number' min='0' /> <span> days </span> <input id='FFnS_CrossCheckDuplicates' type='checkbox' /> </div> </fieldset> <fieldset> <legend>Misc</legend> <div class='setting_group'> <span>Group hot articles & pin to top</span> <input id='FFnS_PinHotToTop' type='checkbox' /> </div> <div class='setting_group'> <span>Hide articles after reading them</span> <input id='FFnS_HideAfterRead' type='checkbox' /> <span class='tooltip' >Replace with gap <span class='tooltiptext tooltip-top' >Replace the hidden article with a gap with same dimensions.</span > </span> <input id='FFnS_ReplaceHiddenWithGap' type='checkbox' /> </div> <div class='setting_group'> <span>Mark as read filtered articles</span> <input id='FFnS_MarkAsReadFiltered' type='checkbox' /> </div> <div class='setting_group'> <span>Disable page overrides</span> <input id='FFnS_DisablePageOverrides' type='checkbox' /> </div> <div class='setting_group'> <span class='tooltip' >Auto refresh <span class='tooltiptext tooltip-top' >The articles will be reloaded periodically following the configured minutes</span > </span> <input id='FFnS_AutoRefreshEnabled' type='checkbox' /> <input id='FFnS_AutoRefreshMinutes' class='FFnS_input MediumNumberInput' type='number' min='1' /> <span>(minutes)</span> </div> </fieldset> </div> <div id='FFnS_Tab_SettingsControls' class='FFnS_Tab_Menu'> <fieldset> <legend>Import/export all settings from/to file</legend> <div class='setting_group'> <span>Import settings </span> <input id='FFnS_ImportSettings' type='file' /> </div> <button id='FFnS_ExportSettings'>Export settings</button> </fieldset> <fieldset> <legend>Subscription management</legend> <select id='FFnS_SettingsControls_SelectedSubscription' class='FFnS_input' > {{ ImportMenu.SubscriptionOptions }} </select> <button id='FFnS_SettingsControls_ImportFromOtherSub'> Import settings from selected subscription </button> <button id='FFnS_SettingsControls_DeleteSub'> Delete selected subscription </button> <div id='FFnS_SettingsControls_LinkedSubContainer'> <span id='FFnS_SettingsControls_LinkedSub'></span> <button id='FFnS_SettingsControls_UnlinkFromSub'>Unlink</button> </div> <button id='FFnS_SettingsControls_LinkToSub'> Link current subscription to selected subscription </button> </fieldset> </div> </div> </fieldset> </div> </div> ",
     filteringListHTML: "<div id='{{FilteringTypeTabId}}' class='FFnS_Tab_Menu'> {{ FilteringKeywordMatchingArea }} <input id='{{inputId}}' class='FFnS_input' size='10' type='text' /> <span id='{{plusBtnId}}'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span id='{{filetringKeywordsId}}'></span> <span id='{{eraseBtnId}}'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div> ",
     keywordHTML: '<button id="{{keywordId}}" type="button" class="FFnS_keyword">{{keyword}}</button>',
     sortingSelectHTML: "<select id='{{Id}}' class='FFnS_input FFnS_select'> <option value='{{PopularityDesc}}' >Sort by popularity (highest to lowest)</option > <option value='{{PopularityAsc}}' >Sort by popularity (lowest to highest)</option > <option value='{{TitleAsc}}'>Sort by title (a -&gt; z)</option> <option value='{{TitleDesc}}'>Sort by title (z -&gt; a)</option> <option value='{{ReceivedDateNewFirst}}' >Sort by received date (new first)</option > <option value='{{ReceivedDateOldFirst}}' >Sort by received date (old first)</option > <option value='{{PublishDateNewFirst}}' >Sort by publish date (new first)</option > <option value='{{PublishDateOldFirst}}' >Sort by publish date (old first)</option > <option value='{{PublishDayNewFirst}}' >Sort by publish day (new first)</option > <option value='{{PublishDayOldFirst}}' >Sort by publish day (old first)</option > <option value='{{SourceAsc}}'>Sort by source title (a -&gt; z)</option> <option value='{{SourceDesc}}'>Sort by source title (z -&gt; a)</option> <option value='{{SourceNewestReceiveDate}}' >Sort by source title (newest received first)</option > <option value='{{Random}}'>Random sort</option> </select> ",
@@ -1918,7 +1918,7 @@ class FeedlyPage {
         this.put("ext", ext);
         this.put("SortingType", SortingType);
         injectClasses(EntryInfos, Article, ArticleSorter, ArticleSorterFactory);
-        injectToWindow(this.getFFnS, this.putFFnS, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.getService, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.loadNextBatch, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles, debugLog, enableDebug, removeContent, this.sortArticlesDOM);
+        injectToWindow(this.getFFnS, this.putFFnS, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.getService, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles, debugLog, enableDebug, removeContent, this.sortArticlesDOM);
         injectToWindow(this.overrideLoadingEntries);
         injectToWindow(this.overrideSorting);
         injectToWindow(this.overrideNavigation);
@@ -2036,14 +2036,14 @@ class FeedlyPage {
         let removeChild = Node.prototype.removeChild;
         Node.prototype.removeChild = function (child) {
             try {
-                debugLog(() => {
-                    if (!$(child).is(ext.articleAndInlineSelector)) {
-                        return null;
-                    }
-                    return [
-                        `child: ${child["id"] || child["classList"] || child["tagName"]}`,
-                    ];
-                }, "remove");
+                // debugLog(() => {
+                //   if (!$(child).is(ext.articleAndInlineSelector)) {
+                //     return null;
+                //   }
+                //   return [
+                //     `child: ${child["id"] || child["classList"] || child["tagName"]}`,
+                //   ];
+                // }, "remove");
                 return removeChild.apply(this, arguments);
             }
             catch (e) {
@@ -2084,18 +2084,23 @@ class FeedlyPage {
                 sibling = parent.firstChild;
             }
             if (!sibling) {
-                debugLog(() => {
-                    return [
-                        `child: ${node["id"] || node["classList"] || node["tagName"]}`,
-                    ];
-                }, "append");
+                // debugLog(() => {
+                //   return [
+                //     `child: ${node["id"] || node["classList"] || node["tagName"]}`,
+                //   ];
+                // }, "append");
                 return appendChild.call(parent, node);
             }
-            debugLog(() => [
-                `node: ${node["id"] || node["classList"] || node["tagName"]}`,
-                "insertBefore",
-                `siblingNode: ${sibling["id"] || sibling["classList"] || sibling["tagName"]}`,
-            ], "insert");
+            // debugLog(
+            //   () => [
+            //     `node: ${node["id"] || node["classList"] || node["tagName"]}`,
+            //     "insertBefore",
+            //     `siblingNode: ${
+            //       sibling["id"] || sibling["classList"] || sibling["tagName"]
+            //     }`,
+            //   ],
+            //   "insert"
+            // );
             return insertBefore.call(sibling.parentNode, node, sibling);
         }
         Node.prototype.insertBefore = function (node, siblingNode) {
@@ -2104,18 +2109,20 @@ class FeedlyPage {
                     return insertArticleNode(this, node, siblingNode.parentNode);
                 }
                 else {
-                    debugLog(() => {
-                        if (!$(node).is(ext.articleAndInlineSelector)) {
-                            return null;
-                        }
-                        return [
-                            `node: ${node["id"] || node["classList"] || node["tagName"]}`,
-                            "insertBefore",
-                            `siblingNode: ${siblingNode["id"] ||
-                                siblingNode["classList"] ||
-                                siblingNode["tagName"]}`,
-                        ];
-                    }, "insert");
+                    // debugLog(() => {
+                    //   if (!$(node).is(ext.articleAndInlineSelector)) {
+                    //     return null;
+                    //   }
+                    //   return [
+                    //     `node: ${node["id"] || node["classList"] || node["tagName"]}`,
+                    //     "insertBefore",
+                    //     `siblingNode: ${
+                    //       siblingNode["id"] ||
+                    //       siblingNode["classList"] ||
+                    //       siblingNode["tagName"]
+                    //     }`,
+                    //   ];
+                    // }, "insert");
                     return insertBefore.apply(this, arguments);
                 }
             }
@@ -2126,19 +2133,21 @@ class FeedlyPage {
         Node.prototype.appendChild = function (child) {
             if (!disableOverrides() &&
                 ($(child).is(ext.inlineArticleFrameSelector) ||
-                    $(child).is(ext.readArticleSelector) || ($(child).is(ext.unreadArticleSelector) && getFFnS(ext.navigatingEntry)))) {
+                    $(child).is(ext.readArticleSelector) ||
+                    ($(child).is(ext.unreadArticleSelector) &&
+                        getFFnS(ext.navigatingEntry)))) {
                 return insertArticleNode(this, child, this);
             }
             else {
                 const result = appendChild.apply(this, arguments);
-                debugLog(() => {
-                    if (!$(child).is(ext.articleAndInlineSelector)) {
-                        return null;
-                    }
-                    return [
-                        `child: ${child["id"] || child["classList"] || child["tagName"]}`,
-                    ];
-                }, "append");
+                // debugLog(() => {
+                //   if (!$(child).is(ext.articleAndInlineSelector)) {
+                //     return null;
+                //   }
+                //   return [
+                //     `child: ${child["id"] || child["classList"] || child["tagName"]}`,
+                //   ];
+                // }, "append");
                 return result;
             }
         };
@@ -2185,12 +2194,16 @@ class FeedlyPage {
             let openCurrentFeedArticlesBtn = $("<div>", {
                 title: "Open all current feed articles in a new tab",
                 class: ext.openCurrentFeedArticlesClass + " " + ext.containerButtonClass,
-                style: getFFnS(ext.openCurrentFeedArticlesId) ? "cursor: pointer;" : "display: none",
+                style: getFFnS(ext.openCurrentFeedArticlesId)
+                    ? "cursor: pointer;"
+                    : "display: none",
                 type: "button",
             });
             let disableAllFiltersBtn = $("<div>", {
                 class: ext.disableAllFiltersButtonClass + " " + ext.containerButtonClass,
-                style: getFFnS(ext.disableAllFiltersButtonId) ? "cursor: pointer;" : "display: none",
+                style: getFFnS(ext.disableAllFiltersButtonId)
+                    ? "cursor: pointer;"
+                    : "display: none",
                 type: "button",
             });
             function refreshDisableAllFiltersBtn(enabled) {
@@ -2252,11 +2265,11 @@ class FeedlyPage {
                 const newEnabled = !getFFnS(ext.disableAllFiltersEnabled, true);
                 putFFnS(ext.disableAllFiltersEnabled, newEnabled, true);
                 refreshDisableAllFiltersBtn(newEnabled);
-                document.dispatchEvent(new Event('ensureSortedEntries'));
+                document.dispatchEvent(new Event("ensureSortedEntries"));
                 $(`#${ext.forceRefreshArticlesId}`).click();
             });
             setTimeout(() => {
-                document.dispatchEvent(new Event('ensureSortedEntries'));
+                document.dispatchEvent(new Event("ensureSortedEntries"));
             }, 1000);
         });
         NodeCreationObserver.onCreation(ext.layoutChangeSelector, (e) => {
@@ -2491,51 +2504,22 @@ class FeedlyPage {
             .replace(/_main$/, "");
     }
     fetchMoreEntries(batchSize) {
-        let stream = getStreamPage().stream;
+        const streamPage = getStreamPage();
+        let stream = streamPage.stream;
+        stream.setBatchSize(batchSize);
         if ($(".FFnS-loading").length == 0) {
             $(ext.articlesContainerSelector)
                 .first()
                 .before(`<div class='FFnS-loading'>
               <div class='FFnS-loading-animation'><div></div><div></div><div></div><div></div></div>
               <span>Auto loading all articles</span>
-           </div>`);
+            </div>`);
         }
-        stream.setBatchSize(batchSize);
-        debugLog(() => "Fetching more articles (batch size: " +
+        debugLog(() => "[Fetching] load with batch size: " +
             stream._batchSize +
-            ") at: " +
+            " at: " +
             new Date().toTimeString());
-        stream.askMoreEntries();
-        stream.askingMoreEntries = false;
-    }
-    loadNextBatch(ev) {
-        ev && ev.stopPropagation();
-        let navigo = getService("navigo");
-        let entries = navigo.originalEntries || navigo.getEntries();
-        let markAsReadEntryIds;
-        if (getFFnS(ext.keepArticlesUnreadId)) {
-            markAsReadEntryIds = getFFnS(ext.articlesToMarkAsReadId);
-        }
-        else {
-            markAsReadEntryIds = entries
-                .sort((a, b) => {
-                return a.jsonInfo.crawled - b.jsonInfo.crawled;
-            })
-                .map((e) => {
-                return e.id;
-            });
-        }
-        let keptUnreadEntryIds = getKeptUnreadEntryIds();
-        markAsReadEntryIds = markAsReadEntryIds.filter((id) => {
-            return keptUnreadEntryIds.indexOf(id) < 0;
-        });
-        let reader = getService("reader");
-        reader.askMarkEntriesAsRead(markAsReadEntryIds, {});
-        window.scrollTo(0, 0);
-        $(ext.articlesContainerSelector).empty();
-        navigo.originalEntries = null;
-        navigo.entries = [];
-        fetchMoreEntries(getFFnS(ext.batchSizeId, true));
+        streamPage._scrollTarget.dispatchEvent(new CustomEvent("scroll"));
     }
     overrideLoadingEntries() {
         let streamObj = getStreamObj();
@@ -2544,9 +2528,6 @@ class FeedlyPage {
             return;
         }
         putFFnS(ext.isNewestFirstId, streamObj._sort === "newest", true);
-        var loadNextBatchBtnId = "#FFnS_LoadNextBatchBtn";
-        var secondaryMarkAsReadBtnsSelector = ".mark-as-read-button.secondary";
-        var loadByBatchText = "Mark batch as read and load next batch";
         var autoLoadAllArticleDefaultBatchSize = 1000;
         var isAutoLoad = () => {
             try {
@@ -2583,87 +2564,33 @@ class FeedlyPage {
                 return setEntries.apply(this, arguments);
             }
             try {
-                if (entries.length > 0) {
-                    setTimeout(() => document.dispatchEvent(new Event('ensureSortedEntries')), 500);
+                if (entries.length == 0) {
+                    return setEntries.apply(this, arguments);
                 }
-                if (entries.length > 0 &&
-                    entries[entries.length - 1].jsonInfo.unread &&
-                    isAutoLoad()) {
-                    let isLoadByBatch = getFFnS(ext.loadByBatchEnabledId, true);
-                    let firstLoadByBatch = false;
-                    let navigo = getService("navigo");
-                    if (navigo.initAutoLoad) {
-                        navigo.initAutoLoad = false;
-                        firstLoadByBatch = isLoadByBatch;
-                    }
-                    const streamPage = getStreamPage();
-                    streamPage._scrollTarget.removeEventListener("scroll", streamPage._throttledCheckMoreEntriesNeeded);
-                    let isBatchLoading = true;
-                    let autoLoadAllArticleBatchSize = autoLoadAllArticleDefaultBatchSize;
-                    if (isLoadByBatch) {
-                        let batchSize = getFFnS(ext.batchSizeId, true);
-                        autoLoadAllArticleBatchSize = batchSize;
-                        if (entries.length >= batchSize) {
-                            isBatchLoading = false;
-                        }
-                    }
-                    var stream = getStreamPage().stream;
-                    var hasAllEntries = stream.state.hasAllEntries;
-                    if (!hasAllEntries &&
-                        !stream.askingMoreEntries &&
-                        !stream.state.isLoadingEntries &&
-                        isBatchLoading &&
-                        $(loadNextBatchBtnId).length == 0) {
-                        stream.askingMoreEntries = true;
+                var stream = getStreamPage().stream;
+                if (stream.state.isLoadingEntries) {
+                    debugLog(() => `[Fetching] already fetching at: ${new Date().toTimeString()}`);
+                }
+                else if (isAutoLoad() && !stream.state.hasAllEntries) {
+                    if (!stream.fetchingMoreEntries) {
+                        stream.fetchingMoreEntries = true;
                         setTimeout(() => {
-                            let batchSize = autoLoadAllArticleBatchSize;
-                            if (firstLoadByBatch) {
-                                batchSize = batchSize - entries.length;
-                            }
-                            fetchMoreEntries(batchSize);
+                            [...$(ext.articlesContainerSelector)].forEach((e) => (e.style.display = "none"));
+                            fetchMoreEntries(Math.min(stream.state.info.unreadCount, autoLoadAllArticleDefaultBatchSize));
                         }, 100);
                     }
-                    else if (hasAllEntries || !isBatchLoading) {
-                        $(ext.loadingElementSelector).remove();
-                        if (hasAllEntries) {
-                            debugLog(() => "End auto load all articles at: " + new Date().toTimeString());
-                            if (isLoadByBatch) {
-                                $(loadNextBatchBtnId).remove();
-                            }
-                        }
-                        else if (isLoadByBatch && $(loadNextBatchBtnId).length == 0) {
-                            $(ext.articlesContainerSelector)
-                                .last()
-                                .after($("<button>", {
-                                id: loadNextBatchBtnId.substring(1),
-                                type: "button",
-                                style: "margin-top: 1%; cursor: pointer; width: 100%; padding: 1%; margin: 4% 1% 0%;",
-                                text: loadByBatchText,
-                            }));
-                            onClickCapture($(loadNextBatchBtnId), loadNextBatch);
-                        }
-                    }
                 }
-                setTimeout(() => {
-                    let markAsReadEntries = $(ext.markAsReadImmediatelySelector);
-                    if (markAsReadEntries.length == 0) {
-                        return;
+                else {
+                    if (isAutoLoad()) {
+                        stream.fetchingMoreEntries = false;
+                        debugLog(() => `[Fetching] End at: ${new Date().toTimeString()}`);
+                        [...$(ext.articlesContainerSelector)].forEach((e) => (e.style.display = ""));
+                        $(".FFnS-loading").remove();
                     }
-                    let ids = $.map(markAsReadEntries.toArray(), (e) => getArticleId(e));
-                    let reader = getService("reader");
-                    reader.askMarkEntriesAsRead(ids, {});
-                    markAsReadEntries
-                        .removeClass(ext.markAsReadImmediatelyClass)
-                        .each((_, e) => {
-                        const a = $(e);
-                        if (a.hasClass(ext.inlineViewClass)) {
-                            a.find(ext.articleTitleSelector).addClass(ext.articleViewReadTitleClass);
-                        }
-                        else {
-                            a.removeClass(ext.unreadArticleClass).addClass(ext.readArticleClass);
-                        }
-                    });
-                }, 1000);
+                    setTimeout(() => {
+                        document.dispatchEvent(new Event("ensureSortedEntries"));
+                    }, 100);
+                }
             }
             catch (e) {
                 console.log(e);
@@ -2676,14 +2603,6 @@ class FeedlyPage {
             }
             if ($(ext.loadingElementSelector).length > 0) {
                 $(e).hide();
-            }
-        });
-        NodeCreationObserver.onCreation(secondaryMarkAsReadBtnsSelector, (e) => {
-            if (disableOverrides()) {
-                return;
-            }
-            if (getFFnS(ext.loadByBatchEnabledId, true)) {
-                $(secondaryMarkAsReadBtnsSelector).attr("title", loadByBatchText);
             }
         });
     }
@@ -2711,10 +2630,6 @@ class FeedlyPage {
             };
             if (lastEntryObject && lastEntryObject.asOf) {
                 askMarkPageAsRead.call(readingManager, lastEntryObject);
-            }
-            else if (getFFnS(ext.loadByBatchEnabledId, true) &&
-                !getStreamPage().stream.state.hasAllEntries) {
-                loadNextBatch();
             }
             else if (getFFnS(ext.keepArticlesUnreadId)) {
                 debugLog(() => "Marking as read with keeping new articles unread");
@@ -2750,26 +2665,30 @@ class FeedlyPage {
                     !articleSorterConfig.pinHotToTop)) {
                 return;
             }
-            debugLog(() => "start", "ensureSortedEntries");
+            // debugLog(() => "start", "ensureSortedEntries");
             let navigo = getService("navigo");
             var entries = navigo.entries;
             var originalEntries = navigo.originalEntries || entries;
             navigo.originalEntries = originalEntries;
             const pageArticles = Array.from(document.querySelectorAll(ext.pageArticlesSelector)).map((a) => getArticleId(a));
-            const addedArticles = entries.filter((e) => !pageArticles.includes(e.id))
-                .map(e => e.id);
+            const addedArticles = entries
+                .filter((e) => !pageArticles.includes(e.id))
+                .map((e) => e.id);
             if (articleSorterConfig.filteringEnabled) {
                 const visibleArticles = getSortedVisibleArticles();
                 navigo.entries = entries.filter((e) => addedArticles.includes(e.id) || visibleArticles.includes(e.id));
             }
             const sorter = ArticleSorter.from(articleSorterConfig);
-            if (!articleSorterConfig.sortingEnabled && !articleSorterConfig.pinHotToTop) {
+            if (!articleSorterConfig.sortingEnabled &&
+                !articleSorterConfig.pinHotToTop) {
                 const articles = navigo.originalEntries
                     .map((e) => getById(e.id))
                     .filter((e) => e != null)
                     .map((e) => new Article(e));
                 var visibleEntryIds = getSortedVisibleArticles();
-                const entryIds = articles.map((a) => a.getEntryId()).filter(id => visibleEntryIds.includes(id));
+                const entryIds = articles
+                    .map((a) => a.getEntryId())
+                    .filter((id) => visibleEntryIds.includes(id));
                 for (var i = 0; i < visibleEntryIds.length; i++) {
                     if (entryIds[i] !== visibleEntryIds[i]) {
                         return sortArticlesDOM(articleSorterConfig, sorter.prepare(articles));
@@ -2810,23 +2729,28 @@ class FeedlyPage {
             if (!sorted && len > 0) {
                 debugLog(() => "sorting entries", "ensureSortedEntries");
                 try {
-                    const articles = navigo.originalEntries.map((e) => {
+                    const articles = navigo.originalEntries
+                        .map((e) => {
                         const el = getById(e.id);
                         return el ? new Article(el) : null;
-                    }).filter(a => !!a);
+                    })
+                        .filter((a) => !!a);
                     const sortedArticles = sorter.sort(articles);
                     const { visibleArticles } = sortedArticles;
                     const idToEntry = {};
                     navigo.originalEntries.forEach((e) => (idToEntry[e.id] = e));
                     entries = visibleArticles.map((a) => idToEntry[a.getEntryId()]);
-                    debugLog(() => [
-                        "sorted entries",
-                        "\n\t" +
-                            entries
-                                .slice(0, Math.min(5, entries.length))
-                                .map((e) => e.getTitle())
-                                .join("\n\t"),
-                    ], "ensureSortedEntries");
+                    // debugLog(
+                    //   () => [
+                    //     "sorted entries",
+                    //     "\n\t" +
+                    //       entries
+                    //         .slice(0, Math.min(5, entries.length))
+                    //         .map((e) => e.getTitle())
+                    //         .join("\n\t"),
+                    //   ],
+                    //   "ensureSortedEntries"
+                    // );
                     navigo.entries = entries;
                     sortArticlesDOM(articleSorterConfig, sortedArticles);
                 }
@@ -2834,7 +2758,7 @@ class FeedlyPage {
                     debugLog(() => ["!!", e.name, e.message, "!!"], "ensureSortedEntries");
                 }
             }
-            debugLog(() => "end", "ensureSortedEntries");
+            // debugLog(() => "end", "ensureSortedEntries");
         }
         document.addEventListener("ensureSortedEntries", ensureSortedEntries);
         const feedly = getService("feedly");
