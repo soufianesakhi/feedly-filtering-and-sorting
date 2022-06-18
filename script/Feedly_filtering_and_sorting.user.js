@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.4
+// @version     3.22.5
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1349,7 +1349,7 @@ class ArticleManager {
             this.addArticle(e, true);
         });
         this.checkLastAddedArticle(true);
-        this.sortArticles();
+        this.page.sortArticles();
     }
     resetArticles() {
         this.articlesToMarkAsRead = [];
@@ -1516,10 +1516,6 @@ class ArticleManager {
             }
             this.checkDisableAllFilters();
         }
-    }
-    sortArticles() {
-        let sub = this.getCurrentSub();
-        this.page.sortArticles(sub);
     }
     prepareMarkAsRead() {
         if (this.articlesToMarkAsRead.length > 0) {
@@ -1917,7 +1913,7 @@ class FeedlyPage {
         this.put("ext", ext);
         this.put("SortingType", SortingType);
         injectClasses(EntryInfos, Article, ArticleSorter, ArticleSorterFactory);
-        injectToWindow(this.getFFnS, this.putFFnS, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.getService, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles, debugLog, enableDebug, removeContent, this.sortArticlesDOM, this.refreshHidingInfo);
+        injectToWindow(this.getFFnS, this.putFFnS, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.getService, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles, debugLog, enableDebug, removeContent, this.sortArticlesDOM, this.displaySortingAnimation, this.refreshHidingInfo);
         injectToWindow(this.overrideLoadingEntries);
         injectToWindow(this.overrideSorting);
         injectToWindow(this.overrideNavigation);
@@ -1950,8 +1946,29 @@ class FeedlyPage {
         this.put(ext.disablePageOverridesId, sub.isDisablePageOverrides());
         this.put(ext.articleSorterConfigId, sub.getArticleSorterConfig());
     }
-    sortArticles(sub) {
-        this.sortArticlesDOM(sub.getArticleSorterConfig());
+    sortArticles() {
+        document.dispatchEvent(new Event("ensureSortedEntries"));
+    }
+    displaySortingAnimation(visible) {
+        if (visible) {
+            $(ext.articlesContainerSelector).hide();
+            $(".FFnS_Hiding_Info").hide();
+            if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
+                $(ext.articlesContainerSelector)
+                    .first()
+                    .before(`<div class='FFnS-sorting'>
+                <div class='FFnS-loading-animation'><div></div><div></div><div></div><div></div></div>
+                <span>Sorting articles</span>
+              </div>`);
+            }
+        }
+        else {
+            $(".FFnS-sorting").remove();
+            if ($(".FFnS-loading").length == 0) {
+                $(ext.articlesContainerSelector).show();
+            }
+            refreshHidingInfo();
+        }
     }
     sortArticlesDOM(articleSorterConfig, sortedArticles) {
         if (!articleSorterConfig) {
@@ -1963,17 +1980,7 @@ class FeedlyPage {
             return;
         }
         debugLog(() => "sort at " + new Date().toTimeString(), "Sorting");
-        $(ext.articlesContainerSelector).hide();
-        $(".FFnS_Hiding_Info").hide();
-        console.log("hide info");
-        if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
-            $(ext.articlesContainerSelector)
-                .first()
-                .before(`<div class='FFnS-sorting'>
-              <div class='FFnS-loading-animation'><div></div><div></div><div></div><div></div></div>
-              <span>Sorting articles</span>
-            </div>`);
-        }
+        displaySortingAnimation(true);
         const sortedArticlesContainers = [];
         if (sortedArticles) {
             const { visibleArticles, hiddenArticles } = sortedArticles;
@@ -2018,11 +2025,7 @@ class FeedlyPage {
             hiddenArticles.forEach(appendArticle);
         });
         setTimeout(() => {
-            $(".FFnS-sorting").remove();
-            if ($(".FFnS-loading").length == 0) {
-                $(ext.articlesContainerSelector).show();
-            }
-            refreshHidingInfo();
+            displaySortingAnimation(false);
         }, 100);
     }
     updateCheck(enabled, id, className) {
@@ -2283,9 +2286,7 @@ class FeedlyPage {
                 document.dispatchEvent(new Event("ensureSortedEntries"));
                 $(`#${ext.forceRefreshArticlesId}`).click();
             });
-            setTimeout(() => {
-                document.dispatchEvent(new Event("ensureSortedEntries"));
-            }, 1000);
+            document.dispatchEvent(new Event("ensureSortedEntries"));
         });
         NodeCreationObserver.onCreation(ext.layoutChangeSelector, (e) => {
             $(e).click(() => setTimeout(() => $(`#${ext.forceRefreshArticlesId}`).click(), 1000));
@@ -2497,7 +2498,6 @@ class FeedlyPage {
         if (hiddenCount == 0) {
             return;
         }
-        console.log("refresh info");
         $(ext.hidingInfoSibling).after("<div class='col-xs-3 col-md-3 detail FFnS_Hiding_Info'> (" +
             hiddenCount +
             " hidden entries)</div>");
@@ -2524,6 +2524,7 @@ class FeedlyPage {
         const streamPage = getStreamPage();
         let stream = streamPage.stream;
         stream.setBatchSize(batchSize);
+        $(".FFnS-sorting").remove();
         if ($(".FFnS-loading").length == 0) {
             $(ext.articlesContainerSelector)
                 .first()
@@ -2584,6 +2585,7 @@ class FeedlyPage {
                 if (entries.length == 0) {
                     return setEntries.apply(this, arguments);
                 }
+                debugLog(() => `set entries`, "Fetching");
                 var stream = getStreamPage().stream;
                 if (stream.state.isLoadingEntries) {
                     debugLog(() => `[Fetching] already fetching at: ${new Date().toTimeString()}`);
@@ -2594,18 +2596,17 @@ class FeedlyPage {
                         setTimeout(() => {
                             $(ext.articlesContainerSelector).hide();
                             $(".FFnS_Hiding_Info").hide();
-                            console.log("hide info");
                             fetchMoreEntries(Math.min(stream.state.info.unreadCount, autoLoadAllArticleDefaultBatchSize));
                         }, 100);
                     }
                 }
                 else {
-                    if (isAutoLoad()) {
+                    if (isAutoLoad() && stream.fetchingMoreEntries) {
                         stream.fetchingMoreEntries = false;
                         debugLog(() => `[Fetching] End at: ${new Date().toTimeString()}`);
                         $(ext.articlesContainerSelector).show();
                         $(".FFnS-loading").remove();
-                        setTimeout(() => refreshHidingInfo, 100);
+                        setTimeout(() => refreshHidingInfo, 200);
                     }
                     document.dispatchEvent(new Event("ensureSortedEntries"));
                 }
@@ -2673,6 +2674,23 @@ class FeedlyPage {
     }
     overrideSorting() {
         function ensureSortedEntries() {
+            displaySortingAnimation(true);
+            let timeoutId = +localStorage.getItem("ensureSortedEntriesTimeoutId");
+            if (timeoutId) {
+                clearTimeout(timeoutId);
+            }
+            timeoutId = setTimeout(() => {
+                try {
+                    checkSortedEntries();
+                }
+                finally {
+                    displaySortingAnimation(false);
+                }
+            }, 1000);
+            localStorage.setItem("ensureSortedEntriesTimeoutId", "" + timeoutId);
+        }
+        function checkSortedEntries() {
+            localStorage.setItem("ensureSortedEntriesTimeoutId", "");
             if (getFFnS(ext.navigatingEntry)) {
                 return;
             }
@@ -2827,7 +2845,7 @@ class FeedlyPage {
             let navigo = getService("navigo");
             navigo.originalEntries = null;
             try {
-                setTimeout(ensureSortedEntries, 300);
+                document.dispatchEvent(new Event("ensureSortedEntries"));
             }
             catch (e) {
                 console.log(e);
@@ -3076,7 +3094,6 @@ class UIManager {
         this.page.reset();
         this.page.update(this.subscription);
         this.articleManager.refreshArticles();
-        document.dispatchEvent(new Event('ensureSortedEntries'));
     }
     updateSubscription() {
         return new AsyncResult((p) => {

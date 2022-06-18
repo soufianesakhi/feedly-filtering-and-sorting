@@ -37,6 +37,7 @@ declare var onNewPageObserve: FeedlyPage["onNewPageObserve"];
 declare var onNewArticleObserve: FeedlyPage["onNewArticleObserve"];
 declare var sortArticlesDOM: FeedlyPage["sortArticlesDOM"];
 declare var refreshHidingInfo: FeedlyPage["refreshHidingInfo"];
+declare var displaySortingAnimation: FeedlyPage["displaySortingAnimation"];
 
 declare var debugEnabled: boolean;
 
@@ -66,6 +67,7 @@ export class FeedlyPage {
       enableDebug,
       removeContent,
       this.sortArticlesDOM,
+      this.displaySortingAnimation,
       this.refreshHidingInfo
     );
     injectToWindow(this.overrideLoadingEntries);
@@ -129,8 +131,31 @@ export class FeedlyPage {
     this.put(ext.articleSorterConfigId, sub.getArticleSorterConfig());
   }
 
-  sortArticles(sub: Subscription) {
-    this.sortArticlesDOM(sub.getArticleSorterConfig());
+  sortArticles() {
+    document.dispatchEvent(new Event("ensureSortedEntries"));
+  }
+
+  displaySortingAnimation(visible) {
+    if (visible) {
+      $(ext.articlesContainerSelector).hide();
+      $(".FFnS_Hiding_Info").hide();
+      if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
+        $(ext.articlesContainerSelector)
+          .first()
+          .before(
+            `<div class='FFnS-sorting'>
+                <div class='FFnS-loading-animation'><div></div><div></div><div></div><div></div></div>
+                <span>Sorting articles</span>
+              </div>`
+          );
+      }
+    } else {
+      $(".FFnS-sorting").remove();
+      if ($(".FFnS-loading").length == 0) {
+        $(ext.articlesContainerSelector).show();
+      }
+      refreshHidingInfo();
+    }
   }
 
   sortArticlesDOM(
@@ -148,19 +173,7 @@ export class FeedlyPage {
       return;
     }
     debugLog(() => "sort at " + new Date().toTimeString(), "Sorting");
-    $(ext.articlesContainerSelector).hide();
-    $(".FFnS_Hiding_Info").hide();
-    console.log("hide info");
-    if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
-      $(ext.articlesContainerSelector)
-        .first()
-        .before(
-          `<div class='FFnS-sorting'>
-              <div class='FFnS-loading-animation'><div></div><div></div><div></div><div></div></div>
-              <span>Sorting articles</span>
-            </div>`
-        );
-    }
+    displaySortingAnimation(true);
     const sortedArticlesContainers: SortedArticlesContainer[] = [];
     if (sortedArticles) {
       const { visibleArticles, hiddenArticles } = sortedArticles;
@@ -213,11 +226,7 @@ export class FeedlyPage {
       hiddenArticles.forEach(appendArticle);
     });
     setTimeout(() => {
-      $(".FFnS-sorting").remove();
-      if ($(".FFnS-loading").length == 0) {
-        $(ext.articlesContainerSelector).show();
-      }
-      refreshHidingInfo();
+      displaySortingAnimation(false);
     }, 100);
   }
 
@@ -491,10 +500,8 @@ export class FeedlyPage {
         document.dispatchEvent(new Event("ensureSortedEntries"));
         $(`#${ext.forceRefreshArticlesId}`).click();
       });
-
-      setTimeout(() => {
-        document.dispatchEvent(new Event("ensureSortedEntries"));
-      }, 1000);
+      
+      document.dispatchEvent(new Event("ensureSortedEntries"));
     });
 
     NodeCreationObserver.onCreation(ext.layoutChangeSelector, (e) => {
@@ -736,7 +743,6 @@ export class FeedlyPage {
     if (hiddenCount == 0) {
       return;
     }
-    console.log("refresh info");
     $(ext.hidingInfoSibling).after(
       "<div class='col-xs-3 col-md-3 detail FFnS_Hiding_Info'> (" +
         hiddenCount +
@@ -776,6 +782,7 @@ export class FeedlyPage {
     const streamPage = getStreamPage();
     let stream = streamPage.stream;
     stream.setBatchSize(batchSize);
+    $(".FFnS-sorting").remove();
     if ($(".FFnS-loading").length == 0) {
       $(ext.articlesContainerSelector)
         .first()
@@ -845,6 +852,7 @@ export class FeedlyPage {
         if (entries.length == 0) {
           return setEntries.apply(this, arguments);
         }
+        debugLog(() => `set entries`, "Fetching");
         var stream = getStreamPage().stream;
         if (stream.state.isLoadingEntries) {
           debugLog(
@@ -856,7 +864,6 @@ export class FeedlyPage {
             setTimeout(() => {
               $(ext.articlesContainerSelector).hide();
               $(".FFnS_Hiding_Info").hide();
-              console.log("hide info");
               fetchMoreEntries(
                 Math.min(
                   stream.state.info.unreadCount,
@@ -866,12 +873,12 @@ export class FeedlyPage {
             }, 100);
           }
         } else {
-          if (isAutoLoad()) {
+          if (isAutoLoad() && stream.fetchingMoreEntries) {
             stream.fetchingMoreEntries = false;
             debugLog(() => `[Fetching] End at: ${new Date().toTimeString()}`);
             $(ext.articlesContainerSelector).show();
             $(".FFnS-loading").remove();
-            setTimeout(() => refreshHidingInfo, 100);
+            setTimeout(() => refreshHidingInfo, 200);
           }
           document.dispatchEvent(new Event("ensureSortedEntries"));
         }
@@ -940,6 +947,22 @@ export class FeedlyPage {
 
   overrideSorting() {
     function ensureSortedEntries() {
+      displaySortingAnimation(true);
+      let timeoutId = +localStorage.getItem("ensureSortedEntriesTimeoutId");
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        try {
+          checkSortedEntries();
+        } finally {
+          displaySortingAnimation(false);
+        }
+      }, 1000);
+      localStorage.setItem("ensureSortedEntriesTimeoutId", "" + timeoutId);
+    }
+    function checkSortedEntries() {
+      localStorage.setItem("ensureSortedEntriesTimeoutId", "");
       if (getFFnS(ext.navigatingEntry)) {
         return;
       }
@@ -1131,7 +1154,7 @@ export class FeedlyPage {
       let navigo = getService("navigo");
       navigo.originalEntries = null;
       try {
-        setTimeout(ensureSortedEntries, 300);
+        document.dispatchEvent(new Event("ensureSortedEntries"));
       } catch (e) {
         console.log(e);
       }

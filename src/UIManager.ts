@@ -264,7 +264,6 @@ export class UIManager {
     this.page.reset();
     this.page.update(this.subscription);
     this.articleManager.refreshArticles();
-    document.dispatchEvent(new Event('ensureSortedEntries'));
   }
 
   updateSubscription(): AsyncResult<any> {

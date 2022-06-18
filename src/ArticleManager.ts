@@ -37,7 +37,7 @@ export class ArticleManager {
       this.addArticle(e, true);
     });
     this.checkLastAddedArticle(true);
-    this.sortArticles();
+    this.page.sortArticles();
   }
 
   resetArticles() {
@@ -234,11 +234,6 @@ export class ArticleManager {
       }
       this.checkDisableAllFilters();
     }
-  }
-
-  sortArticles() {
-    let sub = this.getCurrentSub();
-    this.page.sortArticles(sub);
   }
 
   prepareMarkAsRead() {
