@@ -371,9 +371,9 @@ input {
   margin-right: 20px;
 }
 
-.FFnS-loading {
+.FFnS-loading, .FFnS-sorting {
   padding: 1%;
-  margin: 1%;
+  margin: 2%;
 }
 
 .FFnS-loading-animation {

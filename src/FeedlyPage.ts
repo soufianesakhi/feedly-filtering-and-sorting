@@ -36,12 +36,11 @@ declare var overrideNavigation: FeedlyPage["overrideNavigation"];
 declare var onNewPageObserve: FeedlyPage["onNewPageObserve"];
 declare var onNewArticleObserve: FeedlyPage["onNewArticleObserve"];
 declare var sortArticlesDOM: FeedlyPage["sortArticlesDOM"];
+declare var refreshHidingInfo: FeedlyPage["refreshHidingInfo"];
 
 declare var debugEnabled: boolean;
 
 export class FeedlyPage {
-  hiddingInfoClass = "FFnS_Hiding_Info";
-
   get = this.getFFnS;
   put = this.putFFnS;
 
@@ -66,7 +65,8 @@ export class FeedlyPage {
       debugLog,
       enableDebug,
       removeContent,
-      this.sortArticlesDOM
+      this.sortArticlesDOM,
+      this.refreshHidingInfo
     );
     injectToWindow(this.overrideLoadingEntries);
     injectToWindow(this.overrideSorting);
@@ -147,7 +147,20 @@ export class FeedlyPage {
     ) {
       return;
     }
-    debugLog(() => "Sorting articles at " + new Date().toTimeString());
+    debugLog(() => "sort at " + new Date().toTimeString(), "Sorting");
+    $(ext.articlesContainerSelector).hide();
+    $(".FFnS_Hiding_Info").hide();
+    console.log("hide info");
+    if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
+      $(ext.articlesContainerSelector)
+        .first()
+        .before(
+          `<div class='FFnS-sorting'>
+              <div class='FFnS-loading-animation'><div></div><div></div><div></div><div></div></div>
+              <span>Sorting articles</span>
+            </div>`
+        );
+    }
     const sortedArticlesContainers: SortedArticlesContainer[] = [];
     if (sortedArticles) {
       const { visibleArticles, hiddenArticles } = sortedArticles;
@@ -199,6 +212,13 @@ export class FeedlyPage {
       visibleArticles.forEach(appendArticle);
       hiddenArticles.forEach(appendArticle);
     });
+    setTimeout(() => {
+      $(".FFnS-sorting").remove();
+      if ($(".FFnS-loading").length == 0) {
+        $(ext.articlesContainerSelector).show();
+      }
+      refreshHidingInfo();
+    }, 100);
   }
 
   updateCheck(enabled: boolean, id: string, className: string) {
@@ -266,9 +286,7 @@ export class FeedlyPage {
         } else {
           sibling = null;
         }
-      } catch (e) {
-        console.log(e);
-      }
+      } catch (e) {}
       if (!sibling) {
         sibling = parent.firstChild;
       }
@@ -705,27 +723,29 @@ export class FeedlyPage {
   }
 
   refreshHidingInfo() {
+    if ($(".FFnS-sorting,.FFnS-loading").length > 0) {
+      return;
+    }
     var hiddenCount = 0;
     $(ext.articleSelector).each((i, a) => {
       if (!$(a).is(":visible")) {
         hiddenCount++;
       }
     });
-    this.clearHidingInfo();
+    $(".FFnS_Hiding_Info").remove();
     if (hiddenCount == 0) {
       return;
     }
+    console.log("refresh info");
     $(ext.hidingInfoSibling).after(
-      "<div class='col-xs-3 col-md-3 detail " +
-        this.hiddingInfoClass +
-        "'> (" +
+      "<div class='col-xs-3 col-md-3 detail FFnS_Hiding_Info'> (" +
         hiddenCount +
         " hidden entries)</div>"
     );
   }
 
   clearHidingInfo() {
-    $("." + this.hiddingInfoClass).remove();
+    $(".FFnS_Hiding_Info").remove();
   }
 
   putFFnS(id: string, value: any, persistent?: boolean) {
@@ -834,9 +854,9 @@ export class FeedlyPage {
           if (!stream.fetchingMoreEntries) {
             stream.fetchingMoreEntries = true;
             setTimeout(() => {
-              [...$(ext.articlesContainerSelector)].forEach(
-                (e) => (e.style.display = "none")
-              );
+              $(ext.articlesContainerSelector).hide();
+              $(".FFnS_Hiding_Info").hide();
+              console.log("hide info");
               fetchMoreEntries(
                 Math.min(
                   stream.state.info.unreadCount,
@@ -849,14 +869,11 @@ export class FeedlyPage {
           if (isAutoLoad()) {
             stream.fetchingMoreEntries = false;
             debugLog(() => `[Fetching] End at: ${new Date().toTimeString()}`);
-            [...$(ext.articlesContainerSelector)].forEach(
-              (e) => (e.style.display = "")
-            );
+            $(ext.articlesContainerSelector).show();
             $(".FFnS-loading").remove();
+            setTimeout(() => refreshHidingInfo, 100);
           }
-          setTimeout(() => {
-            document.dispatchEvent(new Event("ensureSortedEntries"));
-          }, 100);
+          document.dispatchEvent(new Event("ensureSortedEntries"));
         }
       } catch (e) {
         console.log(e);
@@ -937,7 +954,7 @@ export class FeedlyPage {
       ) {
         return;
       }
-      // debugLog(() => "start", "ensureSortedEntries");
+      debugLog(() => "checking entries", "Sorting");
       let navigo = getService("navigo");
       var entries: any[] = navigo.entries;
       var originalEntries: any[] = navigo.originalEntries || entries;
@@ -1008,14 +1025,13 @@ export class FeedlyPage {
                     .map((id) => new Article(getById(id)).getTitle())
                     .join("\n\t"),
               ],
-              "ensureSortedEntries"
+              "Sorting"
             );
             sorted = false;
           }
         }
       });
       if (!sorted && len > 0) {
-        debugLog(() => "sorting entries", "ensureSortedEntries");
         try {
           const articles = navigo.originalEntries
             .map((e) => {

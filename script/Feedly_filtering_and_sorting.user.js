@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.3
+// @version     3.22.4
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -111,7 +111,7 @@ var templates = {
     coloringRuleHTML: "<div id='{{Id}}' class='FFnS_ColoringRule'> <img class='FFnS_RemoveColoringRule FFnS_ColoringRuleManagement' title='Remove the coloring rule' src='{{eraseIconLink}}' /> <img class='FFnS_MoveUpColoringRule FFnS_ColoringRuleManagement' title='Move up the order of the coloring rule' src='{{moveUpIconLink}}' /> <img class='FFnS_MoveDownColoringRule FFnS_ColoringRuleManagement' title='Move down the order of the coloring rule' src='{{moveDownIconLink}}' /> <span>Keyword source: </span> <select class='FFnS_ColoringRule_Source FFnS_input FFnS_select'> <option value='{{SpecificKeywords}}'>Specific keywords</option> <option value='{{RestrictingKeywords}}'>Restricting keywords</option> <option value='{{FilteringKeywords}}'>Filtering keywords</option> <option value='{{SourceTitle}}'>Source title (subscription)</option> </select> <span class='FFnS_ColoringRule_Options'> <span style='display: none'>Highlight all the title</span> <input class='FFnS_HighlightAllTitle' type='checkbox' style='display: none' /> <span class='FFnS_SpecificColorGroup' >Color <input class='FFnS_SpecificColor FFnS_input jscolor' value='{{Color}}' size='10' type='text' /> </span> </span> <span class='FFnS_ColoringRule_SourceTitleInfos' >All the titles from the same source (subscription) will have the same generated color (only applied when viewing categories)</span > <div class='FFnS_ColoringRule_MatchingMethodGroup'> Keyword matching method: {{ KeywordMatchingMethod }} </div> <div class='FFnS_ColoringRule_MatchingAreaGroup'> Keyword matching area: {{ KeywordMatchingArea }} </div> <div class='FFnS_ColoringRule_KeywordsGroup'> <span>Specific keywords: </span> <input class='FFnS_input FFnS_ColoringRule_KeywordInput' size='10' type='text' /> <span class='FFnS_ColoringRule_AddKeyword'> <img src='{{plusIconLink}}' class='FFnS_icon' /> </span> <span class='FFnS_ColoringRuleKeywords'></span> <span class='FFnS_ColoringRule_EraseKeywords'> <img src='{{eraseIconLink}}' class='FFnS_icon' /> </span> </div> </div> ",
     optionHTML: "<option value='{{value}}'>{{value}}</option>",
     emptyOptionHTML: "<option value=''>{{value}}</option>",
-    styleCSS: "#FFnS_settingsDivContainer { display: none; color: #333333; scrollbar-color: auto; background: rgba(0, 0, 0, 0.9); width: 100%; height: 100%; z-index: 999; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 87%; margin-top: 1%; margin-left: 5%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #e0f5ff; padding: 2%; opacity: 1; overflow-y: auto; overflow-x: hidden; } .FFnS_input { font-size: 12px; } #FFnS_tabs_menu { display: block; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #b9e0ed; } #FFnS_tabs_menu li a { padding: 3px; color: #2a687d; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35a5e2; border-radius: 20px; color: #fff; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip-top { bottom: 100%; left: 50%; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn, .FFnS_ColoringRuleManagement { float: right; cursor: pointer; width: 24px; height: 24px; padding: 4px; } #FFnS_Tab_SettingsControls button, #FFnS_Tab_SettingsControls input { margin-top: 1%; font-size: 12px; vertical-align: inherit; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type='number'] { width: 30px; margin-left: 1%; margin-right: 1%; } .MediumNumberInput { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { display: inline-block; white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: bold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 1%; } fieldset select.FFnS_keywordMatchingSelect { margin-left: 0%; margin-right: 1%; vertical-align: middle; } input { vertical-align: middle; } .ShowSettingsBtn { display: inline-block; vertical-align: bottom; background-image: url('{{extension-icon}}'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; background-color: transparent; filter: grayscale(1); font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .FFnS_Hiding_Info { text-align: center; } .fx .open-in-new-tab-button.mark-as-read, .fx .mark-as-read-above-below-button.mark-as-read { background-repeat: no-repeat; margin-right: 0px; } .fx .mark-as-read { opacity: 0.8; display: inline-block; } .fx .mark-as-read:hover { opacity: 1; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read:hover, .fx .u100Entry .open-in-new-tab-button.mark-as-read:hover { background-color: #efefef; } .theme--dark .open-in-new-tab-button, .theme--dark .mark-as-read-above-below-button { filter: contrast(0%); } .fx .open-in-new-tab-button.mark-as-read { background-image: url('{{open-in-new-tab-url}}'); background-size: 20px 20px; } .fx .entry.u5 .open-in-new-tab-button.mark-as-read { background-size: 24px 24px; padding: 2px; } #FFnS-buttons-container { float: right; } .fx .FFnS-UI-button { background-repeat: no-repeat; display: inline; margin-left: auto; min-width: 10px; padding: 10px; } .FFnS-UI-button { opacity: 0.8; } .FFnS-UI-button:hover { opacity: 1; } .theme--dark .FFnS-UI-button { filter: contrast(0%); } .fx .open-current-articles-in-new-tab-button { background-image: url('{{open-in-new-tab-url}}'); background-size: 18px 18px; } .fx .disable-all-filters-button { background-image: url('{{disable-all-filters-url}}'); background-size: 20px 20px; opacity: 0.4; } .fx .disable-all-filters-button.enabled { opacity: 1; } .fx .mark-as-read-above-below-button.mark-as-read, .fx .open-in-new-tab-button.mark-as-read, .fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon, .fx .entry.u5 .mark-as-read-above-below-button { background-size: 20px 20px; width: 24px; height: 24px; padding: 4px; background-origin: content-box; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read, .fx .u100Entry .open-in-new-tab-button.mark-as-read { margin-left: 0.5rem; padding: 24px; background-position: center; width: 24px; height: 24px; opacity: 0.54; } .fx .mark-above-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBggICA8PDxERERMTExUVFRgYGBkZGRoaGhwcHB4eHh8fHyAgICYmJicnJygoKCoqKiwsLC4uLi8vLzAwMDExMTIyMjMzMzk5OTo6Oj09PT4+PkREREhISEtLS01NTU5OTlFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbHJycnh4eHp6enx8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhUO7wAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAA1klEQVQoU3WQiVICQQwFGxBUPLgVROQQEBDFA/7/02KSyS6sVXQVyZvXNezWImfIxCx28JCJOvUUnNVlduOOKreejHFJh4s2fRnQsqg8cdBpYklHZ5eF1dJnZctvTG3EHDL0HQ/PeeEmhX/ilYtIRfFOfi6IA8wjFgU0Irn42UWuUomk8AnxIlew9+DwpsL/rwkjrxJIWcWvyAj00x1BNioeZRH3cvRU0W6tv+eoEio+tFTK0QR2v+biKxUZJr6tv0/nHH/itQo/nZAK2Po+IYlJz9cRkT+a78AFAEXS0AAAAABJRU5ErkJggg==); } .fx .mark-below-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICA8PDxERERUVFRoaGhwcHB4eHigoKCoqKiwsLC4uLjAwMDExMTIyMjMzMzk5OTo6Oj09PUhISElJSUtLS01NTVFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbG5ubnJycnR0dHV1dXh4eHp6ent7e3x8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACY/twoAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAAxElEQVQoU3WQhxKCMBBEF7D3gg27Inbl/3/uvLtkQNrOJLvZNxcKqEIVYFQO9q3yiaXDWwmYIua9CCbYixWAD189DxbompADAWo2ZcEJyTkDYmBjYxYAfZsUPCKb6/BsYuEC2BdpAx8NKuwY6H0DYK6VEchl8CaaA/zrUoGODMa0tXOJ+ORxd+A1I3qap7iBgpBLliuVI2M1vBRQQ8FVAH9K1EQogddN+p729OV4kCCAOnwSF92xVjcFcFb/kwGroVoqoh+q2r44+TStvAAAAABJRU5ErkJggg==); } .fx .mark-as-read { min-width: unset; min-height: unset; } .fx .entry.u4 .mark-as-read:first-of-type { margin-left: 0.7rem; } .fx .entry.u5 .open-in-new-tab-button, .fx .entry.u5 .mark-as-read-above-below-button { filter: brightness(0) invert(1); } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .theme--dark .ShowSettingsBtn:hover { background-color: rgba(255, 255, 255, 0.15); } #FFnS_Tab_KeywordControls span { vertical-align: top; } #FFnS_Tab_KeywordControls div { margin-top: 2%; } .FFnS_select { vertical-align: middle; } #FFnS_AddSortingType { margin-left: 1%; } .entry[gap-article] { visibility: hidden; } #FFnS_ImportSettings { width: 400px; } .FFnS_ColoringRule { margin-top: 1%; padding: 1%; border: 1px solid #636363; } .FFnS_ColoringRule div { margin-top: 1%; } .list-entries { margin-top: 1rem; } #topHeaderBarFX, #headerBarFX { margin-right: 20px; } .FFnS-loading { padding: 1%; margin: 1%; } .FFnS-loading-animation { display: inline-block; position: relative; width: 80px; height: 14px; } .FFnS-loading-animation div { position: absolute; top: 5px; width: 13px; height: 13px; border-radius: 50%; background: #2bb24c; animation-timing-function: cubic-bezier(0, 1, 1, 0); } .FFnS-loading-animation div:nth-child(1) { left: 8px; animation: FFnS-loading-animation1 0.6s infinite; } .FFnS-loading-animation div:nth-child(2) { left: 8px; animation: FFnS-loading-animation2 0.6s infinite; } .FFnS-loading-animation div:nth-child(3) { left: 32px; animation: FFnS-loading-animation2 0.6s infinite; } .FFnS-loading-animation div:nth-child(4) { left: 56px; animation: FFnS-loading-animation3 0.6s infinite; } @keyframes FFnS-loading-animation1 { 0% { transform: scale(0); } 100% { transform: scale(1); } } @keyframes FFnS-loading-animation3 { 0% { transform: scale(1); } 100% { transform: scale(0); } } @keyframes FFnS-loading-animation2 { 0% { transform: translate(0, 0); } 100% { transform: translate(24px, 0); } } "
+    styleCSS: "#FFnS_settingsDivContainer { display: none; color: #333333; scrollbar-color: auto; background: rgba(0, 0, 0, 0.9); width: 100%; height: 100%; z-index: 999; top: 0; left: 0; position: fixed; } #FFnS_settingsDiv { max-height: 87%; margin-top: 1%; margin-left: 5%; margin-right: 1%; border-radius: 25px; border: 2px solid #336699; background: #e0f5ff; padding: 2%; opacity: 1; overflow-y: auto; overflow-x: hidden; } .FFnS_input { font-size: 12px; } #FFnS_tabs_menu { display: block; clear: both; margin-top: 1%; margin-bottom: 0%; padding: 0px; text-align: center; } #FFnS_tabs_menu li { height: 30px; line-height: 30px; display: inline-block; border: 1px solid #d4d4d1; } #FFnS_tabs_menu li.current { background-color: #b9e0ed; } #FFnS_tabs_menu li a { padding: 3px; color: #2a687d; } #FFnS_tabs_content { padding: 1%; } .FFnS_Tab_Menu { display: none; width: 100%; overflow-y: auto; overflow-x: hidden; } .FFnS_icon { vertical-align: middle; height: 20px; width: 20px; cursor: pointer; } .FFnS_keyword { vertical-align: middle; background-color: #35a5e2; border-radius: 20px; color: #fff; cursor: pointer; } .tooltip { position: relative; display: inline-block; border-bottom: 1px dotted black; } .tooltip .tooltiptext { visibility: hidden; width: 120px; background-color: black; color: #fff; text-align: center; padding: 5px; border-radius: 6px; position: absolute; z-index: 1; white-space: normal; } .tooltip-top { bottom: 100%; left: 50%; } .tooltip:hover .tooltiptext { visibility: visible; } #FFnS_CloseSettingsBtn, .FFnS_ColoringRuleManagement { float: right; cursor: pointer; width: 24px; height: 24px; padding: 4px; } #FFnS_Tab_SettingsControls button, #FFnS_Tab_SettingsControls input { margin-top: 1%; font-size: 12px; vertical-align: inherit; } #FFnS_Tab_SettingsControls #FFnS_SettingsControls_UnlinkFromSub { display: inline; } #FFnS_MaxPeriod_Infos > input[type='number'] { width: 30px; margin-left: 1%; margin-right: 1%; } .MediumNumberInput { width: 45px; } #FFnS_MaxPeriod_Infos { margin: 1% 0 2% 0; } .setting_group { display: inline-block; white-space: nowrap; margin-right: 2%; } fieldset { border-color: #333690; border-style: bold; } legend { color: #333690; font-weight: bold; } fieldset + fieldset, #FFnS_Tab_SettingsControls fieldset { margin-top: 1%; } fieldset select { margin-left: 1%; } fieldset select.FFnS_keywordMatchingSelect { margin-left: 0%; margin-right: 1%; vertical-align: middle; } input { vertical-align: middle; } .ShowSettingsBtn { display: inline-block; vertical-align: bottom; background-image: url('{{extension-icon}}'); background-size: 20px 20px; background-position: center center; background-repeat: no-repeat; background-color: transparent; filter: grayscale(1); font-weight: normal; min-width: 0; height: 40px; width: 40px; margin-right: 0px; } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .fx header h1 .detail.FFnS_Hiding_Info::before { content: ''; } .FFnS_Hiding_Info { text-align: center; } .fx .open-in-new-tab-button.mark-as-read, .fx .mark-as-read-above-below-button.mark-as-read { background-repeat: no-repeat; margin-right: 0px; } .fx .mark-as-read { opacity: 0.8; display: inline-block; } .fx .mark-as-read:hover { opacity: 1; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read:hover, .fx .u100Entry .open-in-new-tab-button.mark-as-read:hover { background-color: #efefef; } .theme--dark .open-in-new-tab-button, .theme--dark .mark-as-read-above-below-button { filter: contrast(0%); } .fx .open-in-new-tab-button.mark-as-read { background-image: url('{{open-in-new-tab-url}}'); background-size: 20px 20px; } .fx .entry.u5 .open-in-new-tab-button.mark-as-read { background-size: 24px 24px; padding: 2px; } #FFnS-buttons-container { float: right; } .fx .FFnS-UI-button { background-repeat: no-repeat; display: inline; margin-left: auto; min-width: 10px; padding: 10px; } .FFnS-UI-button { opacity: 0.8; } .FFnS-UI-button:hover { opacity: 1; } .theme--dark .FFnS-UI-button { filter: contrast(0%); } .fx .open-current-articles-in-new-tab-button { background-image: url('{{open-in-new-tab-url}}'); background-size: 18px 18px; } .fx .disable-all-filters-button { background-image: url('{{disable-all-filters-url}}'); background-size: 20px 20px; opacity: 0.4; } .fx .disable-all-filters-button.enabled { opacity: 1; } .fx .mark-as-read-above-below-button.mark-as-read, .fx .open-in-new-tab-button.mark-as-read, .fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon, .fx .entry.u5 .mark-as-read-above-below-button { background-size: 20px 20px; width: 24px; height: 24px; padding: 4px; background-origin: content-box; } .fx .u100Entry .mark-as-read-above-below-button.mark-as-read, .fx .u100Entry .open-in-new-tab-button.mark-as-read { margin-left: 0.5rem; padding: 24px; background-position: center; width: 24px; height: 24px; opacity: 0.54; } .fx .mark-above-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBggICA8PDxERERMTExUVFRgYGBkZGRoaGhwcHB4eHh8fHyAgICYmJicnJygoKCoqKiwsLC4uLi8vLzAwMDExMTIyMjMzMzk5OTo6Oj09PT4+PkREREhISEtLS01NTU5OTlFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbHJycnh4eHp6enx8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFhUO7wAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAA1klEQVQoU3WQiVICQQwFGxBUPLgVROQQEBDFA/7/02KSyS6sVXQVyZvXNezWImfIxCx28JCJOvUUnNVlduOOKreejHFJh4s2fRnQsqg8cdBpYklHZ5eF1dJnZctvTG3EHDL0HQ/PeeEmhX/ilYtIRfFOfi6IA8wjFgU0Irn42UWuUomk8AnxIlew9+DwpsL/rwkjrxJIWcWvyAj00x1BNioeZRH3cvRU0W6tv+eoEio+tFTK0QR2v+biKxUZJr6tv0/nHH/itQo/nZAK2Po+IYlJz9cRkT+a78AFAEXS0AAAAABJRU5ErkJggg==); } .fx .mark-below-as-read.mark-as-read { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABgAAAAYCAMAAADXqc3KAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAMAUExURQAAAAEBAQICAgMDAwQEBAUFBQYGBgcHBwgICA8PDxERERUVFRoaGhwcHB4eHigoKCoqKiwsLC4uLjAwMDExMTIyMjMzMzk5OTo6Oj09PUhISElJSUtLS01NTVFRUVNTU1RUVFhYWF1dXV5eXl9fX2BgYGhoaGlpaWxsbG5ubnJycnR0dHV1dXh4eHp6ent7e3x8fAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACY/twoAAAEAdFJOU////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////wBT9wclAAAACXBIWXMAABYlAAAWJQFJUiTwAAAAGHRFWHRTb2Z0d2FyZQBwYWludC5uZXQgNC4wLjb8jGPfAAAAxElEQVQoU3WQhxKCMBBEF7D3gg27Inbl/3/uvLtkQNrOJLvZNxcKqEIVYFQO9q3yiaXDWwmYIua9CCbYixWAD189DxbompADAWo2ZcEJyTkDYmBjYxYAfZsUPCKb6/BsYuEC2BdpAx8NKuwY6H0DYK6VEchl8CaaA/zrUoGODMa0tXOJ+ORxd+A1I3qap7iBgpBLliuVI2M1vBRQQ8FVAH9K1EQogddN+p729OV4kCCAOnwSF92xVjcFcFb/kwGroVoqoh+q2r44+TStvAAAAABJRU5ErkJggg==); } .fx .mark-as-read { min-width: unset; min-height: unset; } .fx .entry.u4 .mark-as-read:first-of-type { margin-left: 0.7rem; } .fx .entry.u5 .open-in-new-tab-button, .fx .entry.u5 .mark-as-read-above-below-button { filter: brightness(0) invert(1); } .ShowSettingsBtn:hover { color: #636363; background-color: rgba(0, 0, 0, 0.05); } .theme--dark .ShowSettingsBtn:hover { background-color: rgba(255, 255, 255, 0.15); } #FFnS_Tab_KeywordControls span { vertical-align: top; } #FFnS_Tab_KeywordControls div { margin-top: 2%; } .FFnS_select { vertical-align: middle; } #FFnS_AddSortingType { margin-left: 1%; } .entry[gap-article] { visibility: hidden; } #FFnS_ImportSettings { width: 400px; } .FFnS_ColoringRule { margin-top: 1%; padding: 1%; border: 1px solid #636363; } .FFnS_ColoringRule div { margin-top: 1%; } .list-entries { margin-top: 1rem; } #topHeaderBarFX, #headerBarFX { margin-right: 20px; } .FFnS-loading, .FFnS-sorting { padding: 1%; margin: 2%; } .FFnS-loading-animation { display: inline-block; position: relative; width: 80px; height: 14px; } .FFnS-loading-animation div { position: absolute; top: 5px; width: 13px; height: 13px; border-radius: 50%; background: #2bb24c; animation-timing-function: cubic-bezier(0, 1, 1, 0); } .FFnS-loading-animation div:nth-child(1) { left: 8px; animation: FFnS-loading-animation1 0.6s infinite; } .FFnS-loading-animation div:nth-child(2) { left: 8px; animation: FFnS-loading-animation2 0.6s infinite; } .FFnS-loading-animation div:nth-child(3) { left: 32px; animation: FFnS-loading-animation2 0.6s infinite; } .FFnS-loading-animation div:nth-child(4) { left: 56px; animation: FFnS-loading-animation3 0.6s infinite; } @keyframes FFnS-loading-animation1 { 0% { transform: scale(0); } 100% { transform: scale(1); } } @keyframes FFnS-loading-animation3 { 0% { transform: scale(1); } 100% { transform: scale(0); } } @keyframes FFnS-loading-animation2 { 0% { transform: translate(0, 0); } 100% { transform: translate(24px, 0); } } "
 };
 
 var exported = {};
@@ -1912,13 +1912,12 @@ class KeywordMatcherFactory {
 
 class FeedlyPage {
     constructor() {
-        this.hiddingInfoClass = "FFnS_Hiding_Info";
         this.get = this.getFFnS;
         this.put = this.putFFnS;
         this.put("ext", ext);
         this.put("SortingType", SortingType);
         injectClasses(EntryInfos, Article, ArticleSorter, ArticleSorterFactory);
-        injectToWindow(this.getFFnS, this.putFFnS, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.getService, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles, debugLog, enableDebug, removeContent, this.sortArticlesDOM);
+        injectToWindow(this.getFFnS, this.putFFnS, this.getById, this.getArticleId, this.getReactPage, this.getStreamPage, this.getStreamObj, this.getService, this.onClickCapture, this.disableOverrides, this.fetchMoreEntries, this.getKeptUnreadEntryIds, this.getSortedVisibleArticles, debugLog, enableDebug, removeContent, this.sortArticlesDOM, this.refreshHidingInfo);
         injectToWindow(this.overrideLoadingEntries);
         injectToWindow(this.overrideSorting);
         injectToWindow(this.overrideNavigation);
@@ -1963,7 +1962,18 @@ class FeedlyPage {
             !sortedArticles) {
             return;
         }
-        debugLog(() => "Sorting articles at " + new Date().toTimeString());
+        debugLog(() => "sort at " + new Date().toTimeString(), "Sorting");
+        $(ext.articlesContainerSelector).hide();
+        $(".FFnS_Hiding_Info").hide();
+        console.log("hide info");
+        if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
+            $(ext.articlesContainerSelector)
+                .first()
+                .before(`<div class='FFnS-sorting'>
+              <div class='FFnS-loading-animation'><div></div><div></div><div></div><div></div></div>
+              <span>Sorting articles</span>
+            </div>`);
+        }
         const sortedArticlesContainers = [];
         if (sortedArticles) {
             const { visibleArticles, hiddenArticles } = sortedArticles;
@@ -2007,6 +2017,13 @@ class FeedlyPage {
             visibleArticles.forEach(appendArticle);
             hiddenArticles.forEach(appendArticle);
         });
+        setTimeout(() => {
+            $(".FFnS-sorting").remove();
+            if ($(".FFnS-loading").length == 0) {
+                $(ext.articlesContainerSelector).show();
+            }
+            refreshHidingInfo();
+        }, 100);
     }
     updateCheck(enabled, id, className) {
         if (enabled) {
@@ -2077,9 +2094,7 @@ class FeedlyPage {
                     sibling = null;
                 }
             }
-            catch (e) {
-                console.log(e);
-            }
+            catch (e) { }
             if (!sibling) {
                 sibling = parent.firstChild;
             }
@@ -2469,24 +2484,26 @@ class FeedlyPage {
         }
     }
     refreshHidingInfo() {
+        if ($(".FFnS-sorting,.FFnS-loading").length > 0) {
+            return;
+        }
         var hiddenCount = 0;
         $(ext.articleSelector).each((i, a) => {
             if (!$(a).is(":visible")) {
                 hiddenCount++;
             }
         });
-        this.clearHidingInfo();
+        $(".FFnS_Hiding_Info").remove();
         if (hiddenCount == 0) {
             return;
         }
-        $(ext.hidingInfoSibling).after("<div class='col-xs-3 col-md-3 detail " +
-            this.hiddingInfoClass +
-            "'> (" +
+        console.log("refresh info");
+        $(ext.hidingInfoSibling).after("<div class='col-xs-3 col-md-3 detail FFnS_Hiding_Info'> (" +
             hiddenCount +
             " hidden entries)</div>");
     }
     clearHidingInfo() {
-        $("." + this.hiddingInfoClass).remove();
+        $(".FFnS_Hiding_Info").remove();
     }
     putFFnS(id, value, persistent) {
         sessionStorage.setItem("FFnS" + (persistent ? "#" : "_") + id, JSON.stringify(value));
@@ -2575,7 +2592,9 @@ class FeedlyPage {
                     if (!stream.fetchingMoreEntries) {
                         stream.fetchingMoreEntries = true;
                         setTimeout(() => {
-                            [...$(ext.articlesContainerSelector)].forEach((e) => (e.style.display = "none"));
+                            $(ext.articlesContainerSelector).hide();
+                            $(".FFnS_Hiding_Info").hide();
+                            console.log("hide info");
                             fetchMoreEntries(Math.min(stream.state.info.unreadCount, autoLoadAllArticleDefaultBatchSize));
                         }, 100);
                     }
@@ -2584,12 +2603,11 @@ class FeedlyPage {
                     if (isAutoLoad()) {
                         stream.fetchingMoreEntries = false;
                         debugLog(() => `[Fetching] End at: ${new Date().toTimeString()}`);
-                        [...$(ext.articlesContainerSelector)].forEach((e) => (e.style.display = ""));
+                        $(ext.articlesContainerSelector).show();
                         $(".FFnS-loading").remove();
+                        setTimeout(() => refreshHidingInfo, 100);
                     }
-                    setTimeout(() => {
-                        document.dispatchEvent(new Event("ensureSortedEntries"));
-                    }, 100);
+                    document.dispatchEvent(new Event("ensureSortedEntries"));
                 }
             }
             catch (e) {
@@ -2665,7 +2683,7 @@ class FeedlyPage {
                     !articleSorterConfig.pinHotToTop)) {
                 return;
             }
-            // debugLog(() => "start", "ensureSortedEntries");
+            debugLog(() => "checking entries", "Sorting");
             let navigo = getService("navigo");
             var entries = navigo.entries;
             var originalEntries = navigo.originalEntries || entries;
@@ -2721,13 +2739,12 @@ class FeedlyPage {
                                     .slice(Math.max(0, i - 1), Math.min(i + 2, entries.length))
                                     .map((id) => new Article(getById(id)).getTitle())
                                     .join("\n\t"),
-                        ], "ensureSortedEntries");
+                        ], "Sorting");
                         sorted = false;
                     }
                 }
             });
             if (!sorted && len > 0) {
-                debugLog(() => "sorting entries", "ensureSortedEntries");
                 try {
                     const articles = navigo.originalEntries
                         .map((e) => {
