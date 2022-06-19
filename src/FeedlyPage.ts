@@ -38,6 +38,7 @@ declare var onNewArticleObserve: FeedlyPage["onNewArticleObserve"];
 declare var sortArticlesDOM: FeedlyPage["sortArticlesDOM"];
 declare var refreshHidingInfo: FeedlyPage["refreshHidingInfo"];
 declare var displaySortingAnimation: FeedlyPage["displaySortingAnimation"];
+declare var isAutoLoad: FeedlyPage["isAutoLoad"];
 
 declare var debugEnabled: boolean;
 
@@ -68,6 +69,7 @@ export class FeedlyPage {
       removeContent,
       this.sortArticlesDOM,
       this.displaySortingAnimation,
+      this.isAutoLoad,
       this.refreshHidingInfo
     );
     injectToWindow(this.overrideLoadingEntries);
@@ -135,6 +137,20 @@ export class FeedlyPage {
     document.dispatchEvent(new Event("ensureSortedEntries"));
   }
 
+  isAutoLoad() {
+    try {
+      return (
+        getStreamPage() != null &&
+        ($(ext.articleSelector).length == 0 ||
+          $(ext.unreadArticlesCountSelector).length > 0) &&
+        !(getStreamPage().stream.state.info.subscribed === false) &&
+        getFFnS(ext.autoLoadAllArticlesId, true)
+      );
+    } catch (e) {
+      return false;
+    }
+  }
+
   displaySortingAnimation(visible) {
     if (visible) {
       $(ext.articlesContainerSelector).hide();
@@ -145,7 +161,7 @@ export class FeedlyPage {
           .before(
             `<div class='FFnS-sorting'>
                 <div class='FFnS-loading-animation'><div></div><div></div><div></div><div></div></div>
-                <span>Sorting articles</span>
+                <span>Sorting and filtering articles</span>
               </div>`
           );
       }
@@ -500,7 +516,7 @@ export class FeedlyPage {
         document.dispatchEvent(new Event("ensureSortedEntries"));
         $(`#${ext.forceRefreshArticlesId}`).click();
       });
-      
+
       document.dispatchEvent(new Event("ensureSortedEntries"));
     });
 
@@ -812,20 +828,6 @@ export class FeedlyPage {
     putFFnS(ext.isNewestFirstId, streamObj._sort === "newest", true);
     var autoLoadAllArticleDefaultBatchSize = 1000;
 
-    var isAutoLoad: () => boolean = () => {
-      try {
-        return (
-          getStreamPage() != null &&
-          ($(ext.articleSelector).length == 0 ||
-            $(ext.unreadArticlesCountSelector).length > 0) &&
-          !(getStreamPage().stream.state.info.subscribed === false) &&
-          getFFnS(ext.autoLoadAllArticlesId, true)
-        );
-      } catch (e) {
-        return false;
-      }
-    };
-
     var prototype = Object.getPrototypeOf(streamObj);
     var setBatchSize: Function = prototype.setBatchSize;
     prototype.setBatchSize = function (customSize?: number) {
@@ -947,23 +949,8 @@ export class FeedlyPage {
 
   overrideSorting() {
     function ensureSortedEntries() {
-      displaySortingAnimation(true);
-      let timeoutId = +localStorage.getItem("ensureSortedEntriesTimeoutId");
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-      timeoutId = setTimeout(() => {
-        try {
-          checkSortedEntries();
-        } finally {
-          displaySortingAnimation(false);
-        }
-      }, 1000);
-      localStorage.setItem("ensureSortedEntriesTimeoutId", "" + timeoutId);
-    }
-    function checkSortedEntries() {
-      localStorage.setItem("ensureSortedEntriesTimeoutId", "");
-      if (getFFnS(ext.navigatingEntry)) {
+      const streamState = getStreamPage().stream?.state;
+      if (getFFnS(ext.navigatingEntry) || streamState?.modificationCount > 0 ) {
         return;
       }
       const articleSorterConfig: ArticleSorterConfig = getFFnS(
@@ -977,6 +964,24 @@ export class FeedlyPage {
       ) {
         return;
       }
+      if (isAutoLoad() && streamState.hasAllEntries && streamState.entries?.length > 100) {
+        displaySortingAnimation(true);
+      }
+      let timeoutId = +localStorage.getItem("ensureSortedEntriesTimeoutId");
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+      timeoutId = setTimeout(() => {
+        try {
+          localStorage.setItem("ensureSortedEntriesTimeoutId", "");
+          checkSortedEntries(articleSorterConfig);
+        } finally {
+          displaySortingAnimation(false);
+        }
+      }, 600);
+      localStorage.setItem("ensureSortedEntriesTimeoutId", "" + timeoutId);
+    }
+    function checkSortedEntries(articleSorterConfig) {
       debugLog(() => "checking entries", "Sorting");
       let navigo = getService("navigo");
       var entries: any[] = navigo.entries;
@@ -1111,14 +1116,20 @@ export class FeedlyPage {
       if (disableOverrides()) {
         return lookupNextEntry.apply(this, arguments);
       }
-      const result = lookupNextEntry.call(
+      const selectedEntryId = this.selectedEntryId;
+      let result = lookupNextEntry.call(
         this,
         getFFnS(ext.hideAfterReadId) ? true : a
       );
+      let entry;
+      while ((entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
+        this.selectedEntryId = result.id;
+        result = lookupNextEntry.call(this, false);
+      }
       debugLog(
         () => [
-          "this.selectedEntryId: " + this.selectedEntryId,
-          "result: " + (result && result.getTitle()),
+          "selectedEntryId: " + selectedEntryId,
+          "nextEntryId: " + result.id,
         ],
         "lookupNextEntry"
       );
@@ -1128,14 +1139,20 @@ export class FeedlyPage {
       if (disableOverrides()) {
         return lookupPreviousEntry.apply(this, arguments);
       }
-      const result = lookupPreviousEntry.call(
+      const selectedEntryId = this.selectedEntryId;
+      let result = lookupPreviousEntry.call(
         this,
         getFFnS(ext.hideAfterReadId) ? true : a
       );
+      let entry;
+      while ((entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
+        this.selectedEntryId = result.id;
+        result = lookupPreviousEntry.call(this, false);
+      }
       debugLog(
         () => [
-          "this.selectedEntryId: " + this.selectedEntryId,
-          "result: " + (result && result.getTitle()),
+          "selectedEntryId: " + selectedEntryId,
+          "previousEntryId: " + result.id,
         ],
         "lookupPreviousEntry"
       );

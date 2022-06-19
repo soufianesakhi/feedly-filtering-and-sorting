@@ -7,7 +7,7 @@ import { FeedlyPage } from "./FeedlyPage";
 import { KeywordManager } from "./KeywordManager";
 import { SettingsManager } from "./SettingsManager";
 import { Subscription } from "./Subscription";
-import { hexToRgb, isLight, shadeColor } from "./Utils";
+import { debugLog, hexToRgb, isLight, shadeColor } from "./Utils";
 
 export class ArticleManager {
   settingsManager: SettingsManager;
@@ -29,6 +29,7 @@ export class ArticleManager {
   }
 
   refreshArticles() {
+    debugLog(() => "refresh articles at " + new Date().toTimeString());
     this.resetArticles();
     if ($(ext.articleSelector).length == 0) {
       return;
