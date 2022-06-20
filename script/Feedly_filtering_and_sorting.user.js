@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.6
+// @version     3.22.7
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1334,6 +1334,7 @@ articleSorterFactory = new ArticleSorterFactory();
 class ArticleManager {
     constructor(settingsManager, keywordManager, page) {
         this.articlesToMarkAsRead = [];
+        this.articlesToAdd = [];
         this.darkMode = this.isDarkMode();
         this.settingsManager = settingsManager;
         this.keywordManager = keywordManager;
@@ -1364,6 +1365,29 @@ class ArticleManager {
     }
     getCurrentSub() {
         return this.settingsManager.getCurrentSubscription();
+    }
+    addNewArticle(a) {
+        if (this.articlesAddTimeout) {
+            clearTimeout(this.articlesAddTimeout);
+        }
+        this.articlesToAdd.push(a);
+        this.articlesAddTimeout = setTimeout(() => {
+            const articlesToAdd = [...this.articlesToAdd];
+            this.articlesAddTimeout = null;
+            this.articlesToAdd = [];
+            if (articlesToAdd.length > 300) {
+                setTimeout(() => {
+                    this.page.displaySortingAnimation(true);
+                    setTimeout(() => {
+                        articlesToAdd.forEach((a) => this.addArticle(a));
+                        this.page.displaySortingAnimation(false);
+                    }, 100);
+                }, 100);
+            }
+            else {
+                articlesToAdd.forEach((a) => this.addArticle(a));
+            }
+        }, 100);
     }
     addArticle(a, skipCheck) {
         var article = new Article(a);
@@ -1980,7 +2004,7 @@ class FeedlyPage {
             if ($(".FFnS-loading").length == 0) {
                 $(ext.articlesContainerSelector).show();
             }
-            refreshHidingInfo();
+            (this.refreshHidingInfo || refreshHidingInfo)();
         }
     }
     sortArticlesDOM(articleSorterConfig, sortedArticles) {
@@ -2820,8 +2844,11 @@ class FeedlyPage {
             }
             const selectedEntryId = this.selectedEntryId;
             let result = lookupNextEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
+            if (!result) {
+                return result;
+            }
             let entry;
-            while ((entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
+            while (result && (entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
                 this.selectedEntryId = result.id;
                 result = lookupNextEntry.call(this, false);
             }
@@ -2837,8 +2864,11 @@ class FeedlyPage {
             }
             const selectedEntryId = this.selectedEntryId;
             let result = lookupPreviousEntry.call(this, getFFnS(ext.hideAfterReadId) ? true : a);
+            if (!result) {
+                return result;
+            }
             let entry;
-            while ((entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
+            while (result && (entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
                 this.selectedEntryId = result.id;
                 result = lookupPreviousEntry.call(this, false);
             }
@@ -3011,7 +3041,7 @@ class UIManager {
             this.htmlSubscriptionManager = new HTMLSubscriptionManager(this);
             this.settingsManager.init().then(() => {
                 this.articleManager = new ArticleManager(this.settingsManager, this.keywordManager, this.page);
-                this.autoLoadAllArticlesCB = new HTMLGlobalSettings(ext.autoLoadAllArticlesId, false, this);
+                this.autoLoadAllArticlesCB = new HTMLGlobalSettings(ext.autoLoadAllArticlesId, true, this);
                 this.globalSettingsEnabledCB = new HTMLGlobalSettings("globalSettingsEnabled", true, this, true, false);
                 this.loadByBatchEnabledCB = new HTMLGlobalSettings(ext.loadByBatchEnabledId, false, this);
                 this.batchSizeInput = new HTMLGlobalSettings(ext.batchSizeId, 200, this);
@@ -3726,7 +3756,7 @@ class UIManager {
             return;
         }
         try {
-            setTimeout(() => this.articleManager.addArticle(article), 100);
+            this.articleManager.addNewArticle(article);
             const callback = this.readArticlesMutationCallback(article);
             var articleObserver = new MutationObserver(callback);
             articleObserver.observe(article, { attributes: true });

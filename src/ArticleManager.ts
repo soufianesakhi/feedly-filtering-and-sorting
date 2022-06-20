@@ -14,6 +14,8 @@ export class ArticleManager {
   keywordManager: KeywordManager;
   page: FeedlyPage;
   articlesToMarkAsRead: Article[] = [];
+  articlesToAdd: HTMLElement[] = [];
+  articlesAddTimeout: number;
   duplicateChecker: DuplicateChecker;
   darkMode = this.isDarkMode();
 
@@ -55,6 +57,29 @@ export class ArticleManager {
 
   getCurrentSub(): Subscription {
     return this.settingsManager.getCurrentSubscription();
+  }
+
+  addNewArticle(a: HTMLElement) {
+    if (this.articlesAddTimeout) {
+      clearTimeout(this.articlesAddTimeout);
+    }
+    this.articlesToAdd.push(a);
+    this.articlesAddTimeout = setTimeout(() => {
+      const articlesToAdd = [...this.articlesToAdd];
+      this.articlesAddTimeout = null;
+      this.articlesToAdd = [];
+      if (articlesToAdd.length > 300) {
+        setTimeout(() => {
+          this.page.displaySortingAnimation(true);
+          setTimeout(() => {
+            articlesToAdd.forEach((a) => this.addArticle(a));
+            this.page.displaySortingAnimation(false);
+          }, 100);
+        }, 100);
+      } else {
+        articlesToAdd.forEach((a) => this.addArticle(a));
+      }
+    }, 100);
   }
 
   addArticle(a: HTMLElement, skipCheck?: boolean) {

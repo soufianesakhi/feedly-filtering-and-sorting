@@ -170,7 +170,7 @@ export class FeedlyPage {
       if ($(".FFnS-loading").length == 0) {
         $(ext.articlesContainerSelector).show();
       }
-      refreshHidingInfo();
+      (this.refreshHidingInfo || refreshHidingInfo)();
     }
   }
 
@@ -1121,8 +1121,11 @@ export class FeedlyPage {
         this,
         getFFnS(ext.hideAfterReadId) ? true : a
       );
+      if(!result) {
+        return result;
+      }
       let entry;
-      while ((entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
+      while (result && (entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
         this.selectedEntryId = result.id;
         result = lookupNextEntry.call(this, false);
       }
@@ -1144,8 +1147,11 @@ export class FeedlyPage {
         this,
         getFFnS(ext.hideAfterReadId) ? true : a
       );
+      if(!result) {
+        return result;
+      }
       let entry;
-      while ((entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
+      while (result && (entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
         this.selectedEntryId = result.id;
         result = lookupPreviousEntry.call(this, false);
       }

@@ -128,7 +128,7 @@ export class UIManager {
         );
         this.autoLoadAllArticlesCB = new HTMLGlobalSettings<boolean>(
           ext.autoLoadAllArticlesId,
-          false,
+          true,
           this
         );
         this.globalSettingsEnabledCB = new HTMLGlobalSettings<boolean>(
@@ -1017,7 +1017,7 @@ export class UIManager {
       return;
     }
     try {
-      setTimeout(() => this.articleManager.addArticle(article), 100);
+      this.articleManager.addNewArticle(article);
       const callback = this.readArticlesMutationCallback(article);
       var articleObserver = new MutationObserver(callback);
       articleObserver.observe(article, { attributes: true });
