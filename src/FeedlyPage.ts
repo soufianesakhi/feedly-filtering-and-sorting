@@ -153,7 +153,9 @@ export class FeedlyPage {
 
   displaySortingAnimation(visible) {
     if (visible) {
-      $(ext.articlesContainerSelector).hide();
+      if (getService("preferences").content.autoSelectOnScroll === "no") {
+        $(ext.articlesContainerSelector).hide();
+      }
       $(".FFnS_Hiding_Info").hide();
       if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
         $(ext.articlesContainerSelector)
@@ -718,6 +720,9 @@ export class FeedlyPage {
         onClickCapture(a.find(".content"), (e) => {
           if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
             e.stopPropagation();
+            e.preventDefault();
+            const link = a.find("a[href]").attr("href");
+            window.open(link, link);
             reader.askMarkEntryAsRead(entryId);
           }
         });
@@ -799,7 +804,7 @@ export class FeedlyPage {
     let stream = streamPage.stream;
     stream.setBatchSize(batchSize);
     $(".FFnS-sorting").remove();
-    if ($(".FFnS-loading").length == 0) {
+    if ($(".FFnS-loading").length == 0 && getService("preferences").content.autoSelectOnScroll === "no") {
       $(ext.articlesContainerSelector)
         .first()
         .before(
@@ -864,7 +869,9 @@ export class FeedlyPage {
           if (!stream.fetchingMoreEntries) {
             stream.fetchingMoreEntries = true;
             setTimeout(() => {
-              $(ext.articlesContainerSelector).hide();
+              if (getService("preferences").content.autoSelectOnScroll === "no") {
+                $(ext.articlesContainerSelector).hide();
+              }
               $(".FFnS_Hiding_Info").hide();
               fetchMoreEntries(
                 Math.min(
@@ -1126,7 +1133,7 @@ export class FeedlyPage {
       }
       let entry;
       while (result && (entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
-        this.selectedEntryId = result.id;
+        this.selectedEntryId = result?.id;
         result = lookupNextEntry.call(this, false);
       }
       debugLog(
@@ -1158,7 +1165,7 @@ export class FeedlyPage {
       debugLog(
         () => [
           "selectedEntryId: " + selectedEntryId,
-          "previousEntryId: " + result.id,
+          "previousEntryId: " + result?.id,
         ],
         "lookupPreviousEntry"
       );

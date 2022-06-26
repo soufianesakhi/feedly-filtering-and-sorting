@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.7
+// @version     3.22.8
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1988,7 +1988,9 @@ class FeedlyPage {
     }
     displaySortingAnimation(visible) {
         if (visible) {
-            $(ext.articlesContainerSelector).hide();
+            if (getService("preferences").content.autoSelectOnScroll === "no") {
+                $(ext.articlesContainerSelector).hide();
+            }
             $(".FFnS_Hiding_Info").hide();
             if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
                 $(ext.articlesContainerSelector)
@@ -2503,6 +2505,9 @@ class FeedlyPage {
                 onClickCapture(a.find(".content"), (e) => {
                     if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
                         e.stopPropagation();
+                        e.preventDefault();
+                        const link = a.find("a[href]").attr("href");
+                        window.open(link, link);
                         reader.askMarkEntryAsRead(entryId);
                     }
                 });
@@ -2562,7 +2567,7 @@ class FeedlyPage {
         let stream = streamPage.stream;
         stream.setBatchSize(batchSize);
         $(".FFnS-sorting").remove();
-        if ($(".FFnS-loading").length == 0) {
+        if ($(".FFnS-loading").length == 0 && getService("preferences").content.autoSelectOnScroll === "no") {
             $(ext.articlesContainerSelector)
                 .first()
                 .before(`<div class='FFnS-loading'>
@@ -2619,7 +2624,9 @@ class FeedlyPage {
                     if (!stream.fetchingMoreEntries) {
                         stream.fetchingMoreEntries = true;
                         setTimeout(() => {
-                            $(ext.articlesContainerSelector).hide();
+                            if (getService("preferences").content.autoSelectOnScroll === "no") {
+                                $(ext.articlesContainerSelector).hide();
+                            }
                             $(".FFnS_Hiding_Info").hide();
                             fetchMoreEntries(Math.min(stream.state.info.unreadCount, autoLoadAllArticleDefaultBatchSize));
                         }, 100);
@@ -2849,7 +2856,7 @@ class FeedlyPage {
             }
             let entry;
             while (result && (entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
-                this.selectedEntryId = result.id;
+                this.selectedEntryId = result?.id;
                 result = lookupNextEntry.call(this, false);
             }
             debugLog(() => [
@@ -2874,7 +2881,7 @@ class FeedlyPage {
             }
             debugLog(() => [
                 "selectedEntryId: " + selectedEntryId,
-                "previousEntryId: " + result.id,
+                "previousEntryId: " + result?.id,
             ], "lookupPreviousEntry");
             return result;
         };
