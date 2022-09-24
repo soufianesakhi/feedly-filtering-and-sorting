@@ -658,15 +658,12 @@ export class FeedlyPage {
           true
         );
       } else {
-        a.find(".CondensedToolbar .fx.tag-button").prepend(buttonContainer);
+        a.find(".TitleOnlyToolbar").prepend(buttonContainer);
       }
       var addButton = (id: string, attributes) => {
         attributes.type = "button";
         attributes.style = getFFnS(id) ? "cursor: pointer;" : "display: none";
         attributes.class += " mark-as-read";
-        if (titleView) {
-          attributes.class += " CondensedToolbar__button";
-        }
         var e = $("<div>", attributes);
         buttonContainer.append(e);
         return e;
@@ -1139,7 +1136,7 @@ export class FeedlyPage {
       debugLog(
         () => [
           "selectedEntryId: " + selectedEntryId,
-          "nextEntryId: " + result.id,
+          "nextEntryId: " + result?.id,
         ],
         "lookupNextEntry"
       );
