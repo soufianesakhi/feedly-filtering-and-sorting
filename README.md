@@ -19,7 +19,7 @@ When this extension/script is enabled, a filter icon will appear next to the set
 - Multi level sorting: by popularity, by title, by source or by publish date.
 - Filtering: Hide the articles that contain at least one of the filtering keywords or by reading time.
 - Restricting: Show only articles that contain at least one of the restricting keywords.
-- Duplicates checking: Hide, highlight with a color and/or mark as read
+- Duplicates checking: Hide, highlight with a color
 - Advanced keyword matching: Specify areas to search, searching method (simple, pattern (RegExp), ...)
 - Auto load all unread articles at once or by batches (mark as read by batch when there are a lot of unread articles).
 - Advanced controls (keep recently published articles unread, ...).

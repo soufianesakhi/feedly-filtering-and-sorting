@@ -38,7 +38,6 @@ export class SubscriptionDTO {
   autoRefreshEnabled = false;
   autoRefreshMinutes = 60;
   hideDuplicates = false;
-  markAsReadDuplicates = false;
   highlightDuplicates = false;
   highlightDuplicatesColor = "FFFF00";
   filteringByReadingTime = new FilteringByReadingTime();

@@ -65,9 +65,6 @@ export class DuplicateChecker {
       duplicate.setVisible(false);
       this.articleManager.page.refreshHidingInfo();
     }
-    if (sub.isMarkAsReadDuplicates()) {
-      this.articleManager.articlesToMarkAsRead.push(duplicate);
-    }
     if (sub.isHighlightDuplicates()) {
       newerDuplicate.setColor("#" + sub.getHighlightDuplicatesColor());
     }

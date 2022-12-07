@@ -92,7 +92,6 @@ export class UIManager {
         "MarkAsReadOnOpenCurrentFeedArticles",
         "DisplayDisableAllFiltersButton",
         "HideDuplicates",
-        "MarkAsReadDuplicates",
         "HighlightDuplicates",
         "Enabled_FilteringByReadingTime",
         "KeepUnread_FilteringByReadingTime",

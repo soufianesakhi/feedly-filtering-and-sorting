@@ -140,17 +140,12 @@ export class Subscription {
   checkDuplicates(): boolean {
     return (
       this.isHideDuplicates() ||
-      this.isMarkAsReadDuplicates() ||
       this.isHighlightDuplicates()
     );
   }
 
   isHideDuplicates(): boolean {
     return this.dto.hideDuplicates;
-  }
-
-  isMarkAsReadDuplicates(): boolean {
-    return this.dto.markAsReadDuplicates;
   }
 
   isHighlightDuplicates(): boolean {
