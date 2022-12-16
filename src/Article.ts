@@ -29,10 +29,11 @@ export class Article {
 
   constructor(articleContainer: HTMLElement) {
     this.container = $(articleContainer);
-    this.entryId = this.container
-      .attr("id")
-      .replace(/_inlineFrame$/, "")
-      .replace(/_main$/, "");
+    let articleIdElement = this.container;
+    if (!this.container.is(ext.articleIdFromFrameSelector)) {
+      articleIdElement = this.container.find(ext.articleIdFromFrameSelector);
+    }
+    this.entryId = articleIdElement.attr("id").replace(/_main$/, "");
     var infosElement = this.container.find("." + ext.entryInfosJsonClass);
     if (infosElement.length > 0) {
       this.entryInfos = JSON.parse(infosElement.text());

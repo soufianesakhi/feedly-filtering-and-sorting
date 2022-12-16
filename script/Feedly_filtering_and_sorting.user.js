@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.10
+// @version     3.22.11
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -36,25 +36,25 @@ var ext = {
     articlesContainerSelector: ".list-entries",
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
-    articleSelector: ".EntryList__chunk > article:not([gap-article]), .EntryList__chunk > [id].inlineFrame.u100",
-    articleAndGapSelector: ".EntryList__chunk > article, .EntryList__chunk > [id].inlineFrame.u100",
-    pageArticlesSelector: ".EntryList__chunk > article, .EntryList__chunk > [id].inlineFrame",
-    sortedArticlesSelector: ".EntryList__chunk > [id]:not([gap-article])",
-    inlineArticleSelector: ".inlineFrame[id]",
-    articleAndInlineSelector: ".EntryList__chunk > article:not([gap-article]), .EntryList__chunk > [id].inlineFrame:not([gap-article])",
-    inlineArticleFrameSelector: "div[id].inlineFrame",
+    articleSelector: ".EntryList__chunk > :where(article, .InlineArticle--u100):not([gap-article])",
+    articleAndGapSelector: ".EntryList__chunk > :where(article, .InlineArticle--u100)",
+    articleIdSelector: ".EntryList__chunk article[id]",
+    articleIdFromFrameSelector: "article[id]",
+    sortedArticlesSelector: ".EntryList__chunk article[id]:not([gap-article])",
+    articleAndInlineSelector: ".EntryList__chunk > :where(article, .InlineArticle):not([gap-article])",
+    inlineArticleFrameSelector: ".InlineArticle",
     readArticleSelector: "article[id].entry--read",
     unreadArticleSelector: "article[id].entry--unread",
-    unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .EntryTitle:not(.EntryTitle--read)",
+    unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .Article__title:not(.Article__title--read)",
     uncheckedArticlesSelector: ":not([gap-article]):not([checked-FFnS])",
     checkedArticlesAttribute: "checked-FFnS",
     markAsReadImmediatelySelector: ".list-entries .FFnS-mark-as-read",
     unreadArticleClass: "entry--unread",
     readArticleClass: "entry--read",
-    articleTitleSelector: ".EntryTitle",
-    inlineViewClass: "inlineFrame",
-    articleViewReadTitleClass: "EntryTitle--read",
-    articleViewReadSelector: ".EntryTitle--read",
+    articleTitleSelector: ".EntryTitle,.Article__title",
+    inlineViewClass: "InlineArticle",
+    articleViewReadTitleClass: "Article__title--read",
+    articleViewReadSelector: ".Article__title--read",
     articleViewEntryContainerSelector: ".u100",
     loadingMessageSelector: ".list-entries .EntryList__loading",
     sectionSelector: "#timeline > .section",
@@ -1047,10 +1047,11 @@ class EntryInfos {
 class Article {
     constructor(articleContainer) {
         this.container = $(articleContainer);
-        this.entryId = this.container
-            .attr("id")
-            .replace(/_inlineFrame$/, "")
-            .replace(/_main$/, "");
+        let articleIdElement = this.container;
+        if (!this.container.is(ext.articleIdFromFrameSelector)) {
+            articleIdElement = this.container.find(ext.articleIdFromFrameSelector);
+        }
+        this.entryId = articleIdElement.attr("id").replace(/_main$/, "");
         var infosElement = this.container.find("." + ext.entryInfosJsonClass);
         if (infosElement.length > 0) {
             this.entryInfos = JSON.parse(infosElement.text());
@@ -2017,7 +2018,7 @@ class FeedlyPage {
             const { visibleArticles, hiddenArticles } = sortedArticles;
             $(ext.articlesContainerSelector).each((_, container) => {
                 const ids = $(container)
-                    .find(ext.articleAndGapSelector)
+                    .find(ext.articleIdSelector)
                     .get()
                     .map(getArticleId);
                 const conatinerVisibleArticles = visibleArticles.filter((a) => ids.includes(a.getEntryId()));
@@ -2407,12 +2408,16 @@ class FeedlyPage {
                 }
             };
         };
-        NodeCreationObserver.onCreation(ext.articleAndInlineSelector, (element) => {
+        NodeCreationObserver.onCreation(ext.articleAndInlineSelector, (element) => setTimeout(() => {
             if (disableOverrides()) {
                 return;
             }
             var a = $(element);
-            var entryId = getArticleId(element);
+            let articleIdElement = element;
+            if (!a.is(ext.articleIdFromFrameSelector)) {
+                articleIdElement = a.find(ext.articleIdFromFrameSelector).get(0);
+            }
+            var entryId = getArticleId(articleIdElement);
             let reader = getService("reader");
             var e = reader.lookupEntry(entryId);
             var entryInfos = $("<span>", {
@@ -2503,7 +2508,7 @@ class FeedlyPage {
             }
             onClickCapture(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(entryId, false));
             onClickCapture(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(entryId, true));
-        });
+        }, 100));
     }
     reset() {
         this.clearHidingInfo();
@@ -2543,12 +2548,13 @@ class FeedlyPage {
         return JSON.parse(sessionStorage.getItem("FFnS" + (persistent ? "#" : "_") + id));
     }
     getById(id) {
-        return document.querySelector(`.EntryList__chunk > [id^='${id}']`);
+        const article = document.querySelector(`.EntryList__chunk article[id^='${id}']`);
+        const container = $(article).closest(".EntryList__chunk > *").get(0);
+        return container;
     }
     getArticleId(e) {
         return e
             .getAttribute("id")
-            .replace(/_inlineFrame$/, "")
             .replace(/_main$/, "");
     }
     fetchMoreEntries(batchSize) {
@@ -2730,7 +2736,7 @@ class FeedlyPage {
             var entries = navigo.entries;
             var originalEntries = navigo.originalEntries || entries;
             navigo.originalEntries = originalEntries;
-            const pageArticles = Array.from(document.querySelectorAll(ext.pageArticlesSelector)).map((a) => getArticleId(a));
+            const pageArticles = Array.from(document.querySelectorAll(ext.articleIdSelector)).map((a) => getArticleId(a));
             const addedArticles = entries
                 .filter((e) => !pageArticles.includes(e.id))
                 .map((e) => e.id);

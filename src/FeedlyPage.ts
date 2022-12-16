@@ -197,7 +197,7 @@ export class FeedlyPage {
       const { visibleArticles, hiddenArticles } = sortedArticles;
       $(ext.articlesContainerSelector).each((_, container) => {
         const ids = $(container)
-          .find(ext.articleAndGapSelector)
+          .find(ext.articleIdSelector)
           .get()
           .map(getArticleId);
         const conatinerVisibleArticles = visibleArticles.filter((a) =>
@@ -623,13 +623,17 @@ export class FeedlyPage {
       };
     };
 
-    NodeCreationObserver.onCreation(ext.articleAndInlineSelector, (element) => {
+    NodeCreationObserver.onCreation(ext.articleAndInlineSelector, (element) => setTimeout(() => {
       if (disableOverrides()) {
         return;
       }
       var a = $(element) as JQuery<HTMLElement>;
 
-      var entryId = getArticleId(element as HTMLElement);
+      let articleIdElement = element as HTMLElement;
+      if (!a.is(ext.articleIdFromFrameSelector)) {
+        articleIdElement = a.find(ext.articleIdFromFrameSelector).get(0);
+      }
+      var entryId = getArticleId(articleIdElement);
 
       let reader = getService("reader");
       var e = reader.lookupEntry(entryId);
@@ -733,7 +737,7 @@ export class FeedlyPage {
         markAsReadAboveElement,
         getMarkAsReadAboveBelowCallback(entryId, true)
       );
-    });
+    }, 100));
   }
 
   reset() {
@@ -785,14 +789,15 @@ export class FeedlyPage {
     );
   }
 
-  getById(id: string): HTMLElement {
-    return document.querySelector(`.EntryList__chunk > [id^='${id}']`);
+  getById(id: string) {
+    const article = document.querySelector(`.EntryList__chunk article[id^='${id}']`);
+    const container = $(article).closest(".EntryList__chunk > *").get(0);
+    return container as HTMLElement;
   }
 
   getArticleId(e: HTMLElement) {
     return e
       .getAttribute("id")
-      .replace(/_inlineFrame$/, "")
       .replace(/_main$/, "");
   }
 
@@ -993,7 +998,7 @@ export class FeedlyPage {
       navigo.originalEntries = originalEntries;
 
       const pageArticles = Array.from(
-        document.querySelectorAll<HTMLElement>(ext.pageArticlesSelector)
+        document.querySelectorAll<HTMLElement>(ext.articleIdSelector)
       ).map((a) => getArticleId(a));
       const addedArticles = entries
         .filter((e) => !pageArticles.includes(e.id))
