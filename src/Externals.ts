@@ -35,6 +35,8 @@ var ext = {
   unreadArticleClass: "entry--unread",
   readArticleClass: "entry--read",
   articleTitleSelector: ".EntryTitle,.Article__title",
+  articleViewUrlAnchorSelector: ".Article__title",
+  articleVisualSelector: ".CardEntry__visual-container,.MagazineEntry__visual",
   inlineViewClass: "InlineArticle",
   articleViewReadTitleClass: "Article__title--read",
   articleViewReadSelector: ".Article__title--read",
@@ -47,7 +49,6 @@ var ext = {
   subscriptionChangeSelector: "#header-title",
   popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
   hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
-  articleUrlAnchorSelector: ".content a[href]",
 
   keepArticlesUnreadId: "keepArticlesUnread",
   articlesToMarkAsReadId: "articlesToMarkAsRead",

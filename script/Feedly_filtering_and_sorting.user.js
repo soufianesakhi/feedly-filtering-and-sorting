@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.11
+// @version     3.22.12
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -52,6 +52,8 @@ var ext = {
     unreadArticleClass: "entry--unread",
     readArticleClass: "entry--read",
     articleTitleSelector: ".EntryTitle,.Article__title",
+    articleViewUrlAnchorSelector: ".Article__title",
+    articleVisualSelector: ".CardEntry__visual-container,.MagazineEntry__visual",
     inlineViewClass: "InlineArticle",
     articleViewReadTitleClass: "Article__title--read",
     articleViewReadSelector: ".Article__title--read",
@@ -64,7 +66,6 @@ var ext = {
     subscriptionChangeSelector: "#header-title",
     popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
     hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
-    articleUrlAnchorSelector: ".content a[href]",
     keepArticlesUnreadId: "keepArticlesUnread",
     articlesToMarkAsReadId: "articlesToMarkAsRead",
     openAndMarkAsReadId: "isOpenAndMarkAsRead",
@@ -1099,7 +1100,11 @@ class Article {
             this.source = source.text().trim();
         }
         // URL
-        this.url = this.container.find(ext.articleUrlAnchorSelector).attr("href");
+        this.url = this.container
+            .find(this.container.is(".u0,.u4,.u5")
+            ? "a[target='_blank']"
+            : ext.articleViewUrlAnchorSelector)
+            .attr("href");
     }
     addClass(c) {
         return this.container.addClass(c);
@@ -2293,7 +2298,11 @@ class FeedlyPage {
                 articlesToOpen
                     .map((id) => getById(id))
                     .forEach((a) => {
-                    let link = $(a).find(ext.articleUrlAnchorSelector).attr("href");
+                    let link = $(a)
+                        .find($(a).is(".u0,.u4,.u5")
+                        ? "a[target='_blank']"
+                        : ext.articleViewUrlAnchorSelector)
+                        .attr("href");
                     window.open(link, link);
                 });
                 if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
@@ -2353,7 +2362,11 @@ class FeedlyPage {
     }
     onNewArticleObserve() {
         var getLink = (a) => {
-            return a.find(ext.articleUrlAnchorSelector).attr("href");
+            return a
+                .find(a.is(".u0,.u4,.u5")
+                ? "a[target='_blank']"
+                : ext.articleViewUrlAnchorSelector)
+                .attr("href");
         };
         var getMarkAsReadAboveBelowCallback = (entryId, above) => {
             return (event) => {
@@ -2482,11 +2495,8 @@ class FeedlyPage {
             };
             onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
             let visualElement;
-            if (cardsView) {
-                visualElement = a.find(".visual-container");
-            }
-            else if (magazineView) {
-                visualElement = a.find(".visual");
+            if (cardsView || magazineView) {
+                visualElement = a.find(ext.articleVisualSelector);
             }
             if (visualElement) {
                 onClickCapture(visualElement, (e) => {
@@ -2496,7 +2506,7 @@ class FeedlyPage {
                 });
             }
             if (titleView) {
-                onClickCapture(a.find(".content"), (e) => {
+                onClickCapture(a.find(ext.articleTitleSelector), (e) => {
                     if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
                         e.stopPropagation();
                         e.preventDefault();
@@ -2553,16 +2563,15 @@ class FeedlyPage {
         return container;
     }
     getArticleId(e) {
-        return e
-            .getAttribute("id")
-            .replace(/_main$/, "");
+        return e.getAttribute("id").replace(/_main$/, "");
     }
     fetchMoreEntries(batchSize) {
         const streamPage = getStreamPage();
         let stream = streamPage.stream;
         stream.setBatchSize(batchSize);
         $(".FFnS-sorting").remove();
-        if ($(".FFnS-loading").length == 0 && getService("preferences").content.autoSelectOnScroll === "no") {
+        if ($(".FFnS-loading").length == 0 &&
+            getService("preferences").content.autoSelectOnScroll === "no") {
             $(ext.articlesContainerSelector)
                 .first()
                 .before(`<div class='FFnS-loading'>
@@ -2712,7 +2721,9 @@ class FeedlyPage {
                     !articleSorterConfig.pinHotToTop)) {
                 return;
             }
-            if (isAutoLoad() && streamState.hasAllEntries && streamState.entries?.length > 100) {
+            if (isAutoLoad() &&
+                streamState.hasAllEntries &&
+                streamState.entries?.length > 100) {
                 displaySortingAnimation(true);
             }
             let timeoutId = +localStorage.getItem("ensureSortedEntriesTimeoutId");
@@ -2850,7 +2861,9 @@ class FeedlyPage {
                 return result;
             }
             let entry;
-            while (result && (entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
+            while (result &&
+                (entry = getById(result.id)) &&
+                (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
                 this.selectedEntryId = result?.id;
                 result = lookupNextEntry.call(this, false);
             }
@@ -2870,7 +2883,9 @@ class FeedlyPage {
                 return result;
             }
             let entry;
-            while (result && (entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
+            while (result &&
+                (entry = getById(result.id)) &&
+                (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
                 this.selectedEntryId = result.id;
                 result = lookupPreviousEntry.call(this, false);
             }
