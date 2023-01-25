@@ -285,6 +285,11 @@ export class FeedlyPage {
         //     `child: ${child["id"] || child["classList"] || child["tagName"]}`,
         //   ];
         // }, "remove");
+        if (child.nodeName === "ARTICLE") {
+          // save id to show inline div in right place
+          // this -> EntryList__chunk node
+          $(this).attr("hiddenArticleId", child.id);
+        }
         return removeChild.apply(this, arguments);
       } catch (e) {
         if ($(this).hasClass(ext.articlesChunkClass)) {
@@ -302,6 +307,9 @@ export class FeedlyPage {
     function insertArticleNode(_, node: HTMLElement, parent: Node) {
       let sibling = null;
       try {
+        const id = node.nodeName === "ARTICLE"
+          ? getArticleId(node)
+          : $(parent).attr("hiddenArticleId").replace(/_main$/, "");
         const id = getArticleId(node);
         const sortedIds = getService("navigo").entries.map((e) => e.id);
         let nextIndex = sortedIds.indexOf(id) + 1;
@@ -335,6 +343,11 @@ export class FeedlyPage {
       //   ],
       //   "insert"
       // );
+      if (node.nodeName == "ARTICLE" && $(parent).attr("hiddenArticleId")) {
+        // it is implied that the article that is being shown
+        // is exactly the one that was hidden, so remove temp attr
+        $(parent).removeAttr("hiddenArticleId");
+      }
       return insertBefore.call(sibling.parentNode, node, sibling);
     }
     Node.prototype.insertBefore = function (node, siblingNode) {
