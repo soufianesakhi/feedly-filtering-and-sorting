@@ -36,7 +36,7 @@ var ext = {
   readArticleClass: "entry--read",
   articleTitleSelector: ".EntryTitle,.Article__title",
   articleViewUrlAnchorSelector: ".Article__title",
-  articleVisualSelector: ".CardEntry__visual-container,.MagazineEntry__visual",
+  articleVisualSelector: ".EntryVisual",
   inlineViewClass: "InlineArticle",
   articleViewReadTitleClass: "Article__title--read",
   articleViewReadSelector: ".Article__title--read",

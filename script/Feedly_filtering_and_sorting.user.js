@@ -53,7 +53,7 @@ var ext = {
     readArticleClass: "entry--read",
     articleTitleSelector: ".EntryTitle,.Article__title",
     articleViewUrlAnchorSelector: ".Article__title",
-    articleVisualSelector: ".CardEntry__visual-container,.MagazineEntry__visual",
+    articleVisualSelector: ".EntryVisual",
     inlineViewClass: "InlineArticle",
     articleViewReadTitleClass: "Article__title--read",
     articleViewReadSelector: ".Article__title--read",
@@ -1975,8 +1975,6 @@ class FeedlyPage {
     isAutoLoad() {
         try {
             return (getStreamPage() != null &&
-                ($(ext.articleSelector).length == 0 ||
-                    $(ext.unreadArticlesCountSelector).length > 0) &&
                 !(getStreamPage().stream.state.info.subscribed === false) &&
                 getFFnS(ext.autoLoadAllArticlesId, true));
         }
@@ -2101,6 +2099,11 @@ class FeedlyPage {
                 //     `child: ${child["id"] || child["classList"] || child["tagName"]}`,
                 //   ];
                 // }, "remove");
+                if (child.nodeName === "ARTICLE") {
+                    // save id to show inline div in right place
+                    // this -> EntryList__chunk node
+                    $(this).attr("hiddenArticleId", child["id"]);
+                }
                 return removeChild.apply(this, arguments);
             }
             catch (e) {
@@ -2120,7 +2123,11 @@ class FeedlyPage {
         function insertArticleNode(_, node, parent) {
             let sibling = null;
             try {
-                const id = getArticleId(node);
+                const id = node.nodeName === "ARTICLE"
+                    ? getArticleId(node)
+                    : $(parent)
+                        .attr("hiddenArticleId")
+                        .replace(/_main$/, "");
                 const sortedIds = getService("navigo").entries.map((e) => e.id);
                 let nextIndex = sortedIds.indexOf(id) + 1;
                 if (nextIndex === sortedIds.length) {
@@ -2156,12 +2163,17 @@ class FeedlyPage {
             //   ],
             //   "insert"
             // );
+            if (node.nodeName == "ARTICLE" && $(parent).attr("hiddenArticleId")) {
+                // it is implied that the article that is being shown
+                // is exactly the one that was hidden, so remove temp attr
+                $(parent).removeAttr("hiddenArticleId");
+            }
             return insertBefore.call(sibling.parentNode, node, sibling);
         }
         Node.prototype.insertBefore = function (node, siblingNode) {
             try {
                 if (!disableOverrides() && $(this).hasClass(ext.articlesChunkClass)) {
-                    return insertArticleNode(this, node, siblingNode.parentNode);
+                    return insertArticleNode(this, node, siblingNode.parentNode || this);
                 }
                 else {
                     // debugLog(() => {
@@ -2437,7 +2449,7 @@ class FeedlyPage {
                 class: ext.entryInfosJsonClass,
                 style: "display: none",
             });
-            entryInfos.text(JSON.stringify(new EntryInfos(e.jsonInfo)));
+            entryInfos.text(JSON.stringify(e ? new EntryInfos(e.jsonInfo) : {}));
             a.append(entryInfos);
             var cardsView = a.hasClass("u5");
             var magazineView = a.hasClass("u4");
@@ -2494,11 +2506,8 @@ class FeedlyPage {
                 }
             };
             onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
-            let visualElement;
             if (cardsView || magazineView) {
-                visualElement = a.find(ext.articleVisualSelector);
-            }
-            if (visualElement) {
+                let visualElement = a.find(ext.articleVisualSelector);
                 onClickCapture(visualElement, (e) => {
                     if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
                         openAndMarkAsRead(e);
