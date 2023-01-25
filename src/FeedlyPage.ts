@@ -503,7 +503,13 @@ export class FeedlyPage {
         articlesToOpen
           .map((id) => getById(id))
           .forEach((a) => {
-            let link = $(a).find(ext.articleUrlAnchorSelector).attr("href");
+            let link = $(a)
+              .find(
+                $(a).is(".u0,.u4,.u5")
+                  ? "a[target='_blank']"
+                  : ext.articleViewUrlAnchorSelector
+              )
+              .attr("href");
             window.open(link, link);
           });
         if (getFFnS(ext.markAsReadOnOpenCurrentFeedArticlesId)) {
@@ -579,7 +585,13 @@ export class FeedlyPage {
 
   onNewArticleObserve() {
     var getLink = (a: JQuery) => {
-      return a.find(ext.articleUrlAnchorSelector).attr("href");
+      return a
+        .find(
+          a.is(".u0,.u4,.u5")
+            ? "a[target='_blank']"
+            : ext.articleViewUrlAnchorSelector
+        )
+        .attr("href");
     };
     var getMarkAsReadAboveBelowCallback = (entryId: string, above: boolean) => {
       return (event: MouseEvent) => {
@@ -636,100 +648,98 @@ export class FeedlyPage {
       };
     };
 
-    NodeCreationObserver.onCreation(ext.articleAndInlineSelector, (element) => setTimeout(() => {
-      if (disableOverrides()) {
-        return;
-      }
-      var a = $(element) as JQuery<HTMLElement>;
-
-      let articleIdElement = element as HTMLElement;
-      if (!a.is(ext.articleIdFromFrameSelector)) {
-        articleIdElement = a.find(ext.articleIdFromFrameSelector).get(0);
-      }
-      var entryId = getArticleId(articleIdElement);
-
-      let reader = getService("reader");
-      var e = reader.lookupEntry(entryId);
-      var entryInfos = $("<span>", {
-        class: ext.entryInfosJsonClass,
-        style: "display: none",
-      });
-      entryInfos.text(JSON.stringify(new EntryInfos(e.jsonInfo)));
-      a.append(entryInfos);
-
-      var cardsView = a.hasClass("u5");
-      var magazineView = a.hasClass("u4");
-      var inlineView = a.hasClass(ext.inlineViewClass);
-      var titleView = a.hasClass("u0") && !inlineView;
-      var buttonContainer = $("<span>");
-      if (cardsView) {
-        a.find(".EntryMarkAsReadButton").last().before(buttonContainer);
-      } else if (magazineView) {
-        a.find(".ago").after(buttonContainer);
-      } else if (inlineView) {
-        NodeCreationObserver.onCreation(
-          `[id^='${entryId}'] .ShareBar__actions-left`,
-          (e) => {
-            $(e).append(buttonContainer);
-          },
-          true
-        );
-      } else {
-        a.find(".TitleOnlyToolbar").prepend(buttonContainer);
-      }
-      var addButton = (id: string, attributes) => {
-        attributes.type = "button";
-        attributes.style = getFFnS(id) ? "cursor: pointer;" : "display: none";
-        attributes.class += " mark-as-read";
-        var e = $("<div>", attributes);
-        buttonContainer.append(e);
-        return e;
-      };
-      var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
-        class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
-        title:
-          "Mark articles above" +
-          (cardsView ? " and on the left" : "") +
-          " as read/unread",
-      });
-      var markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
-        class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
-        title:
-          "Mark articles below" +
-          (cardsView ? " and on the right" : "") +
-          " as read/unread",
-      });
-      var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
-        class: ext.openAndMarkAsReadClass,
-        title: "Open in a new window/tab and mark as read",
-      });
-
-      let openAndMarkAsRead = (event: MouseEvent) => {
-        event.stopPropagation();
-        let link = getLink(a);
-        window.open(link, link);
-        reader.askMarkEntryAsRead(entryId);
-        if (inlineView) {
-          $(a)
-            .find(ext.articleTitleSelector)
-            .addClass(ext.articleViewReadTitleClass);
+    NodeCreationObserver.onCreation(ext.articleAndInlineSelector, (element) =>
+      setTimeout(() => {
+        if (disableOverrides()) {
+          return;
         }
-      };
-      onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
+        var a = $(element) as JQuery<HTMLElement>;
 
-      if (cardsView || magazineView) {
-        let visualElement = a.find(".EntryVisual");
-        if (visualElement.length > 0) {
+        let articleIdElement = element as HTMLElement;
+        if (!a.is(ext.articleIdFromFrameSelector)) {
+          articleIdElement = a.find(ext.articleIdFromFrameSelector).get(0);
+        }
+        var entryId = getArticleId(articleIdElement);
+
+        let reader = getService("reader");
+        var e = reader.lookupEntry(entryId);
+        var entryInfos = $("<span>", {
+          class: ext.entryInfosJsonClass,
+          style: "display: none",
+        });
+        entryInfos.text(JSON.stringify(new EntryInfos(e.jsonInfo)));
+        a.append(entryInfos);
+
+        var cardsView = a.hasClass("u5");
+        var magazineView = a.hasClass("u4");
+        var inlineView = a.hasClass(ext.inlineViewClass);
+        var titleView = a.hasClass("u0") && !inlineView;
+        var buttonContainer = $("<span>");
+        if (cardsView) {
+          a.find(".EntryMarkAsReadButton").last().before(buttonContainer);
+        } else if (magazineView) {
+          a.find(".ago").after(buttonContainer);
+        } else if (inlineView) {
+          NodeCreationObserver.onCreation(
+            `[id^='${entryId}'] .ShareBar__actions-left`,
+            (e) => {
+              $(e).append(buttonContainer);
+            },
+            true
+          );
+        } else {
+          a.find(".TitleOnlyToolbar").prepend(buttonContainer);
+        }
+        var addButton = (id: string, attributes) => {
+          attributes.type = "button";
+          attributes.style = getFFnS(id) ? "cursor: pointer;" : "display: none";
+          attributes.class += " mark-as-read";
+          var e = $("<div>", attributes);
+          buttonContainer.append(e);
+          return e;
+        };
+        var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
+          class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
+          title:
+            "Mark articles above" +
+            (cardsView ? " and on the left" : "") +
+            " as read/unread",
+        });
+        var markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
+          class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
+          title:
+            "Mark articles below" +
+            (cardsView ? " and on the right" : "") +
+            " as read/unread",
+        });
+        var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
+          class: ext.openAndMarkAsReadClass,
+          title: "Open in a new window/tab and mark as read",
+        });
+
+        let openAndMarkAsRead = (event: MouseEvent) => {
+          event.stopPropagation();
+          let link = getLink(a);
+          window.open(link, link);
+          reader.askMarkEntryAsRead(entryId);
+          if (inlineView) {
+            $(a)
+              .find(ext.articleTitleSelector)
+              .addClass(ext.articleViewReadTitleClass);
+          }
+        };
+        onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
+
+        if (cardsView || magazineView) {
+          let visualElement = a.find(ext.articleVisualSelector);
           onClickCapture(visualElement, (e) => {
             if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
               openAndMarkAsRead(e);
             }
           });
         }
-      } else if (titleView) {
-        let titleOnlyEntryContentElement = a.find(".TitleOnlyEntry__content");
-        if (titleOnlyEntryContentElement.length > 0) {
-          onClickCapture(titleOnlyEntryContentElement, (e) => {
+        if (titleView) {
+          onClickCapture(a.find(ext.articleTitleSelector), (e) => {
             if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
               e.stopPropagation();
               e.preventDefault();
@@ -739,17 +749,17 @@ export class FeedlyPage {
             }
           });
         }
-      }
 
-      onClickCapture(
-        markAsReadBelowElement,
-        getMarkAsReadAboveBelowCallback(entryId, false)
-      );
-      onClickCapture(
-        markAsReadAboveElement,
-        getMarkAsReadAboveBelowCallback(entryId, true)
-      );
-    }, 100));
+        onClickCapture(
+          markAsReadBelowElement,
+          getMarkAsReadAboveBelowCallback(entryId, false)
+        );
+        onClickCapture(
+          markAsReadAboveElement,
+          getMarkAsReadAboveBelowCallback(entryId, true)
+        );
+      }, 100)
+    );
   }
 
   reset() {
@@ -802,15 +812,15 @@ export class FeedlyPage {
   }
 
   getById(id: string) {
-    const article = document.querySelector(`.EntryList__chunk article[id^='${id}']`);
+    const article = document.querySelector(
+      `.EntryList__chunk article[id^='${id}']`
+    );
     const container = $(article).closest(".EntryList__chunk > *").get(0);
     return container as HTMLElement;
   }
 
   getArticleId(e: HTMLElement) {
-    return e
-      .getAttribute("id")
-      .replace(/_main$/, "");
+    return e.getAttribute("id").replace(/_main$/, "");
   }
 
   fetchMoreEntries(batchSize: number) {
@@ -818,7 +828,10 @@ export class FeedlyPage {
     let stream = streamPage.stream;
     stream.setBatchSize(batchSize);
     $(".FFnS-sorting").remove();
-    if ($(".FFnS-loading").length == 0 && getService("preferences").content.autoSelectOnScroll === "no") {
+    if (
+      $(".FFnS-loading").length == 0 &&
+      getService("preferences").content.autoSelectOnScroll === "no"
+    ) {
       $(ext.articlesContainerSelector)
         .first()
         .before(
@@ -883,7 +896,9 @@ export class FeedlyPage {
           if (!stream.fetchingMoreEntries) {
             stream.fetchingMoreEntries = true;
             setTimeout(() => {
-              if (getService("preferences").content.autoSelectOnScroll === "no") {
+              if (
+                getService("preferences").content.autoSelectOnScroll === "no"
+              ) {
                 $(ext.articlesContainerSelector).hide();
               }
               $(".FFnS_Hiding_Info").hide();
@@ -971,7 +986,7 @@ export class FeedlyPage {
   overrideSorting() {
     function ensureSortedEntries() {
       const streamState = getStreamPage().stream?.state;
-      if (getFFnS(ext.navigatingEntry) || streamState?.modificationCount > 0 ) {
+      if (getFFnS(ext.navigatingEntry) || streamState?.modificationCount > 0) {
         return;
       }
       const articleSorterConfig: ArticleSorterConfig = getFFnS(
@@ -985,7 +1000,11 @@ export class FeedlyPage {
       ) {
         return;
       }
-      if (isAutoLoad() && streamState.hasAllEntries && streamState.entries?.length > 100) {
+      if (
+        isAutoLoad() &&
+        streamState.hasAllEntries &&
+        streamState.entries?.length > 100
+      ) {
         displaySortingAnimation(true);
       }
       let timeoutId = +localStorage.getItem("ensureSortedEntriesTimeoutId");
@@ -1142,11 +1161,15 @@ export class FeedlyPage {
         this,
         getFFnS(ext.hideAfterReadId) ? true : a
       );
-      if(!result) {
+      if (!result) {
         return result;
       }
       let entry;
-      while (result && (entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
+      while (
+        result &&
+        (entry = getById(result.id)) &&
+        (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))
+      ) {
         this.selectedEntryId = result?.id;
         result = lookupNextEntry.call(this, false);
       }
@@ -1168,11 +1191,15 @@ export class FeedlyPage {
         this,
         getFFnS(ext.hideAfterReadId) ? true : a
       );
-      if(!result) {
+      if (!result) {
         return result;
       }
       let entry;
-      while (result && (entry = getById(result.id)) && (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))) {
+      while (
+        result &&
+        (entry = getById(result.id)) &&
+        (!$(entry).is(":visible") || entry.hasAttribute("gap-article"))
+      ) {
         this.selectedEntryId = result.id;
         result = lookupPreviousEntry.call(this, false);
       }

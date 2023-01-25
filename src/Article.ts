@@ -86,7 +86,13 @@ export class Article {
     }
 
     // URL
-    this.url = this.container.find(ext.articleUrlAnchorSelector).attr("href");
+    this.url = this.container
+      .find(
+        this.container.is(".u0,.u4,.u5")
+          ? "a[target='_blank']"
+          : ext.articleViewUrlAnchorSelector
+      )
+      .attr("href");
   }
 
   addClass(c) {
