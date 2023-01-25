@@ -47,7 +47,7 @@ var ext = {
   subscriptionChangeSelector: "#header-title",
   popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
   hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
-  articleUrlAnchorSelector: ".content a[href]",
+  articleUrlAnchorSelector: ".TitleOnlyEntry__content > a, .MagazineEntry__content > a, .CardEntry__content > a, .content > a[href]",
 
   keepArticlesUnreadId: "keepArticlesUnread",
   articlesToMarkAsReadId: "articlesToMarkAsRead",
