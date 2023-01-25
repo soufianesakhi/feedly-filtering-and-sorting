@@ -704,29 +704,28 @@ export class FeedlyPage {
       };
       onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
 
-      let visualElement;
-      if (cardsView) {
-        visualElement = a.find(".visual-container");
-      } else if (magazineView) {
-        visualElement = a.find(".visual");
-      }
-      if (visualElement) {
-        onClickCapture(visualElement, (e) => {
-          if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
-            openAndMarkAsRead(e);
-          }
-        });
-      }
-      if (titleView) {
-        onClickCapture(a.find(".content"), (e) => {
-          if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
-            e.stopPropagation();
-            e.preventDefault();
-            const link = a.find("a[href]").attr("href");
-            window.open(link, link);
-            reader.askMarkEntryAsRead(entryId);
-          }
-        });
+      if (cardsView || magazineView) {
+        let visualElement = a.find(".EntryVisual");
+        if (visualElement.length > 0) {
+          onClickCapture(visualElement, (e) => {
+            if (getFFnS(ext.visualOpenAndMarkAsReadId)) {
+              openAndMarkAsRead(e);
+            }
+          });
+        }
+      } else if (titleView) {
+        let titleOnlyEntryContentElement = a.find(".TitleOnlyEntry__content");
+        if (titleOnlyEntryContentElement.length > 0) {
+          onClickCapture(titleOnlyEntryContentElement, (e) => {
+            if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
+              e.stopPropagation();
+              e.preventDefault();
+              const link = a.find("a[href]").attr("href");
+              window.open(link, link);
+              reader.askMarkEntryAsRead(entryId);
+            }
+          });
+        }
       }
 
       onClickCapture(
