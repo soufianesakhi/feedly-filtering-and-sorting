@@ -687,12 +687,18 @@ export class FeedlyPage {
           NodeCreationObserver.onCreation(
             `[id^='${entryId}'] .ShareBar__actions-left`,
             (e) => {
-              $(e).append(buttonContainer);
+              $(e).after(buttonContainer);
             },
             true
           );
         } else {
-          a.find(".TitleOnlyToolbar").prepend(buttonContainer);
+          NodeCreationObserver.onCreation(
+            `[id^='${entryId}'] .tag-button`,
+            (e) => {
+              $(e).before(buttonContainer);
+            },
+            true
+          );
         }
         var addButton = (id: string, attributes) => {
           attributes.type = "button";

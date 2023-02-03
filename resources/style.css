@@ -283,8 +283,11 @@ input {
   background-size: 20px 20px;
   width: 24px;
   height: 24px;
-  padding: 4px;
   background-origin: content-box;
+}
+
+.fx .entry.u5 .mark-as-read-above-below-button {
+  padding: 4px;
 }
 
 .fx .u100Entry .mark-as-read-above-below-button.mark-as-read,
@@ -371,7 +374,8 @@ input {
   margin-right: 20px;
 }
 
-.FFnS-loading, .FFnS-sorting {
+.FFnS-loading,
+.FFnS-sorting {
   padding: 1%;
   margin: 2%;
 }

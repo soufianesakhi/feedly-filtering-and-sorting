@@ -2464,11 +2464,11 @@ class FeedlyPage {
             }
             else if (inlineView) {
                 NodeCreationObserver.onCreation(`[id^='${entryId}'] .ShareBar__actions-left`, (e) => {
-                    $(e).append(buttonContainer);
+                    $(e).after(buttonContainer);
                 }, true);
             }
             else {
-                a.find(".TitleOnlyToolbar").prepend(buttonContainer);
+                a.find(".EntryToolbar").before(buttonContainer);
             }
             var addButton = (id, attributes) => {
                 attributes.type = "button";
