@@ -45,7 +45,7 @@ var ext = {
   sectionSelector: "#timeline > .section",
   publishAgeSpanSelector: ".ago, .metadata [title^=published]",
   publishAgeTimestampAttr: "title",
-  articleSourceSelector: ".entry__source",
+  articleSourceSelector: ".EntryMetadataSource",
   subscriptionChangeSelector: "#header-title",
   popularitySelector: ".EntryEngagement, .engagement, .nbrRecommendations",
   hidingInfoSibling: "header .right-col, header > h1 .button-dropdown",
