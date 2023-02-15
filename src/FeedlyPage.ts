@@ -678,28 +678,30 @@ export class FeedlyPage {
         var magazineView = a.hasClass("u4");
         var inlineView = a.hasClass(ext.inlineViewClass);
         var titleView = a.hasClass("u0") && !inlineView;
-        var buttonContainer = $("<span>");
-        if (cardsView) {
-          a.find(".EntryMarkAsReadButton").last().before(buttonContainer);
-        } else if (magazineView) {
-          a.find(".ago").after(buttonContainer);
-        } else if (inlineView) {
-          NodeCreationObserver.onCreation(
-            `[id^='${entryId}'] .ShareBar__actions-left`,
-            (e) => {
-              $(e).after(buttonContainer);
-            },
-            true
-          );
-        } else {
-          NodeCreationObserver.onCreation(
-            `[id^='${entryId}'] .tag-button`,
-            (e) => {
-              $(e).before(buttonContainer);
-            },
-            true
-          );
-        }
+        var buttonContainer = $("<span>", {
+          class: ext.buttonContainerClass,
+        });
+        NodeCreationObserver.onCreation(
+          `[id^='${entryId}'] :where(.EntryMarkAsReadButton, .ago, .ShareBar__actions-left, .tag-button)`,
+          (e) => {
+            if (
+              (cardsView && $(e).hasClass("EntryMarkAsReadButton")) ||
+              (titleView && $(e).hasClass("tag-button"))
+            ) {
+              if (!$(e).prev().hasClass(ext.buttonContainerClass)) {
+                $(e).before(buttonContainer);
+              }
+            }
+            if (
+              (magazineView && $(e).hasClass("ago")) ||
+              (inlineView && $(e).hasClass("ShareBar__actions-left"))
+            ) {
+              if (!$(e).next().hasClass(ext.buttonContainerClass)) {
+                $(e).after(buttonContainer);
+              }
+            }
+          }
+        );
         var addButton = (id: string, attributes) => {
           attributes.type = "button";
           attributes.style = getFFnS(id) ? "cursor: pointer;" : "display: none";

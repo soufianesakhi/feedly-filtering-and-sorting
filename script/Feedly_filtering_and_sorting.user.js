@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.14
+// @version     3.22.15
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -36,12 +36,12 @@ var ext = {
     articlesContainerSelector: ".list-entries",
     articlesChunkClass: "EntryList__chunk",
     articlesChunkSelector: ".EntryList__chunk",
-    articleSelector: ".EntryList__chunk > :where(article, .InlineArticle--u100):not([gap-article])",
-    articleAndGapSelector: ".EntryList__chunk > :where(article, .InlineArticle--u100)",
+    articleSelector: ".EntryList__chunk :where(article, .InlineArticle--u100):not([gap-article])",
+    articleAndGapSelector: ".EntryList__chunk :where(article, .InlineArticle--u100)",
     articleIdSelector: ".EntryList__chunk article[id]",
     articleIdFromFrameSelector: "article[id]",
     sortedArticlesSelector: ".EntryList__chunk article[id]:not([gap-article])",
-    articleAndInlineSelector: ".EntryList__chunk > :where(article, .InlineArticle):not([gap-article])",
+    articleAndInlineSelector: ".EntryList__chunk :where(article, .InlineArticle):not([gap-article])",
     inlineArticleFrameSelector: ".InlineArticle",
     readArticleSelector: "article[id].entry--read",
     unreadArticleSelector: "article[id].entry--unread",
@@ -100,6 +100,7 @@ var ext = {
     navigatingEntry: "navigatingEntry",
     layoutChangeSelector: "input[id^='layout-']",
     loadingElementSelector: ".FFnS-loading",
+    buttonContainerClass: "FFnS-buttonContainer",
 };
 
 var templates = {
@@ -2455,23 +2456,23 @@ class FeedlyPage {
             var magazineView = a.hasClass("u4");
             var inlineView = a.hasClass(ext.inlineViewClass);
             var titleView = a.hasClass("u0") && !inlineView;
-            var buttonContainer = $("<span>");
-            if (cardsView) {
-                a.find(".EntryMarkAsReadButton").last().before(buttonContainer);
-            }
-            else if (magazineView) {
-                a.find(".ago").after(buttonContainer);
-            }
-            else if (inlineView) {
-                NodeCreationObserver.onCreation(`[id^='${entryId}'] .ShareBar__actions-left`, (e) => {
-                    $(e).after(buttonContainer);
-                }, true);
-            }
-            else {
-                NodeCreationObserver.onCreation(`[id^='${entryId}'] .tag-button`, (e) => {
-                    $(e).before(buttonContainer);
-                }, true);
-            }
+            var buttonContainer = $("<span>", {
+                class: ext.buttonContainerClass,
+            });
+            NodeCreationObserver.onCreation(`[id^='${entryId}'] :where(.EntryMarkAsReadButton, .ago, .ShareBar__actions-left, .tag-button)`, (e) => {
+                if ((cardsView && $(e).hasClass("EntryMarkAsReadButton")) ||
+                    (titleView && $(e).hasClass("tag-button"))) {
+                    if (!$(e).prev().hasClass(ext.buttonContainerClass)) {
+                        $(e).before(buttonContainer);
+                    }
+                }
+                if ((magazineView && $(e).hasClass("ago")) ||
+                    (inlineView && $(e).hasClass("ShareBar__actions-left"))) {
+                    if (!$(e).next().hasClass(ext.buttonContainerClass)) {
+                        $(e).after(buttonContainer);
+                    }
+                }
+            });
             var addButton = (id, attributes) => {
                 attributes.type = "button";
                 attributes.style = getFFnS(id) ? "cursor: pointer;" : "display: none";

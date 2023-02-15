@@ -16,14 +16,14 @@ var ext = {
   articlesChunkClass: "EntryList__chunk",
   articlesChunkSelector: ".EntryList__chunk",
   articleSelector:
-    ".EntryList__chunk > :where(article, .InlineArticle--u100):not([gap-article])",
+    ".EntryList__chunk :where(article, .InlineArticle--u100):not([gap-article])",
   articleAndGapSelector:
-    ".EntryList__chunk > :where(article, .InlineArticle--u100)",
+    ".EntryList__chunk :where(article, .InlineArticle--u100)",
   articleIdSelector: ".EntryList__chunk article[id]",
   articleIdFromFrameSelector: "article[id]",
   sortedArticlesSelector: ".EntryList__chunk article[id]:not([gap-article])",
   articleAndInlineSelector:
-    ".EntryList__chunk > :where(article, .InlineArticle):not([gap-article])",
+    ".EntryList__chunk :where(article, .InlineArticle):not([gap-article])",
   inlineArticleFrameSelector: ".InlineArticle",
   readArticleSelector: "article[id].entry--read",
   unreadArticleSelector: "article[id].entry--unread",
@@ -85,4 +85,5 @@ var ext = {
   navigatingEntry: "navigatingEntry",
   layoutChangeSelector: "input[id^='layout-']",
   loadingElementSelector: ".FFnS-loading",
+  buttonContainerClass: "FFnS-buttonContainer",
 };
