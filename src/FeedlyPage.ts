@@ -284,9 +284,8 @@ export class FeedlyPage {
         //   ];
         // }, "remove");
         if (child.nodeName === "ARTICLE") {
-          // save id to show inline div in right place
-          // this -> EntryList__chunk node
-          $(this).attr("hiddenArticleId", child["id"]);
+          // save id to show inline div in right place (this -> EntryList__chunk node)
+          $(".list-entries").attr("hiddenArticleId", child["id"]);
         }
         return removeChild.apply(this, arguments);
       } catch (e) {
@@ -308,9 +307,15 @@ export class FeedlyPage {
         const id =
           node.nodeName === "ARTICLE"
             ? getArticleId(node)
-            : $(parent)
-                .attr("hiddenArticleId")
-                .replace(/_main$/, "");
+            : parent.className === "EntryList__chunk"
+              ? $(".list-entries")
+                  .attr("hiddenArticleId")
+                  .replace(/_main$/, "")
+              : undefined;
+        if (id === undefined) {
+          // skip below code in try to move faster to appendChild.call?
+          throw false;
+        }
         const sortedIds = getService("navigo").entries.map((e) => e.id);
         let nextIndex = sortedIds.indexOf(id) + 1;
         if (nextIndex === sortedIds.length) {
@@ -324,6 +329,14 @@ export class FeedlyPage {
       } catch (e) {}
       if (!sibling) {
         sibling = parent.firstChild;
+      }
+      if (
+        node.nodeName == "ARTICLE" &&
+        $('.list-entries').attr("hiddenArticleId") &&
+        $('.list-entries').attr("hiddenArticleId") == node.id
+      ) {
+        // clear if current showing article is the one that was hidden
+        $('.list-entries').removeAttr("hiddenArticleId");
       }
       if (!sibling) {
         // debugLog(() => {
@@ -343,11 +356,6 @@ export class FeedlyPage {
       //   ],
       //   "insert"
       // );
-      if (node.nodeName == "ARTICLE" && $(parent).attr("hiddenArticleId")) {
-        // it is implied that the article that is being shown
-        // is exactly the one that was hidden, so remove temp attr
-        $(parent).removeAttr("hiddenArticleId");
-      }
       return insertBefore.call(sibling.parentNode, node, sibling);
     }
     Node.prototype.insertBefore = function (node, siblingNode) {
