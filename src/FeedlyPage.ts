@@ -301,17 +301,17 @@ export class FeedlyPage {
     const insertBefore = Node.prototype.insertBefore;
     const appendChild = Node.prototype.appendChild;
     window["appendChildOriginal"] = appendChild;
-    function insertArticleNode(_, node: HTMLElement, parent: Node) {
+    function insertArticleNode(_, node: HTMLElement, parent: HTMLElement) {
       let sibling = null;
       try {
         const id =
           node.nodeName === "ARTICLE"
             ? getArticleId(node)
             : parent.className === "EntryList__chunk"
-              ? $(".list-entries")
-                  .attr("hiddenArticleId")
-                  .replace(/_main$/, "")
-              : undefined;
+            ? $(".list-entries")
+                .attr("hiddenArticleId")
+                .replace(/_main$/, "")
+            : undefined;
         if (id === undefined) {
           // skip below code in try to move faster to appendChild.call?
           throw false;
@@ -332,11 +332,11 @@ export class FeedlyPage {
       }
       if (
         node.nodeName == "ARTICLE" &&
-        $('.list-entries').attr("hiddenArticleId") &&
-        $('.list-entries').attr("hiddenArticleId") == node.id
+        $(".list-entries").attr("hiddenArticleId") &&
+        $(".list-entries").attr("hiddenArticleId") == node.id
       ) {
         // clear if current showing article is the one that was hidden
-        $('.list-entries').removeAttr("hiddenArticleId");
+        $(".list-entries").removeAttr("hiddenArticleId");
       }
       if (!sibling) {
         // debugLog(() => {
@@ -608,7 +608,11 @@ export class FeedlyPage {
     var getMarkAsReadAboveBelowCallback = (above: boolean) => {
       return (event: MouseEvent) => {
         event.stopPropagation();
-        const entryId = getArticleId($(event.target).closest("article").get(0));
+        const entryId = getArticleId(
+          $(event.target as HTMLElement)
+            .closest("article")
+            .get(0)
+        );
         var sortedVisibleArticles = getSortedVisibleArticles();
         var markAsRead = getFFnS(ext.markAsReadAboveBelowReadId);
         if (markAsRead) {
@@ -663,7 +667,7 @@ export class FeedlyPage {
 
     const openAndMarkAsRead = (event: MouseEvent) => {
       event.stopPropagation();
-      const article = $(event.target).closest("article");
+      const article = $(event.target as HTMLElement).closest("article");
       const link = getLink(article);
       const entryId = getArticleId(article.get(0));
       const inlineView = article.hasClass(ext.inlineViewClass);
@@ -675,7 +679,7 @@ export class FeedlyPage {
         article
           .find(ext.articleTitleSelector)
           .addClass(ext.articleViewReadTitleClass);
-       }
+      }
     };
 
     const createButtonContainer = (cardsView = false) => {
@@ -712,8 +716,14 @@ export class FeedlyPage {
       });
 
       onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
-      onClickCapture(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(false));
-      onClickCapture(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(true));
+      onClickCapture(
+        markAsReadBelowElement,
+        getMarkAsReadAboveBelowCallback(false)
+      );
+      onClickCapture(
+        markAsReadAboveElement,
+        getMarkAsReadAboveBelowCallback(true)
+      );
 
       return buttonContainer;
     };
@@ -760,8 +770,8 @@ export class FeedlyPage {
         var titleView = a.hasClass("u0") && !inlineView;
 
         if (inlineView) {
-            const buttonContainer = createButtonContainer();
-            a.find(".ShareBar__actions-left").after(buttonContainer);
+          const buttonContainer = createButtonContainer();
+          a.find(".ShareBar__actions-left").after(buttonContainer);
         }
         if (cardsView || magazineView) {
           let visualElement = a.find(ext.articleVisualSelector);
