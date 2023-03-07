@@ -284,9 +284,8 @@ export class FeedlyPage {
         //   ];
         // }, "remove");
         if (child.nodeName === "ARTICLE") {
-          // save id to show inline div in right place
-          // this -> EntryList__chunk node
-          $(this).attr("hiddenArticleId", child["id"]);
+          // save id to show inline div in right place (this -> EntryList__chunk node)
+          $(".list-entries").attr("hiddenArticleId", child["id"]);
         }
         return removeChild.apply(this, arguments);
       } catch (e) {
@@ -308,9 +307,15 @@ export class FeedlyPage {
         const id =
           node.nodeName === "ARTICLE"
             ? getArticleId(node)
-            : $(parent)
-                .attr("hiddenArticleId")
-                .replace(/_main$/, "");
+            : parent.className === "EntryList__chunk"
+              ? $(".list-entries")
+                  .attr("hiddenArticleId")
+                  .replace(/_main$/, "")
+              : undefined;
+        if (id === undefined) {
+          // skip below code in try to move faster to appendChild.call?
+          throw false;
+        }
         const sortedIds = getService("navigo").entries.map((e) => e.id);
         let nextIndex = sortedIds.indexOf(id) + 1;
         if (nextIndex === sortedIds.length) {
@@ -324,6 +329,14 @@ export class FeedlyPage {
       } catch (e) {}
       if (!sibling) {
         sibling = parent.firstChild;
+      }
+      if (
+        node.nodeName == "ARTICLE" &&
+        $('.list-entries').attr("hiddenArticleId") &&
+        $('.list-entries').attr("hiddenArticleId") == node.id
+      ) {
+        // clear if current showing article is the one that was hidden
+        $('.list-entries').removeAttr("hiddenArticleId");
       }
       if (!sibling) {
         // debugLog(() => {
@@ -343,11 +356,6 @@ export class FeedlyPage {
       //   ],
       //   "insert"
       // );
-      if (node.nodeName == "ARTICLE" && $(parent).attr("hiddenArticleId")) {
-        // it is implied that the article that is being shown
-        // is exactly the one that was hidden, so remove temp attr
-        $(parent).removeAttr("hiddenArticleId");
-      }
       return insertBefore.call(sibling.parentNode, node, sibling);
     }
     Node.prototype.insertBefore = function (node, siblingNode) {
@@ -597,9 +605,10 @@ export class FeedlyPage {
         )
         .attr("href");
     };
-    var getMarkAsReadAboveBelowCallback = (entryId: string, above: boolean) => {
+    var getMarkAsReadAboveBelowCallback = (above: boolean) => {
       return (event: MouseEvent) => {
         event.stopPropagation();
+        const entryId = getArticleId($(event.target).closest("article").get(0));
         var sortedVisibleArticles = getSortedVisibleArticles();
         var markAsRead = getFFnS(ext.markAsReadAboveBelowReadId);
         if (markAsRead) {
@@ -652,6 +661,77 @@ export class FeedlyPage {
       };
     };
 
+    const openAndMarkAsRead = (event: MouseEvent) => {
+      event.stopPropagation();
+      const article = $(event.target).closest("article");
+      const link = getLink(article);
+      const entryId = getArticleId(article.get(0));
+      const inlineView = article.hasClass(ext.inlineViewClass);
+      const reader = getService("reader");
+
+      window.open(link, link);
+      reader.askMarkEntryAsRead(entryId);
+      if (inlineView) {
+        article
+          .find(ext.articleTitleSelector)
+          .addClass(ext.articleViewReadTitleClass);
+       }
+    };
+
+    const createButtonContainer = (cardsView = false) => {
+      const buttonContainer = $("<span>", {
+        class: ext.buttonContainerClass,
+      });
+
+      const addButton = (id: string, attributes) => {
+        attributes.type = "button";
+        attributes.style = getFFnS(id) ? "cursor: pointer;" : "display: none";
+        attributes.class += " mark-as-read";
+        var e = $("<div>", attributes);
+        buttonContainer.append(e);
+        return e;
+      };
+
+      const markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
+        class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
+        title:
+          "Mark articles above" +
+          (cardsView ? " and on the left" : "") +
+          " as read/unread",
+      });
+      const markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
+        class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
+        title:
+          "Mark articles below" +
+          (cardsView ? " and on the right" : "") +
+          " as read/unread",
+      });
+      const openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
+        class: ext.openAndMarkAsReadClass,
+        title: "Open in a new window/tab and mark as read",
+      });
+
+      onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
+      onClickCapture(markAsReadBelowElement, getMarkAsReadAboveBelowCallback(false));
+      onClickCapture(markAsReadAboveElement, getMarkAsReadAboveBelowCallback(true));
+
+      return buttonContainer;
+    };
+
+    NodeCreationObserver.onCreation(".CardEntry__toolbar", (e) => {
+      const buttonContainer = createButtonContainer(true);
+      $(e).prepend(buttonContainer);
+    });
+    NodeCreationObserver.onCreation(".TitleOnlyEntry__toolbar", (e) => {
+      const buttonContainer = createButtonContainer();
+      $(e).prepend(buttonContainer);
+    });
+    NodeCreationObserver.onCreation(".MagazineLayout__toolbar", (e) => {
+      // $(e).closest(".MagazineLayout__content").find(".EntryMetadata .ago").after(buttonContainer);
+      const buttonContainer = createButtonContainer();
+      $(e).prepend(buttonContainer);
+    });
+
     NodeCreationObserver.onCreation(ext.articleAndInlineSelector, (element) =>
       setTimeout(() => {
         if (disableOverrides()) {
@@ -678,70 +758,11 @@ export class FeedlyPage {
         var magazineView = a.hasClass("u4");
         var inlineView = a.hasClass(ext.inlineViewClass);
         var titleView = a.hasClass("u0") && !inlineView;
-        var buttonContainer = $("<span>", {
-          class: ext.buttonContainerClass,
-        });
-        NodeCreationObserver.onCreation(
-          `[id^='${entryId}'] :where(.EntryMarkAsReadButton, .ago, .ShareBar__actions-left, .tag-button)`,
-          (e) => {
-            if (
-              (cardsView && $(e).hasClass("EntryMarkAsReadButton")) ||
-              (titleView && $(e).hasClass("tag-button"))
-            ) {
-              if (!$(e).prev().hasClass(ext.buttonContainerClass)) {
-                $(e).before(buttonContainer);
-              }
-            }
-            if (
-              (magazineView && $(e).hasClass("ago")) ||
-              (inlineView && $(e).hasClass("ShareBar__actions-left"))
-            ) {
-              if (!$(e).next().hasClass(ext.buttonContainerClass)) {
-                $(e).after(buttonContainer);
-              }
-            }
-          }
-        );
-        var addButton = (id: string, attributes) => {
-          attributes.type = "button";
-          attributes.style = getFFnS(id) ? "cursor: pointer;" : "display: none";
-          attributes.class += " mark-as-read";
-          var e = $("<div>", attributes);
-          buttonContainer.append(e);
-          return e;
-        };
-        var markAsReadAboveElement = addButton(ext.markAsReadAboveBelowId, {
-          class: ext.markAsReadAboveBelowClass + " mark-above-as-read",
-          title:
-            "Mark articles above" +
-            (cardsView ? " and on the left" : "") +
-            " as read/unread",
-        });
-        var markAsReadBelowElement = addButton(ext.markAsReadAboveBelowId, {
-          class: ext.markAsReadAboveBelowClass + " mark-below-as-read",
-          title:
-            "Mark articles below" +
-            (cardsView ? " and on the right" : "") +
-            " as read/unread",
-        });
-        var openAndMarkAsReadElement = addButton(ext.openAndMarkAsReadId, {
-          class: ext.openAndMarkAsReadClass,
-          title: "Open in a new window/tab and mark as read",
-        });
 
-        let openAndMarkAsRead = (event: MouseEvent) => {
-          event.stopPropagation();
-          let link = getLink(a);
-          window.open(link, link);
-          reader.askMarkEntryAsRead(entryId);
-          if (inlineView) {
-            $(a)
-              .find(ext.articleTitleSelector)
-              .addClass(ext.articleViewReadTitleClass);
-          }
-        };
-        onClickCapture(openAndMarkAsReadElement, openAndMarkAsRead);
-
+        if (inlineView) {
+            const buttonContainer = createButtonContainer();
+            a.find(".ShareBar__actions-left").after(buttonContainer);
+        }
         if (cardsView || magazineView) {
           let visualElement = a.find(ext.articleVisualSelector);
           onClickCapture(visualElement, (e) => {
@@ -755,22 +776,13 @@ export class FeedlyPage {
             if (getFFnS(ext.titleOpenAndMarkAsReadId)) {
               e.stopPropagation();
               e.preventDefault();
-              const link = a.find("a[href]").attr("href");
+              const link = getLink(a);
               window.open(link, link);
               reader.askMarkEntryAsRead(entryId);
             }
           });
         }
-
-        onClickCapture(
-          markAsReadBelowElement,
-          getMarkAsReadAboveBelowCallback(entryId, false)
-        );
-        onClickCapture(
-          markAsReadAboveElement,
-          getMarkAsReadAboveBelowCallback(entryId, true)
-        );
-      }, 100)
+      }, 900)
     );
   }
 
