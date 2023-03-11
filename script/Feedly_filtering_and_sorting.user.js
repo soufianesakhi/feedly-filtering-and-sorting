@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.16
+// @version     3.22.17
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1057,35 +1057,35 @@ class Article {
         var infosElement = this.container.find("." + ext.entryInfosJsonClass);
         if (infosElement.length > 0) {
             this.entryInfos = JSON.parse(infosElement.text());
-            if (this.entryInfos) {
-                this.body = this.entryInfos.body;
-                this.body = this.body ? this.body.toLowerCase() : "";
-                this.author = this.entryInfos.author;
-                this.author = this.author ? this.author.toLowerCase() : "";
-                this.receivedAge = this.entryInfos.received;
-                this.publishAge = this.entryInfos.published;
-            }
-            else {
-                let isInlineView = this.container.find(ext.inlineViewClass).length > 0;
-                this.body = this.container
-                    .find(isInlineView ? ".content" : ".summary")
-                    .text()
-                    .toLowerCase();
-                this.author = this.container
-                    .find(".authors")
-                    .text()
-                    .replace("by", "")
-                    .trim()
-                    .toLowerCase();
-                var ageStr = this.container
-                    .find(ext.publishAgeSpanSelector)
-                    .attr(ext.publishAgeTimestampAttr);
-                var ageSplit = ageStr.split("--");
-                var publishDate = ageSplit[0].replace(/[^:]*:/, "").trim();
-                var receivedDate = ageSplit[1].replace(/[^:]*:/, "").trim();
-                this.publishAge = Date.parse(publishDate);
-                this.receivedAge = Date.parse(receivedDate);
-            }
+        }
+        if (this.entryInfos) {
+            this.body = this.entryInfos.body;
+            this.body = this.body ? this.body.toLowerCase() : "";
+            this.author = this.entryInfos.author;
+            this.author = this.author ? this.author.toLowerCase() : "";
+            this.receivedAge = this.entryInfos.received;
+            this.publishAge = this.entryInfos.published;
+        }
+        else {
+            let isInlineView = this.container.find(ext.inlineViewClass).length > 0;
+            this.body = this.container
+                .find(isInlineView ? ".content" : ".summary")
+                .text()
+                .toLowerCase();
+            this.author = this.container
+                .find(".authors")
+                .text()
+                .replace("by", "")
+                .trim()
+                .toLowerCase();
+            var ageStr = this.container
+                .find(ext.publishAgeSpanSelector)
+                .attr(ext.publishAgeTimestampAttr);
+            var ageSplit = ageStr.split("\n");
+            var publishDate = ageSplit[0].replace(/[^:]*:/, "").trim();
+            var receivedDate = ageSplit[1].replace(/[^:]*:/, "").trim();
+            this.publishAge = Date.parse(publishDate);
+            this.receivedAge = Date.parse(receivedDate);
         }
         // Title
         this.title = this.container
