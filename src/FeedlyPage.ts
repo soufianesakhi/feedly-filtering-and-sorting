@@ -151,9 +151,7 @@ export class FeedlyPage {
 
   displaySortingAnimation(visible) {
     if (visible) {
-      if (getService("preferences").content.autoSelectOnScroll === "no") {
-        $(ext.articlesContainerSelector).hide();
-      }
+      $(ext.articlesContainerSelector).hide();
       $(".FFnS_Hiding_Info").hide();
       if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
         $(ext.articlesContainerSelector)
@@ -256,9 +254,7 @@ export class FeedlyPage {
   }
 
   initAutoLoad() {
-    if (this.get(ext.autoLoadAllArticlesId, true)) {
-      executeWindow("Feedly-Page-FFnS-InitAutoLoad", this.autoLoad);
-    }
+    executeWindow("Feedly-Page-FFnS-InitAutoLoad", this.autoLoad);
   }
 
   initWindow() {
@@ -412,9 +408,14 @@ export class FeedlyPage {
   }
 
   autoLoad() {
-    var navigo = getService("navigo");
-    navigo.initAutoLoad = true;
-    navigo.setEntries(navigo.getEntries());
+    if (getService("preferences").content.autoSelectOnScroll !== "no") {
+      putFFnS(ext.autoLoadAllArticlesId, true, true);
+    }
+    if (getFFnS(ext.autoLoadAllArticlesId, true)) {
+      var navigo = getService("navigo");
+      navigo.initAutoLoad = true;
+      navigo.setEntries(navigo.getEntries());
+    }
   }
 
   getStreamPage(): any {
@@ -862,10 +863,7 @@ export class FeedlyPage {
     let stream = streamPage.stream;
     stream.setBatchSize(batchSize);
     $(".FFnS-sorting").remove();
-    if (
-      $(".FFnS-loading").length == 0 &&
-      getService("preferences").content.autoSelectOnScroll === "no"
-    ) {
+    if ($(".FFnS-loading").length == 0) {
       $(ext.articlesContainerSelector)
         .first()
         .before(
@@ -882,7 +880,7 @@ export class FeedlyPage {
         " at: " +
         new Date().toTimeString()
     );
-    streamPage._scrollTarget.dispatchEvent(new CustomEvent("scroll"));
+    streamPage.stream.askMoreEntries();
   }
 
   overrideLoadingEntries() {
@@ -930,11 +928,7 @@ export class FeedlyPage {
           if (!stream.fetchingMoreEntries) {
             stream.fetchingMoreEntries = true;
             setTimeout(() => {
-              if (
-                getService("preferences").content.autoSelectOnScroll === "no"
-              ) {
-                $(ext.articlesContainerSelector).hide();
-              }
+              $(ext.articlesContainerSelector).hide();
               $(".FFnS_Hiding_Info").hide();
               fetchMoreEntries(
                 Math.min(

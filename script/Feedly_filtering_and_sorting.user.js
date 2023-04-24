@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.17
+// @version     3.22.18
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1985,9 +1985,7 @@ class FeedlyPage {
     }
     displaySortingAnimation(visible) {
         if (visible) {
-            if (getService("preferences").content.autoSelectOnScroll === "no") {
-                $(ext.articlesContainerSelector).hide();
-            }
+            $(ext.articlesContainerSelector).hide();
             $(".FFnS_Hiding_Info").hide();
             if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
                 $(ext.articlesContainerSelector)
@@ -2074,9 +2072,7 @@ class FeedlyPage {
         }
     }
     initAutoLoad() {
-        if (this.get(ext.autoLoadAllArticlesId, true)) {
-            executeWindow("Feedly-Page-FFnS-InitAutoLoad", this.autoLoad);
-        }
+        executeWindow("Feedly-Page-FFnS-InitAutoLoad", this.autoLoad);
     }
     initWindow() {
         window["ext"] = getFFnS("ext");
@@ -2227,9 +2223,14 @@ class FeedlyPage {
         };
     }
     autoLoad() {
-        var navigo = getService("navigo");
-        navigo.initAutoLoad = true;
-        navigo.setEntries(navigo.getEntries());
+        if (getService("preferences").content.autoSelectOnScroll !== "no") {
+            putFFnS(ext.autoLoadAllArticlesId, true, true);
+        }
+        if (getFFnS(ext.autoLoadAllArticlesId, true)) {
+            var navigo = getService("navigo");
+            navigo.initAutoLoad = true;
+            navigo.setEntries(navigo.getEntries());
+        }
     }
     getStreamPage() {
         var observers = getService("navigo").observers;
@@ -2601,8 +2602,7 @@ class FeedlyPage {
         let stream = streamPage.stream;
         stream.setBatchSize(batchSize);
         $(".FFnS-sorting").remove();
-        if ($(".FFnS-loading").length == 0 &&
-            getService("preferences").content.autoSelectOnScroll === "no") {
+        if ($(".FFnS-loading").length == 0) {
             $(ext.articlesContainerSelector)
                 .first()
                 .before(`<div class='FFnS-loading'>
@@ -2614,7 +2614,7 @@ class FeedlyPage {
             stream._batchSize +
             " at: " +
             new Date().toTimeString());
-        streamPage._scrollTarget.dispatchEvent(new CustomEvent("scroll"));
+        streamPage.stream.askMoreEntries();
     }
     overrideLoadingEntries() {
         let streamObj = getStreamObj();
@@ -2659,9 +2659,7 @@ class FeedlyPage {
                     if (!stream.fetchingMoreEntries) {
                         stream.fetchingMoreEntries = true;
                         setTimeout(() => {
-                            if (getService("preferences").content.autoSelectOnScroll === "no") {
-                                $(ext.articlesContainerSelector).hide();
-                            }
+                            $(ext.articlesContainerSelector).hide();
                             $(".FFnS_Hiding_Info").hide();
                             fetchMoreEntries(Math.min(stream.state.info.unreadCount, autoLoadAllArticleDefaultBatchSize));
                         }, 100);
