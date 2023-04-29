@@ -974,12 +974,7 @@ export class FeedlyPage {
       }
       let jumpToNext = () => {
         if (document.URL.indexOf("category/global.") < 0) {
-          let navigo = getService("navigo");
-          if (navigo.getNextURI()) {
-            readingManager._jumpToNext.call(readingManager);
-          } else {
-            this.feedly.loadDefaultPage();
-          }
+          readingManager._jumpToNext.call(readingManager);
         } else {
           this._askRefreshCurrentPage();
         }
