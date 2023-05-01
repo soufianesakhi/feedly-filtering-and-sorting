@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.19
+// @version     3.22.20
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2224,7 +2224,11 @@ class FeedlyPage {
     }
     autoLoad() {
         if (getService("preferences").content.autoSelectOnScroll !== "no") {
-            putFFnS(ext.autoLoadAllArticlesId, true, true);
+            const articleSorterConfig = getFFnS(ext.articleSorterConfigId);
+            if (articleSorterConfig &&
+                (articleSorterConfig.sortingEnabled || articleSorterConfig.pinHotToTop)) {
+                putFFnS(ext.autoLoadAllArticlesId, true, true);
+            }
         }
         if (getFFnS(ext.autoLoadAllArticlesId, true)) {
             var navigo = getService("navigo");
@@ -2646,6 +2650,7 @@ class FeedlyPage {
             if (disableOverrides()) {
                 return setEntries.apply(this, arguments);
             }
+            $(ext.articlesContainerSelector).hide();
             try {
                 if (entries.length == 0) {
                     return setEntries.apply(this, arguments);
@@ -2658,9 +2663,10 @@ class FeedlyPage {
                 else if (isAutoLoad() && !stream.state.hasAllEntries) {
                     if (!stream.fetchingMoreEntries) {
                         stream.fetchingMoreEntries = true;
+                        $(ext.articlesContainerSelector).hide();
                         setTimeout(() => {
-                            $(ext.articlesContainerSelector).hide();
                             $(".FFnS_Hiding_Info").hide();
+                            $(ext.articlesContainerSelector).hide();
                             fetchMoreEntries(Math.min(stream.state.info.unreadCount, autoLoadAllArticleDefaultBatchSize));
                         }, 100);
                     }
@@ -2669,10 +2675,10 @@ class FeedlyPage {
                     if (isAutoLoad() && stream.fetchingMoreEntries) {
                         stream.fetchingMoreEntries = false;
                         debugLog(() => `[Fetching] End at: ${new Date().toTimeString()}`);
-                        $(ext.articlesContainerSelector).show();
                         $(".FFnS-loading").remove();
                         setTimeout(() => refreshHidingInfo, 200);
                     }
+                    $(ext.articlesContainerSelector).show();
                     document.dispatchEvent(new Event("ensureSortedEntries"));
                 }
             }
@@ -2965,11 +2971,11 @@ class FeedlyPage {
         };
     }
     overrideNavigation() {
-        var prototype = Object.getPrototypeOf(getService("navigo"));
+        const readingManager = Object.getPrototypeOf(getService("readingManager"));
         const collectionPrefix = "collection/content/";
         const allCategorySuffix = "category/global.all";
-        const getNextURI = prototype.getNextURI;
-        prototype.getNextURI = function () {
+        const getNextURI = readingManager.getNextURI;
+        readingManager.getNextURI = function () {
             if (disableOverrides()) {
                 return getNextURI.apply(this, arguments);
             }
@@ -2994,7 +3000,6 @@ class FeedlyPage {
             }
             return nextURI;
         };
-        const readingManager = Object.getPrototypeOf(getService("readingManager"));
         const _jumpToNext = readingManager._jumpToNext;
         readingManager._jumpToNext = () => {
             if (!disableOverrides()) {

@@ -409,7 +409,15 @@ export class FeedlyPage {
 
   autoLoad() {
     if (getService("preferences").content.autoSelectOnScroll !== "no") {
-      putFFnS(ext.autoLoadAllArticlesId, true, true);
+      const articleSorterConfig: ArticleSorterConfig = getFFnS(
+        ext.articleSorterConfigId
+      );
+      if (
+        articleSorterConfig &&
+        (articleSorterConfig.sortingEnabled || articleSorterConfig.pinHotToTop)
+      ) {
+        putFFnS(ext.autoLoadAllArticlesId, true, true);
+      }
     }
     if (getFFnS(ext.autoLoadAllArticlesId, true)) {
       var navigo = getService("navigo");
@@ -914,6 +922,7 @@ export class FeedlyPage {
       if (disableOverrides()) {
         return setEntries.apply(this, arguments);
       }
+      $(ext.articlesContainerSelector).hide();
       try {
         if (entries.length == 0) {
           return setEntries.apply(this, arguments);
@@ -927,9 +936,10 @@ export class FeedlyPage {
         } else if (isAutoLoad() && !stream.state.hasAllEntries) {
           if (!stream.fetchingMoreEntries) {
             stream.fetchingMoreEntries = true;
+            $(ext.articlesContainerSelector).hide();
             setTimeout(() => {
-              $(ext.articlesContainerSelector).hide();
               $(".FFnS_Hiding_Info").hide();
+              $(ext.articlesContainerSelector).hide();
               fetchMoreEntries(
                 Math.min(
                   stream.state.info.unreadCount,
@@ -942,10 +952,10 @@ export class FeedlyPage {
           if (isAutoLoad() && stream.fetchingMoreEntries) {
             stream.fetchingMoreEntries = false;
             debugLog(() => `[Fetching] End at: ${new Date().toTimeString()}`);
-            $(ext.articlesContainerSelector).show();
             $(".FFnS-loading").remove();
             setTimeout(() => refreshHidingInfo, 200);
           }
+          $(ext.articlesContainerSelector).show();
           document.dispatchEvent(new Event("ensureSortedEntries"));
         }
       } catch (e) {
@@ -1286,11 +1296,11 @@ export class FeedlyPage {
   }
 
   overrideNavigation() {
-    var prototype = Object.getPrototypeOf(getService("navigo"));
+    const readingManager = Object.getPrototypeOf(getService("readingManager"));
     const collectionPrefix = "collection/content/";
     const allCategorySuffix = "category/global.all";
-    const getNextURI = prototype.getNextURI;
-    prototype.getNextURI = function () {
+    const getNextURI = readingManager.getNextURI;
+    readingManager.getNextURI = function () {
       if (disableOverrides()) {
         return getNextURI.apply(this, arguments);
       }
@@ -1322,7 +1332,6 @@ export class FeedlyPage {
       return nextURI;
     };
 
-    const readingManager = Object.getPrototypeOf(getService("readingManager"));
     const _jumpToNext = readingManager._jumpToNext;
     readingManager._jumpToNext = () => {
       if (!disableOverrides()) {
