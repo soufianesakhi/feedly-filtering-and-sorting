@@ -284,6 +284,7 @@ input {
   width: 24px;
   height: 24px;
   background-origin: content-box;
+  padding-top: 4px;
 }
 
 .fx .entry.u5 .mark-as-read-above-below-button {
