@@ -279,10 +279,6 @@ export class FeedlyPage {
         //     `child: ${child["id"] || child["classList"] || child["tagName"]}`,
         //   ];
         // }, "remove");
-        if (child.nodeName === "ARTICLE") {
-          // save id to show inline div in right place (this -> EntryList__chunk node)
-          $(".list-entries").attr("hiddenArticleId", child["id"]);
-        }
         return removeChild.apply(this, arguments);
       } catch (e) {
         if ($(this).hasClass(ext.articlesChunkClass)) {
@@ -297,42 +293,32 @@ export class FeedlyPage {
     const insertBefore = Node.prototype.insertBefore;
     const appendChild = Node.prototype.appendChild;
     window["appendChildOriginal"] = appendChild;
-    function insertArticleNode(_, node: HTMLElement, parent: HTMLElement) {
-      let sibling = null;
-      try {
-        const id =
-          node.nodeName === "ARTICLE"
-            ? getArticleId(node)
-            : parent.className === "EntryList__chunk"
-            ? $(".list-entries")
-                .attr("hiddenArticleId")
-                .replace(/_main$/, "")
-            : undefined;
-        if (id === undefined) {
-          // skip below code in try to move faster to appendChild.call?
-          throw false;
-        }
-        const sortedIds = getService("navigo").entries.map((e) => e.id);
-        let nextIndex = sortedIds.indexOf(id) + 1;
-        if (nextIndex === sortedIds.length) {
-          return appendChild.call(parent, node);
-        } else if (nextIndex > 0 && nextIndex < sortedIds.length) {
-          const nextId = sortedIds[nextIndex];
-          sibling = getById(nextId);
-        } else {
-          sibling = null;
-        }
-      } catch (e) {}
-      if (!sibling) {
-        sibling = parent.firstChild;
+    function insertArticleNode(
+      _,
+      node: HTMLElement,
+      parent: HTMLElement,
+      inSibling: HTMLElement | null = null
+    ) {
+      let sibling = inSibling;
+
+      if (!sibling && node.nodeName === "ARTICLE") {
+        try {
+          const id = getArticleId(node);
+          const sortedIds = getService("navigo").entries.map((e) => e.id);
+          const nextIndex = sortedIds.indexOf(id) + 1;
+          if (nextIndex === sortedIds.length) {
+            return appendChild.call(parent, node);
+          } else if (nextIndex > 0 && nextIndex < sortedIds.length) {
+            const nextId = sortedIds[nextIndex];
+            sibling = getById(nextId);
+          } else {
+            sibling = null;
+          }
+        } catch (e) {}
       }
-      if (
-        node.nodeName == "ARTICLE" &&
-        $(".list-entries").attr("hiddenArticleId") &&
-        $(".list-entries").attr("hiddenArticleId") == node.id
-      ) {
-        // clear if current showing article is the one that was hidden
-        $(".list-entries").removeAttr("hiddenArticleId");
+
+      if (!sibling) {
+        sibling = parent.firstChild as HTMLElement;
       }
       if (!sibling) {
         // debugLog(() => {
@@ -360,7 +346,8 @@ export class FeedlyPage {
           return insertArticleNode(
             this,
             node as any,
-            siblingNode.parentNode || this
+            siblingNode.parentNode || this,
+            siblingNode as HTMLElement
           );
         } else {
           // debugLog(() => {
