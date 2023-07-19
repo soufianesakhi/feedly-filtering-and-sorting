@@ -24,7 +24,7 @@ var ext = {
   sortedArticlesSelector: ".EntryList__chunk article[id]:not([gap-article])",
   articleAndInlineSelector:
     ".EntryList__chunk :where(article.entry, .InlineArticle):not([gap-article])",
-  inlineArticleFrameSelector: ".InlineArticle",
+  inlineArticleFrameSelector: ".InlineArticle,.SelectedEntryScroller",
   readArticleSelector: "article[id].entry--read",
   unreadArticleSelector: "article[id].entry--unread",
   unreadArticlesCountSelector:

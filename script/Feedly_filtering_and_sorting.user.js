@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.21
+// @version     3.22.22
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -42,7 +42,7 @@ var ext = {
     articleIdFromFrameSelector: "article[id]",
     sortedArticlesSelector: ".EntryList__chunk article[id]:not([gap-article])",
     articleAndInlineSelector: ".EntryList__chunk :where(article.entry, .InlineArticle):not([gap-article])",
-    inlineArticleFrameSelector: ".InlineArticle",
+    inlineArticleFrameSelector: ".InlineArticle,.SelectedEntryScroller",
     readArticleSelector: "article[id].entry--read",
     unreadArticleSelector: "article[id].entry--unread",
     unreadArticlesCountSelector: ".entry--unread:not([gap-article]), .Article__title:not(.Article__title--read)",
@@ -2112,47 +2112,50 @@ class FeedlyPage {
         const insertBefore = Node.prototype.insertBefore;
         const appendChild = Node.prototype.appendChild;
         window["appendChildOriginal"] = appendChild;
-        function insertArticleNode(_, node, parent, inSibling = null) {
-            let sibling = inSibling;
-            if (!sibling && node.nodeName === "ARTICLE") {
-                try {
-                    const id = getArticleId(node);
-                    const sortedIds = getService("navigo").entries.map((e) => e.id);
+        function insertArticleNode(_, node, parent, originalSibling = null) {
+            let sibling = null;
+            try {
+                const navigo = getService("navigo");
+                let id = "";
+                if (node.hasAttribute("id")) {
+                    id = getArticleId(node);
+                }
+                else if (originalSibling) {
+                    const siblingId = getArticleId(originalSibling);
+                    const entries = navigo.originalEntries || navigo.entries;
+                    const originalIds = entries.map((e) => e.getId());
+                    const originalSiblingIndex = originalIds.findIndex((id) => id == siblingId);
+                    if (originalSiblingIndex > 0) {
+                        id = originalIds[originalSiblingIndex - 1];
+                    }
+                }
+                if (id) {
+                    const sortedIds = navigo.entries.map((e) => e.id);
                     const nextIndex = sortedIds.indexOf(id) + 1;
                     if (nextIndex === sortedIds.length) {
                         return appendChild.call(parent, node);
                     }
                     else if (nextIndex > 0 && nextIndex < sortedIds.length) {
-                        const nextId = sortedIds[nextIndex];
+                        let nextId = sortedIds[nextIndex];
                         sibling = getById(nextId);
+                        if (!sibling && nextIndex + 1 < sortedIds.length) {
+                            sibling = getById(sortedIds[nextIndex + 1]);
+                        }
                     }
                     else {
                         sibling = null;
                     }
                 }
-                catch (e) { }
+            }
+            catch (e) {
+                console.log(e);
             }
             if (!sibling) {
                 sibling = parent.firstChild;
             }
             if (!sibling) {
-                // debugLog(() => {
-                //   return [
-                //     `child: ${node["id"] || node["classList"] || node["tagName"]}`,
-                //   ];
-                // }, "append");
                 return appendChild.call(parent, node);
             }
-            // debugLog(
-            //   () => [
-            //     `node: ${node["id"] || node["classList"] || node["tagName"]}`,
-            //     "insertBefore",
-            //     `siblingNode: ${
-            //       sibling["id"] || sibling["classList"] || sibling["tagName"]
-            //     }`,
-            //   ],
-            //   "insert"
-            // );
             return insertBefore.call(sibling.parentNode, node, sibling);
         }
         Node.prototype.insertBefore = function (node, siblingNode) {
@@ -2161,20 +2164,6 @@ class FeedlyPage {
                     return insertArticleNode(this, node, siblingNode.parentNode || this, siblingNode);
                 }
                 else {
-                    // debugLog(() => {
-                    //   if (!$(node).is(ext.articleAndInlineSelector)) {
-                    //     return null;
-                    //   }
-                    //   return [
-                    //     `node: ${node["id"] || node["classList"] || node["tagName"]}`,
-                    //     "insertBefore",
-                    //     `siblingNode: ${
-                    //       siblingNode["id"] ||
-                    //       siblingNode["classList"] ||
-                    //       siblingNode["tagName"]
-                    //     }`,
-                    //   ];
-                    // }, "insert");
                     return insertBefore.apply(this, arguments);
                 }
             }
@@ -2192,14 +2181,6 @@ class FeedlyPage {
             }
             else {
                 const result = appendChild.apply(this, arguments);
-                // debugLog(() => {
-                //   if (!$(child).is(ext.articleAndInlineSelector)) {
-                //     return null;
-                //   }
-                //   return [
-                //     `child: ${child["id"] || child["classList"] || child["tagName"]}`,
-                //   ];
-                // }, "append");
                 return result;
             }
         };
