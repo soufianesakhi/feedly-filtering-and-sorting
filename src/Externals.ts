@@ -16,9 +16,9 @@ var ext = {
   articlesChunkClass: "EntryList__chunk",
   articlesChunkSelector: ".EntryList__chunk",
   articleSelector:
-    ".EntryList__chunk :where(article.entry, .InlineArticle--u100):not([gap-article])",
+    ".EntryList__chunk :where(article.entry, .InlineArticle--fullArticle):not([gap-article])",
   articleAndGapSelector:
-    ".EntryList__chunk :where(article.entry, .InlineArticle--u100)",
+    ".EntryList__chunk :where(article.entry, .InlineArticle--fullArticle)",
   articleIdSelector: ".EntryList__chunk article[id]",
   articleIdFromFrameSelector: "article[id]",
   sortedArticlesSelector: ".EntryList__chunk article[id]:not([gap-article])",
@@ -40,7 +40,6 @@ var ext = {
   inlineViewClass: "InlineArticle",
   articleViewReadTitleClass: "Article__title--read",
   articleViewReadSelector: ".Article__title--read",
-  articleViewEntryContainerSelector: ".u100",
   loadingMessageSelector: ".list-entries .EntryList__loading",
   sectionSelector: "#timeline > .section",
   publishAgeSpanSelector: ".ago, .metadata [title^=published]",

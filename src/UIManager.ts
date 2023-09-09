@@ -540,7 +540,7 @@ export class UIManager {
         var settingsBtn = $("<div>", {
           title: "Feedly filtering and sorting",
           style: "cursor: pointer;",
-          class: "ShowSettingsBtn"
+          class: "ShowSettingsBtn",
         });
         $(predecessor).after(settingsBtn);
         $(settingsBtn).click(function () {
@@ -1028,11 +1028,8 @@ export class UIManager {
 
   private readArticlesMutationCallback(article: Element): MutationCallback {
     return (mr, observer) => {
-      let readClassElement = !$(article).hasClass(ext.inlineViewClass)
-        ? $(article)
-        : $(article).closest(ext.articleViewEntryContainerSelector);
       if (
-        readClassElement.hasClass(ext.readArticleClass) &&
+        $(article).hasClass(ext.readArticleClass) &&
         !$(article).hasClass(ext.inlineViewClass)
       ) {
         if (this.subscription.isHideAfterRead()) {

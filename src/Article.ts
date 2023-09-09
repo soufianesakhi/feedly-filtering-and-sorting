@@ -90,7 +90,7 @@ export class Article {
     // URL
     this.url = this.container
       .find(
-        this.container.is(".u0,.u4,.u5")
+        this.container.is(".titleOnly,.magazine,.cards")
           ? "a[target='_blank']"
           : ext.articleViewUrlAnchorSelector
       )

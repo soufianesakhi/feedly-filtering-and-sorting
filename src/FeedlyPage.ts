@@ -494,7 +494,7 @@ export class FeedlyPage {
           .forEach((a) => {
             let link = $(a)
               .find(
-                $(a).is(".u0,.u4,.u5")
+                $(a).is(".titleOnly,.magazine,.cards")
                   ? "a[target='_blank']"
                   : ext.articleViewUrlAnchorSelector
               )
@@ -576,7 +576,7 @@ export class FeedlyPage {
     var getLink = (a: JQuery) => {
       return a
         .find(
-          a.is(".u0,.u4,.u5")
+          a.is(".titleOnly,.magazine,.cards")
             ? "a[target='_blank']"
             : ext.articleViewUrlAnchorSelector
         )
@@ -741,10 +741,10 @@ export class FeedlyPage {
         entryInfos.text(JSON.stringify(e ? new EntryInfos(e.jsonInfo) : {}));
         a.append(entryInfos);
 
-        var cardsView = a.hasClass("u5");
-        var magazineView = a.hasClass("u4");
+        var cardsView = a.hasClass("cards");
+        var magazineView = a.hasClass("magazine");
         var inlineView = a.hasClass(ext.inlineViewClass);
-        var titleView = a.hasClass("u0") && !inlineView;
+        var titleView = a.hasClass("titleOnly") && !inlineView;
 
         if (inlineView) {
           const buttonContainer = createButtonContainer();

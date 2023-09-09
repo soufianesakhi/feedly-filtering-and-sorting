@@ -232,7 +232,7 @@ input {
   background-size: 20px 20px;
 }
 
-.fx .entry.u5 .open-in-new-tab-button.mark-as-read {
+.fx .entry.cards .open-in-new-tab-button.mark-as-read {
   background-size: 24px 24px;
   padding: 2px;
 }
@@ -278,8 +278,8 @@ input {
 
 .fx .mark-as-read-above-below-button.mark-as-read,
 .fx .open-in-new-tab-button.mark-as-read,
-.fx .entry.u0 .mark-as-read-above-below-button.condensed-toolbar-icon,
-.fx .entry.u5 .mark-as-read-above-below-button {
+.fx .entry.titleOnly .mark-as-read-above-below-button.condensed-toolbar-icon,
+.fx .entry.cards .mark-as-read-above-below-button {
   background-size: 20px 20px;
   width: 24px;
   height: 24px;
@@ -287,7 +287,7 @@ input {
   padding-top: 4px;
 }
 
-.fx .entry.u5 .mark-as-read-above-below-button {
+.fx .entry.cards .mark-as-read-above-below-button {
   padding: 4px;
 }
 
@@ -314,12 +314,12 @@ input {
   min-height: unset;
 }
 
-.fx .entry.u4 .mark-as-read:first-of-type {
+.fx .entry.magazine .mark-as-read:first-of-type {
   margin-left: 0.7rem;
 }
 
-.fx .entry.u5 .open-in-new-tab-button,
-.fx .entry.u5 .mark-as-read-above-below-button {
+.fx .entry.cards .open-in-new-tab-button,
+.fx .entry.cards .mark-as-read-above-below-button {
   filter: brightness(0) invert(1);
 }
 
