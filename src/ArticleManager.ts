@@ -116,7 +116,7 @@ export class ArticleManager {
         );
         hide = hide || filtered;
         if (filtered && sub.isMarkAsReadFiltered()) {
-          article.addClass(ext.markAsReadImmediatelyClass);
+          article.articleIdElement.addClass(ext.markAsReadImmediatelyClass);
         }
       }
       if (hide) {

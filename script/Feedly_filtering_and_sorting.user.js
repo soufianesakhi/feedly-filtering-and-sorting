@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.23
+// @version     3.22.24
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1048,11 +1048,11 @@ class EntryInfos {
 class Article {
     constructor(articleContainer) {
         this.container = $(articleContainer);
-        let articleIdElement = this.container;
+        this.articleIdElement = this.container;
         if (!this.container.is(ext.articleIdFromFrameSelector)) {
-            articleIdElement = this.container.find(ext.articleIdFromFrameSelector);
+            this.articleIdElement = this.container.find(ext.articleIdFromFrameSelector);
         }
-        this.entryId = articleIdElement.attr("id").replace(/_main$/, "");
+        this.entryId = this.articleIdElement.attr("id").replace(/_main$/, "");
         var infosElement = this.container.find("." + ext.entryInfosJsonClass);
         if (infosElement.length > 0) {
             this.entryInfos = JSON.parse(infosElement.text());
@@ -1414,7 +1414,7 @@ class ArticleManager {
                 let filtered = this.keywordManager.matchKeywords(article, sub, FilteringType.FilteredOut);
                 hide = hide || filtered;
                 if (filtered && sub.isMarkAsReadFiltered()) {
-                    article.addClass(ext.markAsReadImmediatelyClass);
+                    article.articleIdElement.addClass(ext.markAsReadImmediatelyClass);
                 }
             }
             if (hide) {
@@ -2643,6 +2643,27 @@ class FeedlyPage {
                     $(ext.articlesContainerSelector).show();
                     document.dispatchEvent(new Event("ensureSortedEntries"));
                 }
+                setTimeout(() => {
+                    // Mark as read filtered articles (advanced settings)
+                    let reader = getService("reader");
+                    let markAsReadEntries = $(ext.markAsReadImmediatelySelector);
+                    if (markAsReadEntries.length == 0) {
+                        return;
+                    }
+                    let ids = $.map(markAsReadEntries.toArray(), (e) => $(e)
+                        .attr("id")
+                        .replace(/_main$/, ""));
+                    ids.forEach((id) => {
+                        reader.askMarkEntryAsRead(id);
+                        const a = $(getById(id));
+                        if (a.hasClass(ext.inlineViewClass)) {
+                            a.find(ext.articleTitleSelector).addClass(ext.articleViewReadTitleClass);
+                        }
+                        else {
+                            a.removeClass(ext.unreadArticleClass).addClass(ext.readArticleClass);
+                        }
+                    });
+                }, 300);
             }
             catch (e) {
                 console.log(e);

@@ -926,6 +926,33 @@ export class FeedlyPage {
           $(ext.articlesContainerSelector).show();
           document.dispatchEvent(new Event("ensureSortedEntries"));
         }
+        setTimeout(() => {
+          // Mark as read filtered articles (advanced settings)
+
+          let reader = getService("reader");
+          let markAsReadEntries = $(ext.markAsReadImmediatelySelector);
+          if (markAsReadEntries.length == 0) {
+            return;
+          }
+          let ids = $.map<Element, string>(markAsReadEntries.toArray(), (e) =>
+            $(e)
+              .attr("id")
+              .replace(/_main$/, "")
+          );
+          ids.forEach((id) => {
+            reader.askMarkEntryAsRead(id);
+            const a = $(getById(id));
+            if (a.hasClass(ext.inlineViewClass)) {
+              a.find(ext.articleTitleSelector).addClass(
+                ext.articleViewReadTitleClass
+              );
+            } else {
+              a.removeClass(ext.unreadArticleClass).addClass(
+                ext.readArticleClass
+              );
+            }
+          });
+        }, 300);
       } catch (e) {
         console.log(e);
       }
