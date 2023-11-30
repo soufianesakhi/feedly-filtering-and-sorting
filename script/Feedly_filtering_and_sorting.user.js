@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.24
+// @version     3.22.25
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1068,7 +1068,7 @@ class Article {
         else {
             let isInlineView = this.container.find(ext.inlineViewClass).length > 0;
             this.body = this.container
-                .find(isInlineView ? ".content" : ".summary")
+                .find(isInlineView ? ".content" : ".EntrySummary")
                 .text()
                 .toLowerCase();
             this.author = this.container

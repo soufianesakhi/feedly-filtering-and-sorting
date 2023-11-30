@@ -53,7 +53,7 @@ export class Article {
     } else {
       let isInlineView = this.container.find(ext.inlineViewClass).length > 0;
       this.body = this.container
-        .find(isInlineView ? ".content" : ".summary")
+        .find(isInlineView ? ".content" : ".EntrySummary")
         .text()
         .toLowerCase();
       this.author = this.container
