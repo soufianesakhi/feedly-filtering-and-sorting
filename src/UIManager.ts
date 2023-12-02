@@ -1044,17 +1044,6 @@ export class UIManager {
     };
   }
 
-  addSection(section: Element) {
-    if (currentPageNotSupported()) {
-      return;
-    }
-    if (section.id === "section0") {
-      $(section).find("h2").text(" ");
-    } else {
-      $(section).remove();
-    }
-  }
-
   importFromOtherSub() {
     var selectedURL = this.getSettingsControlsSelectedSubscription();
     if (

@@ -42,10 +42,6 @@ $(document).ready(function () {
             uiManagerBind(uiManager.addArticle)
           );
           NodeCreationObserver.onCreation(
-            ext.sectionSelector,
-            uiManagerBind(uiManager.addSection)
-          );
-          NodeCreationObserver.onCreation(
             ext.subscriptionChangeSelector,
             uiManagerBind(uiManager.updatePage)
           );
