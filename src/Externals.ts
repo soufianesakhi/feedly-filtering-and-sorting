@@ -12,6 +12,7 @@ var ext = {
   categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
 
   settingsBtnPredecessorSelector: ".header .MarkAsReadButton",
+  headerSelector: ".StreamPage header",
   articlesContainerSelector:
     ".StreamPage:not(.presentation-magazine), .presentation-magazine > .row > div:first-child",
   articlesH2Selector: ".StreamPage h2",
