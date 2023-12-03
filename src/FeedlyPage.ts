@@ -149,7 +149,6 @@ export class FeedlyPage {
 
   displaySortingAnimation(visible) {
     if (visible) {
-      $(ext.articlesContainerSelector).hide();
       $(".FFnS_Hiding_Info").hide();
       if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
         $(ext.articlesContainerSelector).append(
@@ -772,12 +771,8 @@ export class FeedlyPage {
   }
 
   getById(id: string) {
-    const article = document.querySelector(
-      `${ext.articlesContainerSelector} > article[id^='${id}']`
-    );
-    const container = $(article)
-      .closest(ext.articlesContainerSelector + " > *")
-      .get(0);
+    const article = document.querySelector(`article[id^='${id}']`);
+    const container = $(article).closest(ext.articleSelector).get(0);
     return container as HTMLElement;
   }
 
@@ -832,78 +827,78 @@ export class FeedlyPage {
       }
     };
 
-    var navigoPrototype = Object.getPrototypeOf(getService("navigo"));
-    var setEntries = navigoPrototype.setEntries;
-    navigoPrototype.setEntries = function (entries: any[]) {
-      if (disableOverrides()) {
-        return setEntries.apply(this, arguments);
-      }
-      $(ext.articlesContainerSelector).hide();
-      try {
-        if (entries.length == 0) {
-          return setEntries.apply(this, arguments);
-        }
-        debugLog(() => `set entries`, "Fetching");
-        var stream = getStream();
-        if (stream.state.isLoadingEntries) {
-          debugLog(
-            () => `[Fetching] already fetching at: ${new Date().toTimeString()}`
-          );
-        } else if (isAutoLoad() && !stream.state.hasAllEntries) {
-          if (!stream.fetchingMoreEntries) {
-            stream.fetchingMoreEntries = true;
-            $(ext.articlesContainerSelector).hide();
-            setTimeout(() => {
-              $(".FFnS_Hiding_Info").hide();
-              $(ext.articlesContainerSelector).hide();
-              fetchMoreEntries(
-                Math.min(
-                  stream.state.info.unreadCount,
-                  autoLoadAllArticleDefaultBatchSize
-                )
-              );
-            }, 100);
-          }
-        } else {
-          if (isAutoLoad() && stream.fetchingMoreEntries) {
-            stream.fetchingMoreEntries = false;
-            debugLog(() => `[Fetching] End at: ${new Date().toTimeString()}`);
-            $(".FFnS-loading").remove();
-            setTimeout(() => refreshHidingInfo, 200);
-          }
-          $(ext.articlesContainerSelector).show();
-          document.dispatchEvent(new Event("ensureSortedEntries"));
-        }
-        setTimeout(() => {
-          // Mark as read filtered articles (advanced settings)
+    // var navigoPrototype = Object.getPrototypeOf(getService("navigo"));
+    // var setEntries = navigoPrototype.setEntries;
+    // navigoPrototype.setEntries = function (entries: any[]) {
+    //   if (disableOverrides()) {
+    //     return setEntries.apply(this, arguments);
+    //   }
+    //   $(ext.articlesContainerSelector).hide();
+    //   try {
+    //     if (entries.length == 0) {
+    //       return setEntries.apply(this, arguments);
+    //     }
+    //     debugLog(() => `set entries`, "Fetching");
+    //     var stream = getStream();
+    //     if (stream.state.isLoadingEntries) {
+    //       debugLog(
+    //         () => `[Fetching] already fetching at: ${new Date().toTimeString()}`
+    //       );
+    //     } else if (isAutoLoad() && !stream.state.hasAllEntries) {
+    //       if (!stream.fetchingMoreEntries) {
+    //         stream.fetchingMoreEntries = true;
+    //         $(ext.articlesContainerSelector).hide();
+    //         setTimeout(() => {
+    //           $(".FFnS_Hiding_Info").hide();
+    //           $(ext.articlesContainerSelector).hide();
+    //           fetchMoreEntries(
+    //             Math.min(
+    //               stream.state.info.unreadCount,
+    //               autoLoadAllArticleDefaultBatchSize
+    //             )
+    //           );
+    //         }, 100);
+    //       }
+    //     } else {
+    //       if (isAutoLoad() && stream.fetchingMoreEntries) {
+    //         stream.fetchingMoreEntries = false;
+    //         debugLog(() => `[Fetching] End at: ${new Date().toTimeString()}`);
+    //         $(".FFnS-loading").remove();
+    //         setTimeout(() => refreshHidingInfo, 200);
+    //       }
+    //       $(ext.articlesContainerSelector).show();
+    //       document.dispatchEvent(new Event("ensureSortedEntries"));
+    //     }
+    //     setTimeout(() => {
+    //       // Mark as read filtered articles (advanced settings)
 
-          let reader = getService("reader");
-          let markAsReadEntries = $(ext.markAsReadImmediatelySelector);
-          if (markAsReadEntries.length == 0) {
-            return;
-          }
-          let ids = $.map<Element, string>(markAsReadEntries.toArray(), (e) =>
-            $(e)
-              .attr("id")
-              .replace(/_main$/, "")
-          );
-          ids.forEach((id) => {
-            reader.askMarkEntryAsRead(id);
-            const a = $(getById(id));
-            if (a.hasClass(ext.inlineViewClass)) {
-              a.find(ext.articleTitleSelector).addClass(
-                ext.articleViewReadTitleClass
-              );
-            } else {
-              a.addClass(ext.readArticleClass);
-            }
-          });
-        }, 300);
-      } catch (e) {
-        console.log(e);
-      }
-      return setEntries.apply(this, arguments);
-    };
+    //       let reader = getService("reader");
+    //       let markAsReadEntries = $(ext.markAsReadImmediatelySelector);
+    //       if (markAsReadEntries.length == 0) {
+    //         return;
+    //       }
+    //       let ids = $.map<Element, string>(markAsReadEntries.toArray(), (e) =>
+    //         $(e)
+    //           .attr("id")
+    //           .replace(/_main$/, "")
+    //       );
+    //       ids.forEach((id) => {
+    //         reader.askMarkEntryAsRead(id);
+    //         const a = $(getById(id));
+    //         if (a.hasClass(ext.inlineViewClass)) {
+    //           a.find(ext.articleTitleSelector).addClass(
+    //             ext.articleViewReadTitleClass
+    //           );
+    //         } else {
+    //           a.addClass(ext.readArticleClass);
+    //         }
+    //       });
+    //     }, 300);
+    //   } catch (e) {
+    //     console.log(e);
+    //   }
+    //   return setEntries.apply(this, arguments);
+    // };
 
     NodeCreationObserver.onCreation(ext.loadingMessageSelector, (e) => {
       if (disableOverrides()) {
@@ -979,6 +974,8 @@ export class FeedlyPage {
       ) {
         return;
       }
+      $(ext.articlesH2Selector).hide();
+      $(".StreamPage header").css("margin-bottom", "20px");
       if (isAutoLoad()) {
         displaySortingAnimation(true);
       }

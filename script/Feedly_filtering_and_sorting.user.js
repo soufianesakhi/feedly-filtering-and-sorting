@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.26
+// @version     3.22.27
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -33,13 +33,13 @@ var ext = {
     subscriptionUrlPrefixPattern: "https?://[^/]+/i/feed/content",
     categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
     settingsBtnPredecessorSelector: ".header .MarkAsReadButton",
-    articlesContainerSelector: ".StreamPage",
-    articleSelector: ".StreamPage > :where(article.entry, .SelectedEntryScroller):not([gap-article])",
-    articleAndGapSelector: ".StreamPage > :where(article.entry, .SelectedEntryScroller)",
-    articleIdSelector: ".StreamPage > article[id]",
+    articlesContainerSelector: ".StreamPage:not(.presentation-magazine), .presentation-magazine > .row > div:first-child",
+    articlesH2Selector: ".StreamPage h2",
+    articleSelector: ".StreamPage > .SelectedEntryScroller, article.entry:not(.Article--inlined):not([gap-article])",
+    articleAndGapSelector: ".StreamPage > .SelectedEntryScroller, article.entry:not(.Article--inlined)",
     articleIdFromFrameSelector: "article[id]",
-    sortedArticlesSelector: ".StreamPage > article[id]:not([gap-article])",
-    articleAndInlineSelector: ".StreamPage > :where(article.entry, .SelectedEntryScroller):not([gap-article])",
+    sortedArticlesSelector: "article.entry:not(.Article--inlined):not([gap-article])",
+    articleAndInlineSelector: ".StreamPage > .SelectedEntryScroller, article.entry:not(.Article--inlined):not([gap-article])",
     standardArticleEntrySelector: "article.entry",
     inlineArticleFrameSelector: ".SelectedEntryScroller",
     readArticleSelector: "article[id].entry--read",
@@ -1141,8 +1141,6 @@ class Article {
     }
     setVisible(visible) {
         if (visible != null && !visible) {
-            const parent = this.container.parent();
-            this.container.detach().prependTo(parent);
             this.container.css("display", "none");
         }
         else {
@@ -1981,7 +1979,6 @@ class FeedlyPage {
     }
     displaySortingAnimation(visible) {
         if (visible) {
-            $(ext.articlesContainerSelector).hide();
             $(".FFnS_Hiding_Info").hide();
             if ($(".FFnS-sorting,.FFnS-loading").length == 0) {
                 $(ext.articlesContainerSelector).append(`<div class='FFnS-sorting'>
@@ -2521,10 +2518,8 @@ class FeedlyPage {
         return JSON.parse(sessionStorage.getItem("FFnS" + (persistent ? "#" : "_") + id));
     }
     getById(id) {
-        const article = document.querySelector(`${ext.articlesContainerSelector} > article[id^='${id}']`);
-        const container = $(article)
-            .closest(ext.articlesContainerSelector + " > *")
-            .get(0);
+        const article = document.querySelector(`article[id^='${id}']`);
+        const container = $(article).closest(ext.articleSelector).get(0);
         return container;
     }
     getArticleId(e) {
@@ -2570,70 +2565,77 @@ class FeedlyPage {
                 setBatchSize.apply(this, arguments);
             }
         };
-        var navigoPrototype = Object.getPrototypeOf(getService("navigo"));
-        var setEntries = navigoPrototype.setEntries;
-        navigoPrototype.setEntries = function (entries) {
-            if (disableOverrides()) {
-                return setEntries.apply(this, arguments);
-            }
-            $(ext.articlesContainerSelector).hide();
-            try {
-                if (entries.length == 0) {
-                    return setEntries.apply(this, arguments);
-                }
-                debugLog(() => `set entries`, "Fetching");
-                var stream = getStream();
-                if (stream.state.isLoadingEntries) {
-                    debugLog(() => `[Fetching] already fetching at: ${new Date().toTimeString()}`);
-                }
-                else if (isAutoLoad() && !stream.state.hasAllEntries) {
-                    if (!stream.fetchingMoreEntries) {
-                        stream.fetchingMoreEntries = true;
-                        $(ext.articlesContainerSelector).hide();
-                        setTimeout(() => {
-                            $(".FFnS_Hiding_Info").hide();
-                            $(ext.articlesContainerSelector).hide();
-                            fetchMoreEntries(Math.min(stream.state.info.unreadCount, autoLoadAllArticleDefaultBatchSize));
-                        }, 100);
-                    }
-                }
-                else {
-                    if (isAutoLoad() && stream.fetchingMoreEntries) {
-                        stream.fetchingMoreEntries = false;
-                        debugLog(() => `[Fetching] End at: ${new Date().toTimeString()}`);
-                        $(".FFnS-loading").remove();
-                        setTimeout(() => refreshHidingInfo, 200);
-                    }
-                    $(ext.articlesContainerSelector).show();
-                    document.dispatchEvent(new Event("ensureSortedEntries"));
-                }
-                setTimeout(() => {
-                    // Mark as read filtered articles (advanced settings)
-                    let reader = getService("reader");
-                    let markAsReadEntries = $(ext.markAsReadImmediatelySelector);
-                    if (markAsReadEntries.length == 0) {
-                        return;
-                    }
-                    let ids = $.map(markAsReadEntries.toArray(), (e) => $(e)
-                        .attr("id")
-                        .replace(/_main$/, ""));
-                    ids.forEach((id) => {
-                        reader.askMarkEntryAsRead(id);
-                        const a = $(getById(id));
-                        if (a.hasClass(ext.inlineViewClass)) {
-                            a.find(ext.articleTitleSelector).addClass(ext.articleViewReadTitleClass);
-                        }
-                        else {
-                            a.addClass(ext.readArticleClass);
-                        }
-                    });
-                }, 300);
-            }
-            catch (e) {
-                console.log(e);
-            }
-            return setEntries.apply(this, arguments);
-        };
+        // var navigoPrototype = Object.getPrototypeOf(getService("navigo"));
+        // var setEntries = navigoPrototype.setEntries;
+        // navigoPrototype.setEntries = function (entries: any[]) {
+        //   if (disableOverrides()) {
+        //     return setEntries.apply(this, arguments);
+        //   }
+        //   $(ext.articlesContainerSelector).hide();
+        //   try {
+        //     if (entries.length == 0) {
+        //       return setEntries.apply(this, arguments);
+        //     }
+        //     debugLog(() => `set entries`, "Fetching");
+        //     var stream = getStream();
+        //     if (stream.state.isLoadingEntries) {
+        //       debugLog(
+        //         () => `[Fetching] already fetching at: ${new Date().toTimeString()}`
+        //       );
+        //     } else if (isAutoLoad() && !stream.state.hasAllEntries) {
+        //       if (!stream.fetchingMoreEntries) {
+        //         stream.fetchingMoreEntries = true;
+        //         $(ext.articlesContainerSelector).hide();
+        //         setTimeout(() => {
+        //           $(".FFnS_Hiding_Info").hide();
+        //           $(ext.articlesContainerSelector).hide();
+        //           fetchMoreEntries(
+        //             Math.min(
+        //               stream.state.info.unreadCount,
+        //               autoLoadAllArticleDefaultBatchSize
+        //             )
+        //           );
+        //         }, 100);
+        //       }
+        //     } else {
+        //       if (isAutoLoad() && stream.fetchingMoreEntries) {
+        //         stream.fetchingMoreEntries = false;
+        //         debugLog(() => `[Fetching] End at: ${new Date().toTimeString()}`);
+        //         $(".FFnS-loading").remove();
+        //         setTimeout(() => refreshHidingInfo, 200);
+        //       }
+        //       $(ext.articlesContainerSelector).show();
+        //       document.dispatchEvent(new Event("ensureSortedEntries"));
+        //     }
+        //     setTimeout(() => {
+        //       // Mark as read filtered articles (advanced settings)
+        //       let reader = getService("reader");
+        //       let markAsReadEntries = $(ext.markAsReadImmediatelySelector);
+        //       if (markAsReadEntries.length == 0) {
+        //         return;
+        //       }
+        //       let ids = $.map<Element, string>(markAsReadEntries.toArray(), (e) =>
+        //         $(e)
+        //           .attr("id")
+        //           .replace(/_main$/, "")
+        //       );
+        //       ids.forEach((id) => {
+        //         reader.askMarkEntryAsRead(id);
+        //         const a = $(getById(id));
+        //         if (a.hasClass(ext.inlineViewClass)) {
+        //           a.find(ext.articleTitleSelector).addClass(
+        //             ext.articleViewReadTitleClass
+        //           );
+        //         } else {
+        //           a.addClass(ext.readArticleClass);
+        //         }
+        //       });
+        //     }, 300);
+        //   } catch (e) {
+        //     console.log(e);
+        //   }
+        //   return setEntries.apply(this, arguments);
+        // };
         NodeCreationObserver.onCreation(ext.loadingMessageSelector, (e) => {
             if (disableOverrides()) {
                 return;
@@ -2701,6 +2703,8 @@ class FeedlyPage {
                     !articleSorterConfig.pinHotToTop)) {
                 return;
             }
+            $(ext.articlesH2Selector).hide();
+            $(".StreamPage header").css("margin-bottom", "20px");
             if (isAutoLoad()) {
                 displaySortingAnimation(true);
             }

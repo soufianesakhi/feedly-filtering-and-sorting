@@ -12,16 +12,18 @@ var ext = {
   categoryUrlPrefixPattern: "https?://[^/]+/i/collection/content/user/[^/]+/",
 
   settingsBtnPredecessorSelector: ".header .MarkAsReadButton",
-  articlesContainerSelector: ".StreamPage",
+  articlesContainerSelector:
+    ".StreamPage:not(.presentation-magazine), .presentation-magazine > .row > div:first-child",
+  articlesH2Selector: ".StreamPage h2",
   articleSelector:
-    ".StreamPage > :where(article.entry, .SelectedEntryScroller):not([gap-article])",
+    ".StreamPage > .SelectedEntryScroller, article.entry:not(.Article--inlined):not([gap-article])",
   articleAndGapSelector:
-    ".StreamPage > :where(article.entry, .SelectedEntryScroller)",
-  articleIdSelector: ".StreamPage > article[id]",
+    ".StreamPage > .SelectedEntryScroller, article.entry:not(.Article--inlined)",
   articleIdFromFrameSelector: "article[id]",
-  sortedArticlesSelector: ".StreamPage > article[id]:not([gap-article])",
+  sortedArticlesSelector:
+    "article.entry:not(.Article--inlined):not([gap-article])",
   articleAndInlineSelector:
-    ".StreamPage > :where(article.entry, .SelectedEntryScroller):not([gap-article])",
+    ".StreamPage > .SelectedEntryScroller, article.entry:not(.Article--inlined):not([gap-article])",
   standardArticleEntrySelector: "article.entry",
   inlineArticleFrameSelector: ".SelectedEntryScroller",
   readArticleSelector: "article[id].entry--read",
