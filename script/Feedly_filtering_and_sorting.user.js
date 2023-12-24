@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.29
+// @version     3.22.30
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2571,9 +2571,13 @@ class FeedlyPage {
             return stream;
         };
         function refreshSorting() {
-            getService("pageManager").refreshPage();
+            const sortingConfig = document.URL + JSON.stringify(getFFnS(ext.articleSorterConfigId));
+            if (refreshSorting["sortingConfig"] != sortingConfig) {
+                refreshSorting["sortingConfig"] = sortingConfig;
+                getService("pageManager").refreshPage();
+            }
         }
-        -document.addEventListener("refreshSorting", refreshSorting);
+        document.addEventListener("refreshSorting", refreshSorting);
         refreshSorting();
     }
     overrideNavigation() {

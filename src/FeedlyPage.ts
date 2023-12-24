@@ -808,9 +808,14 @@ export class FeedlyPage {
     };
 
     function refreshSorting() {
-      getService("pageManager").refreshPage();
+      const sortingConfig =
+        document.URL + JSON.stringify(getFFnS(ext.articleSorterConfigId));
+      if (refreshSorting["sortingConfig"] != sortingConfig) {
+        refreshSorting["sortingConfig"] = sortingConfig;
+        getService("pageManager").refreshPage();
+      }
     }
-    -document.addEventListener("refreshSorting", refreshSorting);
+    document.addEventListener("refreshSorting", refreshSorting);
     refreshSorting();
   }
 
