@@ -1,4 +1,4 @@
-import { Article } from "./Article";
+import { SortableArticle } from "./Article";
 import { SortingType } from "./DataTypes";
 
 export interface ArticleSorterConfig {
@@ -9,14 +9,14 @@ export interface ArticleSorterConfig {
   additionalSortingTypes: SortingType[];
 }
 
-export interface SortedArticles {
-  visibleArticles: Article[];
-  hiddenArticles: Article[];
+export interface SortedArticles<T extends SortableArticle> {
+  visibleArticles: T[];
+  hiddenArticles: T[];
 }
 
-declare var articleSorterFactory: ArticleSorterFactory;
+declare var articleSorterFactory: ArticleSorterFactory<SortableArticle>;
 
-export class ArticleSorter {
+export class ArticleSorter<T extends SortableArticle> {
   sortingTypes: SortingType[];
   constructor(
     private sortingEnabled: boolean,
@@ -28,8 +28,8 @@ export class ArticleSorter {
     this.sortingTypes = [sortingType].concat(additionalSortingTypes);
   }
 
-  static from(config: ArticleSorterConfig) {
-    return new ArticleSorter(
+  static from<T extends SortableArticle>(config: ArticleSorterConfig) {
+    return new ArticleSorter<T>(
       config.sortingEnabled,
       config.pinHotToTop,
       config.sortingType,
@@ -38,12 +38,12 @@ export class ArticleSorter {
   }
 
   articleVisible = this.sortGaps
-    ? (a: Article) => a.isVisible() || a.isGap()
-    : (a: Article) => a.isVisible();
+    ? (a: T) => a.isVisible() || a.isGap()
+    : (a: T) => a.isVisible();
 
-  prepare(articles: Article[]): SortedArticles {
-    let visibleArticles: Article[] = [];
-    let hiddenArticles: Article[] = [];
+  prepare(articles: T[]): SortedArticles<T> {
+    let visibleArticles: T[] = [];
+    let hiddenArticles: T[] = [];
     articles.forEach((a) => {
       if (this.articleVisible(a)) {
         visibleArticles.push(a);
@@ -54,11 +54,11 @@ export class ArticleSorter {
     return { visibleArticles, hiddenArticles };
   }
 
-  sort(articles: Article[]): SortedArticles {
+  sort(articles: T[]): SortedArticles<T> {
     let { visibleArticles, hiddenArticles } = this.prepare(articles);
     if (this.pinHotToTop) {
-      var hotArticles: Article[] = [];
-      var normalArticles: Article[] = [];
+      var hotArticles: T[] = [];
+      var normalArticles: T[] = [];
       visibleArticles.forEach((article) => {
         if (article.isHot()) {
           hotArticles.push(article);
@@ -77,11 +77,11 @@ export class ArticleSorter {
     return { visibleArticles, hiddenArticles };
   }
 
-  sortArray(articles: Article[]) {
+  sortArray(articles: T[]) {
     articles.sort(articleSorterFactory.getSorter(this.sortingTypes));
 
     if (SortingType.SourceNewestReceiveDate == this.sortingType) {
-      let sourceToArticles: { [key: string]: Article[] } = {};
+      let sourceToArticles: { [key: string]: T[] } = {};
       articles.forEach((a) => {
         let sourceArticles =
           (sourceToArticles[a.getSource()] ||
@@ -97,37 +97,39 @@ export class ArticleSorter {
   }
 }
 
-export class ArticleSorterFactory {
-  sorterByType: { [key: number]: (a: Article, b: Article) => number } = {};
+export class ArticleSorterFactory<T extends SortableArticle> {
+  sorterByType: {
+    [key: number]: (a: T, b: T) => number;
+  } = {};
 
   constructor() {
     function titleSorter(isAscending: boolean) {
       var multiplier = isAscending ? 1 : -1;
-      return (a: Article, b: Article) => {
+      return (a: T, b: T) => {
         return a.getTitle().localeCompare(b.getTitle()) * multiplier;
       };
     }
     function popularitySorter(isAscending: boolean) {
       var multiplier = isAscending ? 1 : -1;
-      return (a: Article, b: Article) => {
+      return (a: T, b: T) => {
         return (a.getPopularity() - b.getPopularity()) * multiplier;
       };
     }
     function receivedDateSorter(isNewFirst: boolean) {
       var multiplier = isNewFirst ? -1 : 1;
-      return (a: Article, b: Article) => {
+      return (a: T, b: T) => {
         return (a.getReceivedAge() - b.getReceivedAge()) * multiplier;
       };
     }
     function publishDateSorter(isNewFirst: boolean) {
       var multiplier = isNewFirst ? -1 : 1;
-      return (a: Article, b: Article) => {
+      return (a: T, b: T) => {
         return (a.getPublishAge() - b.getPublishAge()) * multiplier;
       };
     }
     function publishDaySorter(isNewFirst: boolean) {
       var multiplier = isNewFirst ? -1 : 1;
-      return (a: Article, b: Article) => {
+      return (a: T, b: T) => {
         let dateA = a.getPublishDate(),
           dateB = b.getPublishDate();
         let result = dateA.getFullYear() - dateB.getFullYear();
@@ -142,7 +144,7 @@ export class ArticleSorterFactory {
     }
     function sourceSorter(isAscending: boolean) {
       var multiplier = isAscending ? 1 : -1;
-      return (a: Article, b: Article) => {
+      return (a: T, b: T) => {
         return a.getSource().localeCompare(b.getSource()) * multiplier;
       };
     }
@@ -170,11 +172,11 @@ export class ArticleSorterFactory {
     };
   }
 
-  getSorter(sortingTypes: SortingType[]): (a: Article, b: Article) => number {
+  getSorter(sortingTypes: SortingType[]): (a: T, b: T) => number {
     if (sortingTypes.length == 1) {
       return this.sorterByType[sortingTypes[0]];
     }
-    return (a: Article, b: Article) => {
+    return (a: T, b: T) => {
       var res;
       for (var i = 0; i < sortingTypes.length; i++) {
         res = this.sorterByType[sortingTypes[i]](a, b);
@@ -187,4 +189,4 @@ export class ArticleSorterFactory {
   }
 }
 
-articleSorterFactory = new ArticleSorterFactory();
+articleSorterFactory = new ArticleSorterFactory<SortableArticle>();

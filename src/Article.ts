@@ -16,7 +16,20 @@ export class EntryInfos {
   }
 }
 
-export class Article {
+export interface SortableArticle {
+  getEntryId(): string;
+  getPublishDate(): Date;
+  getPublishAge(): number;
+  getReceivedAge(): number;
+  getPopularity(): number;
+  getTitle(): string;
+  getSource(): string;
+  isHot(): boolean;
+  isGap(): boolean;
+  isVisible(): boolean;
+}
+
+export class Article implements SortableArticle {
   private container: JQuery;
   private entryId: string;
   articleIdElement: JQuery;
@@ -39,6 +52,10 @@ export class Article {
       );
     }
     this.entryId = this.articleIdElement.attr("id").replace(/_main$/, "");
+    (window["onClickCapture"] || (() => {}))(this.container, () => {
+      window["currentArticleId"] = this.entryId;
+    });
+
     var infosElement = this.container.find("." + ext.entryInfosJsonClass);
     if (infosElement.length > 0) {
       this.entryInfos = JSON.parse(infosElement.text());
@@ -184,5 +201,55 @@ export class Article {
       popularityStr += "000";
     }
     return Number(popularityStr);
+  }
+}
+
+export class Entry implements SortableArticle {
+  private entry;
+  private metadata;
+  private jsonInfo;
+  constructor(entry) {
+    this.entry = entry;
+    this.metadata = entry.metadata;
+    this.jsonInfo = entry.jsonInfo;
+  }
+  get() {
+    return this.entry;
+  }
+  getEntryId(): string {
+    return this.jsonInfo.id;
+  }
+  getPublishAge(): number {
+    return this.jsonInfo.published;
+  }
+  getReceivedAge(): number {
+    return this.jsonInfo.received;
+  }
+  getPublishDate(): Date {
+    return new Date(this.getPublishAge());
+  }
+  getPopularity(): number {
+    return this.jsonInfo.engagement ?? 0;
+  }
+  getTitle(): string {
+    return this.jsonInfo.title;
+  }
+  getSource(): string {
+    return this.metadata.sourceTitle;
+  }
+  isHot(): boolean {
+    return (
+      !this.metadata.garbage &&
+      this.jsonInfo.engagement &&
+      this.jsonInfo.engagementRate &&
+      ((this.jsonInfo.engagement > 100 && this.jsonInfo.engagementRate > 3) ||
+        (this.jsonInfo.engagement > 25 && this.jsonInfo.engagementRate > 7))
+    );
+  }
+  isGap(): boolean {
+    return false;
+  }
+  isVisible(): boolean {
+    return true;
   }
 }

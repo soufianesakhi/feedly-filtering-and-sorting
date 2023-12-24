@@ -21,12 +21,10 @@ var ext = {
   articleAndGapSelector:
     ".StreamPage > .SelectedEntryScroller, article.entry:not(.Article--inlined)",
   articleIdFromFrameSelector: "article[id]",
-  sortedArticlesSelector:
-    "article.entry:not(.Article--inlined):not([gap-article])",
+  sortedArticlesSelector: "article.entry:not([gap-article])",
   articleAndInlineSelector:
     ".StreamPage > .SelectedEntryScroller, article.entry:not(.Article--inlined):not([gap-article])",
-  standardArticleEntrySelector: "article.entry",
-  inlineArticleFrameSelector: ".SelectedEntryScroller",
+  inlineArticleFrameSelector: ".SelectedEntryScroller, article.entry",
   readArticleSelector: "article[id].entry--read",
   unreadArticleSelector: "article[id]:not(.entry--read)",
   unreadArticlesCountSelector:
