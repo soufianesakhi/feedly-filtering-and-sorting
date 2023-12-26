@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.30
+// @version     3.22.31
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -2558,6 +2558,7 @@ class FeedlyPage {
                             const sorter = ArticleSorter.from(articleSorterConfig);
                             const { visibleArticles } = sorter.sort(entries);
                             value = visibleArticles.map((e) => e.get());
+                            updateSortingConfig();
                             setTimeout(() => {
                                 document.dispatchEvent(new Event("checkAutoLoad"));
                             }, 100);
@@ -2571,13 +2572,17 @@ class FeedlyPage {
             return stream;
         };
         function refreshSorting() {
-            const sortingConfig = document.URL + JSON.stringify(getFFnS(ext.articleSorterConfigId));
-            if (refreshSorting["sortingConfig"] != sortingConfig) {
-                refreshSorting["sortingConfig"] = sortingConfig;
+            if (updateSortingConfig()) {
                 getService("pageManager").refreshPage();
             }
         }
         document.addEventListener("refreshSorting", refreshSorting);
+        function updateSortingConfig() {
+            const sortingConfig = document.URL + JSON.stringify(getFFnS(ext.articleSorterConfigId));
+            const oldSortingConfig = refreshSorting["sortingConfig"];
+            refreshSorting["sortingConfig"] = sortingConfig;
+            return oldSortingConfig != sortingConfig;
+        }
         refreshSorting();
     }
     overrideNavigation() {

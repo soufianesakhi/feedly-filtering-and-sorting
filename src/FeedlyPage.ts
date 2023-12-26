@@ -794,6 +794,7 @@ export class FeedlyPage {
               const sorter = ArticleSorter.from<Entry>(articleSorterConfig);
               const { visibleArticles } = sorter.sort(entries);
               value = visibleArticles.map((e) => e.get());
+              updateSortingConfig();
               setTimeout(() => {
                 document.dispatchEvent(new Event("checkAutoLoad"));
               }, 100);
@@ -808,14 +809,18 @@ export class FeedlyPage {
     };
 
     function refreshSorting() {
-      const sortingConfig =
-        document.URL + JSON.stringify(getFFnS(ext.articleSorterConfigId));
-      if (refreshSorting["sortingConfig"] != sortingConfig) {
-        refreshSorting["sortingConfig"] = sortingConfig;
+      if (updateSortingConfig()) {
         getService("pageManager").refreshPage();
       }
     }
     document.addEventListener("refreshSorting", refreshSorting);
+    function updateSortingConfig() {
+      const sortingConfig =
+        document.URL + JSON.stringify(getFFnS(ext.articleSorterConfigId));
+      const oldSortingConfig = refreshSorting["sortingConfig"];
+      refreshSorting["sortingConfig"] = sortingConfig;
+      return oldSortingConfig != sortingConfig;
+    }
     refreshSorting();
   }
 
