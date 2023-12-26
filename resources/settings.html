@@ -8,7 +8,7 @@
         <span>Auto load all unread articles</span>
         <input id="FFnS_autoLoadAllArticles" type="checkbox" />
       </div>
-      <div class="setting_group" style="display: none;">
+      <div class="setting_group" style="display: none">
         <span>Load articles by batch</span>
         <input id="FFnS_loadByBatchEnabled" type="checkbox" />
         <span>Batch size</span>
@@ -88,8 +88,8 @@
         <li><a href="#FFnS_Tab_SettingsControls">Settings controls</a></li>
       </ul>
       <div id="FFnS_tabs_content">
-        {{ FilteringList.Type.FilteredOut }}
-        {{ FilteringList.Type.RestrictedOn }}
+        {{ FilteringList.Type.FilteredOut }} {{ FilteringList.Type.RestrictedOn
+        }}
         <div id="FFnS_Tab_KeywordControls" class="FFnS_Tab_Menu">
           <p>
             The following settings are applied to the filtering and restricting
@@ -144,7 +144,7 @@
               <span>Add buttons to mark articles above/below as</span>
               <select id="FFnS_MarkAsReadAboveBelowRead" class="FFnS_input">
                 <option value="true" selected>read</option>
-                <option value="false">unread</option>
+                <option value="false" style="display: none">unread</option>
               </select>
               <input id="FFnS_MarkAsReadAboveBelow" type="checkbox" />
               <span>
@@ -183,9 +183,7 @@
               />
             </div>
             <div>
-              <span
-                >Add button to quickly disable all filters</span
-              >
+              <span>Add button to quickly disable all filters</span>
               <input id="FFnS_DisplayDisableAllFiltersButton" type="checkbox" />
             </div>
           </fieldset>
@@ -455,9 +453,7 @@
               id="FFnS_SettingsControls_SelectedSubscription"
               class="FFnS_input"
             >
-              {{
-                ImportMenu.SubscriptionOptions
-              }}
+              {{ ImportMenu.SubscriptionOptions }}
             </select>
             <button id="FFnS_SettingsControls_ImportFromOtherSub">
               Import settings from selected subscription

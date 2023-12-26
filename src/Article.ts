@@ -223,7 +223,7 @@ export class Entry implements SortableArticle {
     return this.jsonInfo.published;
   }
   getReceivedAge(): number {
-    return this.jsonInfo.received;
+    return this.jsonInfo.crawled;
   }
   getPublishDate(): Date {
     return new Date(this.getPublishAge());
@@ -232,7 +232,7 @@ export class Entry implements SortableArticle {
     return this.jsonInfo.engagement ?? 0;
   }
   getTitle(): string {
-    return this.jsonInfo.title;
+    return this.entry._title;
   }
   getSource(): string {
     return this.metadata.sourceTitle;

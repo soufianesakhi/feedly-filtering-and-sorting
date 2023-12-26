@@ -402,11 +402,10 @@ export class FeedlyPage {
           endExcl = sortedVisibleArticles.length;
         }
         var hide = getFFnS(ext.hideWhenMarkAboveBelowId);
-        let reader = getService("reader");
         for (var i = start; i < endExcl; i++) {
           var id = sortedVisibleArticles[i];
           if (markAsRead) {
-            reader.askMarkEntryAsRead(id);
+            getService("reader").askMarkEntryAsRead(id);
             const a = $(getById(id));
             if (a.hasClass(ext.inlineViewClass)) {
               a.find(ext.articleTitleSelector).addClass(
@@ -419,7 +418,7 @@ export class FeedlyPage {
               $(getById(id)).remove();
             }
           } else {
-            reader.askKeepEntryAsUnread(id);
+            getService("readingManager").askKeepEntryAsUnread(id);
           }
         }
       };
