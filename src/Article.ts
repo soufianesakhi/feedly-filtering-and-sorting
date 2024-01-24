@@ -232,7 +232,7 @@ export class Entry implements SortableArticle {
     return this.jsonInfo.engagement ?? 0;
   }
   getTitle(): string {
-    return this.entry._title;
+    return this.jsonInfo.title ?? this.entry._titleHtml ?? "";
   }
   getSource(): string {
     return this.metadata.sourceTitle;

@@ -14,7 +14,7 @@
 // @resource    node-creation-observer.js https://greasyfork.org/scripts/19857-node-creation-observer/code/node-creation-observer.js?version=174436
 // @require     https://cdnjs.cloudflare.com/ajax/libs/jscolor/2.0.4/jscolor.min.js
 // @include     *://feedly.com/*
-// @version     3.22.32
+// @version     3.22.33
 // @grant       GM_setValue
 // @grant       GM_getValue
 // @grant       GM_deleteValue
@@ -1199,7 +1199,7 @@ class Entry {
         return this.jsonInfo.engagement ?? 0;
     }
     getTitle() {
-        return this.entry._title;
+        return this.jsonInfo.title ?? this.entry._titleHtml ?? "";
     }
     getSource() {
         return this.metadata.sourceTitle;
