@@ -1,18 +1,7 @@
 # Feedly filtering and sorting
 
-When this extension/script is enabled, a filter icon will appear next to the settings icon that toggles the filtering and sorting menu.
-
-![Toggle button](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/toggle%20button.PNG)
-
-![Menu](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/menu.PNG)
-
-![Keyword settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/keyword_controls.PNG)
-
-![UI settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/ui_controls.PNG)
-
-![Advanced settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/menu_advanced.PNG)
-
-![Import settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/settings_controls.PNG)
+| :warning: WARNING: This extension is currently discontinued. The source code is still available under the [MIT license](https://opensource.org/license/mit) |
+| ---------------------------------------------------------------------------------------------------- |
 
 ## Features
 
@@ -30,43 +19,3 @@ When this extension/script is enabled, a filter icon will appear next to the set
 - Add coloring rules to highlight titles.
 - Auto refresh articles periodically.
 
-Two settings configurations are available:
-
-- Global settings: same configuration used for all subscriptions and categories.
-- Subscription settings:
-  - Subscription and category specific configurations
-  - The default settings values are the global settings.
-  - A group of subscriptions can share the same configuration by linking them to the same subscription.
-
-## Requirements
-
-### Feedly settings
-![Feedly settings](https://raw.githubusercontent.com/soufianesakhi/feedly-filtering-and-sorting/master/screenshots/feedly_settings.PNG)
-
-- The `Unread Only` option is required to be checked
-- Sorting should be set to either `Latest` or `Oldest`
-
-## [Changelog](https://github.com/soufianesakhi/feedly-filtering-and-sorting/releases)
-
-## Requests
-
-Please report bugs and feature requests by emailing me at soufiane.sakhi.js@gmail.com.
-
-## Installation
-
-Two options are available:
-
-### Install as an extension
-
-- Google Chrome: https://chrome.google.com/webstore/detail/feedly-filtering-and-sort/anknmaofbemimfabppdffklbfiecikgo
-
-- Firefox: https://addons.mozilla.org/en-US/firefox/addon/feedly_filtering_and_sorting/
-
-### Install as a user script
-
-This script relies on the user scripts extensions like [Greasemonkey](https://addons.mozilla.org/en-US/firefox/addon/greasemonkey/) or [Tampermonkey](https://chrome.google.com/webstore/detail/tampermonkey/dhdgffkkebhmkfjojejmpbldmpobfkfo?hl=en).
-
-After installing the appropriate user scripts extension, you can install the script from the following sites:
-
-- https://greasyfork.org/en/scripts/20483-feedly-filtering-and-sorting
-- https://openuserjs.org/scripts/soufianesakhi/Feedly_filtering_and_sorting
